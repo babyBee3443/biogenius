@@ -30,12 +30,23 @@ import {
   Video,
   Quote,
   Code,
+  PlusCircle, // Added for Add Block button
+  Minus, // Added for Divider
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import Image from 'next/image'; // Used for image previews if needed
 import { TemplateSelector, Block } from "@/components/admin/template-selector"; // Import Block type as well
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Added DropdownMenu
+
 
 // --- Block Editor Components ---
 
@@ -349,17 +360,53 @@ export default function NewArticlePage() {
                                      ))}
                                  </div>
 
-                                  {/* Add Block Buttons */}
-                                  <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('text')}><Type className="mr-2 h-4 w-4"/> Metin Ekle</Button>
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('heading')}><Heading2 className="mr-2 h-4 w-4"/> Başlık Ekle</Button>
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('image')}><ImageIcon className="mr-2 h-4 w-4"/> Görsel Ekle</Button>
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('gallery')}><GalleryHorizontal className="mr-2 h-4 w-4"/> Galeri Ekle</Button>
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('video')}><Video className="mr-2 h-4 w-4"/> Video Ekle</Button>
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('quote')}><Quote className="mr-2 h-4 w-4"/> Alıntı Ekle</Button>
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('code')}><Code className="mr-2 h-4 w-4"/> Kod Ekle</Button>
-                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('divider')}>Ayırıcı Ekle</Button>
-                                  </div>
+                                  {/* Add Block Button Dropdown */}
+                                   <div className="mt-6">
+                                     <DropdownMenu>
+                                       <DropdownMenuTrigger asChild>
+                                         <Button variant="outline">
+                                           <PlusCircle className="mr-2 h-4 w-4" /> Bölüm Ekle
+                                         </Button>
+                                       </DropdownMenuTrigger>
+                                       <DropdownMenuContent className="w-56">
+                                         <DropdownMenuLabel>İçerik Blokları</DropdownMenuLabel>
+                                         <DropdownMenuSeparator />
+                                         <DropdownMenuItem onSelect={() => handleAddBlock('text')}>
+                                           <Type className="mr-2 h-4 w-4" />
+                                           <span>Metin</span>
+                                         </DropdownMenuItem>
+                                         <DropdownMenuItem onSelect={() => handleAddBlock('heading')}>
+                                           <Heading2 className="mr-2 h-4 w-4" />
+                                           <span>Başlık</span>
+                                         </DropdownMenuItem>
+                                         <DropdownMenuItem onSelect={() => handleAddBlock('image')}>
+                                           <ImageIcon className="mr-2 h-4 w-4" />
+                                           <span>Görsel</span>
+                                         </DropdownMenuItem>
+                                         <DropdownMenuItem onSelect={() => handleAddBlock('gallery')}>
+                                           <GalleryHorizontal className="mr-2 h-4 w-4" />
+                                           <span>Galeri</span>
+                                         </DropdownMenuItem>
+                                         <DropdownMenuItem onSelect={() => handleAddBlock('video')}>
+                                           <Video className="mr-2 h-4 w-4" />
+                                           <span>Video</span>
+                                         </DropdownMenuItem>
+                                         <DropdownMenuItem onSelect={() => handleAddBlock('quote')}>
+                                           <Quote className="mr-2 h-4 w-4" />
+                                           <span>Alıntı</span>
+                                         </DropdownMenuItem>
+                                         <DropdownMenuItem onSelect={() => handleAddBlock('code')}>
+                                           <Code className="mr-2 h-4 w-4" />
+                                           <span>Kod</span>
+                                         </DropdownMenuItem>
+                                          <DropdownMenuItem onSelect={() => handleAddBlock('divider')}>
+                                            <Minus className="mr-2 h-4 w-4" />
+                                            <span>Ayırıcı</span>
+                                          </DropdownMenuItem>
+                                          {/* Add more block types here */}
+                                       </DropdownMenuContent>
+                                     </DropdownMenu>
+                                   </div>
                              </div>
 
                         </TabsContent>
