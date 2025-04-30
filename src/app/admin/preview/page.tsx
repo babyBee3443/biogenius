@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin } from 'lucide-react'; // Added icons
+import { ArrowLeft, Twitter, Facebook, Linkedin, Eye } from 'lucide-react'; // Added Eye icon
 import type { Block } from '@/components/admin/template-selector'; // Import Block type
 
 interface ArticlePreviewData {
@@ -199,3 +199,4 @@ export default function ArticlePreviewPage() {
     </div>
   );
 }
+
