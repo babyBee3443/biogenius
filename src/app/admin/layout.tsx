@@ -14,6 +14,7 @@ import {
   SidebarInset,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarGroupContent, // Added missing import
 } from '@/components/ui/sidebar';
 import { LayoutDashboard, Newspaper, Users, Settings } from 'lucide-react'; // Icons for navigation
 import { Button } from '@/components/ui/button';
