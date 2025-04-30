@@ -38,20 +38,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import Image from 'next/image'; // Keep for image previews
-import { TemplateSelector } from "@/components/admin/template-selector"; // Keep for template tab
-
-// Define Block Types (Must match NewArticlePage and TemplateSelector)
-// TODO: Import from a shared types file
-type Block =
-  | { id: string; type: 'text'; content: string }
-  | { id: string; type: 'heading'; level: number; content: string }
-  | { id: string; type: 'image'; url: string; alt: string; caption?: string }
-  | { id: string; type: 'gallery'; images: { url: string; alt: string }[] }
-  | { id: string; type: 'video'; url: string }
-  | { id: string; type: 'quote'; content: string; citation?: string }
-  | { id: string; type: 'code'; language: string; content: string }
-  | { id: string; type: 'divider' };
-
+import { TemplateSelector, Block } from "@/components/admin/template-selector"; // Import Block type
 
 // --- Mock Data Fetching ---
 // TODO: Replace with actual API calls and data structure
@@ -59,9 +46,8 @@ interface ArticleData {
   id: string;
   title: string;
   excerpt: string;
-  // content: string; // Old content, might need migration or removal
   blocks: Block[]; // New block-based content
-  category: string;
+  category: 'Teknoloji' | 'Biyoloji';
   status: string;
   mainImageUrl: string | null; // Corresponds to Ana Görsel URL
   seoTitle: string;
@@ -186,7 +172,7 @@ export default function EditArticlePage() {
 
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
-    const [category, setCategory] = React.useState("");
+    const [category, setCategory] = React.useState<"Teknoloji" | "Biyoloji" | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [status, setStatus] = React.useState("Taslak");
@@ -241,10 +227,10 @@ export default function EditArticlePage() {
 
      // Auto-update slug when title changes (optional)
     React.useEffect(() => {
-        if (title && !slug) { // Only auto-update if slug is empty initially
+        if (title && !slug && articleData && title !== articleData.title) { // Only auto-update if slug is empty and title changed
             setSlug(generateSlug(title));
         }
-    }, [title, slug]); // Depend on slug too
+    }, [title, slug, articleData]); // Depend on slug too
 
 
     const handleAddBlock = (type: Block['type']) => {
@@ -312,8 +298,35 @@ export default function EditArticlePage() {
                  return;
             }
         }
-        setBlocks(templateBlocks);
+         // Ensure new unique IDs for blocks from the template
+         const newBlocks = templateBlocks.map(block => ({
+            ...block,
+            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
+        }));
+        setBlocks(newBlocks);
         setIsTemplateSelectorOpen(false);
+     };
+
+      const handlePreview = () => {
+         const previewData = {
+             id: articleId || 'preview', // Use actual ID if available
+             title,
+             description: excerpt,
+             category: category || 'Teknoloji',
+             imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
+             blocks,
+         };
+         try {
+             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
+             window.open('/admin/preview', '_blank'); // Open preview in a new tab
+         } catch (error) {
+             console.error("Error saving preview data to localStorage:", error);
+             toast({
+                 variant: "destructive",
+                 title: "Önizleme Hatası",
+                 description: "Önizleme verisi kaydedilemedi.",
+             });
+         }
      };
 
      // --- Rendering ---
@@ -368,7 +381,7 @@ export default function EditArticlePage() {
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="category">Kategori</Label>
-                                     <Select value={category} onValueChange={setCategory} required>
+                                     <Select value={category} onValueChange={(value) => setCategory(value as "Teknoloji" | "Biyoloji")} required>
                                          <SelectTrigger id="category"><SelectValue /></SelectTrigger>
                                          <SelectContent>
                                              <SelectItem value="Teknoloji">Teknoloji</SelectItem>
@@ -384,9 +397,14 @@ export default function EditArticlePage() {
                              <div className="space-y-2">
                                  <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                  <div className="flex gap-2">
-                                      <Input id="main-image-url" value={mainImageUrl} onChange={(e) => setMainImageUrl(e.target.value)} />
+                                      <Input id="main-image-url" value={mainImageUrl ?? ""} onChange={(e) => setMainImageUrl(e.target.value)} />
                                       <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button>
                                  </div>
+                                 {mainImageUrl && (
+                                     <div className="mt-2 rounded border p-2">
+                                         <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded"/>
+                                     </div>
+                                 )}
                              </div>
                              <div className="flex items-center space-x-2 pt-2">
                                  <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
@@ -487,7 +505,9 @@ export default function EditArticlePage() {
                                  </Select>
                              </div>
                               <Separator />
-                              <Button variant="outline" className="w-full justify-center"><Eye className="mr-2 h-4 w-4" /> Önizle</Button>
+                               <Button variant="outline" className="w-full justify-center" onClick={handlePreview}>
+                                 <Eye className="mr-2 h-4 w-4" /> Önizle
+                             </Button>
                               <Button className="w-full" onClick={() => handleSave(status === 'Yayınlandı')}>
                                 <Save className="mr-2 h-4 w-4" />
                                 {status === 'Yayınlandı' ? 'Güncelle' : 'Kaydet'}
@@ -535,3 +555,4 @@ export default function EditArticlePage() {
          </div>
     );
 }
+

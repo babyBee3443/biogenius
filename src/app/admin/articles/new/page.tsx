@@ -35,18 +35,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import Image from 'next/image'; // Used for image previews if needed
-import { TemplateSelector } from "@/components/admin/template-selector"; // Keep for the template tab
-
-// Define Block Types
-// TODO: Refine these types and add necessary props for each block
-type Block =
-  | { id: string; type: 'text'; content: string }
-  | { id: string; type: 'heading'; level: number; content: string }
-  | { id: string; type: 'image'; url: string; alt: string; caption?: string }
-  | { id: string; type: 'gallery'; images: { url: string; alt: string }[] }
-  | { id: string; type: 'video'; url: string }
-  | { id: string; type: 'quote'; content: string; citation?: string }
-  | { id: string; type: 'code'; language: string; content: string };
+import { TemplateSelector, Block } from "@/components/admin/template-selector"; // Import Block type as well
 
 // --- Block Editor Components ---
 
@@ -142,7 +131,7 @@ export default function NewArticlePage() {
     // --- State ---
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
-    const [category, setCategory] = React.useState("");
+    const [category, setCategory] = React.useState<"Teknoloji" | "Biyoloji" | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [status, setStatus] = React.useState("Taslak");
@@ -192,6 +181,7 @@ export default function NewArticlePage() {
             ...(type === 'video' && { url: '' }),
             ...(type === 'quote' && { content: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
+             ...(type === 'divider' && {}),
         } as Block; // Added type assertion
         setBlocks([...blocks, newBlock]);
     };
@@ -219,7 +209,7 @@ export default function NewArticlePage() {
 
     const handleSave = (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
-         // TODO: Convert blocks state to final save format (e.g., structured JSON or HTML)
+         // TODO: Implement actual API call to save the article
          const blocksToSave = blocks; // Process blocks if needed
          console.log("Saving article:", { title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, tags: tags.join(','), blocks: blocksToSave, seoTitle, seoDescription });
          toast({
@@ -238,9 +228,37 @@ export default function NewArticlePage() {
                  return;
             }
         }
-        setBlocks(templateBlocks); // Update blocks state with template
+        // Ensure new unique IDs for blocks from the template
+        const newBlocks = templateBlocks.map(block => ({
+            ...block,
+            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
+        }));
+        setBlocks(newBlocks); // Update blocks state with template
         setIsTemplateSelectorOpen(false); // Close the selector
      };
+
+      const handlePreview = () => {
+         const previewData = {
+             id: 'preview', // Use a temporary ID
+             title,
+             description: excerpt, // Use excerpt as description for preview
+             category: category || 'Teknoloji', // Default category if not set
+             imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600', // Placeholder if no image
+             blocks, // Pass the current blocks
+         };
+         try {
+             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
+             window.open('/admin/preview', '_blank'); // Open preview in a new tab
+         } catch (error) {
+             console.error("Error saving preview data to localStorage:", error);
+             toast({
+                 variant: "destructive",
+                 title: "Önizleme Hatası",
+                 description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu olabilir.",
+             });
+         }
+     };
+
 
      // TODO: Add handlers for media upload, SEO fields, etc.
 
@@ -278,7 +296,7 @@ export default function NewArticlePage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Kategori</Label>
-                                    <Select value={category} onValueChange={setCategory} required>
+                                    <Select value={category} onValueChange={(value) => setCategory(value as "Teknoloji" | "Biyoloji")} required>
                                         <SelectTrigger id="category">
                                             <SelectValue placeholder="Kategori seçin" />
                                         </SelectTrigger>
@@ -300,6 +318,11 @@ export default function NewArticlePage() {
                                      <Input id="main-image-url" value={mainImageUrl} onChange={(e) => setMainImageUrl(e.target.value)} placeholder="Ana görsel URL'si (isteğe bağlı)" />
                                      <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button> {/* TODO: Implement upload */}
                                 </div>
+                                {mainImageUrl && (
+                                    <div className="mt-2 rounded border p-2">
+                                        <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded"/>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex items-center space-x-2 pt-2">
                                 <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
@@ -319,7 +342,7 @@ export default function NewArticlePage() {
                                             {block.type === 'text' && <TextBlock block={block} onChange={handleContentChange} />}
                                             {block.type === 'heading' && <HeadingBlock block={block} onChange={handleContentChange} />}
                                             {/* Render other block types here */}
-                                             {(block.type === 'image' || block.type === 'gallery' || block.type === 'video' || block.type === 'quote' || block.type === 'code') && (
+                                             {(block.type === 'image' || block.type === 'gallery' || block.type === 'video' || block.type === 'quote' || block.type === 'code' || block.type === 'divider') && (
                                                  <PlaceholderBlock type={block.type} /> // Replace with actual components
                                              )}
                                          </BlockWrapper>
@@ -335,7 +358,7 @@ export default function NewArticlePage() {
                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('video')}><Video className="mr-2 h-4 w-4"/> Video Ekle</Button>
                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('quote')}><Quote className="mr-2 h-4 w-4"/> Alıntı Ekle</Button>
                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('code')}><Code className="mr-2 h-4 w-4"/> Kod Ekle</Button>
-                                     {/* Add more block types */}
+                                     <Button variant="outline" size="sm" onClick={() => handleAddBlock('divider')}>Ayırıcı Ekle</Button>
                                   </div>
                              </div>
 
@@ -412,9 +435,9 @@ export default function NewArticlePage() {
                             </div>
                             {/* Optional: Add visibility, publish date */}
                              <Separator />
-                             <Button variant="outline" className="w-full justify-center" onClick={() => {console.log("Preview clicked")}}>
-                                <Eye className="mr-2 h-4 w-4" /> Önizle
-                            </Button>
+                              <Button variant="outline" className="w-full justify-center" onClick={handlePreview}>
+                                 <Eye className="mr-2 h-4 w-4" /> Önizle
+                             </Button>
                              <Button className="w-full" onClick={() => handleSave(status === 'Yayınlandı')}>
                                 <Save className="mr-2 h-4 w-4" /> Kaydet
                             </Button>
