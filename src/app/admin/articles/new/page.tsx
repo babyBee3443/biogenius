@@ -46,95 +46,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"; // Added DropdownMenu
+import { BlockEditor } from "@/components/admin/block-editor/block-editor"; // Import BlockEditor
+import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
 
-
-// --- Block Editor Components ---
-
-interface BlockWrapperProps {
-  blockId: string;
-  blockType: string;
-  blockNumber: number;
-  children: React.ReactNode;
-  onDelete: (id: string) => void;
-  // Add onMoveUp/Down later for basic reordering if needed
-}
-
-const BlockWrapper: React.FC<BlockWrapperProps> = ({ blockId, blockType, blockNumber, children, onDelete }) => {
-  return (
-    <div className="border border-border rounded-lg p-4 mb-4 relative group bg-card">
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-7 w-7 cursor-grab" aria-label="Blok Taşı">
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(blockId)} aria-label="Blok Sil">
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-      <Label className="text-xs text-muted-foreground mb-2 block capitalize">{blockType} (Bölüm {blockNumber})</Label>
-      {children}
-    </div>
-  );
-};
-
-// Example Text Block Component
-interface TextBlockProps {
-  block: Extract<Block, { type: 'text' }>;
-  onChange: (id: string, content: string) => void;
-}
-const TextBlock: React.FC<TextBlockProps> = ({ block, onChange }) => (
-  <div>
-    <div className="flex items-center gap-1 mb-2 border-b pb-2">
-      <Button variant="ghost" size="icon" className="h-7 w-7"><Bold className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><Italic className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><Underline className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
-      <Separator orientation="vertical" className="h-6 mx-1" />
-      <Button variant="ghost" size="icon" className="h-7 w-7"><List className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><ListOrdered className="h-4 w-4" /></Button>
-    </div>
-    <Textarea
-      value={block.content}
-      onChange={(e) => onChange(block.id, e.target.value)}
-      placeholder="Metninizi girin..."
-      rows={6}
-      className="text-base" // Ensure readability
-    />
-  </div>
-);
-
-// Example Heading Block Component
-interface HeadingBlockProps {
-    block: Extract<Block, { type: 'heading' }>;
-    onChange: (id: string, content: string, level?: number) => void;
-}
-const HeadingBlock: React.FC<HeadingBlockProps> = ({ block, onChange }) => (
-    <div className="flex items-center gap-2">
-         {/* Basic level selector - could be improved */}
-         {/* <Select value={String(block.level)} onValueChange={(val) => onChange(block.id, block.content, parseInt(val))}>
-            <SelectTrigger className="w-[60px]">
-                <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="2">H2</SelectItem>
-                <SelectItem value="3">H3</SelectItem>
-                <SelectItem value="4">H4</SelectItem>
-            </SelectContent>
-        </Select> */}
-        <Input
-            value={block.content}
-            onChange={(e) => onChange(block.id, e.target.value)}
-            placeholder={`Başlık ${block.level} Metni...`}
-            className="text-xl font-semibold border-0 shadow-none focus-visible:ring-0 px-1" // Simplified styling
-        />
-    </div>
-);
-
-// Placeholder for other block types
-const PlaceholderBlock: React.FC<{ type: string }> = ({ type }) => (
-    <div className="text-muted-foreground italic">
-        {type} block component will be here.
-    </div>
-);
 
 // --- Main Page Component ---
 
@@ -158,8 +72,8 @@ export default function NewArticlePage() {
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [tags, setTags] = React.useState<string[]>([]);
-    // TODO: Add state for Media Tab content, SEO Tab content
+    const [keywords, setKeywords] = React.useState<string[]>([]);
+    const [canonicalUrl, setCanonicalUrl] = React.useState("");
 
     // --- Handlers ---
 
@@ -179,6 +93,22 @@ export default function NewArticlePage() {
          }
      }, [title]);
 
+    // Auto-generate SEO Title from main title if empty
+    React.useEffect(() => {
+      if (title && !seoTitle) {
+        setSeoTitle(title);
+      }
+    }, [title, seoTitle]);
+
+     // Auto-generate SEO Description from excerpt if empty
+    React.useEffect(() => {
+       if (excerpt && !seoDescription) {
+         // Simple trim and take first 160 chars
+         const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
+         setSeoDescription(desc);
+       }
+    }, [excerpt, seoDescription]);
+
 
     const handleAddBlock = (type: Block['type']) => {
         const newBlock: Block = {
@@ -187,10 +117,10 @@ export default function NewArticlePage() {
             // Default content based on type
             ...(type === 'text' && { content: '' }),
             ...(type === 'heading' && { level: 2, content: '' }),
-            ...(type === 'image' && { url: '', alt: '' }),
+            ...(type === 'image' && { url: '', alt: '', caption: '' }),
             ...(type === 'gallery' && { images: [] }),
             ...(type === 'video' && { url: '' }),
-            ...(type === 'quote' && { content: '' }),
+            ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
              ...(type === 'divider' && {}),
         } as Block; // Added type assertion
@@ -201,28 +131,26 @@ export default function NewArticlePage() {
         setBlocks(blocks.filter(block => block.id !== id));
     };
 
-    const handleUpdateBlock = (id: string, newContent: Partial<Block>) => {
-       setBlocks(blocks.map(block => block.id === id ? { ...block, ...newContent } : block));
-    };
-
-     // Specific handler for simple content changes (text, heading)
-     const handleContentChange = (id: string, content: string, level?: number) => {
-        setBlocks(blocks.map(block => {
-            if (block.id === id) {
-                 if (block.type === 'text') return { ...block, content };
-                 if (block.type === 'heading') return { ...block, content, level: level ?? block.level };
-                 if (block.type === 'quote') return { ...block, content };
-                 if (block.type === 'code') return { ...block, content };
-             }
-             return block;
-         }));
+     // Update block state (generic, used by BlockEditor)
+     const handleUpdateBlock = (updatedBlock: Block) => {
+         setBlocks(prevBlocks =>
+             prevBlocks.map(block =>
+                 block.id === updatedBlock.id ? updatedBlock : block
+             )
+         );
      };
+
+     // Reorder blocks (generic, used by BlockEditor)
+     const handleReorderBlocks = (reorderedBlocks: Block[]) => {
+         setBlocks(reorderedBlocks);
+     };
+
 
     const handleSave = (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
          // TODO: Implement actual API call to save the article
          const blocksToSave = blocks; // Process blocks if needed
-         console.log("Saving article:", { title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, tags: tags.join(','), blocks: blocksToSave, seoTitle, seoDescription });
+         console.log("Saving article:", { title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, keywords: keywords.join(','), canonicalUrl, blocks: blocksToSave, seoTitle, seoDescription });
          toast({
              title: publish ? "Makale Yayınlandı" : "Makale Kaydedildi",
              description: `"${title}" başlıklı makale başarıyla ${publish ? 'yayınlandı' : 'kaydedildi (' + finalStatus + ')'}.`,
@@ -233,7 +161,7 @@ export default function NewArticlePage() {
      // Handler for template selection (assuming template gives blocks)
      const handleTemplateSelect = (templateBlocks: Block[]) => {
         // Ask for confirmation before overwriting existing content
-        if (blocks.length > 1 || (blocks.length === 1 && blocks[0].content !== '')) {
+        if (blocks.length > 1 || (blocks.length === 1 && blocks[0].type === 'text' && (blocks[0] as Extract<Block, { type: 'text' }>).content !== '')) {
             if (!window.confirm("Mevcut içerik bölümlerinin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
                  setIsTemplateSelectorOpen(false); // Close selector if cancelled
                  return;
@@ -271,7 +199,7 @@ export default function NewArticlePage() {
      };
 
 
-     // TODO: Add handlers for media upload, SEO fields, etc.
+     // TODO: Add handlers for media upload, etc.
 
 
     return (
@@ -326,11 +254,11 @@ export default function NewArticlePage() {
                             <div className="space-y-2">
                                 <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                 <div className="flex gap-2">
-                                     <Input id="main-image-url" value={mainImageUrl} onChange={(e) => setMainImageUrl(e.target.value)} placeholder="Ana görsel URL'si (isteğe bağlı)" />
+                                     <Input id="main-image-url" value={mainImageUrl} onChange={(e) => setMainImageUrl(e.target.value)} placeholder="https://..." />
                                      <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button> {/* TODO: Implement upload */}
                                 </div>
                                 {mainImageUrl && (
-                                    <div className="mt-2 rounded border p-2">
+                                    <div className="mt-2 rounded border p-2 w-fit">
                                         <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded"/>
                                     </div>
                                 )}
@@ -343,71 +271,13 @@ export default function NewArticlePage() {
                              <Separator className="my-8" />
 
                              {/* Block Editor Section */}
-                             <div>
-                                 <h2 className="text-lg font-semibold mb-1">Makale Bölümleri</h2>
-                                 <p className="text-sm text-muted-foreground mb-4">İçeriğinizi düzenlemek için bölümler ekleyin ve sürükleyerek sıralayın.</p>
-
-                                 <div className="space-y-4">
-                                     {blocks.map((block, index) => (
-                                         <BlockWrapper key={block.id} blockId={block.id} blockType={block.type} blockNumber={index + 1} onDelete={handleDeleteBlock}>
-                                            {block.type === 'text' && <TextBlock block={block} onChange={handleContentChange} />}
-                                            {block.type === 'heading' && <HeadingBlock block={block} onChange={handleContentChange} />}
-                                            {/* Render other block types here */}
-                                             {(block.type === 'image' || block.type === 'gallery' || block.type === 'video' || block.type === 'quote' || block.type === 'code' || block.type === 'divider') && (
-                                                 <PlaceholderBlock type={block.type} /> // Replace with actual components
-                                             )}
-                                         </BlockWrapper>
-                                     ))}
-                                 </div>
-
-                                  {/* Add Block Button Dropdown */}
-                                   <div className="mt-6">
-                                     <DropdownMenu>
-                                       <DropdownMenuTrigger asChild>
-                                         <Button variant="outline">
-                                           <PlusCircle className="mr-2 h-4 w-4" /> Bölüm Ekle
-                                         </Button>
-                                       </DropdownMenuTrigger>
-                                       <DropdownMenuContent className="w-56">
-                                         <DropdownMenuLabel>İçerik Blokları</DropdownMenuLabel>
-                                         <DropdownMenuSeparator />
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('text')}>
-                                           <Type className="mr-2 h-4 w-4" />
-                                           <span>Metin</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('heading')}>
-                                           <Heading2 className="mr-2 h-4 w-4" />
-                                           <span>Başlık</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('image')}>
-                                           <ImageIcon className="mr-2 h-4 w-4" />
-                                           <span>Görsel</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('gallery')}>
-                                           <GalleryHorizontal className="mr-2 h-4 w-4" />
-                                           <span>Galeri</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('video')}>
-                                           <Video className="mr-2 h-4 w-4" />
-                                           <span>Video</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('quote')}>
-                                           <Quote className="mr-2 h-4 w-4" />
-                                           <span>Alıntı</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('code')}>
-                                           <Code className="mr-2 h-4 w-4" />
-                                           <span>Kod</span>
-                                         </DropdownMenuItem>
-                                          <DropdownMenuItem onSelect={() => handleAddBlock('divider')}>
-                                            <Minus className="mr-2 h-4 w-4" />
-                                            <span>Ayırıcı</span>
-                                          </DropdownMenuItem>
-                                          {/* Add more block types here */}
-                                       </DropdownMenuContent>
-                                     </DropdownMenu>
-                                   </div>
-                             </div>
+                             <BlockEditor
+                                blocks={blocks}
+                                onAddBlock={handleAddBlock}
+                                onDeleteBlock={handleDeleteBlock}
+                                onUpdateBlock={handleUpdateBlock}
+                                onReorderBlocks={handleReorderBlocks}
+                             />
 
                         </TabsContent>
 
@@ -433,26 +303,80 @@ export default function NewArticlePage() {
 
                         {/* SEO Tab */}
                         <TabsContent value="seo">
-                            <Card>
+                             <Card>
                                  <CardHeader>
                                     <CardTitle>SEO Ayarları</CardTitle>
-                                    <CardDescription>Arama motorları için makale görünürlüğünü optimize edin.</CardDescription>
+                                    <CardDescription>Makalenizin arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
                                  </CardHeader>
-                                 <CardContent className="space-y-4">
-                                     <div className="space-y-2">
-                                        <Label htmlFor="slug">URL Metni (Slug)</Label>
-                                        <Input id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} placeholder="makale-basligi-url" required />
-                                         <p className="text-xs text-muted-foreground">Makalenin URL'si. Genellikle otomatik oluşturulur, ancak düzenleyebilirsiniz.</p>
-                                    </div>
-                                     <div className="space-y-2">
-                                        <Label htmlFor="seo-title">SEO Başlığı</Label>
-                                        <Input id="seo-title" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} placeholder="Arama sonuçlarında görünecek başlık (isteğe bağlı)" />
-                                    </div>
-                                     <div className="space-y-2">
-                                        <Label htmlFor="seo-description">Meta Açıklama</Label>
-                                        <Textarea id="seo-description" value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} placeholder="Arama sonuçlarında görünecek kısa açıklama (150-160 karakter önerilir)" rows={2} maxLength={160} />
-                                    </div>
-                                    {/* TODO: Add Keyword input, Schema options, etc. */}
+                                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                     {/* SEO Form Fields */}
+                                     <div className="space-y-6">
+                                         <div className="space-y-2">
+                                             <Label htmlFor="seo-title">SEO Başlığı</Label>
+                                             <Input
+                                                 id="seo-title"
+                                                 value={seoTitle}
+                                                 onChange={(e) => setSeoTitle(e.target.value)}
+                                                 maxLength={60}
+                                                 placeholder="Arama sonuçlarında görünecek başlık"
+                                             />
+                                             <p className="text-xs text-muted-foreground">Tavsiye edilen uzunluk: 50-60 karakter. ({seoTitle.length}/60)</p>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <Label htmlFor="seo-description">Meta Açıklama</Label>
+                                             <Textarea
+                                                 id="seo-description"
+                                                 value={seoDescription}
+                                                 onChange={(e) => setSeoDescription(e.target.value)}
+                                                 rows={4}
+                                                 maxLength={160}
+                                                 placeholder="Arama sonuçlarında görünecek kısa açıklama"
+                                             />
+                                             <p className="text-xs text-muted-foreground">Tavsiye edilen uzunluk: 150-160 karakter. ({seoDescription.length}/160)</p>
+                                         </div>
+                                          <div className="space-y-2">
+                                             <Label htmlFor="slug">URL Metni (Slug)</Label>
+                                             <Input
+                                                 id="slug"
+                                                 value={slug}
+                                                 onChange={(e) => setSlug(generateSlug(e.target.value))}
+                                                 placeholder="makale-basligi-url"
+                                                 required
+                                             />
+                                             <p className="text-xs text-muted-foreground">Makalenin URL'si. Genellikle otomatik oluşturulur.</p>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <Label htmlFor="keywords">Anahtar Kelimeler</Label>
+                                             <Input
+                                                 id="keywords"
+                                                 value={keywords.join(', ')}
+                                                 onChange={(e) => setKeywords(e.target.value.split(',').map(kw => kw.trim()).filter(kw => kw !== ''))}
+                                                 placeholder="Anahtar kelimeleri virgülle ayırın"
+                                             />
+                                             <p className="text-xs text-muted-foreground">Makalenizle ilgili anahtar kelimeleri belirtin.</p>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <Label htmlFor="canonical-url">Canonical URL</Label>
+                                             <Input
+                                                 id="canonical-url"
+                                                 type="url"
+                                                 value={canonicalUrl}
+                                                 onChange={(e) => setCanonicalUrl(e.target.value)}
+                                                 placeholder="https://teknobiyo.com/orijinal-makale-url"
+                                             />
+                                             <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
+                                         </div>
+                                     </div>
+
+                                     {/* SEO Preview */}
+                                     <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.6))] h-fit">
+                                          <SeoPreview
+                                              title={seoTitle || title}
+                                              description={seoDescription || excerpt}
+                                              slug={slug}
+                                              category={category || "kategori"}
+                                          />
+                                      </div>
                                  </CardContent>
                              </Card>
                         </TabsContent>
@@ -496,22 +420,7 @@ export default function NewArticlePage() {
                              )}
                         </CardContent>
                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                           <CardTitle>Etiketler</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Input
-                                id="tags"
-                                value={tags.join(', ')}
-                                onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag !== ''))}
-                                placeholder="Etiketleri virgülle ayırın"
-                             />
-                        </CardContent>
-                     </Card>
-
-                     {/* Add more sidebar cards if needed: Revisions, etc. */}
+                    {/* Keywords moved to main SEO section */}
                  </aside>
              </div>
 
@@ -524,4 +433,3 @@ export default function NewArticlePage() {
         </div>
     );
 }
-

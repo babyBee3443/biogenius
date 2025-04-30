@@ -19,36 +19,15 @@ import {
   Trash2,
   History, // Keep for revisions potentially
   MessageSquare, // Keep for comments potentially
-  GripVertical,
-  Bold,
-  Italic,
-  Underline,
-  Link as LinkIcon,
-  List,
-  ListOrdered,
-  Type,
-  Heading2,
-  Image as ImageIcon,
-  GalleryHorizontal,
-  Video,
-  Quote,
-  Code,
-  PlusCircle, // Added for Add Block button
-  Minus, // Added for Divider
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import Image from 'next/image'; // Keep for image previews
 import { TemplateSelector, Block } from "@/components/admin/template-selector"; // Import Block type
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Added DropdownMenu
+import { BlockEditor } from "@/components/admin/block-editor/block-editor"; // Import BlockEditor
+import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
+
 
 // --- Mock Data Fetching ---
 // TODO: Replace with actual API calls and data structure
@@ -64,7 +43,8 @@ interface ArticleData {
   seoDescription: string;
   slug: string;
   isFeatured: boolean;
-  tags: string[];
+  keywords: string[];
+  canonicalUrl: string;
   // Add other fields like author, createdAt, updatedAt etc.
 }
 
@@ -89,86 +69,14 @@ const getArticleById = async (id: string): Promise<ArticleData | null> => {
             seoDescription: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
             slug: 'yapay-zeka-devrimi',
             isFeatured: true,
-            tags: ['ai', 'makine öğrenimi']
+            keywords: ['ai', 'makine öğrenimi', 'yapay zeka'],
+            canonicalUrl: '',
         },
         // Add other articles if needed
     ];
     return articles.find(article => article.id === id) || null;
 };
 
-// --- Block Editor Components (Copied from NewArticlePage for consistency) ---
-// TODO: Extract block components into their own files/directory
-
-interface BlockWrapperProps {
-  blockId: string;
-  blockType: string;
-  blockNumber: number;
-  children: React.ReactNode;
-  onDelete: (id: string) => void;
-}
-
-const BlockWrapper: React.FC<BlockWrapperProps> = ({ blockId, blockType, blockNumber, children, onDelete }) => {
-  return (
-    <div className="border border-border rounded-lg p-4 mb-4 relative group bg-card">
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-7 w-7 cursor-grab" aria-label="Blok Taşı">
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(blockId)} aria-label="Blok Sil">
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-      <Label className="text-xs text-muted-foreground mb-2 block capitalize">{blockType} (Bölüm {blockNumber})</Label>
-      {children}
-    </div>
-  );
-};
-
-interface TextBlockProps {
-  block: Extract<Block, { type: 'text' }>;
-  onChange: (id: string, content: string) => void;
-}
-const TextBlock: React.FC<TextBlockProps> = ({ block, onChange }) => (
-  <div>
-    <div className="flex items-center gap-1 mb-2 border-b pb-2">
-      <Button variant="ghost" size="icon" className="h-7 w-7"><Bold className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><Italic className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><Underline className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
-      <Separator orientation="vertical" className="h-6 mx-1" />
-      <Button variant="ghost" size="icon" className="h-7 w-7"><List className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7"><ListOrdered className="h-4 w-4" /></Button>
-    </div>
-    <Textarea
-      value={block.content}
-      onChange={(e) => onChange(block.id, e.target.value)}
-      placeholder="Metninizi girin..."
-      rows={6}
-      className="text-base"
-    />
-  </div>
-);
-
-interface HeadingBlockProps {
-    block: Extract<Block, { type: 'heading' }>;
-    onChange: (id: string, content: string, level?: number) => void;
-}
-const HeadingBlock: React.FC<HeadingBlockProps> = ({ block, onChange }) => (
-    <div className="flex items-center gap-2">
-        <Input
-            value={block.content}
-            onChange={(e) => onChange(block.id, e.target.value)}
-            placeholder={`Başlık ${block.level} Metni...`}
-            className={`text-${['xl', 'lg', 'md'][block.level - 2] || 'base'} font-semibold border-0 shadow-none focus-visible:ring-0 px-1`} // Dynamic size (approx)
-        />
-    </div>
-);
-
-const PlaceholderBlock: React.FC<{ type: string }> = ({ type }) => (
-    <div className="text-muted-foreground italic">
-        {type} block component will be here.
-    </div>
-);
 
 // --- Main Page Component ---
 
@@ -190,7 +98,8 @@ export default function EditArticlePage() {
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [tags, setTags] = React.useState<string[]>([]);
+    const [keywords, setKeywords] = React.useState<string[]>([]);
+    const [canonicalUrl, setCanonicalUrl] = React.useState("");
 
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
 
@@ -213,7 +122,8 @@ export default function EditArticlePage() {
                         setSeoTitle(data.seoTitle);
                         setSeoDescription(data.seoDescription);
                         setSlug(data.slug);
-                        setTags(data.tags || []);
+                        setKeywords(data.keywords || []);
+                        setCanonicalUrl(data.canonicalUrl || "");
                     } else {
                         notFound(); // Redirect to 404 if article not found
                     }
@@ -242,6 +152,22 @@ export default function EditArticlePage() {
         }
     }, [title, slug, articleData]); // Depend on slug too
 
+     // Auto-generate SEO Title from main title if empty
+     React.useEffect(() => {
+       if (title && !seoTitle && articleData && title !== articleData.title) {
+         setSeoTitle(title);
+       }
+     }, [title, seoTitle, articleData]);
+
+      // Auto-generate SEO Description from excerpt if empty
+     React.useEffect(() => {
+        if (excerpt && !seoDescription && articleData && excerpt !== articleData.excerpt) {
+          // Simple trim and take first 160 chars
+          const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
+          setSeoDescription(desc);
+        }
+     }, [excerpt, seoDescription, articleData]);
+
 
     const handleAddBlock = (type: Block['type']) => {
         const newBlock: Block = {
@@ -249,10 +175,10 @@ export default function EditArticlePage() {
             type: type,
             ...(type === 'text' && { content: '' }),
             ...(type === 'heading' && { level: 2, content: '' }),
-            ...(type === 'image' && { url: '', alt: '' }),
+            ...(type === 'image' && { url: '', alt: '', caption: '' }),
             ...(type === 'gallery' && { images: [] }),
             ...(type === 'video' && { url: '' }),
-            ...(type === 'quote' && { content: '' }),
+            ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
         } as Block;
@@ -263,23 +189,24 @@ export default function EditArticlePage() {
         setBlocks(blocks.filter(block => block.id !== id));
     };
 
-     const handleContentChange = (id: string, content: string, level?: number) => {
-        setBlocks(blocks.map(block => {
-            if (block.id === id) {
-                 if (block.type === 'text') return { ...block, content };
-                 if (block.type === 'heading') return { ...block, content, level: level ?? block.level };
-                 if (block.type === 'quote') return { ...block, content };
-                 if (block.type === 'code') return { ...block, content };
-                 // Add handlers for other types if needed (e.g., image URL, alt text)
-             }
-             return block;
-         }));
-     };
+      // Update block state (generic, used by BlockEditor)
+      const handleUpdateBlock = (updatedBlock: Block) => {
+          setBlocks(prevBlocks =>
+              prevBlocks.map(block =>
+                  block.id === updatedBlock.id ? updatedBlock : block
+              )
+          );
+      };
+
+      // Reorder blocks (generic, used by BlockEditor)
+      const handleReorderBlocks = (reorderedBlocks: Block[]) => {
+          setBlocks(reorderedBlocks);
+      };
 
     const handleSave = (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
          // TODO: Implement actual API call to update the article
-         console.log("Updating article:", { articleId, title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, tags: tags.join(','), blocks, seoTitle, seoDescription });
+         console.log("Updating article:", { articleId, title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, keywords: keywords.join(','), canonicalUrl, blocks, seoTitle, seoDescription });
 
          toast({
              title: "Makale Güncellendi",
@@ -407,11 +334,11 @@ export default function EditArticlePage() {
                              <div className="space-y-2">
                                  <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                  <div className="flex gap-2">
-                                      <Input id="main-image-url" value={mainImageUrl ?? ""} onChange={(e) => setMainImageUrl(e.target.value)} />
+                                      <Input id="main-image-url" value={mainImageUrl ?? ""} onChange={(e) => setMainImageUrl(e.target.value)} placeholder="https://..."/>
                                       <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button>
                                  </div>
                                  {mainImageUrl && (
-                                     <div className="mt-2 rounded border p-2">
+                                     <div className="mt-2 rounded border p-2 w-fit">
                                          <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded"/>
                                      </div>
                                  )}
@@ -424,70 +351,13 @@ export default function EditArticlePage() {
                               <Separator className="my-8" />
 
                               {/* Block Editor Section */}
-                              <div>
-                                  <h2 className="text-lg font-semibold mb-1">Makale Bölümleri</h2>
-                                  <p className="text-sm text-muted-foreground mb-4">İçeriğinizi düzenlemek için bölümler ekleyin ve sürükleyerek sıralayın.</p>
-
-                                  <div className="space-y-4">
-                                      {blocks.map((block, index) => (
-                                          <BlockWrapper key={block.id} blockId={block.id} blockType={block.type} blockNumber={index + 1} onDelete={handleDeleteBlock}>
-                                             {block.type === 'text' && <TextBlock block={block} onChange={handleContentChange} />}
-                                             {block.type === 'heading' && <HeadingBlock block={block} onChange={handleContentChange} />}
-                                              {(block.type === 'image' || block.type === 'gallery' || block.type === 'video' || block.type === 'quote' || block.type === 'code' || block.type === 'divider') && (
-                                                  <PlaceholderBlock type={block.type} /> // Replace with actual components
-                                              )}
-                                          </BlockWrapper>
-                                      ))}
-                                  </div>
-
-                                    {/* Add Block Button Dropdown */}
-                                   <div className="mt-6">
-                                     <DropdownMenu>
-                                       <DropdownMenuTrigger asChild>
-                                         <Button variant="outline">
-                                           <PlusCircle className="mr-2 h-4 w-4" /> Bölüm Ekle
-                                         </Button>
-                                       </DropdownMenuTrigger>
-                                       <DropdownMenuContent className="w-56">
-                                         <DropdownMenuLabel>İçerik Blokları</DropdownMenuLabel>
-                                         <DropdownMenuSeparator />
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('text')}>
-                                           <Type className="mr-2 h-4 w-4" />
-                                           <span>Metin</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('heading')}>
-                                           <Heading2 className="mr-2 h-4 w-4" />
-                                           <span>Başlık</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('image')}>
-                                           <ImageIcon className="mr-2 h-4 w-4" />
-                                           <span>Görsel</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('gallery')}>
-                                           <GalleryHorizontal className="mr-2 h-4 w-4" />
-                                           <span>Galeri</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('video')}>
-                                           <Video className="mr-2 h-4 w-4" />
-                                           <span>Video</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('quote')}>
-                                           <Quote className="mr-2 h-4 w-4" />
-                                           <span>Alıntı</span>
-                                         </DropdownMenuItem>
-                                         <DropdownMenuItem onSelect={() => handleAddBlock('code')}>
-                                           <Code className="mr-2 h-4 w-4" />
-                                           <span>Kod</span>
-                                         </DropdownMenuItem>
-                                          <DropdownMenuItem onSelect={() => handleAddBlock('divider')}>
-                                            <Minus className="mr-2 h-4 w-4" />
-                                            <span>Ayırıcı</span>
-                                          </DropdownMenuItem>
-                                          {/* Add more block types here */}
-                                       </DropdownMenuContent>
-                                     </DropdownMenu>
-                                   </div>
-                              </div>
+                              <BlockEditor
+                                blocks={blocks}
+                                onAddBlock={handleAddBlock}
+                                onDeleteBlock={handleDeleteBlock}
+                                onUpdateBlock={handleUpdateBlock}
+                                onReorderBlocks={handleReorderBlocks}
+                              />
 
                          </TabsContent>
 
@@ -510,25 +380,82 @@ export default function EditArticlePage() {
 
                          {/* SEO Tab */}
                          <TabsContent value="seo">
-                             <Card>
-                                  <CardHeader>
-                                     <CardTitle>SEO Ayarları</CardTitle>
-                                  </CardHeader>
-                                  <CardContent className="space-y-4">
-                                      <div className="space-y-2">
-                                         <Label htmlFor="slug">URL Metni (Slug)</Label>
-                                         <Input id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required />
+                              <Card>
+                                 <CardHeader>
+                                    <CardTitle>SEO Ayarları</CardTitle>
+                                    <CardDescription>Makalenizin arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
+                                 </CardHeader>
+                                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                     {/* SEO Form Fields */}
+                                     <div className="space-y-6">
+                                         <div className="space-y-2">
+                                             <Label htmlFor="seo-title">SEO Başlığı</Label>
+                                             <Input
+                                                 id="seo-title"
+                                                 value={seoTitle}
+                                                 onChange={(e) => setSeoTitle(e.target.value)}
+                                                 maxLength={60}
+                                                 placeholder="Arama sonuçlarında görünecek başlık"
+                                             />
+                                             <p className="text-xs text-muted-foreground">Tavsiye edilen uzunluk: 50-60 karakter. ({seoTitle.length}/60)</p>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <Label htmlFor="seo-description">Meta Açıklama</Label>
+                                             <Textarea
+                                                 id="seo-description"
+                                                 value={seoDescription}
+                                                 onChange={(e) => setSeoDescription(e.target.value)}
+                                                 rows={4}
+                                                 maxLength={160}
+                                                 placeholder="Arama sonuçlarında görünecek kısa açıklama"
+                                             />
+                                             <p className="text-xs text-muted-foreground">Tavsiye edilen uzunluk: 150-160 karakter. ({seoDescription.length}/160)</p>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <Label htmlFor="slug">URL Metni (Slug)</Label>
+                                             <Input
+                                                 id="slug"
+                                                 value={slug}
+                                                 onChange={(e) => setSlug(generateSlug(e.target.value))}
+                                                 placeholder="makale-basligi-url"
+                                                 required
+                                             />
+                                             <p className="text-xs text-muted-foreground">Makalenin URL'si.</p>
+                                         </div>
+                                          <div className="space-y-2">
+                                             <Label htmlFor="keywords">Anahtar Kelimeler</Label>
+                                             <Input
+                                                 id="keywords"
+                                                 value={keywords.join(', ')}
+                                                 onChange={(e) => setKeywords(e.target.value.split(',').map(kw => kw.trim()).filter(kw => kw !== ''))}
+                                                 placeholder="Anahtar kelimeleri virgülle ayırın"
+                                             />
+                                             <p className="text-xs text-muted-foreground">Makalenizle ilgili anahtar kelimeleri belirtin.</p>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <Label htmlFor="canonical-url">Canonical URL</Label>
+                                             <Input
+                                                 id="canonical-url"
+                                                 type="url"
+                                                 value={canonicalUrl}
+                                                 onChange={(e) => setCanonicalUrl(e.target.value)}
+                                                 placeholder="https://teknobiyo.com/orijinal-makale-url"
+                                             />
+                                             <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
+                                         </div>
                                      </div>
-                                      <div className="space-y-2">
-                                         <Label htmlFor="seo-title">SEO Başlığı</Label>
-                                         <Input id="seo-title" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
-                                     </div>
-                                      <div className="space-y-2">
-                                         <Label htmlFor="seo-description">Meta Açıklama</Label>
-                                         <Textarea id="seo-description" value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={2} maxLength={160} />
-                                     </div>
-                                  </CardContent>
-                              </Card>
+
+                                      {/* SEO Preview */}
+                                      <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.6))] h-fit">
+                                          <SeoPreview
+                                              title={seoTitle || title}
+                                              description={seoDescription || excerpt}
+                                              slug={slug}
+                                              category={category || "kategori"}
+                                          />
+                                      </div>
+                                 </CardContent>
+                             </Card>
                          </TabsContent>
                      </Tabs>
                  </div>
@@ -566,17 +493,7 @@ export default function EditArticlePage() {
                          </CardContent>
                       </Card>
 
-                       <Card>
-                         <CardHeader><CardTitle>Etiketler</CardTitle></CardHeader>
-                         <CardContent>
-                             <Input
-                                 id="tags"
-                                 value={tags.join(', ')}
-                                 onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag !== ''))}
-                                 placeholder="Etiketleri virgülle ayırın"
-                              />
-                         </CardContent>
-                      </Card>
+                      {/* Keywords moved to main SEO section */}
 
                       {/* Placeholder for Comments - Keep if still relevant */}
                        <Card>
@@ -601,4 +518,3 @@ export default function EditArticlePage() {
          </div>
     );
 }
-
