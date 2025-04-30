@@ -11,95 +11,213 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Upload, Image as ImageIcon, Trash2, History, MessageSquare, LayoutTemplate } from "lucide-react"; // Added LayoutTemplate icon
+import {
+  ArrowLeft,
+  Save,
+  Eye,
+  Upload,
+  Trash2,
+  History, // Keep for revisions potentially
+  MessageSquare, // Keep for comments potentially
+  GripVertical,
+  Bold,
+  Italic,
+  Underline,
+  Link as LinkIcon,
+  List,
+  ListOrdered,
+  Type,
+  Heading2,
+  Image as ImageIcon,
+  GalleryHorizontal,
+  Video,
+  Quote,
+  Code,
+} from "lucide-react";
 import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import Image from 'next/image'; // For image preview
-import { TemplateSelector } from "@/components/admin/template-selector"; // Import TemplateSelector component
+import Image from 'next/image'; // Keep for image previews
+import { TemplateSelector } from "@/components/admin/template-selector"; // Keep for template tab
 
-// Mock data fetching - replace with actual API call
-const getArticleById = async (id: string): Promise<Article | null> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+// Define Block Types (Must match NewArticlePage and TemplateSelector)
+// TODO: Import from a shared types file
+type Block =
+  | { id: string; type: 'text'; content: string }
+  | { id: string; type: 'heading'; level: number; content: string }
+  | { id: string; type: 'image'; url: string; alt: string; caption?: string }
+  | { id: string; type: 'gallery'; images: { url: string; alt: string }[] }
+  | { id: string; type: 'video'; url: string }
+  | { id: string; type: 'quote'; content: string; citation?: string }
+  | { id: string; type: 'code'; language: string; content: string }
+  | { id: string; type: 'divider' };
 
-    const articles: Article[] = [
-        { id: '1', title: 'Yapay Zeka Devrimi', content: '<p>Yapay zeka (AI), makinelerin öğrenme...</p>', category: 'Teknoloji', status: 'Yayınlandı', imageUrl: 'https://picsum.photos/seed/ai/600/400', seoTitle: 'Yapay Zeka Devrimi | TeknoBiyo', seoDescription: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.', slug: 'yapay-zeka-devrimi', isFeatured: true, tags: ['ai', 'makine öğrenimi'] },
-        { id: '3', title: 'Kuantum Bilgisayarlar', content: '<p>Kuantum bilgisayarlar, klasik bilgisayarların bitler...</p>', category: 'Teknoloji', status: 'Taslak', imageUrl: 'https://picsum.photos/seed/quantum/600/400', seoTitle: '', seoDescription: '', slug: 'kuantum-bilgisayarlar', isFeatured: false, tags: ['kuantum', 'hesaplama'] },
-        // Add other articles used in list view if needed for testing
-    ];
-    return articles.find(article => article.id === id) || null;
-};
 
-interface Article {
+// --- Mock Data Fetching ---
+// TODO: Replace with actual API calls and data structure
+interface ArticleData {
   id: string;
   title: string;
-  content: string; // Content should be structured data for a block editor ideally
+  excerpt: string;
+  // content: string; // Old content, might need migration or removal
+  blocks: Block[]; // New block-based content
   category: string;
   status: string;
-  imageUrl: string | null;
+  mainImageUrl: string | null; // Corresponds to Ana Görsel URL
   seoTitle: string;
   seoDescription: string;
   slug: string;
   isFeatured: boolean;
   tags: string[];
+  // Add other fields like author, createdAt, updatedAt etc.
 }
 
+// Mock Function
+const getArticleById = async (id: string): Promise<ArticleData | null> => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const articles: ArticleData[] = [
+         {
+            id: '1',
+            title: 'Yapay Zeka Devrimi',
+            excerpt: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
+            blocks: [
+                { id: 'b1', type: 'text', content: 'Yapay zeka (AI), makinelerin öğrenme, problem çözme ve karar verme gibi tipik olarak insan zekası gerektiren görevleri yerine getirme yeteneğidir.' },
+                { id: 'b2', type: 'image', url: 'https://picsum.photos/seed/ai-edit/800/400', alt: 'Yapay Zeka Görseli', caption: 'AI teknolojileri gelişiyor.' },
+                { id: 'b3', type: 'heading', level: 2, content: 'AI\'nın Etki Alanları' },
+                { id: 'b4', type: 'text', content: 'Sağlık hizmetlerinde AI, hastalıkların daha erken teşhis edilmesine yardımcı olmaktadır...' }
+            ],
+            category: 'Teknoloji',
+            status: 'Yayınlandı',
+            mainImageUrl: 'https://picsum.photos/seed/ai/600/400',
+            seoTitle: 'Yapay Zeka Devrimi | TeknoBiyo',
+            seoDescription: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
+            slug: 'yapay-zeka-devrimi',
+            isFeatured: true,
+            tags: ['ai', 'makine öğrenimi']
+        },
+        // Add other articles if needed
+    ];
+    return articles.find(article => article.id === id) || null;
+};
 
-// Placeholder for a Rich Text/Block Editor component - Needs replacement
-const RichTextEditorPlaceholder = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement> & { initialValue?: string; onContentChange: (content: string) => void }>(
-    ({ initialValue, onContentChange, ...props }, ref) => (
-        <Textarea
-            ref={ref}
-            rows={15}
-            placeholder="Makale içeriğini buraya yazın veya bir şablon seçin..."
-            defaultValue={initialValue}
-            onChange={(e) => onContentChange(e.target.value)} // Ensure content changes are propagated
-            {...props}
-        />
-    )
+// --- Block Editor Components (Copied from NewArticlePage for consistency) ---
+// TODO: Extract block components into their own files/directory
+
+interface BlockWrapperProps {
+  blockId: string;
+  blockType: string;
+  blockNumber: number;
+  children: React.ReactNode;
+  onDelete: (id: string) => void;
+}
+
+const BlockWrapper: React.FC<BlockWrapperProps> = ({ blockId, blockType, blockNumber, children, onDelete }) => {
+  return (
+    <div className="border border-border rounded-lg p-4 mb-4 relative group bg-card">
+      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button variant="ghost" size="icon" className="h-7 w-7 cursor-grab" aria-label="Blok Taşı">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(blockId)} aria-label="Blok Sil">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+      <Label className="text-xs text-muted-foreground mb-2 block capitalize">{blockType} (Bölüm {blockNumber})</Label>
+      {children}
+    </div>
+  );
+};
+
+interface TextBlockProps {
+  block: Extract<Block, { type: 'text' }>;
+  onChange: (id: string, content: string) => void;
+}
+const TextBlock: React.FC<TextBlockProps> = ({ block, onChange }) => (
+  <div>
+    <div className="flex items-center gap-1 mb-2 border-b pb-2">
+      <Button variant="ghost" size="icon" className="h-7 w-7"><Bold className="h-4 w-4" /></Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7"><Italic className="h-4 w-4" /></Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7"><Underline className="h-4 w-4" /></Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
+      <Separator orientation="vertical" className="h-6 mx-1" />
+      <Button variant="ghost" size="icon" className="h-7 w-7"><List className="h-4 w-4" /></Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7"><ListOrdered className="h-4 w-4" /></Button>
+    </div>
+    <Textarea
+      value={block.content}
+      onChange={(e) => onChange(block.id, e.target.value)}
+      placeholder="Metninizi girin..."
+      rows={6}
+      className="text-base"
+    />
+  </div>
 );
-RichTextEditorPlaceholder.displayName = 'RichTextEditorPlaceholder';
 
+interface HeadingBlockProps {
+    block: Extract<Block, { type: 'heading' }>;
+    onChange: (id: string, content: string, level?: number) => void;
+}
+const HeadingBlock: React.FC<HeadingBlockProps> = ({ block, onChange }) => (
+    <div className="flex items-center gap-2">
+        <Input
+            value={block.content}
+            onChange={(e) => onChange(block.id, e.target.value)}
+            placeholder={`Başlık ${block.level} Metni...`}
+            className={`text-${['xl', 'lg', 'md'][block.level - 2] || 'base'} font-semibold border-0 shadow-none focus-visible:ring-0 px-1`} // Dynamic size (approx)
+        />
+    </div>
+);
+
+const PlaceholderBlock: React.FC<{ type: string }> = ({ type }) => (
+    <div className="text-muted-foreground italic">
+        {type} block component will be here.
+    </div>
+);
+
+// --- Main Page Component ---
 
 export default function EditArticlePage() {
     const params = useParams();
     const articleId = params.id as string;
 
-    const [article, setArticle] = React.useState<Article | null>(null);
+    // --- State ---
+    const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
-    const [featuredImageFile, setFeaturedImageFile] = React.useState<File | null>(null);
-    const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+
+    const [title, setTitle] = React.useState("");
+    const [excerpt, setExcerpt] = React.useState("");
+    const [category, setCategory] = React.useState("");
+    const [mainImageUrl, setMainImageUrl] = React.useState("");
+    const [isFeatured, setIsFeatured] = React.useState(false);
+    const [status, setStatus] = React.useState("Taslak");
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
+    const [seoTitle, setSeoTitle] = React.useState("");
+    const [seoDescription, setSeoDescription] = React.useState("");
+    const [slug, setSlug] = React.useState("");
+    const [tags, setTags] = React.useState<string[]>([]);
+
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
 
-     // Form state - initialize with empty strings or defaults
-     const [title, setTitle] = React.useState("");
-     const [content, setContent] = React.useState(""); // Content state
-     const [category, setCategory] = React.useState("");
-     const [status, setStatus] = React.useState("Taslak");
-     const [seoTitle, setSeoTitle] = React.useState("");
-     const [seoDescription, setSeoDescription] = React.useState("");
-     const [slug, setSlug] = React.useState("");
-     const [isFeatured, setIsFeatured] = React.useState(false);
-     const [tags, setTags] = React.useState<string[]>([]);
-
-
+    // --- Data Fetching ---
     React.useEffect(() => {
         if (articleId) {
+            setLoading(true);
             getArticleById(articleId)
                 .then(data => {
                     if (data) {
-                        setArticle(data);
-                        // Initialize form state with fetched data
+                        setArticleData(data);
+                        // Initialize state from fetched data
                         setTitle(data.title);
-                        setContent(data.content); // Initialize content state
+                        setExcerpt(data.excerpt);
                         setCategory(data.category);
                         setStatus(data.status);
-                        setImagePreview(data.imageUrl);
+                        setMainImageUrl(data.mainImageUrl || "");
+                        setIsFeatured(data.isFeatured);
+                        setBlocks(data.blocks || []); // Initialize with fetched blocks
                         setSeoTitle(data.seoTitle);
                         setSeoDescription(data.seoDescription);
                         setSlug(data.slug);
-                        setIsFeatured(data.isFeatured);
-                        setTags(data.tags);
+                        setTags(data.tags || []);
                     } else {
                         notFound(); // Redirect to 404 if article not found
                     }
@@ -107,41 +225,65 @@ export default function EditArticlePage() {
                 .catch(error => {
                     console.error("Error fetching article:", error);
                     toast({ variant: "destructive", title: "Hata", description: "Makale yüklenirken bir sorun oluştu." });
-                    // Optionally redirect or show error message
                 })
                 .finally(() => setLoading(false));
         }
     }, [articleId]);
 
+     // --- Handlers ---
+     const generateSlug = (text: string) => {
+        return text
+            .toLowerCase()
+            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+            .replace(/[^a-z0-9 -]/g, '')
+            .replace(/\s+/g, '-').replace(/-+/g, '-');
+    };
 
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setFeaturedImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string); // Update preview with new file
-            };
-            reader.readAsDataURL(file);
+     // Auto-update slug when title changes (optional)
+    React.useEffect(() => {
+        if (title && !slug) { // Only auto-update if slug is empty initially
+            setSlug(generateSlug(title));
         }
+    }, [title, slug]); // Depend on slug too
+
+
+    const handleAddBlock = (type: Block['type']) => {
+        const newBlock: Block = {
+            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            type: type,
+            ...(type === 'text' && { content: '' }),
+            ...(type === 'heading' && { level: 2, content: '' }),
+            ...(type === 'image' && { url: '', alt: '' }),
+            ...(type === 'gallery' && { images: [] }),
+            ...(type === 'video' && { url: '' }),
+            ...(type === 'quote' && { content: '' }),
+            ...(type === 'code' && { language: 'javascript', content: '' }),
+            ...(type === 'divider' && {}),
+        } as Block;
+        setBlocks([...blocks, newBlock]);
     };
 
-     const handleRemoveImage = () => {
-        setFeaturedImageFile(null);
-        setImagePreview(null); // Remove preview
-        // TODO: Add logic to mark image for removal on the backend if necessary
+    const handleDeleteBlock = (id: string) => {
+        setBlocks(blocks.filter(block => block.id !== id));
     };
+
+     const handleContentChange = (id: string, content: string, level?: number) => {
+        setBlocks(blocks.map(block => {
+            if (block.id === id) {
+                 if (block.type === 'text') return { ...block, content };
+                 if (block.type === 'heading') return { ...block, content, level: level ?? block.level };
+                 if (block.type === 'quote') return { ...block, content };
+                 if (block.type === 'code') return { ...block, content };
+                 // Add handlers for other types if needed (e.g., image URL, alt text)
+             }
+             return block;
+         }));
+     };
 
     const handleSave = (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
-         console.log("Updating article:", { articleId, title, content, category, status: finalStatus, featuredImageFile, seoTitle, seoDescription, slug, isFeatured, tags: tags.join(',') }); // Log tags
          // TODO: Implement actual API call to update the article
-          // Use FormData if sending file:
-         // const formData = new FormData();
-         // formData.append('title', title);
-         // ... other fields
-         // if (featuredImageFile) formData.append('image', featuredImageFile);
-         // ... API call using formData
+         console.log("Updating article:", { articleId, title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, tags: tags.join(','), blocks, seoTitle, seoDescription });
 
          toast({
              title: "Makale Güncellendi",
@@ -163,273 +305,233 @@ export default function EditArticlePage() {
         }
     };
 
-     // Basic slug generation
-    const generateSlug = (text: string) => {
-        return text
-            .toLowerCase()
-            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-            .replace(/[^a-z0-9 -]/g, '')
-            .replace(/\s+/g, '-').replace(/-+/g, '-');
-    };
-
-    // Auto-update slug when title changes (optional)
-    React.useEffect(() => {
-        if (title && articleId) { // Only update slug if title exists and we are editing
-            setSlug(generateSlug(title));
+     const handleTemplateSelect = (templateBlocks: Block[]) => {
+         if (blocks.length > 0) {
+            if (!window.confirm("Mevcut içerik bölümlerinin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
+                 setIsTemplateSelectorOpen(false);
+                 return;
+            }
         }
-    }, [title, articleId]); // Re-run when title or articleId changes
-
-     // Handler for tag input change
-     const handleTagsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const tagsString = event.target.value;
-        setTags(tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== '')); // Split and clean tags
+        setBlocks(templateBlocks);
+        setIsTemplateSelectorOpen(false);
      };
 
-      // Handler for template selection
-     const handleTemplateSelect = (templateContent: string) => {
-        // Ask for confirmation before overwriting existing content
-        if (content && !window.confirm("Mevcut içeriğin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
-            return;
-        }
-        setContent(templateContent); // Update content state with template
-        setIsTemplateSelectorOpen(false); // Close the selector
-     };
-
+     // --- Rendering ---
 
     if (loading) {
-        // TODO: Replace with a proper Skeleton loader component
-        return <div className="flex justify-center items-center h-64">Makale yükleniyor...</div>;
+        // TODO: Replace with a proper Skeleton loader for the editor layout
+        return <div className="flex justify-center items-center h-screen">Makale yükleniyor...</div>;
     }
 
-    if (!article) {
-         // This should ideally be handled by notFound() in useEffect, but as a fallback
+    if (!articleData) {
+         // Should be handled by notFound(), but as a fallback
          return <div className="text-center py-10">Makale bulunamadı.</div>;
     }
 
+
     return (
-        <>
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                     <Button variant="outline" size="sm" asChild className="mb-4">
-                        <Link href="/admin/articles"><ArrowLeft className="mr-2 h-4 w-4" /> Makale Listesine Dön</Link>
-                     </Button>
-                    <h1 className="text-3xl font-bold">Makaleyi Düzenle</h1>
-                    <p className="text-muted-foreground">"{article.title}"</p>
-                </div>
-                 <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm"><History className="mr-2 h-4 w-4"/> Revizyon Geçmişi</Button> {/* TODO: Implement Revision History Modal/Page */}
-                    <Button variant="destructive" onClick={handleDelete}>
-                        <Trash2 className="mr-2 h-4 w-4" /> Sil
+        <div className="flex flex-col h-full">
+             {/* Top Bar */}
+             <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
+                <Button variant="ghost" size="sm" asChild>
+                    <Link href="/admin/articles"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
+                </Button>
+                 <h1 className="text-xl font-semibold truncate" title={`Makaleyi Düzenle: ${articleData.title}`}>Makaleyi Düzenle</h1>
+                 {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                     <Button variant="destructive" size="sm" onClick={handleDelete}>
+                        <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="secondary" onClick={() => handleSave(false)}>
-                        <Save className="mr-2 h-4 w-4" /> Değişiklikleri Kaydet
-                    </Button>
-                     {status !== 'Yayınlandı' && (
-                         <Button onClick={() => handleSave(true)}>
-                             <Upload className="mr-2 h-4 w-4" /> Yayınla
-                         </Button>
-                     )}
-                     {status === 'Yayınlandı' && (
-                         <Button onClick={() => handleSave(false)}> {/* Or just handleSave() which keeps status */}
-                             <Save className="mr-2 h-4 w-4" /> Güncelle
-                         </Button>
-                     )}
+                    {/* Add other actions like Revision History here if needed */}
+                    {/* <Button variant="outline" size="sm"><History className="mr-2 h-4 w-4"/> Revizyonlar</Button> */}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Content Area */}
-                <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                         <CardHeader>
-                            <CardTitle>Makale İçeriği</CardTitle>
-                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="title">Başlık</Label>
-                                <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                            </div>
-                             <div className="space-y-2">
-                                 <div className="flex justify-between items-center mb-2">
-                                     <Label htmlFor="content">İçerik</Label>
-                                     <Button variant="outline" size="sm" onClick={() => setIsTemplateSelectorOpen(true)}>
-                                         <LayoutTemplate className="mr-2 h-4 w-4" /> Şablon Seç
-                                     </Button>
-                                 </div>
-                                {/* Replace with actual Rich Text/Block Editor */}
-                                <RichTextEditorPlaceholder
-                                    id="content"
-                                    initialValue={content} // Pass initial content
-                                    onContentChange={setContent} // Pass update handler
-                                    key={articleId} // Force re-render if article changes
-                                />
-                                 <p className="text-xs text-muted-foreground">
-                                    İçeriği biçimlendirmek için zengin metin editörünü kullanın veya hazır bir şablon seçin. Sürükle-bırak işlevselliği için gelişmiş bir editör gereklidir.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+             {/* Main Content Area */}
+             <div className="flex flex-1 overflow-hidden">
+                 {/* Left Content Area (Tabs & Editor) */}
+                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                     <Tabs defaultValue="content">
+                         <TabsList className="mb-6">
+                            <TabsTrigger value="content">İçerik</TabsTrigger>
+                            <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon</TabsTrigger>
+                            <TabsTrigger value="media">Medya</TabsTrigger>
+                            <TabsTrigger value="seo">SEO</TabsTrigger>
+                         </TabsList>
 
-                     <Card>
-                         <CardHeader>
-                            <CardTitle>SEO Ayarları</CardTitle>
-                         </CardHeader>
-                         <CardContent className="space-y-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="slug">URL Metni (Slug)</Label>
-                                <Input id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required />
+                         {/* Content Tab */}
+                         <TabsContent value="content" className="space-y-6">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                 <div className="space-y-2">
+                                     <Label htmlFor="title">Makale Başlığı</Label>
+                                     <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                                 </div>
+                                 <div className="space-y-2">
+                                     <Label htmlFor="category">Kategori</Label>
+                                     <Select value={category} onValueChange={setCategory} required>
+                                         <SelectTrigger id="category"><SelectValue /></SelectTrigger>
+                                         <SelectContent>
+                                             <SelectItem value="Teknoloji">Teknoloji</SelectItem>
+                                             <SelectItem value="Biyoloji">Biyoloji</SelectItem>
+                                         </SelectContent>
+                                     </Select>
+                                 </div>
+                             </div>
+                              <div className="space-y-2">
+                                 <Label htmlFor="excerpt">Özet</Label>
+                                 <Textarea id="excerpt" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} />
                              </div>
                              <div className="space-y-2">
-                                <Label htmlFor="seo-title">SEO Başlığı</Label>
-                                <Input id="seo-title" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="seo-description">Meta Açıklama</Label>
-                                <Textarea id="seo-description" value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={2} maxLength={160} />
-                            </div>
-                         </CardContent>
-                     </Card>
-
-                     {/* Placeholder for Comments Management */}
-                    <Card>
-                         <CardHeader>
-                            <CardTitle>Yorumlar</CardTitle>
-                             <CardDescription>Bu makaleye yapılan yorumları yönetin.</CardDescription>
-                         </CardHeader>
-                         <CardContent>
-                             <p className="text-sm text-muted-foreground">Yorum yönetimi bölümü burada yer alacak (listeleme, onaylama, silme).</p>
-                             {/* TODO: Implement comments listing and moderation */}
-                             <Button variant="outline" size="sm" className="mt-4"><MessageSquare className="mr-2 h-4 w-4" /> Yorumları Yönet</Button>
-                         </CardContent>
-                     </Card>
-                </div>
-
-                {/* Sidebar Area */}
-                <div className="space-y-6">
-                     <Card>
-                         <CardHeader>
-                            <CardTitle>Yayınlama Ayarları</CardTitle>
-                         </CardHeader>
-                         <CardContent className="space-y-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="status">Durum</Label>
-                                <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger id="status">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Taslak">Taslak</SelectItem>
-                                        <SelectItem value="İncelemede">İncelemede</SelectItem>
-                                        <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
-                                        <SelectItem value="Arşivlendi">Arşivlendi</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                 <Label htmlFor="main-image-url">Ana Görsel URL</Label>
+                                 <div className="flex gap-2">
+                                      <Input id="main-image-url" value={mainImageUrl} onChange={(e) => setMainImageUrl(e.target.value)} />
+                                      <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button>
+                                 </div>
+                             </div>
                              <div className="flex items-center space-x-2 pt-2">
-                                <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
-                                <Label htmlFor="featured-article">Öne Çıkan Makale</Label>
-                            </div>
-                             {/* Optional: Add Last Updated Info */}
-                             <p className="text-xs text-muted-foreground pt-2">Son güncelleme: [Tarih]</p>
-                         </CardContent>
-                     </Card>
-
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Kategoriler ve Etiketler</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="category">Kategori</Label>
-                                <Select value={category} onValueChange={setCategory} required>
-                                    <SelectTrigger id="category">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Teknoloji">Teknoloji</SelectItem>
-                                        <SelectItem value="Biyoloji">Biyoloji</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="tags">Etiketler</Label>
-                                 <Input
-                                    id="tags"
-                                    value={tags.join(', ')} // Display tags as comma-separated string
-                                    onChange={handleTagsChange} // Use handler to update array
-                                    placeholder="Etiketleri virgülle ayırın"
-                                />
-                                 <p className="text-xs text-muted-foreground">Etiketleri virgül (,) ile ayırarak girin.</p>
+                                 <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
+                                 <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
                              </div>
-                        </CardContent>
-                     </Card>
 
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Öne Çıkan Görsel</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {imagePreview ? (
-                                <div className="relative group">
-                                     <Image
-                                        src={imagePreview}
-                                        alt="Öne çıkan görsel önizlemesi"
-                                        width={600} height={400} // Provide initial dimensions
-                                        className="w-full h-auto rounded-md object-cover"
-                                     />
-                                     <Button
-                                         variant="destructive"
-                                         size="sm"
-                                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                         onClick={handleRemoveImage}>
-                                         Kaldır
-                                     </Button>
-                                 </div>
-                            ) : (
-                                <div className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-md border-muted-foreground/50">
-                                     <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                </div>
-                            )}
-                            <div className="space-y-1 text-sm">
-                                <Label htmlFor="featured-image" className="cursor-pointer text-primary hover:underline">
-                                    {imagePreview ? "Görseli Değiştir" : "Görsel Yükle"}
-                                </Label>
-                                <Input id="featured-image" type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
-                            </div>
-                        </CardContent>
-                     </Card>
+                              <Separator className="my-8" />
+
+                              {/* Block Editor Section */}
+                              <div>
+                                  <h2 className="text-lg font-semibold mb-1">Makale Bölümleri</h2>
+                                  <p className="text-sm text-muted-foreground mb-4">İçeriğinizi düzenlemek için bölümler ekleyin ve sürükleyerek sıralayın.</p>
+
+                                  <div className="space-y-4">
+                                      {blocks.map((block, index) => (
+                                          <BlockWrapper key={block.id} blockId={block.id} blockType={block.type} blockNumber={index + 1} onDelete={handleDeleteBlock}>
+                                             {block.type === 'text' && <TextBlock block={block} onChange={handleContentChange} />}
+                                             {block.type === 'heading' && <HeadingBlock block={block} onChange={handleContentChange} />}
+                                              {(block.type === 'image' || block.type === 'gallery' || block.type === 'video' || block.type === 'quote' || block.type === 'code' || block.type === 'divider') && (
+                                                  <PlaceholderBlock type={block.type} /> // Replace with actual components
+                                              )}
+                                          </BlockWrapper>
+                                      ))}
+                                  </div>
+
+                                   {/* Add Block Buttons */}
+                                   <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('text')}><Type className="mr-2 h-4 w-4"/> Metin Ekle</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('heading')}><Heading2 className="mr-2 h-4 w-4"/> Başlık Ekle</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('image')}><ImageIcon className="mr-2 h-4 w-4"/> Görsel Ekle</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('gallery')}><GalleryHorizontal className="mr-2 h-4 w-4"/> Galeri Ekle</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('video')}><Video className="mr-2 h-4 w-4"/> Video Ekle</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('quote')}><Quote className="mr-2 h-4 w-4"/> Alıntı Ekle</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('code')}><Code className="mr-2 h-4 w-4"/> Kod Ekle</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleAddBlock('divider')}>Ayırıcı Ekle</Button>
+                                   </div>
+                              </div>
+
+                         </TabsContent>
+
+                          {/* Template Tab */}
+                         <TabsContent value="template">
+                             <p className="text-muted-foreground">Şablon seçmek için yukarıdaki "Şablon" sekmesine tıklayın.</p>
+                         </TabsContent>
+
+                         {/* Media Tab */}
+                         <TabsContent value="media">
+                              <Card>
+                                  <CardHeader>
+                                     <CardTitle>Medya Yönetimi</CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                      <p className="text-muted-foreground">Medya kütüphanesi burada yer alacak.</p>
+                                  </CardContent>
+                              </Card>
+                         </TabsContent>
+
+                         {/* SEO Tab */}
+                         <TabsContent value="seo">
+                             <Card>
+                                  <CardHeader>
+                                     <CardTitle>SEO Ayarları</CardTitle>
+                                  </CardHeader>
+                                  <CardContent className="space-y-4">
+                                      <div className="space-y-2">
+                                         <Label htmlFor="slug">URL Metni (Slug)</Label>
+                                         <Input id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required />
+                                     </div>
+                                      <div className="space-y-2">
+                                         <Label htmlFor="seo-title">SEO Başlığı</Label>
+                                         <Input id="seo-title" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
+                                     </div>
+                                      <div className="space-y-2">
+                                         <Label htmlFor="seo-description">Meta Açıklama</Label>
+                                         <Textarea id="seo-description" value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={2} maxLength={160} />
+                                     </div>
+                                  </CardContent>
+                              </Card>
+                         </TabsContent>
+                     </Tabs>
                  </div>
-            </div>
 
-             <Separator />
-             <div className="flex justify-end flex-wrap gap-2">
-                 <Button variant="destructive" onClick={handleDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Sil
-                </Button>
-                <Button variant="secondary" onClick={() => handleSave(false)}>
-                    <Save className="mr-2 h-4 w-4" /> Değişiklikleri Kaydet
-                </Button>
-                {status !== 'Yayınlandı' && (
-                    <Button onClick={() => handleSave(true)}>
-                        <Upload className="mr-2 h-4 w-4" /> Yayınla
-                    </Button>
-                )}
-                 {status === 'Yayınlandı' && (
-                     <Button onClick={() => handleSave(false)}>
-                         <Save className="mr-2 h-4 w-4" /> Güncelle
-                     </Button>
-                 )}
-             </div>
-        </form>
+                  {/* Right Sidebar */}
+                  <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
+                      <Card>
+                         <CardHeader><CardTitle>Durum</CardTitle></CardHeader>
+                         <CardContent className="space-y-4">
+                              <div className="space-y-2">
+                                 <Label htmlFor="status">Yayın Durumu</Label>
+                                 <Select value={status} onValueChange={setStatus}>
+                                     <SelectTrigger id="status"><SelectValue /></SelectTrigger>
+                                     <SelectContent>
+                                         <SelectItem value="Taslak">Taslak</SelectItem>
+                                         <SelectItem value="İncelemede">İncelemede</SelectItem>
+                                         <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
+                                         <SelectItem value="Arşivlendi">Arşivlendi</SelectItem>
+                                     </SelectContent>
+                                 </Select>
+                             </div>
+                              <Separator />
+                              <Button variant="outline" className="w-full justify-center"><Eye className="mr-2 h-4 w-4" /> Önizle</Button>
+                              <Button className="w-full" onClick={() => handleSave(status === 'Yayınlandı')}>
+                                <Save className="mr-2 h-4 w-4" />
+                                {status === 'Yayınlandı' ? 'Güncelle' : 'Kaydet'}
+                             </Button>
+                             {status !== 'Yayınlandı' && (
+                                 <Button className="w-full" onClick={() => handleSave(true)}>
+                                     <Upload className="mr-2 h-4 w-4" /> Yayınla
+                                 </Button>
+                             )}
+                         </CardContent>
+                      </Card>
 
-        {/* Template Selector Modal */}
-        <TemplateSelector
-            isOpen={isTemplateSelectorOpen}
-            onClose={() => setIsTemplateSelectorOpen(false)}
-            onSelectTemplate={handleTemplateSelect}
-        />
-        </>
+                       <Card>
+                         <CardHeader><CardTitle>Etiketler</CardTitle></CardHeader>
+                         <CardContent>
+                             <Input
+                                 id="tags"
+                                 value={tags.join(', ')}
+                                 onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag !== ''))}
+                                 placeholder="Etiketleri virgülle ayırın"
+                              />
+                         </CardContent>
+                      </Card>
+
+                      {/* Placeholder for Comments - Keep if still relevant */}
+                       <Card>
+                          <CardHeader>
+                             <CardTitle>Yorumlar</CardTitle>
+                             <CardDescription>Bu makaleye yapılan yorumlar.</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                              <p className="text-sm text-muted-foreground">Yorum yönetimi burada olacak.</p>
+                              <Button variant="outline" size="sm" className="mt-4"><MessageSquare className="mr-2 h-4 w-4" /> Yorumları Yönet</Button>
+                          </CardContent>
+                       </Card>
+                  </aside>
+              </div>
+
+              {/* Template Selector Modal */}
+              <TemplateSelector
+                  isOpen={isTemplateSelectorOpen}
+                  onClose={() => setIsTemplateSelectorOpen(false)}
+                  onSelectTemplateBlocks={handleTemplateSelect}
+              />
+         </div>
     );
 }
-

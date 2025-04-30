@@ -15,20 +15,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image"; // Using next/image for placeholders
 
-interface TemplateSelectorProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelectTemplate: (content: string) => void; // Callback still expects HTML string for now
-}
-
-// Define Block Types
-type Block =
-  | { type: 'heading'; level: 1 | 2 | 3 | 4 | 5 | 6; content: string }
-  | { type: 'paragraph'; content: string; emphasis?: boolean; strong?: boolean }
-  | { type: 'image'; src: string; alt: string; caption?: string }
-  | { type: 'list'; ordered: boolean; items: string[] }
-  | { type: 'blockquote'; content: string }
-  | { type: 'divider' };
+// --- Block Types (Should match the editor's block types) ---
+export type Block =
+  | { id: string; type: 'text'; content: string }
+  | { id: string; type: 'heading'; level: number; content: string }
+  | { id: string; type: 'image'; url: string; alt: string; caption?: string }
+  | { id: string; type: 'gallery'; images: { url: string; alt: string }[] }
+  | { id: string; type: 'video'; url: string }
+  | { id: string; type: 'quote'; content: string; citation?: string }
+  | { id: string; type: 'code'; language: string; content: string }
+  | { id: string; type: 'divider' }; // Assuming divider is simple or add props
 
 // Define Template Structure
 interface Template {
@@ -39,7 +35,18 @@ interface Template {
   blocks: Block[]; // Content as an array of blocks
 }
 
-// Mock Templates (Using Block Structure)
+interface TemplateSelectorProps {
+  isOpen: boolean;
+  onClose: () => void;
+  /** @deprecated Use onSelectTemplateBlocks instead */
+  onSelectTemplate?: (content: string) => void; // Keep for potential backward compatibility, but prefer blocks
+  onSelectTemplateBlocks: (blocks: Block[]) => void; // New prop for passing blocks directly
+}
+
+
+// --- Mock Templates (Using Block Structure) ---
+const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
 const templates: Template[] = [
   {
     id: 'standard-article',
@@ -47,38 +54,38 @@ const templates: Template[] = [
     description: 'Başlık, ana görsel ve metin içeriği için temel düzen.',
     previewImageUrl: 'https://picsum.photos/seed/template1/300/200',
     blocks: [
-      { type: 'heading', level: 1, content: 'Makale Başlığı' },
-      { type: 'paragraph', content: 'Özetleyici bir giriş paragrafı buraya ekleyin...', emphasis: true },
-      { type: 'image', src: 'https://picsum.photos/seed/articleimg1/800/400', alt: 'Ana Görsel' },
-      { type: 'paragraph', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.' },
-      { type: 'heading', level: 2, content: 'Alt Başlık 1' },
-      { type: 'paragraph', content: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.' },
-      { type: 'heading', level: 2, content: 'Alt Başlık 2' },
-      { type: 'paragraph', content: 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.' },
-      { type: 'blockquote', content: 'Bu alana önemli bir alıntı veya vurgu ekleyebilirsiniz.' },
-      { type: 'paragraph', content: 'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.' },
+      { id: generateId(), type: 'heading', level: 1, content: 'Makale Başlığı' },
+      { id: generateId(), type: 'text', content: 'Özetleyici bir giriş paragrafı buraya ekleyin...' }, // Removed emphasis/strong for simplicity, handle in editor
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/articleimg1/800/400', alt: 'Ana Görsel', caption: 'Görsel alt yazı (isteğe bağlı)' },
+      { id: generateId(), type: 'text', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 1' },
+      { id: generateId(), type: 'text', content: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 2' },
+      { id: generateId(), type: 'text', content: 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.' },
+      { id: generateId(), type: 'quote', content: 'Bu alana önemli bir alıntı veya vurgu ekleyebilirsiniz.', citation: 'Kaynak (isteğe bağlı)' },
+      { id: generateId(), type: 'text', content: 'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.' },
     ]
   },
-  {
+   {
     id: 'listicle',
     name: 'Listeleme Makalesi',
     description: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.',
     previewImageUrl: 'https://picsum.photos/seed/template2/300/200',
     blocks: [
-        { type: 'heading', level: 1, content: 'Harika [X] Şey Listesi' },
-        { type: 'paragraph', content: 'Bu makalede, [konu] hakkında bilmeniz gereken en önemli [X] şeyi listeliyoruz. Giriş paragrafı buraya gelecek.' },
-        { type: 'heading', level: 2, content: '1. Birinci Madde Başlığı' },
-        { type: 'image', src: 'https://picsum.photos/seed/list1/600/300', alt: 'Madde 1 Görseli' },
-        { type: 'paragraph', content: 'Birinci maddenin açıklaması. Neden önemli olduğunu veya nasıl çalıştığını açıklayın.' },
-        { type: 'heading', level: 2, content: '2. İkinci Madde Başlığı' },
-        { type: 'paragraph', content: 'İkinci maddenin detayları burada yer alacak. Örnekler veya ek bilgiler ekleyebilirsiniz.' },
-        { type: 'heading', level: 2, content: '3. Üçüncü Madde Başlığı' },
-        { type: 'image', src: 'https://picsum.photos/seed/list3/600/300', alt: 'Madde 3 Görseli' },
-        { type: 'paragraph', content: 'Üçüncü maddeye ilişkin açıklamalar ve önemli noktalar.' },
-        { type: 'paragraph', content: '...' },
-        { type: 'heading', level: 2, content: '[X]. Son Madde Başlığı' },
-        { type: 'paragraph', content: 'Listenin son maddesi ve açıklaması.' },
-        { type: 'paragraph', content: 'Makalenin ana fikrini özetleyen veya okuyucuya bir sonraki adımı öneren bir sonuç paragrafı ekleyin.', strong: true }, // Representing 'Sonuç:' part
+        { id: generateId(), type: 'heading', level: 1, content: 'Harika [X] Şey Listesi' },
+        { id: generateId(), type: 'text', content: 'Bu makalede, [konu] hakkında bilmeniz gereken en önemli [X] şeyi listeliyoruz. Giriş paragrafı buraya gelecek.' },
+        { id: generateId(), type: 'heading', level: 2, content: '1. Birinci Madde Başlığı' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list1/600/300', alt: 'Madde 1 Görseli' },
+        { id: generateId(), type: 'text', content: 'Birinci maddenin açıklaması. Neden önemli olduğunu veya nasıl çalıştığını açıklayın.' },
+        { id: generateId(), type: 'heading', level: 2, content: '2. İkinci Madde Başlığı' },
+        { id: generateId(), type: 'text', content: 'İkinci maddenin detayları burada yer alacak. Örnekler veya ek bilgiler ekleyebilirsiniz.' },
+        { id: generateId(), type: 'heading', level: 2, content: '3. Üçüncü Madde Başlığı' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list3/600/300', alt: 'Madde 3 Görseli' },
+        { id: generateId(), type: 'text', content: 'Üçüncü maddeye ilişkin açıklamalar ve önemli noktalar.' },
+        { id: generateId(), type: 'text', content: '...' },
+        { id: generateId(), type: 'heading', level: 2, content: '[X]. Son Madde Başlığı' },
+        { id: generateId(), type: 'text', content: 'Listenin son maddesi ve açıklaması.' },
+        { id: generateId(), type: 'text', content: 'Makalenin ana fikrini özetleyen veya okuyucuya bir sonraki adımı öneren bir sonuç paragrafı ekleyin.'},
     ]
   },
   {
@@ -87,14 +94,14 @@ const templates: Template[] = [
     description: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.',
     previewImageUrl: 'https://picsum.photos/seed/template3/300/200',
     blocks: [
-        { type: 'heading', level: 1, content: '[Konu] Görsel Galerisi' },
-        { type: 'paragraph', content: 'Bu galeride [konu] ile ilgili etkileyici görselleri bir araya getirdik. Galeri hakkında kısa bir açıklama.' },
-        { type: 'image', src: 'https://picsum.photos/seed/gallery1/800/500', alt: 'Görsel 1', caption: 'Kısa ve açıklayıcı bir başlık. Bu görselin ne hakkında olduğunu veya neyi gösterdiğini anlatan birkaç cümle.' },
-        { type: 'divider' },
-        { type: 'image', src: 'https://picsum.photos/seed/gallery2/800/500', alt: 'Görsel 2', caption: 'Başka bir açıklayıcı başlık. Görselle ilgili ilginç detaylar veya bağlam bilgisi.' },
-        { type: 'divider' },
-        { type: 'image', src: 'https://picsum.photos/seed/gallery3/800/500', alt: 'Görsel 3', caption: 'Üçüncü görsel için başlık ve açıklama.' },
-        { type: 'paragraph', content: 'Galeriyi sonlandıran veya ek bilgi veren bir paragraf.' },
+        { id: generateId(), type: 'heading', level: 1, content: '[Konu] Görsel Galerisi' },
+        { id: generateId(), type: 'text', content: 'Bu galeride [konu] ile ilgili etkileyici görselleri bir araya getirdik. Galeri hakkında kısa bir açıklama.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery1/800/500', alt: 'Görsel 1', caption: 'Görsel 1: Kısa ve açıklayıcı bir başlık. Bu görselin ne hakkında olduğunu veya neyi gösterdiğini anlatan birkaç cümle.' },
+        { id: generateId(), type: 'divider' }, // Use a simple divider block
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery2/800/500', alt: 'Görsel 2', caption: 'Görsel 2: Başka bir açıklayıcı başlık. Görselle ilgili ilginç detaylar veya bağlam bilgisi.' },
+        { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery3/800/500', alt: 'Görsel 3', caption: 'Görsel 3: Üçüncü görsel için başlık ve açıklama.' },
+        { id: generateId(), type: 'text', content: 'Galeriyi sonlandıran veya ek bilgi veren bir paragraf.' },
     ]
   },
   {
@@ -103,18 +110,17 @@ const templates: Template[] = [
     description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
     previewImageUrl: 'https://picsum.photos/seed/template4/300/200',
     blocks: [
-        { type: 'heading', level: 1, content: '[Konu] Hakkında Sıkça Sorulan Sorular (SSS)' },
-        { type: 'paragraph', content: '[Konu] ile ilgili merak edilen yaygın soruları ve cevaplarını bu makalede bulabilirsiniz.' },
-        { type: 'heading', level: 2, content: 'Soru 1: [İlk Soru Buraya]?' },
-        { type: 'paragraph', content: 'İlk sorunun detaylı cevabı buraya gelecek. Açıklayıcı ve net olun.', strong: true }, // Representing Answer
-        { type: 'heading', level: 2, content: 'Soru 2: [İkinci Soru Buraya]?' },
-        { type: 'paragraph', content: 'İkinci sorunun yanıtı. Gerekirse alt maddeler veya listeler kullanabilirsiniz.', strong: true },
-        { type: 'list', ordered: false, items: ['Alt madde 1', 'Alt madde 2'] },
-        { type: 'heading', level: 2, content: 'Soru 3: [Üçüncü Soru Buraya]?' },
-        { type: 'paragraph', content: 'Üçüncü sorunun cevabı. İlgili kaynaklara bağlantılar verebilirsiniz.', strong: true },
-        { type: 'heading', level: 2, content: 'Soru 4: [Dördüncü Soru Buraya]?' },
-        { type: 'paragraph', content: 'Dördüncü soruya verilen yanıt.', strong: true },
-        { type: 'paragraph', content: 'Daha fazla sorunuz varsa, bizimle iletişime geçmekten çekinmeyin.' },
+        { id: generateId(), type: 'heading', level: 1, content: '[Konu] Hakkında Sıkça Sorulan Sorular (SSS)' },
+        { id: generateId(), type: 'text', content: '[Konu] ile ilgili merak edilen yaygın soruları ve cevaplarını bu makalede bulabilirsiniz.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: [İlk Soru Buraya]?' },
+        { id: generateId(), type: 'text', content: 'Cevap: İlk sorunun detaylı cevabı buraya gelecek. Açıklayıcı ve net olun.'},
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: [İkinci Soru Buraya]?' },
+        { id: generateId(), type: 'text', content: 'Cevap: İkinci sorunun yanıtı. Gerekirse alt maddeler veya listeler kullanabilirsiniz.\n- Alt madde 1\n- Alt madde 2' }, // Simple list within text
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: [Üçüncü Soru Buraya]?' },
+        { id: generateId(), type: 'text', content: 'Cevap: Üçüncü sorunun cevabı. İlgili kaynaklara bağlantılar verebilirsiniz.'},
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 4: [Dördüncü Soru Buraya]?' },
+        { id: generateId(), type: 'text', content: 'Cevap: Dördüncü soruya verilen yanıt.'},
+        { id: generateId(), type: 'text', content: 'Daha fazla sorunuz varsa, bizimle iletişime geçmekten çekinmeyin.' },
     ]
   },
   {
@@ -123,61 +129,55 @@ const templates: Template[] = [
     description: 'Adım adım talimatlar içeren öğretici makaleler için.',
     previewImageUrl: 'https://picsum.photos/seed/template5/300/200',
     blocks: [
-        { type: 'heading', level: 1, content: '[Görev] Nasıl Yapılır: Adım Adım Rehber' },
-        { type: 'paragraph', content: 'Bu rehber, [görev] işlemini nasıl kolayca gerçekleştirebileceğinizi adım adım gösterecektir.' },
-        { type: 'heading', level: 2, content: 'Gereksinimler' },
-        { type: 'list', ordered: false, items: [
-            'Gerekli malzeme veya araç 1',
-            'Gerekli malzeme veya araç 2',
-            'Önceden yapılması gerekenler (varsa)'
-            ]
-        },
-        { type: 'heading', level: 2, content: 'Adım 1: [İlk Adım Başlığı]' },
-        { type: 'image', src: 'https://picsum.photos/seed/step1/600/350', alt: 'Adım 1 Görseli' },
-        { type: 'paragraph', content: 'İlk adımın detaylı açıklaması. Ne yapmanız gerektiğini net bir şekilde belirtin.' },
-        { type: 'heading', level: 2, content: 'Adım 2: [İkinci Adım Başlığı]' },
-        { type: 'paragraph', content: 'İkinci adımın açıklaması. İpuçları veya dikkat edilmesi gereken noktaları ekleyin.' },
-        { type: 'heading', level: 2, content: 'Adım 3: [Üçüncü Adım Başlığı]' },
-        { type: 'image', src: 'https://picsum.photos/seed/step3/600/350', alt: 'Adım 3 Görseli' },
-        { type: 'paragraph', content: 'Üçüncü adımın detayları.' },
-        { type: 'paragraph', content: '...' },
-        { type: 'heading', level: 2, content: 'Adım [X]: [Son Adım Başlığı]' },
-        { type: 'paragraph', content: 'Son adımın açıklaması ve işlemin tamamlanması.' },
-        { type: 'heading', level: 2, content: 'Sonuç ve İpuçları' },
-        { type: 'paragraph', content: 'İşlemi başarıyla tamamladınız! Ekstra ipuçları veya sorun giderme bilgileri buraya eklenebilir.' },
+        { id: generateId(), type: 'heading', level: 1, content: '[Görev] Nasıl Yapılır: Adım Adım Rehber' },
+        { id: generateId(), type: 'text', content: 'Bu rehber, [görev] işlemini nasıl kolayca gerçekleştirebileceğinizi adım adım gösterecektir.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Gereksinimler' },
+        { id: generateId(), type: 'text', content: '- Gerekli malzeme veya araç 1\n- Gerekli malzeme veya araç 2\n- Önceden yapılması gerekenler (varsa)' }, // List as text
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: [İlk Adım Başlığı]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/step1/600/350', alt: 'Adım 1 Görseli' },
+        { id: generateId(), type: 'text', content: 'İlk adımın detaylı açıklaması. Ne yapmanız gerektiğini net bir şekilde belirtin.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: [İkinci Adım Başlığı]' },
+        { id: generateId(), type: 'text', content: 'İkinci adımın açıklaması. İpuçları veya dikkat edilmesi gereken noktaları ekleyin.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: [Üçüncü Adım Başlığı]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/step3/600/350', alt: 'Adım 3 Görseli' },
+        { id: generateId(), type: 'text', content: 'Üçüncü adımın detayları.' },
+        { id: generateId(), type: 'text', content: '...' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım [X]: [Son Adım Başlığı]' },
+        { id: generateId(), type: 'text', content: 'Son adımın açıklaması ve işlemin tamamlanması.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Sonuç ve İpuçları' },
+        { id: generateId(), type: 'text', content: 'İşlemi başarıyla tamamladınız! Ekstra ipuçları veya sorun giderme bilgileri buraya eklenebilir.' },
     ]
   },
-  {
+   {
     id: 'interview-article',
     name: 'Röportaj Makalesi',
     description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
     previewImageUrl: 'https://picsum.photos/seed/template6/300/200',
     blocks: [
-        { type: 'heading', level: 1, content: '[Kişi Adı] ile Özel Röportaj: [Röportaj Konusu]' },
-        // Note: Floating images require CSS not representable in basic blocks easily.
-        { type: 'image', src: 'https://picsum.photos/seed/interviewee/300/300', alt: '[Kişi Adı]' },
-        { type: 'paragraph', content: '[Kişi Adı], [Kişinin Unvanı/Alanı], [konu] hakkındaki görüşlerini ve deneyimlerini paylaştı. Giriş paragrafı...', emphasis: true },
-        { type: 'heading', level: 2, content: 'Giriş ve Bağlam' },
-        { type: 'paragraph', content: 'Röportajın neden yapıldığı veya kişinin uzmanlığı hakkında kısa bir bilgi verin.' },
-        { type: 'divider' },
-        { type: 'paragraph', content: 'İlk soru buraya yazılacak?', strong: true }, // Representing Question
-        { type: 'paragraph', content: 'İlk sorunun cevabı. Kişinin kendi ifadeleriyle...' }, // Representing Answer
-        { type: 'paragraph', content: 'İkinci soru...?', strong: true },
-        { type: 'paragraph', content: 'İkinci sorunun cevabı...' },
-        { type: 'paragraph', content: 'Üçüncü soru...?', strong: true },
-        { type: 'paragraph', content: 'Üçüncü sorunun cevabı...' },
-        { type: 'blockquote', content: "[Kişi Adı]'nın röportajdan çarpıcı bir sözü veya alıntısı." },
-        { type: 'paragraph', content: 'Son soru...?', strong: true },
-        { type: 'paragraph', content: 'Son sorunun cevabı...' },
-        { type: 'heading', level: 2, content: 'Sonuç' },
-        { type: 'paragraph', content: 'Röportajın ana çıkarımlarını özetleyen veya okuyucuya teşekkür eden bir kapanış paragrafı.' },
+        { id: generateId(), type: 'heading', level: 1, content: '[Kişi Adı] ile Özel Röportaj: [Röportaj Konusu]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interviewee/300/300', alt: '[Kişi Adı]' },
+        { id: generateId(), type: 'text', content: '[Kişi Adı], [Kişinin Unvanı/Alanı], [konu] hakkındaki görüşlerini ve deneyimlerini paylaştı. Giriş paragrafı...' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Giriş ve Bağlam' },
+        { id: generateId(), type: 'text', content: 'Röportajın neden yapıldığı veya kişinin uzmanlığı hakkında kısa bir bilgi verin.' },
+        { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'text', content: '**Soru:** İlk soru buraya yazılacak?' }, // Question marker
+        { id: generateId(), type: 'text', content: '**Cevap:** İlk sorunun cevabı. Kişinin kendi ifadeleriyle...' }, // Answer marker
+        { id: generateId(), type: 'text', content: '**Soru:** İkinci soru...?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** İkinci sorunun cevabı...' },
+        { id: generateId(), type: 'text', content: '**Soru:** Üçüncü soru...?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Üçüncü sorunun cevabı...' },
+        { id: generateId(), type: 'quote', content: "[Kişi Adı]'nın röportajdan çarpıcı bir sözü veya alıntısı." },
+        { id: generateId(), type: 'text', content: '**Soru:** Son soru...?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Son sorunun cevabı...' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Sonuç' },
+        { id: generateId(), type: 'text', content: 'Röportajın ana çıkarımlarını özetleyen veya okuyucuya teşekkür eden bir kapanış paragrafı.' },
     ]
   },
 ];
 
+// --- Helper Functions ---
 
-// Function to convert block structure to HTML (basic implementation)
-// A real block editor would render this directly or use a dedicated format.
+// Function to convert block structure to HTML (basic implementation for backward compatibility)
 const blocksToHtml = (blocks: Block[]): string => {
     let html = '';
     blocks.forEach(block => {
@@ -185,75 +185,109 @@ const blocksToHtml = (blocks: Block[]): string => {
             case 'heading':
                 html += `<h${block.level}>${block.content}</h${block.level}>\n`;
                 break;
-            case 'paragraph':
-                let content = block.content;
-                if (block.strong) content = `<strong>${content}</strong>`;
-                if (block.emphasis) content = `<em>${content}</em>`;
-                html += `<p>${content}</p>\n`;
+            case 'text':
+                // Basic markdown-like handling for bold/italic if needed, or rely on editor
+                const processedContent = block.content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Basic bold
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Basic italic
+                html += `<p>${processedContent}</p>\n`;
                 break;
             case 'image':
-                html += `<figure>\n  <img src="${block.src}" alt="${block.alt}" />\n`;
+                 html += `<figure>\n  <img src="${block.url}" alt="${block.alt}" />\n`;
                 if (block.caption) {
-                     const strongCaption = block.caption.includes(':') ? `<strong>${block.caption.split(':')[0]}:</strong>${block.caption.split(':').slice(1).join(':')}` : block.caption;
-                    html += `  <figcaption>${strongCaption}</figcaption>\n`;
+                    // Simple caption handling
+                    html += `  <figcaption>${block.caption}</figcaption>\n`;
+                 }
+                 html += `</figure>\n`;
+                break;
+             // case 'list': // If you add a dedicated list block
+             //     const tag = block.ordered ? 'ol' : 'ul';
+             //     html += `<${tag}>\n`;
+             //     block.items.forEach(item => {
+             //         html += `  <li>${item}</li>\n`;
+             //     });
+             //     html += `</${tag}>\n`;
+             //     break;
+             case 'quote':
+                html += `<blockquote><p>${block.content}</p>`;
+                if (block.citation) {
+                    html += `<footer>— ${block.citation}</footer>`;
                 }
-                html += `</figure>\n`;
+                html += `</blockquote>\n`;
                 break;
-            case 'list':
-                const tag = block.ordered ? 'ol' : 'ul';
-                html += `<${tag}>\n`;
-                block.items.forEach(item => {
-                    html += `  <li>${item}</li>\n`;
-                });
-                html += `</${tag}>\n`;
-                break;
-            case 'blockquote':
-                html += `<blockquote>${block.content}</blockquote>\n`;
-                break;
-            case 'divider':
-                html += `<hr />\n`;
-                break;
+             case 'code':
+                 // Use pre and code tags, maybe add class for syntax highlighting later
+                 html += `<pre><code class="language-${block.language}">${block.content}</code></pre>\n`;
+                 break;
+             case 'divider':
+                 html += `<hr />\n`;
+                 break;
+             case 'gallery': // Simple gallery handling
+                 html += `<div class="gallery">\n`;
+                 block.images.forEach(img => {
+                     html += `  <figure><img src="${img.url}" alt="${img.alt}" /></figure>\n`;
+                 });
+                 html += `</div>\n`;
+                 break;
+             case 'video': // Simple video embed (assuming youtube or similar)
+                // Basic URL check - needs improvement for robustness
+                 if (block.url.includes('youtube.com') || block.url.includes('youtu.be')) {
+                     const videoId = block.url.split('v=')[1]?.split('&')[0] || block.url.split('/').pop();
+                     html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
+                 } else {
+                     html += `<p><a href="${block.url}" target="_blank" rel="noopener noreferrer">Video izle: ${block.url}</a></p>\n`; // Fallback link
+                 }
+                 break;
         }
     });
     return html;
 };
 
 
-export function TemplateSelector({ isOpen, onClose, onSelectTemplate }: TemplateSelectorProps) {
+export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTemplateBlocks }: TemplateSelectorProps) {
 
     const handleSelect = (blocks: Block[]) => {
-        const htmlContent = blocksToHtml(blocks); // Convert blocks to HTML
-        onSelectTemplate(htmlContent); // Pass HTML to the parent
+        // Call the new prop with the blocks array
+        onSelectTemplateBlocks(blocks);
+
+        // Call the old prop with converted HTML if it exists
+        if (onSelectTemplate) {
+             console.warn("TemplateSelector: onSelectTemplate is deprecated. Use onSelectTemplateBlocks instead.");
+             const htmlContent = blocksToHtml(blocks);
+             onSelectTemplate(htmlContent);
+        }
+
         onClose(); // Close the dialog after selection
     };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col"> {/* Adjusted width and height */}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}> {/* Ensure close on background click */}
+      <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Makale Şablonu Seç</DialogTitle>
           <DialogDescription>
             İçeriğinizi oluşturmaya başlamak için hazır bir şablon seçin. Şablon içeriği mevcut içeriğinizin üzerine yazılabilir (onayınızla).
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow pr-4 -mr-4"> {/* Added ScrollArea */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4"> {/* Responsive grid */}
+        <ScrollArea className="flex-grow pr-4 -mr-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
                 {templates.map((template) => (
-                    <Card key={template.id} className="cursor-pointer hover:shadow-lg transition-shadow flex flex-col" onClick={() => handleSelect(template.blocks)}>
-                        <CardHeader className="p-0">
-                            <Image
+                    <Card key={template.id} className="cursor-pointer hover:shadow-lg transition-shadow flex flex-col overflow-hidden group" onClick={() => handleSelect(template.blocks)}>
+                        <CardHeader className="p-0 relative h-32 overflow-hidden"> {/* Fixed height */}
+                             <Image
                                 src={template.previewImageUrl}
                                 alt={`${template.name} önizlemesi`}
                                 width={300}
                                 height={200}
-                                className="w-full h-32 object-cover rounded-t-lg"
-                            />
-                        </CardHeader>
-                        <CardContent className="p-4 flex flex-col flex-grow">
-                            <CardTitle className="text-base font-semibold mb-1">{template.name}</CardTitle>
-                            <p className="text-xs text-muted-foreground flex-grow">{template.description}</p>
-                             <Button variant="outline" size="sm" className="mt-3 w-full" onClick={(e) => { e.stopPropagation(); handleSelect(template.blocks); }}>Seç</Button> {/* Prevent card click, trigger select */}
-                        </CardContent>
+                                className="w-full h-full object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                             />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div> {/* Gradient overlay */}
+                              <CardTitle className="absolute bottom-2 left-3 text-sm font-semibold text-white p-1 bg-black/50 rounded text-shadow-sm">{template.name}</CardTitle> {/* Title on image */}
+                         </CardHeader>
+                         <CardContent className="p-3 flex flex-col flex-grow"> {/* Reduced padding */}
+                             <p className="text-xs text-muted-foreground flex-grow mb-2">{template.description}</p>
+                             <Button variant="outline" size="sm" className="mt-auto w-full" onClick={(e) => { e.stopPropagation(); handleSelect(template.blocks); }}>Seç</Button>
+                         </CardContent>
                     </Card>
                 ))}
             </div>
