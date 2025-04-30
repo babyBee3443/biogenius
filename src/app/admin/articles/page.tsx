@@ -153,7 +153,7 @@ export default function AdminArticlesPage() {
                      <Link href={`/admin/articles/edit/${article.id}`} className="hover:underline">
                         {article.title}
                      </Link>
-                    </TableCell>
+                  </TableCell>
                   <TableCell>
                      <Badge variant="secondary" className={`${getCategoryClass(article.category)} font-normal`}>
                         {article.category}
