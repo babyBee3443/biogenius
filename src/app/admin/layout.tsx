@@ -14,12 +14,13 @@ import {
   SidebarInset,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarGroupContent, // Added missing import
+  SidebarGroupContent,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings } from 'lucide-react'; // Icons for navigation
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut } from 'lucide-react'; // Added LogOut icon
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Card, CardContent } from '@/components/ui/card'; // Added Card for main content area
 
 export const metadata: Metadata = {
   title: 'TeknoBiyo Admin',
@@ -62,37 +63,72 @@ export default function AdminLayout({
         <SidebarContent className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={true} tooltip="Gösterge Paneli">
+              <SidebarMenuButton asChild tooltip="Gösterge Paneli">
                 <Link href="/admin">
                   <LayoutDashboard />
                   <span>Gösterge Paneli</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Makaleler">
-                <Link href="/admin/articles">
-                  <Newspaper />
-                  <span>Makaleler</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Kullanıcılar">
-                <Link href="/admin/users">
-                  <Users />
-                  <span>Kullanıcılar</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Ayarlar">
-                <Link href="/admin/settings">
-                  <Settings />
-                  <span>Ayarlar</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Tüm Makaleler">
+                        <Link href="/admin/articles">
+                        <Newspaper />
+                        <span>Makaleler</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    </SidebarMenuItem>
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Yeni Makale Ekle">
+                            <Link href="/admin/articles/new">
+                            <PlusCircle />
+                            <span>Yeni Makale</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {/* Add Categories, Tags, Media links here later */}
+                </SidebarMenu>
+             </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="p-0">
+               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Yönetim</SidebarGroupLabel>
+               <SidebarGroupContent>
+                 <SidebarMenu>
+                    <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Kullanıcılar">
+                        <Link href="/admin/users">
+                        <Users />
+                        <span>Kullanıcılar</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {/* Add Roles/Permissions link here later */}
+                 </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+             <SidebarGroup className="p-0">
+               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
+               <SidebarGroupContent>
+                 <SidebarMenu>
+                    <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Ayarlar">
+                        <Link href="/admin/settings">
+                        <Settings />
+                        <span>Ayarlar</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {/* Add Analytics, Logs links here later */}
+                 </SidebarMenu>
+               </SidebarGroupContent>
+             </SidebarGroup>
+
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-2">
@@ -111,6 +147,15 @@ export default function AdminLayout({
                         </Link>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                     <SidebarMenuButton asChild tooltip="Çıkış Yap">
+                        {/* TODO: Implement actual logout */}
+                        <Link href="/login">
+                           <LogOut />
+                           <span>Çıkış Yap</span>
+                        </Link>
+                     </SidebarMenuButton>
+                   </SidebarMenuItem>
                  </SidebarMenu>
               </SidebarGroupContent>
            </SidebarGroup>
@@ -118,12 +163,13 @@ export default function AdminLayout({
       </Sidebar>
       <SidebarInset className="flex flex-col">
          {/* Header for mobile and top bar content */}
-         <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:justify-end">
+         <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:justify-end">
            <SidebarTrigger className="md:hidden" />
            {/* Add other header elements like search or user menu here if needed */}
            <div className="flex items-center gap-2">
              <ThemeToggle />
              {/* Example User Dropdown Trigger */}
+             {/* TODO: Add dropdown menu for user actions */}
              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                 <Avatar className="size-7">
                    <AvatarImage src="https://picsum.photos/seed/admin-avatar/32/32" alt="Admin" />
@@ -132,7 +178,10 @@ export default function AdminLayout({
              </Button>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6">{children}</main>
+         <main className="flex-1 p-4 md:p-6">
+            {/* Removed Card wrapping here, let individual pages manage their main container */}
+            {children}
+         </main>
       </SidebarInset>
     </SidebarProvider>
   );
