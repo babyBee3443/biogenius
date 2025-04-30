@@ -31,8 +31,8 @@ interface Template {
   id: string;
   name: string;
   description: string;
-  previewImageUrl: string;
-  blocks: Block[]; // Content as an array of blocks
+  previewImageUrl: string; // URL for the small preview image in the selector dialog
+  blocks: Block[]; // Content as an array of blocks, including placeholder images for the actual article content
 }
 
 interface TemplateSelectorProps {
@@ -45,6 +45,9 @@ interface TemplateSelectorProps {
 
 
 // --- Mock Templates (Using Block Structure) ---
+// Note: The images defined within the 'blocks' array below use picsum.photos URLs.
+// These are placeholder images that will be part of the template content when selected.
+// They will appear in the editor and subsequently in the preview if the template is applied.
 const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
 const templates: Template[] = [
@@ -52,11 +55,11 @@ const templates: Template[] = [
     id: 'standard-article',
     name: 'Standart Makale',
     description: 'Başlık, ana görsel ve metin içeriği için temel düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template1/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template1/300/200', // Preview image for selector dialog
     blocks: [
       { id: generateId(), type: 'heading', level: 1, content: 'Makale Başlığı' },
-      { id: generateId(), type: 'text', content: 'Özetleyici bir giriş paragrafı buraya ekleyin...' }, // Removed emphasis/strong for simplicity, handle in editor
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/articleimg1/800/400', alt: 'Ana Görsel', caption: 'Görsel alt yazı (isteğe bağlı)' },
+      { id: generateId(), type: 'text', content: 'Özetleyici bir giriş paragrafı buraya ekleyin...' },
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/articleimg1/800/400', alt: 'Ana Görsel', caption: 'Görsel alt yazı (isteğe bağlı)' }, // Placeholder content image
       { id: generateId(), type: 'text', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.' },
       { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 1' },
       { id: generateId(), type: 'text', content: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.' },
@@ -70,17 +73,17 @@ const templates: Template[] = [
     id: 'listicle',
     name: 'Listeleme Makalesi',
     description: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.',
-    previewImageUrl: 'https://picsum.photos/seed/template2/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template2/300/200', // Preview image for selector dialog
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Harika [X] Şey Listesi' },
         { id: generateId(), type: 'text', content: 'Bu makalede, [konu] hakkında bilmeniz gereken en önemli [X] şeyi listeliyoruz. Giriş paragrafı buraya gelecek.' },
         { id: generateId(), type: 'heading', level: 2, content: '1. Birinci Madde Başlığı' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list1/600/300', alt: 'Madde 1 Görseli' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list1/600/300', alt: 'Madde 1 Görseli' }, // Placeholder content image
         { id: generateId(), type: 'text', content: 'Birinci maddenin açıklaması. Neden önemli olduğunu veya nasıl çalıştığını açıklayın.' },
         { id: generateId(), type: 'heading', level: 2, content: '2. İkinci Madde Başlığı' },
         { id: generateId(), type: 'text', content: 'İkinci maddenin detayları burada yer alacak. Örnekler veya ek bilgiler ekleyebilirsiniz.' },
         { id: generateId(), type: 'heading', level: 2, content: '3. Üçüncü Madde Başlığı' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list3/600/300', alt: 'Madde 3 Görseli' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list3/600/300', alt: 'Madde 3 Görseli' }, // Placeholder content image
         { id: generateId(), type: 'text', content: 'Üçüncü maddeye ilişkin açıklamalar ve önemli noktalar.' },
         { id: generateId(), type: 'text', content: '...' },
         { id: generateId(), type: 'heading', level: 2, content: '[X]. Son Madde Başlığı' },
@@ -92,15 +95,15 @@ const templates: Template[] = [
     id: 'image-gallery',
     name: 'Görsel Galerisi',
     description: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template3/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template3/300/200', // Preview image for selector dialog
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: '[Konu] Görsel Galerisi' },
         { id: generateId(), type: 'text', content: 'Bu galeride [konu] ile ilgili etkileyici görselleri bir araya getirdik. Galeri hakkında kısa bir açıklama.' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery1/800/500', alt: 'Görsel 1', caption: 'Görsel 1: Kısa ve açıklayıcı bir başlık. Bu görselin ne hakkında olduğunu veya neyi gösterdiğini anlatan birkaç cümle.' },
-        { id: generateId(), type: 'divider' }, // Use a simple divider block
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery2/800/500', alt: 'Görsel 2', caption: 'Görsel 2: Başka bir açıklayıcı başlık. Görselle ilgili ilginç detaylar veya bağlam bilgisi.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery1/800/500', alt: 'Görsel 1', caption: 'Görsel 1: Kısa ve açıklayıcı bir başlık. Bu görselin ne hakkında olduğunu veya neyi gösterdiğini anlatan birkaç cümle.' }, // Placeholder content image
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery3/800/500', alt: 'Görsel 3', caption: 'Görsel 3: Üçüncü görsel için başlık ve açıklama.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery2/800/500', alt: 'Görsel 2', caption: 'Görsel 2: Başka bir açıklayıcı başlık. Görselle ilgili ilginç detaylar veya bağlam bilgisi.' }, // Placeholder content image
+        { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery3/800/500', alt: 'Görsel 3', caption: 'Görsel 3: Üçüncü görsel için başlık ve açıklama.' }, // Placeholder content image
         { id: generateId(), type: 'text', content: 'Galeriyi sonlandıran veya ek bilgi veren bir paragraf.' },
     ]
   },
@@ -108,7 +111,7 @@ const templates: Template[] = [
     id: 'faq-article',
     name: 'SSS Makalesi',
     description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template4/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template4/300/200', // Preview image for selector dialog
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: '[Konu] Hakkında Sıkça Sorulan Sorular (SSS)' },
         { id: generateId(), type: 'text', content: '[Konu] ile ilgili merak edilen yaygın soruları ve cevaplarını bu makalede bulabilirsiniz.' },
@@ -127,19 +130,19 @@ const templates: Template[] = [
     id: 'how-to-guide',
     name: 'Nasıl Yapılır Rehberi',
     description: 'Adım adım talimatlar içeren öğretici makaleler için.',
-    previewImageUrl: 'https://picsum.photos/seed/template5/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template5/300/200', // Preview image for selector dialog
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: '[Görev] Nasıl Yapılır: Adım Adım Rehber' },
         { id: generateId(), type: 'text', content: 'Bu rehber, [görev] işlemini nasıl kolayca gerçekleştirebileceğinizi adım adım gösterecektir.' },
         { id: generateId(), type: 'heading', level: 2, content: 'Gereksinimler' },
         { id: generateId(), type: 'text', content: '- Gerekli malzeme veya araç 1\n- Gerekli malzeme veya araç 2\n- Önceden yapılması gerekenler (varsa)' }, // List as text
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: [İlk Adım Başlığı]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/step1/600/350', alt: 'Adım 1 Görseli' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/step1/600/350', alt: 'Adım 1 Görseli' }, // Placeholder content image
         { id: generateId(), type: 'text', content: 'İlk adımın detaylı açıklaması. Ne yapmanız gerektiğini net bir şekilde belirtin.' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: [İkinci Adım Başlığı]' },
         { id: generateId(), type: 'text', content: 'İkinci adımın açıklaması. İpuçları veya dikkat edilmesi gereken noktaları ekleyin.' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: [Üçüncü Adım Başlığı]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/step3/600/350', alt: 'Adım 3 Görseli' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/step3/600/350', alt: 'Adım 3 Görseli' }, // Placeholder content image
         { id: generateId(), type: 'text', content: 'Üçüncü adımın detayları.' },
         { id: generateId(), type: 'text', content: '...' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım [X]: [Son Adım Başlığı]' },
@@ -152,16 +155,16 @@ const templates: Template[] = [
     id: 'interview-article',
     name: 'Röportaj Makalesi',
     description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/template6/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template6/300/200', // Preview image for selector dialog
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: '[Kişi Adı] ile Özel Röportaj: [Röportaj Konusu]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interviewee/300/300', alt: '[Kişi Adı]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interviewee/300/300', alt: '[Kişi Adı]' }, // Placeholder content image (profile picture)
         { id: generateId(), type: 'text', content: '[Kişi Adı], [Kişinin Unvanı/Alanı], [konu] hakkındaki görüşlerini ve deneyimlerini paylaştı. Giriş paragrafı...' },
         { id: generateId(), type: 'heading', level: 2, content: 'Giriş ve Bağlam' },
         { id: generateId(), type: 'text', content: 'Röportajın neden yapıldığı veya kişinin uzmanlığı hakkında kısa bir bilgi verin.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'text', content: '**Soru:** İlk soru buraya yazılacak?' }, // Question marker
-        { id: generateId(), type: 'text', content: '**Cevap:** İlk sorunun cevabı. Kişinin kendi ifadeleriyle...' }, // Answer marker
+        { id: generateId(), type: 'text', content: '**Soru:** İlk soru buraya yazılacak?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** İlk sorunun cevabı. Kişinin kendi ifadeleriyle...' },
         { id: generateId(), type: 'text', content: '**Soru:** İkinci soru...?' },
         { id: generateId(), type: 'text', content: '**Cevap:** İkinci sorunun cevabı...' },
         { id: generateId(), type: 'text', content: '**Soru:** Üçüncü soru...?' },
@@ -195,19 +198,10 @@ const blocksToHtml = (blocks: Block[]): string => {
             case 'image':
                  html += `<figure>\n  <img src="${block.url}" alt="${block.alt}" />\n`;
                 if (block.caption) {
-                    // Simple caption handling
                     html += `  <figcaption>${block.caption}</figcaption>\n`;
                  }
                  html += `</figure>\n`;
                 break;
-             // case 'list': // If you add a dedicated list block
-             //     const tag = block.ordered ? 'ol' : 'ul';
-             //     html += `<${tag}>\n`;
-             //     block.items.forEach(item => {
-             //         html += `  <li>${item}</li>\n`;
-             //     });
-             //     html += `</${tag}>\n`;
-             //     break;
              case 'quote':
                 html += `<blockquote><p>${block.content}</p>`;
                 if (block.citation) {
@@ -216,21 +210,19 @@ const blocksToHtml = (blocks: Block[]): string => {
                 html += `</blockquote>\n`;
                 break;
              case 'code':
-                 // Use pre and code tags, maybe add class for syntax highlighting later
                  html += `<pre><code class="language-${block.language}">${block.content}</code></pre>\n`;
                  break;
              case 'divider':
                  html += `<hr />\n`;
                  break;
-             case 'gallery': // Simple gallery handling
+             case 'gallery':
                  html += `<div class="gallery">\n`;
                  block.images.forEach(img => {
                      html += `  <figure><img src="${img.url}" alt="${img.alt}" /></figure>\n`;
                  });
                  html += `</div>\n`;
                  break;
-             case 'video': // Simple video embed (assuming youtube or similar)
-                // Basic URL check - needs improvement for robustness
+             case 'video':
                  if (block.url.includes('youtube.com') || block.url.includes('youtu.be')) {
                      const videoId = block.url.split('v=')[1]?.split('&')[0] || block.url.split('/').pop();
                      html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
@@ -275,7 +267,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
                     <Card key={template.id} className="cursor-pointer hover:shadow-lg transition-shadow flex flex-col overflow-hidden group" onClick={() => handleSelect(template.blocks)}>
                         <CardHeader className="p-0 relative h-32 overflow-hidden"> {/* Fixed height */}
                              <Image
-                                src={template.previewImageUrl}
+                                src={template.previewImageUrl} // This is the small image shown in the dialog
                                 alt={`${template.name} önizlemesi`}
                                 width={300}
                                 height={200}
@@ -301,5 +293,3 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
     </Dialog>
   );
 }
-
-    
