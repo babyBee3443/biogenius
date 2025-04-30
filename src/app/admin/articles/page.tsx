@@ -140,7 +140,7 @@ export default function AdminArticlesPage() {
               <TableRow>
                 <TableHead>Başlık</TableHead>
                 <TableHead>Kategori</TableHead>
-                <TableHead>Yazar</TableHead> {/* Added Author Column */}
+                <TableHead>Yazar</TableHead>{/* Added Author Column */}
                 <TableHead>Durum</TableHead>
                 <TableHead>Oluşturulma Tarihi</TableHead>
                 <TableHead className="text-right">Eylemler</TableHead>
@@ -218,4 +218,3 @@ export default function AdminArticlesPage() {
     </div>
   );
 }
-
