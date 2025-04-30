@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
+import { ArrowRight } from "lucide-react";
 
 interface Article {
   id: string;
@@ -61,32 +62,36 @@ const recentArticles: Article[] = [
 
 export default function Home() {
   return (
-    <div className="space-y-12">
+    <div className="space-y-16"> {/* Increased spacing between sections */}
       {/* Featured Articles Showcase */}
       <section>
-        <h2 className="text-3xl font-bold mb-6">Öne Çıkanlar</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <h2 className="text-3xl font-bold mb-8">Öne Çıkanlar</h2> {/* Increased margin bottom */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Increased gap */}
           {featuredArticles.map((article) => (
-            <Card key={article.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-              <CardHeader className="p-0">
+            <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group"> {/* Subtle shadow, ease transition, group for hover */}
+              <CardHeader className="p-0 relative">
                  <Image
                   src={article.imageUrl}
                   alt={article.title}
                   width={600}
                   height={400}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" // Slight zoom on hover
                   priority={featuredArticles.indexOf(article) < 3} // Prioritize loading images for the first few articles
                 />
+                {/* Optional: Add an overlay on hover */}
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </CardHeader>
-              <CardContent className="p-4 flex flex-col flex-grow">
-                 <CardTitle className="text-xl font-semibold mb-2">{article.title}</CardTitle>
-                <CardDescription className="text-muted-foreground mb-4 flex-grow">{article.description}</CardDescription>
+              <CardContent className="p-6 flex flex-col flex-grow"> {/* Increased padding */}
+                 <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle> {/* Increased margin bottom */}
+                <CardDescription className="text-muted-foreground mb-5 flex-grow">{article.description}</CardDescription> {/* Increased margin bottom */}
                  <div className="mt-auto flex justify-between items-center">
-                   <span className={`text-sm font-medium ${article.category === 'Teknoloji' ? 'text-blue-600' : 'text-green-600'}`}>
+                   <span className={`text-xs font-semibold px-2 py-1 rounded ${article.category === 'Teknoloji' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}>
                      {article.category}
                    </span>
-                   <Button asChild variant="link" className="p-0 h-auto text-primary">
-                     <Link href={`/articles/${article.id}`}>Devamını Oku →</Link>
+                   <Button asChild variant="link" className="p-0 h-auto text-primary hover:text-primary/80 transition-colors">
+                     <Link href={`/articles/${article.id}`} className="flex items-center">
+                       Devamını Oku <ArrowRight className="ml-1 h-4 w-4" />
+                      </Link>
                    </Button>
                  </div>
               </CardContent>
@@ -97,20 +102,20 @@ export default function Home() {
 
        {/* Category-Based Browsing Teaser */}
        <section>
-         <h2 className="text-3xl font-bold mb-6">Kategoriler</h2>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-           <div className="bg-secondary p-8 rounded-lg shadow-md text-center">
-             <h3 className="text-2xl font-semibold mb-4">Teknoloji</h3>
+         <h2 className="text-3xl font-bold mb-8">Kategoriler</h2> {/* Increased margin bottom */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8"> {/* Increased gap */}
+           <div className="bg-secondary/70 p-8 rounded-lg shadow-sm text-center border border-transparent hover:border-primary/30 transition-colors duration-300"> {/* Subtle background, border on hover */}
+             <h3 className="text-2xl font-semibold mb-3">Teknoloji</h3> {/* Increased margin bottom */}
              <p className="text-muted-foreground mb-6">Yapay zeka, kuantum bilişim, yazılım geliştirme ve daha fazlası hakkında en son makaleler.</p>
              <Button asChild>
-               <Link href="/categories/teknoloji">Teknoloji Makaleleri</Link>
+               <Link href="/categories/teknoloji">Teknoloji Makaleleri <ArrowRight className="ml-2 h-4 w-4" /></Link>
              </Button>
            </div>
-           <div className="bg-secondary p-8 rounded-lg shadow-md text-center">
-             <h3 className="text-2xl font-semibold mb-4">Biyoloji</h3>
+           <div className="bg-secondary/70 p-8 rounded-lg shadow-sm text-center border border-transparent hover:border-primary/30 transition-colors duration-300"> {/* Subtle background, border on hover */}
+             <h3 className="text-2xl font-semibold mb-3">Biyoloji</h3> {/* Increased margin bottom */}
              <p className="text-muted-foreground mb-6">Genetik, mikrobiyoloji, evrim, ekoloji ve yaşam bilimlerinin diğer dallarındaki gelişmeler.</p>
              <Button asChild>
-               <Link href="/categories/biyoloji">Biyoloji Makaleleri</Link>
+               <Link href="/categories/biyoloji">Biyoloji Makaleleri <ArrowRight className="ml-2 h-4 w-4" /></Link>
              </Button>
            </div>
          </div>
@@ -119,28 +124,31 @@ export default function Home() {
 
       {/* Recent Articles */}
       <section>
-        <h2 className="text-3xl font-bold mb-6">En Son Eklenenler</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <h2 className="text-3xl font-bold mb-8">En Son Eklenenler</h2> {/* Increased margin bottom */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Increased gap */}
            {recentArticles.map((article) => (
-             <Card key={article.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-               <CardHeader className="p-0">
+             <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group"> {/* Subtle shadow, ease transition, group for hover */}
+               <CardHeader className="p-0 relative">
                   <Image
                     src={article.imageUrl}
                     alt={article.title}
                     width={600}
                     height={400}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" // Slight zoom on hover
                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                </CardHeader>
-               <CardContent className="p-4 flex flex-col flex-grow">
-                  <CardTitle className="text-xl font-semibold mb-2">{article.title}</CardTitle>
-                 <CardDescription className="text-muted-foreground mb-4 flex-grow">{article.description}</CardDescription>
+               <CardContent className="p-6 flex flex-col flex-grow"> {/* Increased padding */}
+                  <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle> {/* Increased margin bottom */}
+                 <CardDescription className="text-muted-foreground mb-5 flex-grow">{article.description}</CardDescription> {/* Increased margin bottom */}
                   <div className="mt-auto flex justify-between items-center">
-                    <span className={`text-sm font-medium ${article.category === 'Teknoloji' ? 'text-blue-600' : 'text-green-600'}`}>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded ${article.category === 'Teknoloji' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}>
                       {article.category}
                     </span>
-                    <Button asChild variant="link" className="p-0 h-auto text-primary">
-                      <Link href={`/articles/${article.id}`}>Devamını Oku →</Link>
+                    <Button asChild variant="link" className="p-0 h-auto text-primary hover:text-primary/80 transition-colors">
+                      <Link href={`/articles/${article.id}`} className="flex items-center">
+                        Devamını Oku <ArrowRight className="ml-1 h-4 w-4" />
+                      </Link>
                     </Button>
                   </div>
                </CardContent>

@@ -2,14 +2,23 @@ import Link from 'next/link';
 
 const Footer = () => {
   return (
-    <footer className="border-t bg-muted/40">
-      <div className="container py-8 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} TeknoBiyo. Tüm hakları saklıdır.</p>
-        <div className="mt-2 space-x-4">
-          <Link href="/hakkinda" className="hover:text-primary">Hakkında</Link>
-          <Link href="/iletisim" className="hover:text-primary">İletişim</Link>
-          <Link href="/gizlilik-politikasi" className="hover:text-primary">Gizlilik Politikası</Link>
-          <Link href="/kullanim-sartlari" className="hover:text-primary">Kullanım Şartları</Link>
+    <footer className="border-t border-border/40 bg-secondary/50 mt-16"> {/* Added margin-top */}
+      <div className="container py-10 text-center md:text-left"> {/* Adjusted padding and text alignment */}
+        <div className="md:flex md:justify-between md:items-center">
+          <div className="mb-6 md:mb-0">
+            <p className="text-sm text-muted-foreground">
+              &copy; {new Date().getFullYear()} TeknoBiyo. Tüm hakları saklıdır.
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Teknoloji ve biyoloji dünyasındaki en son gelişmeler.
+            </p>
+          </div>
+          <div className="flex justify-center md:justify-start space-x-5 text-sm"> {/* Increased spacing */}
+            <Link href="/hakkinda" className="text-muted-foreground hover:text-primary transition-colors">Hakkında</Link>
+            <Link href="/iletisim" className="text-muted-foreground hover:text-primary transition-colors">İletişim</Link>
+            <Link href="/gizlilik-politikasi" className="text-muted-foreground hover:text-primary transition-colors">Gizlilik Politikası</Link>
+            <Link href="/kullanim-sartlari" className="text-muted-foreground hover:text-primary transition-colors">Kullanım Şartları</Link>
+          </div>
         </div>
       </div>
     </footer>

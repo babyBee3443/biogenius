@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist } from 'next/font/google'; // Removed Geist_Mono, using only Geist Sans
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import Header from '@/components/header';
@@ -11,14 +11,11 @@ const geistSans = Geist({
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+// Removed geistMono
 
 export const metadata: Metadata = {
-  title: 'TeknoBiyo Articles',
-  description: 'Teknoloji ve Biyoloji Makaleleri',
+  title: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri', // Enhanced title
+  description: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.', // Enhanced description
 };
 
 export default function RootLayout({
@@ -28,7 +25,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {/* Applied Geist Sans font variable directly to body */}
+      <body className={`${geistSans.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -37,7 +35,8 @@ export default function RootLayout({
         >
           <div className="flex flex-col min-h-screen">
             <Header />
-            <main className="flex-grow container py-8">{children}</main>
+            {/* Added slight top padding to main content area */}
+            <main className="flex-grow container py-12">{children}</main>
             <Footer />
           </div>
           <Toaster />

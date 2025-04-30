@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { ArrowLeft, ArrowRight } from "lucide-react"; // Added icons
 
 interface Article {
   id: string;
@@ -46,30 +47,34 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const articles = allArticles.filter(article => article.category === categoryName);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-4xl font-bold">{categoryName} Makaleleri</h1>
+    <div className="space-y-12"> {/* Increased spacing */}
+      <h1 className="text-4xl font-bold mb-8">{categoryName} Makaleleri</h1> {/* Added margin bottom */}
       {articles.length === 0 ? (
-        <p className="text-muted-foreground">Bu kategoride henüz makale bulunmamaktadır.</p>
+        <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">Bu kategoride henüz makale bulunmamaktadır.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Increased gap */}
           {articles.map((article) => (
-             <Card key={article.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-               <CardHeader className="p-0">
+             <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group"> {/* Subtle shadow, ease transition, group for hover */}
+               <CardHeader className="p-0 relative">
                  <Image
                    src={article.imageUrl}
                    alt={article.title}
                    width={600}
                    height={400}
-                   className="w-full h-48 object-cover"
+                   className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" // Slight zoom on hover
                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                </CardHeader>
-               <CardContent className="p-4 flex flex-col flex-grow">
-                 <CardTitle className="text-xl font-semibold mb-2">{article.title}</CardTitle>
-                 <CardDescription className="text-muted-foreground mb-4 flex-grow">{article.description}</CardDescription>
-                 <div className="mt-auto flex justify-between items-center">
-                    {/* Category tag can be omitted here as we are already in the category page */}
-                    <Button asChild variant="link" className="p-0 h-auto text-primary">
-                       <Link href={`/articles/${article.id}`}>Devamını Oku →</Link>
+               <CardContent className="p-6 flex flex-col flex-grow"> {/* Increased padding */}
+                 <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle> {/* Increased margin bottom */}
+                 <CardDescription className="text-muted-foreground mb-5 flex-grow">{article.description}</CardDescription> {/* Increased margin bottom */}
+                 <div className="mt-auto flex justify-end items-center"> {/* Aligned button to the right */}
+                    <Button asChild variant="link" className="p-0 h-auto text-primary hover:text-primary/80 transition-colors">
+                       <Link href={`/articles/${article.id}`} className="flex items-center">
+                          Devamını Oku <ArrowRight className="ml-1 h-4 w-4" />
+                        </Link>
                     </Button>
                  </div>
                </CardContent>
@@ -77,9 +82,11 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           ))}
         </div>
       )}
-       <div className="mt-8 text-center">
+       <div className="mt-12 text-center"> {/* Increased margin top */}
            <Button asChild variant="outline">
-             <Link href="/">Ana Sayfaya Dön</Link>
+             <Link href="/" className="inline-flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Ana Sayfaya Dön
+             </Link>
            </Button>
        </div>
     </div>

@@ -3,30 +3,32 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif; /* Apply Geist Sans globally */
+  @apply text-base; /* Slightly increase base font size */
 }
 
 @layer base {
   :root {
+    /* Light Theme - Refined Palette */
     --background: 0 0% 100%; /* White */
-    --foreground: 210 10% 23%; /* Darker Grey */
+    --foreground: 220 9% 25%; /* Softer Dark Grey */
     --card: 0 0% 100%;
-    --card-foreground: 210 10% 23%;
+    --card-foreground: 220 9% 25%;
     --popover: 0 0% 100%;
-    --popover-foreground: 210 10% 23%;
-    --primary: 180 100% 25%; /* Teal */
+    --popover-foreground: 220 9% 25%;
+    --primary: 175 80% 30%; /* Deeper Teal */
     --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 210 10% 96.1%; /* Light Grey */
-    --secondary-foreground: 210 10% 23%;
-    --muted: 210 10% 96.1%; /* Light Grey */
-    --muted-foreground: 210 10% 45%; /* Muted Grey */
-    --accent: 180 100% 25%; /* Teal */
+    --secondary: 220 20% 96%; /* Very Light Grey */
+    --secondary-foreground: 220 9% 25%;
+    --muted: 220 20% 96%; /* Very Light Grey */
+    --muted-foreground: 220 10% 55%; /* Muted Grey */
+    --accent: 175 80% 30%; /* Teal */
     --accent-foreground: 0 0% 100%; /* White */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 10% 89.8%; /* Slightly darker grey border */
-    --input: 210 10% 89.8%;
-    --ring: 180 100% 25%; /* Teal for focus rings */
+    --destructive: 0 75% 55%; /* Refined Red */
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 90%; /* Subtle Light Grey Border */
+    --input: 220 15% 90%;
+    --ring: 175 80% 30%; /* Teal for focus rings */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -43,25 +45,26 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 210 10% 10%; /* Dark Grey/Blue */
-    --foreground: 210 10% 85%; /* Light Grey */
-    --card: 210 10% 10%;
-    --card-foreground: 210 10% 85%;
-    --popover: 210 10% 10%;
-    --popover-foreground: 210 10% 85%;
-    --primary: 180 80% 40%; /* Lighter Teal */
-    --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 210 10% 14.9%;
-    --secondary-foreground: 210 10% 85%;
-    --muted: 210 10% 14.9%;
-    --muted-foreground: 210 10% 55%; /* Muted Grey */
-    --accent: 180 80% 40%; /* Lighter Teal */
-    --accent-foreground: 0 0% 100%; /* White */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 10% 20%; /* Darker border for dark mode */
-    --input: 210 10% 20%;
-    --ring: 180 80% 40%; /* Lighter Teal for focus rings */
+     /* Dark Theme - Refined Palette */
+    --background: 220 15% 8%; /* Deep Cool Dark Grey */
+    --foreground: 210 15% 88%; /* Soft Light Grey */
+    --card: 220 15% 10%; /* Slightly lighter than background */
+    --card-foreground: 210 15% 88%;
+    --popover: 220 15% 8%;
+    --popover-foreground: 210 15% 88%;
+    --primary: 175 75% 45%; /* Brighter Rich Teal */
+    --primary-foreground: 220 15% 10%; /* Dark text on primary */
+    --secondary: 220 10% 15%; /* Darker Grey */
+    --secondary-foreground: 210 15% 88%;
+    --muted: 220 10% 15%;
+    --muted-foreground: 210 10% 60%; /* Muted Grey */
+    --accent: 175 75% 45%; /* Lighter Teal */
+    --accent-foreground: 220 15% 10%; /* Dark text on accent */
+    --destructive: 0 65% 50%; /* Refined Dark Red */
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 10% 20%; /* Darker border for dark mode */
+    --input: 220 10% 20%;
+    --ring: 175 75% 45%; /* Lighter Teal for focus rings */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -84,7 +87,73 @@ body {
   }
   body {
     @apply bg-background text-foreground transition-colors duration-300;
+    /* Smoother font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight; /* Tighter tracking for headings */
+  }
+  h1 { @apply text-4xl; }
+  h2 { @apply text-3xl; }
+  h3 { @apply text-2xl; }
+  h4 { @apply text-xl; }
+
+  /* Basic prose styling for article content */
+  .prose {
+     @apply max-w-none; /* Override max-width for full container width */
+     color: hsl(var(--foreground));
+   }
+   .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+     @apply mb-4 mt-8 font-semibold tracking-tight;
+   }
+   .prose h1 { @apply text-3xl; }
+   .prose h2 { @apply text-2xl; }
+   .prose h3 { @apply text-xl; }
+   .prose p {
+     @apply leading-relaxed mb-6; /* Slightly looser line height for readability */
+   }
+   .prose a {
+     @apply text-primary hover:underline decoration-primary/50 underline-offset-4;
+   }
+   .prose strong {
+     @apply font-semibold;
+   }
+   .prose blockquote {
+     @apply border-l-4 border-primary pl-4 italic text-muted-foreground my-6;
+   }
+   .prose ul, .prose ol {
+      @apply pl-6 mb-6 space-y-2;
+   }
+   .prose li > ul, .prose li > ol {
+      @apply mt-2;
+   }
+   .prose code {
+      @apply px-1 py-0.5 bg-muted rounded-sm font-mono text-sm;
+   }
+   .prose pre {
+      @apply bg-muted p-4 rounded-md overflow-x-auto text-sm my-6;
+   }
+   .prose img {
+      @apply rounded-lg shadow-md my-8; /* Style images within prose */
+   }
+
+  /* Adjust prose colors for dark mode */
+   .dark .prose {
+     color: hsl(var(--foreground));
+   }
+   .dark .prose a {
+     @apply text-primary hover:underline decoration-primary/50;
+   }
+   .dark .prose blockquote {
+      @apply border-primary text-muted-foreground;
+   }
+    .dark .prose code {
+      @apply bg-secondary;
+   }
+    .dark .prose pre {
+      @apply bg-secondary;
+   }
 }
 
 @layer components {
