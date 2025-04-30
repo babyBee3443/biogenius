@@ -10,31 +10,44 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Upload, Image as ImageIcon } from "lucide-react"; // Added icons
+import { ArrowLeft, Save, Upload, Image as ImageIcon, LayoutTemplate } from "lucide-react"; // Added LayoutTemplate icon
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import Image from 'next/image';
+import { TemplateSelector } from "@/components/admin/template-selector"; // Import TemplateSelector component
 
-// Placeholder for a Rich Text Editor component
-const RichTextEditorPlaceholder = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
-    (props, ref) => (
-        <Textarea ref={ref} rows={15} placeholder="Makale içeriğini buraya yazın... Zengin metin editörü (WYSIWYG) entegrasyonu gereklidir." {...props} />
+// Placeholder for a Rich Text Editor component - Needs replacement with a block editor for drag-and-drop
+const RichTextEditorPlaceholder = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement> & { onContentChange: (content: string) => void }>(
+    ({ value, onContentChange, ...props }, ref) => (
+        <Textarea
+            ref={ref}
+            rows={15}
+            placeholder="Makale içeriğini buraya yazın veya bir şablon seçin..."
+            value={value}
+            onChange={(e) => onContentChange(e.target.value)} // Ensure content changes are propagated
+            {...props}
+        />
     )
 );
 RichTextEditorPlaceholder.displayName = 'RichTextEditorPlaceholder';
 
 
 export default function NewArticlePage() {
-    // TODO: Implement state management for form fields (e.g., using react-hook-form)
+    // State management for form fields
     const [title, setTitle] = React.useState("");
-    const [content, setContent] = React.useState("");
+    const [content, setContent] = React.useState(""); // Content state
     const [category, setCategory] = React.useState("");
-    const [status, setStatus] = React.useState("Taslak"); // Default status
+    const [status, setStatus] = React.useState("Taslak");
     const [featuredImage, setFeaturedImage] = React.useState<File | null>(null);
     const [imagePreview, setImagePreview] = React.useState<string | null>(null);
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
+    const [tags, setTags] = React.useState<string[]>([]);
+
+    const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
+
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -53,7 +66,7 @@ export default function NewArticlePage() {
 
     const handleSave = (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
-         console.log("Saving article:", { title, content, category, status: finalStatus, featuredImage, seoTitle, seoDescription, slug, isFeatured });
+         console.log("Saving article:", { title, content, category, status: finalStatus, featuredImage, seoTitle, seoDescription, slug, isFeatured, tags: tags.join(',') }); // Log tags as comma-separated string
          // TODO: Implement actual API call to save/publish the article
          toast({
              title: publish ? "Makale Yayınlandı" : "Makale Kaydedildi",
@@ -62,30 +75,41 @@ export default function NewArticlePage() {
          // Redirect or clear form based on action
     };
 
-
-    // Basic slug generation (replace with a more robust library if needed)
-    const generateSlug = (title: string) => {
-        return title
+    // Basic slug generation
+    const generateSlug = (text: string) => {
+        return text
             .toLowerCase()
-            .replace(/ğ/g, 'g')
-            .replace(/ü/g, 'u')
-            .replace(/ş/g, 's')
-            .replace(/ı/g, 'i')
-            .replace(/ö/g, 'o')
-            .replace(/ç/g, 'c')
-            .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-            .replace(/\s+/g, '-') // collapse whitespace and replace by -
-            .replace(/-+/g, '-'); // collapse dashes
+            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+            .replace(/[^a-z0-9 -]/g, '')
+            .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
+     // Auto-generate slug from title
      React.useEffect(() => {
-        if (title && !slug) { // Auto-generate slug only if empty
-            setSlug(generateSlug(title));
+         if (title) { // Auto-generate slug when title changes, even if slug already exists (optional behavior)
+             setSlug(generateSlug(title));
+         }
+     }, [title]);
+
+     // Handler for tag input change
+     const handleTagsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const tagsString = event.target.value;
+        setTags(tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== '')); // Split and clean tags
+     };
+
+     // Handler for template selection
+     const handleTemplateSelect = (templateContent: string) => {
+        // Ask for confirmation before overwriting existing content
+        if (content && !window.confirm("Mevcut içeriğin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
+            return;
         }
-    }, [title, slug]); // Added slug to dependencies
+        setContent(templateContent); // Update content state with template
+        setIsTemplateSelectorOpen(false); // Close the selector
+     };
 
 
     return (
+        <>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -118,9 +142,21 @@ export default function NewArticlePage() {
                                 <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Makale başlığını girin..." required />
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="content">İçerik</Label>
-                                {/* Replace with actual Rich Text Editor */}
-                                <RichTextEditorPlaceholder id="content" value={content} onChange={(e) => setContent(e.target.value)} />
+                                <div className="flex justify-between items-center mb-2">
+                                    <Label htmlFor="content">İçerik</Label>
+                                    <Button variant="outline" size="sm" onClick={() => setIsTemplateSelectorOpen(true)}>
+                                        <LayoutTemplate className="mr-2 h-4 w-4" /> Şablon Seç
+                                    </Button>
+                                </div>
+                                {/* Replace with actual Rich Text/Block Editor */}
+                                <RichTextEditorPlaceholder
+                                    id="content"
+                                    value={content} // Pass content state
+                                    onContentChange={setContent} // Pass update handler
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    İçeriği biçimlendirmek için zengin metin editörünü kullanın veya hazır bir şablon seçin. Sürükle-bırak işlevselliği için gelişmiş bir editör gereklidir.
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
@@ -197,8 +233,13 @@ export default function NewArticlePage() {
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="tags">Etiketler</Label>
-                                {/* TODO: Implement a Tag input component */}
-                                <Input id="tags" placeholder="Etiketleri virgülle ayırın (ör: ai, crispr)" />
+                                <Input
+                                    id="tags"
+                                    value={tags.join(', ')} // Display tags as comma-separated string
+                                    onChange={handleTagsChange} // Use handler to update array
+                                    placeholder="Etiketleri virgülle ayırın (ör: ai, crispr)"
+                                />
+                                <p className="text-xs text-muted-foreground">Etiketleri virgül (,) ile ayırarak girin.</p>
                              </div>
                         </CardContent>
                      </Card>
@@ -254,5 +295,14 @@ export default function NewArticlePage() {
                 </Button>
              </div>
         </form>
+
+        {/* Template Selector Modal */}
+        <TemplateSelector
+            isOpen={isTemplateSelectorOpen}
+            onClose={() => setIsTemplateSelectorOpen(false)}
+            onSelectTemplate={handleTemplateSelect}
+        />
+        </>
     );
 }
+

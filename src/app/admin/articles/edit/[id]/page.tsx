@@ -11,10 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Upload, Image as ImageIcon, Trash2, History, MessageSquare } from "lucide-react"; // Added icons
+import { ArrowLeft, Save, Upload, Image as ImageIcon, Trash2, History, MessageSquare, LayoutTemplate } from "lucide-react"; // Added LayoutTemplate icon
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import Image from 'next/image'; // For image preview
+import { TemplateSelector } from "@/components/admin/template-selector"; // Import TemplateSelector component
 
 // Mock data fetching - replace with actual API call
 const getArticleById = async (id: string): Promise<Article | null> => {
@@ -32,10 +33,10 @@ const getArticleById = async (id: string): Promise<Article | null> => {
 interface Article {
   id: string;
   title: string;
-  content: string;
+  content: string; // Content should be structured data for a block editor ideally
   category: string;
   status: string;
-  imageUrl: string | null; // Allow null for cases where image might not exist yet
+  imageUrl: string | null;
   seoTitle: string;
   seoDescription: string;
   slug: string;
@@ -44,10 +45,17 @@ interface Article {
 }
 
 
-// Placeholder for a Rich Text Editor component
-const RichTextEditorPlaceholder = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement> & { initialValue?: string }>(
-    ({ initialValue, ...props }, ref) => (
-        <Textarea ref={ref} rows={15} placeholder="Makale içeriğini buraya yazın..." defaultValue={initialValue} {...props} />
+// Placeholder for a Rich Text/Block Editor component - Needs replacement
+const RichTextEditorPlaceholder = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement> & { initialValue?: string; onContentChange: (content: string) => void }>(
+    ({ initialValue, onContentChange, ...props }, ref) => (
+        <Textarea
+            ref={ref}
+            rows={15}
+            placeholder="Makale içeriğini buraya yazın veya bir şablon seçin..."
+            defaultValue={initialValue}
+            onChange={(e) => onContentChange(e.target.value)} // Ensure content changes are propagated
+            {...props}
+        />
     )
 );
 RichTextEditorPlaceholder.displayName = 'RichTextEditorPlaceholder';
@@ -61,10 +69,11 @@ export default function EditArticlePage() {
     const [loading, setLoading] = React.useState(true);
     const [featuredImageFile, setFeaturedImageFile] = React.useState<File | null>(null);
     const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+    const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
 
      // Form state - initialize with empty strings or defaults
      const [title, setTitle] = React.useState("");
-     const [content, setContent] = React.useState("");
+     const [content, setContent] = React.useState(""); // Content state
      const [category, setCategory] = React.useState("");
      const [status, setStatus] = React.useState("Taslak");
      const [seoTitle, setSeoTitle] = React.useState("");
@@ -82,7 +91,7 @@ export default function EditArticlePage() {
                         setArticle(data);
                         // Initialize form state with fetched data
                         setTitle(data.title);
-                        setContent(data.content); // Assuming content is fetched as HTML string
+                        setContent(data.content); // Initialize content state
                         setCategory(data.category);
                         setStatus(data.status);
                         setImagePreview(data.imageUrl);
@@ -125,7 +134,7 @@ export default function EditArticlePage() {
 
     const handleSave = (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
-         console.log("Updating article:", { articleId, title, content, category, status: finalStatus, featuredImageFile, seoTitle, seoDescription, slug, isFeatured, tags });
+         console.log("Updating article:", { articleId, title, content, category, status: finalStatus, featuredImageFile, seoTitle, seoDescription, slug, isFeatured, tags: tags.join(',') }); // Log tags
          // TODO: Implement actual API call to update the article
           // Use FormData if sending file:
          // const formData = new FormData();
@@ -154,7 +163,7 @@ export default function EditArticlePage() {
         }
     };
 
-     // Basic slug generation (replace with a more robust library if needed)
+     // Basic slug generation
     const generateSlug = (text: string) => {
         return text
             .toLowerCase()
@@ -162,6 +171,29 @@ export default function EditArticlePage() {
             .replace(/[^a-z0-9 -]/g, '')
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
+
+    // Auto-update slug when title changes (optional)
+    React.useEffect(() => {
+        if (title && articleId) { // Only update slug if title exists and we are editing
+            setSlug(generateSlug(title));
+        }
+    }, [title, articleId]); // Re-run when title or articleId changes
+
+     // Handler for tag input change
+     const handleTagsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const tagsString = event.target.value;
+        setTags(tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== '')); // Split and clean tags
+     };
+
+      // Handler for template selection
+     const handleTemplateSelect = (templateContent: string) => {
+        // Ask for confirmation before overwriting existing content
+        if (content && !window.confirm("Mevcut içeriğin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
+            return;
+        }
+        setContent(templateContent); // Update content state with template
+        setIsTemplateSelectorOpen(false); // Close the selector
+     };
 
 
     if (loading) {
@@ -175,6 +207,7 @@ export default function EditArticlePage() {
     }
 
     return (
+        <>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -218,9 +251,22 @@ export default function EditArticlePage() {
                                 <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="content">İçerik</Label>
-                                {/* Replace with actual Rich Text Editor, passing initial value */}
-                                <RichTextEditorPlaceholder id="content" initialValue={content} onChange={(e) => setContent(e.target.value)} />
+                                 <div className="flex justify-between items-center mb-2">
+                                     <Label htmlFor="content">İçerik</Label>
+                                     <Button variant="outline" size="sm" onClick={() => setIsTemplateSelectorOpen(true)}>
+                                         <LayoutTemplate className="mr-2 h-4 w-4" /> Şablon Seç
+                                     </Button>
+                                 </div>
+                                {/* Replace with actual Rich Text/Block Editor */}
+                                <RichTextEditorPlaceholder
+                                    id="content"
+                                    initialValue={content} // Pass initial content
+                                    onContentChange={setContent} // Pass update handler
+                                    key={articleId} // Force re-render if article changes
+                                />
+                                 <p className="text-xs text-muted-foreground">
+                                    İçeriği biçimlendirmek için zengin metin editörünü kullanın veya hazır bir şablon seçin. Sürükle-bırak işlevselliği için gelişmiş bir editör gereklidir.
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
@@ -308,8 +354,13 @@ export default function EditArticlePage() {
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="tags">Etiketler</Label>
-                                {/* TODO: Implement a Tag input component with existing tags */}
-                                <Input id="tags" defaultValue={tags.join(', ')} placeholder="Etiketleri virgülle ayırın" />
+                                 <Input
+                                    id="tags"
+                                    value={tags.join(', ')} // Display tags as comma-separated string
+                                    onChange={handleTagsChange} // Use handler to update array
+                                    placeholder="Etiketleri virgülle ayırın"
+                                />
+                                 <p className="text-xs text-muted-foreground">Etiketleri virgül (,) ile ayırarak girin.</p>
                              </div>
                         </CardContent>
                      </Card>
@@ -371,5 +422,14 @@ export default function EditArticlePage() {
                  )}
              </div>
         </form>
+
+        {/* Template Selector Modal */}
+        <TemplateSelector
+            isOpen={isTemplateSelectorOpen}
+            onClose={() => setIsTemplateSelectorOpen(false)}
+            onSelectTemplate={handleTemplateSelect}
+        />
+        </>
     );
 }
+
