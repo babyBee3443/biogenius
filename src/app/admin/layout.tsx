@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut } from 'lucide-react'; // Added LogOut icon
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck } from 'lucide-react'; // Added ShieldCheck icon for Roles
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -107,7 +107,14 @@ export default function AdminLayout({
                         </Link>
                     </SidebarMenuButton>
                     </SidebarMenuItem>
-                    {/* Add Roles/Permissions link here later */}
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Roller">
+                            <Link href="/admin/roles">
+                            <ShieldCheck />
+                            <span>Roller</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                  </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
