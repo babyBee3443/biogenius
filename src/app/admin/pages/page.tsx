@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, LayoutTemplate, Eye, Trash2 } from "lucide-react";
+import { PlusCircle, LayoutTemplate, Eye, Trash2, FilePenLine } from "lucide-react"; // Added FilePenLine
 import {
   Table,
   TableHeader,
@@ -29,8 +29,11 @@ export default function AdminPagesPage() {
             <h1 className="text-3xl font-bold">Sayfa Yönetimi</h1>
             <p className="text-muted-foreground">Mevcut sayfaları düzenleyin veya yeni sayfalar oluşturun.</p>
         </div>
-        <Button disabled> {/* Disable button as functionality is not implemented yet */}
-           <PlusCircle className="mr-2 h-4 w-4" /> Yeni Sayfa Oluştur (Yakında)
+        {/* Enabled button and linked to new page route */}
+        <Button asChild>
+           <Link href="/admin/pages/new">
+             <PlusCircle className="mr-2 h-4 w-4" /> Yeni Sayfa Oluştur
+           </Link>
         </Button>
       </div>
 
@@ -38,8 +41,7 @@ export default function AdminPagesPage() {
         <CardHeader>
           <CardTitle>Mevcut Sayfalar</CardTitle>
           <CardDescription>
-            Bu bölüm, kod yazmadan sayfa tasarımlarını düzenlemenizi ve yeni sayfalar oluşturmanızı sağlayacak şekilde geliştirilecektir.
-            Şu an için mevcut sayfaları listelemektedir.
+            Oluşturulmuş sayfaları düzenleyin veya silin. Yeni sayfalar eklemek için yukarıdaki butonu kullanın.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -56,23 +58,32 @@ export default function AdminPagesPage() {
             <TableBody>
               {pages.map((page) => (
                 <TableRow key={page.id}>
-                  <TableCell className="font-medium">{page.name}</TableCell>
+                  <TableCell className="font-medium">
+                     {/* Link page name to edit page */}
+                    <Link href={`/admin/pages/edit/${page.id}`} className="hover:underline">
+                        {page.name}
+                    </Link>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{page.path}</TableCell>
                   <TableCell>{page.status}</TableCell>
                   <TableCell>{page.lastModified}</TableCell>
                   <TableCell className="text-right space-x-1">
-                    {/* Placeholder buttons - Functionality to be added */}
-                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled title="Görsel Düzenleyici (Yakında)">
-                       <LayoutTemplate className="h-4 w-4" />
-                       <span className="sr-only">Görsel Düzenleyici</span>
-                    </Button>
+                     {/* Edit Button */}
+                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Link href={`/admin/pages/edit/${page.id}`} title="Sayfayı Düzenle">
+                           <FilePenLine className="h-4 w-4" />
+                           <span className="sr-only">Düzenle</span>
+                        </Link>
+                     </Button>
+                     {/* View Button */}
                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                          <Link href={page.path} target="_blank" title="Sayfayı Görüntüle">
                             <Eye className="h-4 w-4" />
                             <span className="sr-only">Görüntüle</span>
                         </Link>
                      </Button>
-                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" disabled title="Sayfayı Sil (Yakında)">
+                     {/* Delete Button (Placeholder) */}
+                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Sayfayı Sil (Yakında)" disabled>
                         <Trash2 className="h-4 w-4" />
                        <span className="sr-only">Sil</span>
                     </Button>
@@ -84,21 +95,7 @@ export default function AdminPagesPage() {
         </CardContent>
       </Card>
 
-       <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-         <CardHeader>
-            <CardTitle className="text-blue-800 dark:text-blue-300">Gelecek Özellikler</CardTitle>
-         </CardHeader>
-         <CardContent className="text-blue-700 dark:text-blue-400 text-sm space-y-2">
-             <p>Bu alana eklenecek özellikler:</p>
-             <ul className="list-disc pl-5 space-y-1">
-                 <li>Sürükle-bırak arayüzü ile sayfa düzenleme.</li>
-                 <li>Yeni sayfalar ve özel şablonlar oluşturma.</li>
-                 <li>Hazır bileşenleri (başlık, metin, görsel, buton vb.) sayfalara ekleme.</li>
-                 <li>Sayfa tasarımlarını koda dokunmadan değiştirme.</li>
-             </ul>
-             <p className="pt-2">Bu özellikler geliştirme aşamasındadır ve yakında kullanıma sunulacaktır.</p>
-         </CardContent>
-       </Card>
+       {/* Removed the "Gelecek Özellikler" card */}
 
     </div>
   );
