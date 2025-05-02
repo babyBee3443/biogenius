@@ -1,4 +1,8 @@
 
+"use client"; // Add this line because we're using Framer Motion client-side
+
+import * as React from 'react'; // Import React for useState/useEffect if needed elsewhere
+import { motion } from 'framer-motion'; // Import motion
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -62,10 +66,73 @@ const recentArticles: Article[] = [
     },
 ];
 
+
+// Animation variants for the title
+const titleContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06, // Delay between each letter animation
+      delayChildren: 0.2, // Initial delay before starting animation
+    },
+  },
+};
+
+const letterVariants = {
+  hidden: { opacity: 0, y: 10, filter: "blur(5px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    // Simple glow effect using text shadow
+    textShadow: [
+      "0 0 0px hsl(var(--primary) / 0)", // Start: no glow
+      "0 0 10px hsl(var(--primary) / 0.8)", // Mid: bright glow
+      "0 0 20px hsl(var(--primary) / 0.5)",
+      "0 0 0px hsl(var(--primary) / 0)", // End: no glow
+    ],
+    transition: {
+      duration: 0.5, // Duration of each letter's animation
+      ease: "easeOut",
+      // Repeat glow effect? (Optional)
+      // textShadow: {
+      //   duration: 1.5, // Duration for the glow cycle
+      //   repeat: Infinity,
+      //   repeatType: "mirror", // Glow in and out
+      //   ease: "easeInOut"
+      // }
+    },
+  },
+};
+
+const titleText = "Teknoloji ve Biyolojinin Kesişim Noktası";
+
+
 export default function Home() {
   return (
     <div className="space-y-16">
-       {/* Add Hero Section */}
+      {/* Animated Static Title Above Hero */}
+      <motion.h1
+        className="text-center text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl mb-8 overflow-hidden py-2" // Added overflow-hidden and padding
+        variants={titleContainerVariants}
+        initial="hidden"
+        animate="visible"
+        aria-label={titleText}
+      >
+        {titleText.split("").map((char, index) => (
+          <motion.span
+            key={`${char}-${index}`}
+            variants={letterVariants}
+            className="inline-block whitespace-pre" // Use whitespace-pre for spaces
+            style={{ color: char === ' ' ? 'transparent' : undefined }} // Make spaces invisible but take space
+          >
+            {char}
+          </motion.span>
+        ))}
+      </motion.h1>
+
+       {/* Hero Section - No longer includes the static title */}
        <Hero />
 
       {/* Featured Articles Showcase */}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -114,17 +115,6 @@ const Hero = () => {
       </AnimatePresence>
 
       <div className="container relative z-10 text-white dark:text-foreground px-4">
-        {/* Main Static Title */}
-         <motion.h1
-          className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl mb-4 text-shadow-lg" // Added text shadow
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <span className="block xl:inline">Teknoloji ve Biyolojinin</span>{' '}
-          <span className="block text-primary xl:inline">Kesişim Noktası</span>
-        </motion.h1>
-
         {/* Animated Article Content */}
         <div className="relative h-48 md:h-40"> {/* Fixed height container */}
           <AnimatePresence initial={false} mode="wait">
