@@ -36,9 +36,10 @@ export function ThemeToggle() {
       style={{ width: `${toggleWidth}px`, height: '40px' }} // Apply dimensions using style for precision
       className={cn(
         "relative flex items-center rounded-full p-1 cursor-pointer transition-all duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        // Updated gradients for more distinction
         isLight
-          ? "bg-gradient-to-r from-blue-400 to-green-400" // Light theme: Light Blue to Light Green
-          : "bg-gradient-to-r from-blue-600 to-green-600" // Dark theme: Darker Blue to Darker Green
+          ? "bg-gradient-to-r from-sky-400 to-emerald-400" // Brighter, distinct light theme gradient
+          : "bg-gradient-to-r from-slate-700 to-teal-800" // Darker, distinct dark theme gradient
       )}
       aria-label={isLight ? "Koyu temaya geç" : "Açık temaya geç"} // Updated aria-label
     >
@@ -56,9 +57,9 @@ export function ThemeToggle() {
         animate={{ x: isLight ? 0 : moveDistance }} // Move indicator based on calculated distance
       >
         {isLight ? (
-          <Sun className="h-5 w-5 text-blue-500" /> // Changed Sun color
+          <Sun className="h-5 w-5 text-orange-500" /> // Changed Sun color for better contrast on light gradient
         ) : (
-          <Moon className="h-5 w-5 text-green-500" /> // Changed Moon color
+          <Moon className="h-5 w-5 text-indigo-400" /> // Changed Moon color for better contrast on dark gradient
         )}
       </motion.div>
 
@@ -81,4 +82,3 @@ export function ThemeToggle() {
     </button>
   );
 }
-
