@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -361,8 +362,8 @@ export default function EditPage() {
 
             {/* Main Content Area (Editor/SEO + Preview) */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Pane (Editor or SEO) - Increased width */}
-                 <ScrollArea className="border-r w-full md:w-1/2 xl:w-[600px] flex-shrink-0"> {/* Fixed larger width */}
+                 {/* Left Pane (Editor or SEO) - Adjusted width, fixed positioning */}
+                 <ScrollArea className="w-[380px] xl:w-[450px] flex-shrink-0 border-r h-full"> {/* Fixed width, full height */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -476,7 +477,7 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                  {/* Right Preview Pane - Takes remaining space */}
+                  {/* Right Preview Pane - Takes maximum remaining space */}
                    <div className="flex-1 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-start relative">
                      <div className={cn(
                          "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative",
