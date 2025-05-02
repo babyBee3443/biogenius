@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 
 const Footer = () => {
@@ -14,8 +15,10 @@ const Footer = () => {
             </p>
           </div>
           <div className="flex justify-center md:justify-start space-x-5 text-sm"> {/* Increased spacing */}
-            <Link href="/hakkinda" className="text-muted-foreground hover:text-primary transition-colors">Hakkında</Link>
+            {/* Updated Hakkında link to /hakkimizda */}
+            <Link href="/hakkimizda" className="text-muted-foreground hover:text-primary transition-colors">Hakkımızda</Link>
             <Link href="/iletisim" className="text-muted-foreground hover:text-primary transition-colors">İletişim</Link>
+            {/* Updated placeholder links */}
             <Link href="/gizlilik-politikasi" className="text-muted-foreground hover:text-primary transition-colors">Gizlilik Politikası</Link>
             <Link href="/kullanim-sartlari" className="text-muted-foreground hover:text-primary transition-colors">Kullanım Şartları</Link>
           </div>
