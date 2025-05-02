@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck } from 'lucide-react'; // Added ShieldCheck icon for Roles
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare } from 'lucide-react'; // Added MenuSquare for Navigation
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -44,7 +44,7 @@ export default function AdminLayout({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1"
+            className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow" // Added animation
           >
             <path d="M12 2 L12 6" />
             <path d="M12 18 L12 22" />
@@ -124,12 +124,20 @@ export default function AdminLayout({
                <SidebarGroupContent>
                  <SidebarMenu>
                     <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Ayarlar">
-                        <Link href="/admin/settings">
-                        <Settings />
-                        <span>Ayarlar</span>
-                        </Link>
-                    </SidebarMenuButton>
+                        <SidebarMenuButton asChild tooltip="Genel Ayarlar">
+                            <Link href="/admin/settings">
+                            <Settings />
+                            <span>Genel Ayarlar</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Menü Yönetimi">
+                            <Link href="/admin/settings/navigation">
+                            <MenuSquare />
+                            <span>Menü Yönetimi</span>
+                            </Link>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                     {/* Add Analytics, Logs links here later */}
                  </SidebarMenu>

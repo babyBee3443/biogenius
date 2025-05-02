@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea"; // Added Textarea
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Added Tabs
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select
+import Link from "next/link";
+import { MenuSquare, Palette, Shield, Plug, Mail } from "lucide-react"; // Added icons
 
 
 export default function AdminSettingsPage() {
@@ -19,19 +21,19 @@ export default function AdminSettingsPage() {
         <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6"> {/* Adjusted grid for more tabs */}
                 <TabsTrigger value="general">Genel</TabsTrigger>
+                <TabsTrigger value="navigation">Navigasyon</TabsTrigger> {/* Changed Appearance to Navigation */}
                 <TabsTrigger value="appearance">Görünüm</TabsTrigger>
                 <TabsTrigger value="security">Güvenlik</TabsTrigger>
                 <TabsTrigger value="integrations">Entegrasyonlar</TabsTrigger>
                 <TabsTrigger value="email">E-posta</TabsTrigger>
-                 {/* Add more triggers for other settings sections */}
             </TabsList>
 
             {/* General Settings Tab */}
             <TabsContent value="general">
                  <Card>
                     <CardHeader>
-                    <CardTitle>Genel Ayarlar</CardTitle>
-                    <CardDescription>Site temel bilgilerini ve durumunu yapılandırın.</CardDescription>
+                        <CardTitle>Genel Ayarlar</CardTitle>
+                        <CardDescription>Site temel bilgilerini ve durumunu yapılandırın.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6"> {/* Increased spacing */}
                         <div className="space-y-2">
@@ -63,12 +65,35 @@ export default function AdminSettingsPage() {
                 </Card>
             </TabsContent>
 
+            {/* Navigation Settings Tab Placeholder */}
+            <TabsContent value="navigation">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <MenuSquare className="h-5 w-5"/>
+                            Navigasyon / Menü Yönetimi
+                        </CardTitle>
+                        <CardDescription>Ana menüdeki bağlantıları yönetin.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <p className="text-muted-foreground mb-4">Site başlığında görünen ana navigasyon menüsünü buradan düzenleyebilirsiniz.</p>
+                         <Button asChild>
+                             <Link href="/admin/settings/navigation">Menü Öğelerini Düzenle</Link>
+                         </Button>
+                     </CardContent>
+                 </Card>
+             </TabsContent>
+
+
             {/* Appearance Settings Tab */}
             <TabsContent value="appearance">
                  <Card>
                     <CardHeader>
-                    <CardTitle>Görünüm Ayarları</CardTitle>
-                    <CardDescription>Sitenin görünümünü ve kullanıcı arayüzü tercihlerini yönetin.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                             <Palette className="h-5 w-5" />
+                             Görünüm Ayarları
+                         </CardTitle>
+                        <CardDescription>Sitenin görünümünü ve kullanıcı arayüzü tercihlerini yönetin.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                          {/* Theme settings handled by ThemeToggle, mention it here */}
@@ -105,8 +130,11 @@ export default function AdminSettingsPage() {
             <TabsContent value="security">
                  <Card>
                     <CardHeader>
-                    <CardTitle>Güvenlik Ayarları</CardTitle>
-                    <CardDescription>Site güvenliğini ve kullanıcı erişimini yapılandırın.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                            <Shield className="h-5 w-5"/>
+                            Güvenlik Ayarları
+                        </CardTitle>
+                        <CardDescription>Site güvenliğini ve kullanıcı erişimini yapılandırın.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between rounded-lg border p-4">
@@ -141,8 +169,11 @@ export default function AdminSettingsPage() {
             <TabsContent value="integrations">
                 <Card>
                     <CardHeader>
-                    <CardTitle>Entegrasyonlar</CardTitle>
-                    <CardDescription>Üçüncü parti servisleri bağlayın ve yapılandırın.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                            <Plug className="h-5 w-5"/>
+                            Entegrasyonlar
+                        </CardTitle>
+                        <CardDescription>Üçüncü parti servisleri bağlayın ve yapılandırın.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
@@ -168,8 +199,11 @@ export default function AdminSettingsPage() {
             <TabsContent value="email">
                  <Card>
                     <CardHeader>
-                    <CardTitle>E-posta Ayarları</CardTitle>
-                    <CardDescription>Giden e-posta sunucusu ve şablonlarını yapılandırın.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                            <Mail className="h-5 w-5"/>
+                            E-posta Ayarları
+                        </CardTitle>
+                        <CardDescription>Giden e-posta sunucusu ve şablonlarını yapılandırın.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                          <div className="space-y-2">
