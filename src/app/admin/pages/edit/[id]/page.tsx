@@ -362,8 +362,8 @@ export default function EditPage() {
 
             {/* Main Content Area (Editor/SEO + Preview) */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Pane (Editor or SEO) - Adjusted width to use percentage */}
-                 <ScrollArea className="border-r w-full md:w-1/3 lg:w-1/3 xl:w-1/3"> {/* Use percentage width */}
+                 {/* Left Pane (Editor or SEO) - Adjusted width to be smaller on larger screens */}
+                 <ScrollArea className="border-r w-full md:w-2/5 lg:w-1/3 xl:w-1/4"> {/* Adjusted widths */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -498,5 +498,3 @@ export default function EditPage() {
         </div>
     );
 }
-
-    
