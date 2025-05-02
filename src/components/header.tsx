@@ -105,7 +105,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2"> {/* Reduced margin */}
-          {/* Refined Logo */}
+          {/* Animated Logo */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -114,8 +114,9 @@ const Header = () => {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-6 w-6 text-primary" // Slightly smaller icon
+            className="h-7 w-7 text-primary animate-spin-slow" // Apply animation class
           >
+            {/* Outer circle elements representing technology/connections */}
             <path d="M12 2 L12 6" />
             <path d="M12 18 L12 22" />
             <path d="M4.93 4.93 L7.76 7.76" />
@@ -124,7 +125,10 @@ const Header = () => {
             <path d="M18 12 L22 12" />
             <path d="M4.93 19.07 L7.76 16.24" />
             <path d="M16.24 7.76 L19.07 4.93" />
-            <circle cx="12" cy="12" r="3" />
+            {/* Inner circle representing biology/core */}
+            <circle cx="12" cy="12" r="4" strokeWidth="1.5" />
+             {/* Inner dot for focus */}
+            <circle cx="12" cy="12" r="1" fill="currentColor"/>
           </svg>
           <span className="font-bold text-lg">TeknoBiyo</span>
         </Link>

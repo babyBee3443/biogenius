@@ -161,3 +161,19 @@ body {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
+
+/* Custom Animation for Logo */
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin-slow 15s linear infinite;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
