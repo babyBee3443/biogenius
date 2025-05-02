@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea"; // Import Textarea
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye } from "lucide-react";
 import Link from "next/link";
@@ -14,9 +15,9 @@ import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor";
 import type { Block } from "@/components/admin/template-selector";
 import SeoPreview from "@/components/admin/seo-preview";
-import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
-import { cn } from "@/lib/utils"; // Import cn
+import PagePreviewRenderer from "@/components/admin/page-preview-renderer"; // Ensure this is correctly imported
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 // Mock data fetching - Replace with actual API call
 interface PageData {
@@ -40,8 +41,9 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             title: 'Anasayfa',
             slug: '',
             blocks: [
-                { id: 'hpb-welcome', type: 'heading', level: 1, content: 'TeknoBiyo\'ya Hoş Geldiniz!' }, // Example non-visual block
-                { id: 'hpb-intro', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' }, // Example non-visual block
+                // Example structural blocks (might be hidden in editor preview)
+                { id: 'hpb-welcome', type: 'heading', level: 1, content: 'TeknoBiyo\'ya Hoş Geldiniz!' },
+                { id: 'hpb-intro', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' },
                 // --- Blocks representing visual sections ---
                 { id: 'hp-section-featured', type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkanlar', count: 3 } },
                 { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler' } },
@@ -254,6 +256,7 @@ export default function EditPage() {
     };
 
     // --- Preview Data for Renderer ---
+    // Use useMemo to recalculate only when dependencies change
     const currentPreviewData: PageData = React.useMemo(() => ({
         id: pageId || 'preview',
         title: title,
@@ -263,11 +266,13 @@ export default function EditPage() {
         seoDescription: seoDescription,
         imageUrl: pageData?.imageUrl || (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/page-preview/1200/600',
         settings: pageData?.settings || {} // Pass settings
-    }), [pageId, title, slug, blocks, seoTitle, seoDescription, pageData]);
+        // Add all relevant state variables that affect the preview as dependencies
+    }), [pageId, title, slug, blocks, seoTitle, seoDescription, pageData, keywords, canonicalUrl]);
+
 
     const getPreviewSizeClass = () => {
       switch (previewDevice) {
-        case 'mobile': return 'w-[375px] h-[667px] max-w-full max-h-full'; // Added max constraints
+        case 'mobile': return 'w-[375px] h-[667px] max-w-full max-h-full';
         case 'tablet': return 'w-[768px] h-[1024px] max-w-full max-h-full';
         default: return 'w-full h-full';
       }
@@ -356,8 +361,8 @@ export default function EditPage() {
 
             {/* Main Content Area (Editor/SEO + Preview) */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Pane (Editor or SEO) */}
-                 <ScrollArea className="flex-1 border-r w-1/2 lg:w-2/5 xl:w-1/2">
+                 {/* Left Pane (Editor or SEO) - Adjusted width */}
+                 <ScrollArea className="border-r w-1/2 lg:w-1/3 xl:w-2/5"> {/* Editor pane width adjusted */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -427,7 +432,7 @@ export default function EditPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="seo-description">Meta Açıklama</Label>
-                                        <Textarea // Use Textarea for better editing
+                                        <Textarea
                                             id="seo-description"
                                             value={seoDescription}
                                             onChange={(e) => setSeoDescription(e.target.value)}
@@ -471,20 +476,20 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                  {/* Right Preview Pane */}
+                  {/* Right Preview Pane - Made wider */}
                    <div className="flex-1 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-start relative">
                      <div className={cn(
-                         "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative", // Added relative positioning
+                         "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative",
                          getPreviewSizeClass()
                      )}>
-                       {/* Added overlay to prevent interaction with iframe/content */}
-                       <div className="absolute inset-0 z-10 bg-transparent" />
+                       {/* Removed overlay for direct interaction (be careful with iframe approach if re-enabled) */}
+                       {/* <div className="absolute inset-0 z-10 bg-transparent" /> */}
                        <PagePreviewRenderer
-                          key={previewDevice} // Force re-render on device change
-                          pageData={currentPreviewData}
-                          selectedBlockId={selectedBlockId} // Pass selected block ID
-                          onBlockSelect={handleBlockSelect} // Pass selection handler
-                          isPreview={true} // Indicate this is a preview render
+                          key={previewDevice + '-' + currentPreviewData.id + '-' + blocks.length} // Force re-render on device change or block changes
+                          pageData={currentPreviewData} // Pass data recalculated by useMemo
+                          selectedBlockId={selectedBlockId}
+                          onBlockSelect={handleBlockSelect}
+                          isPreview={true}
                        />
                      </div>
                    </div>
