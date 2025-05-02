@@ -8,14 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Construction } from "lucide-react"; // Added Construction icon
+import { ArrowLeft, Save, Eye } from "lucide-react"; // Added Eye for preview
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { BlockEditor } from "@/components/admin/block-editor"; // Import BlockEditor
+import type { Block } from "@/components/admin/template-selector"; // Import Block type
+import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
+
 
 export default function NewPage() {
     const router = useRouter();
     const [title, setTitle] = React.useState("");
     const [slug, setSlug] = React.useState("");
+    const [blocks, setBlocks] = React.useState<Block[]>([
+        { id: `block-${Date.now()}`, type: 'text', content: '' }, // Start with an empty text block
+    ]);
+    const [seoTitle, setSeoTitle] = React.useState("");
+    const [seoDescription, setSeoDescription] = React.useState("");
+    const [keywords, setKeywords] = React.useState<string[]>([]);
+    const [canonicalUrl, setCanonicalUrl] = React.useState("");
+
 
     // Basic slug generation (same as article editor)
     const generateSlug = (text: string) => {
@@ -35,13 +47,67 @@ export default function NewPage() {
          }
      }, [title]);
 
+     // Auto-generate SEO Title
+     React.useEffect(() => {
+        if (title && !seoTitle) {
+            setSeoTitle(title);
+        }
+     }, [title, seoTitle]);
+
+      // Auto-generate SEO Description (basic)
+     React.useEffect(() => {
+        if (blocks.length > 0 && !seoDescription) {
+            const firstTextBlock = blocks.find(b => b.type === 'text') as Extract<Block, { type: 'text' }> | undefined;
+            if (firstTextBlock && firstTextBlock.content) {
+                 const desc = firstTextBlock.content.length > 160 ? firstTextBlock.content.substring(0, 157) + '...' : firstTextBlock.content;
+                 setSeoDescription(desc);
+            }
+        }
+     }, [blocks, seoDescription]);
+
+
+     // --- Block Handlers ---
+     const handleAddBlock = (type: Block['type']) => {
+        const newBlock: Block = {
+            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            type: type,
+            ...(type === 'text' && { content: '' }),
+            ...(type === 'heading' && { level: 2, content: '' }),
+            ...(type === 'image' && { url: '', alt: '', caption: '' }),
+            ...(type === 'gallery' && { images: [] }),
+            ...(type === 'video' && { url: '' }),
+            ...(type === 'quote' && { content: '', citation: '' }),
+            ...(type === 'code' && { language: 'javascript', content: '' }),
+            ...(type === 'divider' && {}),
+        } as Block;
+        setBlocks([...blocks, newBlock]);
+     };
+
+     const handleDeleteBlock = (id: string) => {
+        setBlocks(blocks.filter(block => block.id !== id));
+     };
+
+     const handleUpdateBlock = (updatedBlock: Block) => {
+        setBlocks(prevBlocks =>
+            prevBlocks.map(block =>
+                block.id === updatedBlock.id ? updatedBlock : block
+            )
+        );
+     };
+
+     const handleReorderBlocks = (reorderedBlocks: Block[]) => {
+        setBlocks(reorderedBlocks);
+     };
+     // --- End Block Handlers ---
+
     const handleSave = () => {
         if (!title || !slug) {
             toast({ variant: "destructive", title: "Hata", description: "Sayfa başlığı ve URL metni zorunludur." });
             return;
         }
-        // TODO: Implement actual API call to save the new page structure
-        console.log("Saving new page:", { title, slug, content: [] }); // Placeholder for content
+        // TODO: Implement actual API call to save the new page structure including blocks and SEO
+        const newPageData = { title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl };
+        console.log("Saving new page:", newPageData);
         toast({
             title: "Sayfa Oluşturuldu",
             description: `"${title}" başlıklı sayfa taslak olarak kaydedildi.`,
@@ -51,74 +117,157 @@ export default function NewPage() {
         router.push('/admin/pages');
     };
 
+     // --- Preview Handler ---
+     const handlePreview = () => {
+        const previewData = {
+            id: 'preview', // Temporary ID for preview
+            title,
+            description: seoDescription || '',
+            imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/new-page-preview/1200/600',
+            blocks,
+        };
+         try {
+             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
+             window.open('/admin/preview', '_blank');
+         } catch (error) {
+             console.error("Error saving preview data:", error);
+             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi kaydedilemedi." });
+         }
+     };
+
     return (
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                     <Button variant="outline" size="sm" asChild className="mb-4">
-                        <Link href="/admin/pages"><ArrowLeft className="mr-2 h-4 w-4" /> Sayfa Listesine Dön</Link>
+        <div className="flex flex-col h-full">
+            {/* Top Bar */}
+            <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
+                 <Button variant="ghost" size="sm" asChild>
+                    <Link href="/admin/pages"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
+                 </Button>
+                <h1 className="text-xl font-semibold">Yeni Sayfa Oluştur</h1>
+                <div className="flex items-center gap-2">
+                     <Button variant="outline" size="sm" onClick={handlePreview}>
+                        <Eye className="mr-2 h-4 w-4" /> Önizle
                      </Button>
-                    <h1 className="text-3xl font-bold">Yeni Sayfa Oluştur</h1>
-                    <p className="text-muted-foreground">Yeni bir statik sayfa tanımlayın.</p>
-                </div>
-                <Button onClick={handleSave} disabled={!title || !slug}>
-                    <Save className="mr-2 h-4 w-4" /> Sayfayı Kaydet
-                </Button>
+                     <Button size="sm" onClick={handleSave} disabled={!title || !slug}>
+                        <Save className="mr-2 h-4 w-4" /> Kaydet
+                     </Button>
+                 </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Temel Bilgiler</CardTitle>
-                    <CardDescription>Sayfanın başlığını ve URL'sini belirleyin.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="page-title">Sayfa Başlığı <span className="text-destructive">*</span></Label>
-                        <Input
-                            id="page-title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Örn: Gizlilik Politikası"
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="page-slug">URL Metni (Slug) <span className="text-destructive">*</span></Label>
-                        <Input
-                            id="page-slug"
-                            value={slug}
-                            onChange={(e) => setSlug(generateSlug(e.target.value))} // Allow manual adjustment
-                            placeholder="Sayfa URL'si"
-                            required
-                        />
-                         <p className="text-xs text-muted-foreground">Tarayıcı adres çubuğunda görünecek kısım. Genellikle otomatik oluşturulur.</p>
-                    </div>
-                </CardContent>
-            </Card>
+             {/* Main Content Area */}
+             <div className="flex flex-1 overflow-hidden">
+                  {/* Left Content Area (Editor) */}
+                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Temel Bilgiler</CardTitle>
+                            <CardDescription>Sayfanın başlığını ve URL'sini belirleyin.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="page-title">Sayfa Başlığı <span className="text-destructive">*</span></Label>
+                                <Input
+                                    id="page-title"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder="Örn: Gizlilik Politikası"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="page-slug">URL Metni (Slug) <span className="text-destructive">*</span></Label>
+                                <Input
+                                    id="page-slug"
+                                    value={slug}
+                                    onChange={(e) => setSlug(generateSlug(e.target.value))} // Allow manual adjustment
+                                    placeholder="Sayfa URL'si"
+                                    required
+                                />
+                                <p className="text-xs text-muted-foreground">Tarayıcı adres çubuğunda görünecek kısım. Genellikle otomatik oluşturulur.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-            <Separator />
+                    <Separator />
 
-             {/* Placeholder for Visual Editor */}
-             <Card className="border-dashed border-primary/50 bg-primary/5">
-                <CardHeader className="text-center">
-                     <Construction className="h-10 w-10 text-primary mx-auto mb-2" />
-                     <CardTitle className="text-primary">Görsel Sayfa Düzenleyici</CardTitle>
-                     <CardDescription>
-                        Bu alanda yakında sürükle-bırak arayüzü ile sayfa içeriğini (metin, görsel, buton vb.) oluşturup düzenleyebileceksiniz.
-                    </CardDescription>
-                </CardHeader>
-                 <CardContent className="text-center">
-                     <p className="text-sm text-muted-foreground">Bu özellik şu anda geliştirme aşamasındadır.</p>
-                 </CardContent>
-             </Card>
+                     {/* Block Editor Section */}
+                     <BlockEditor
+                       blocks={blocks}
+                       onAddBlock={handleAddBlock}
+                       onDeleteBlock={handleDeleteBlock}
+                       onUpdateBlock={handleUpdateBlock}
+                       onReorderBlocks={handleReorderBlocks}
+                     />
+                 </div>
 
-             <Separator />
+                  {/* Right Sidebar (SEO) */}
+                 <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
+                      <Card>
+                            <CardHeader>
+                                <CardTitle>SEO Ayarları</CardTitle>
+                                <CardDescription>Sayfanızın arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="seo-title">SEO Başlığı</Label>
+                                    <Input
+                                        id="seo-title"
+                                        value={seoTitle}
+                                        onChange={(e) => setSeoTitle(e.target.value)}
+                                        maxLength={60}
+                                        placeholder="Arama sonuçlarında görünecek başlık"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Tavsiye: 50-60 karakter. ({seoTitle.length}/60)</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="seo-description">Meta Açıklama</Label>
+                                    <Input
+                                        id="seo-description"
+                                        value={seoDescription}
+                                        onChange={(e) => setSeoDescription(e.target.value)}
+                                        maxLength={160}
+                                        placeholder="Arama sonuçlarında görünecek kısa açıklama"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Tavsiye: 150-160 karakter. ({seoDescription.length}/160)</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="keywords">Anahtar Kelimeler</Label>
+                                    <Input
+                                        id="keywords"
+                                        value={keywords.join(', ')}
+                                        onChange={(e) => setKeywords(e.target.value.split(',').map(kw => kw.trim()).filter(kw => kw !== ''))}
+                                        placeholder="Anahtar kelimeleri virgülle ayırın"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Sayfanızla ilgili anahtar kelimeleri belirtin.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="canonical-url">Canonical URL</Label>
+                                    <Input
+                                        id="canonical-url"
+                                        type="url"
+                                        value={canonicalUrl}
+                                        onChange={(e) => setCanonicalUrl(e.target.value)}
+                                        placeholder="https://teknobiyo.com/orijinal-sayfa-url"
+                                    />
+                                    <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
+                                </div>
+                            </CardContent>
+                      </Card>
 
-             <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={!title || !slug}>
-                    <Save className="mr-2 h-4 w-4" /> Sayfayı Kaydet
-                </Button>
-             </div>
-        </form>
+                       <Separator />
+
+                      {/* SEO Preview */}
+                       <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.6))] h-fit">
+                          <SeoPreview
+                              title={seoTitle || title}
+                              description={seoDescription || ''}
+                              slug={slug}
+                              category="sayfa"
+                          />
+                       </div>
+                 </aside>
+            </div>
+        </div>
     );
 }
+
+    
