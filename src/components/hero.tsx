@@ -88,7 +88,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[70vh] md:h-[80vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner">
+    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner"> {/* Reduced height */}
       {/* Animated Background Image */}
       <AnimatePresence initial={false} mode="wait">
         <motion.div
