@@ -73,35 +73,33 @@ const titleContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06, // Delay between each letter animation
+      staggerChildren: 0.05, // Speed up stagger slightly
       delayChildren: 0.2, // Initial delay before starting animation
     },
   },
 };
 
 const letterVariants = {
-  hidden: { opacity: 0, y: 10, filter: "blur(5px)" },
+  hidden: { opacity: 0, y: 20, filter: "blur(8px)" }, // Start more blurred and further down
   visible: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    // Simple glow effect using text shadow
-    textShadow: [
-      "0 0 0px hsl(var(--primary) / 0)", // Start: no glow
-      "0 0 10px hsl(var(--primary) / 0.8)", // Mid: bright glow
-      "0 0 20px hsl(var(--primary) / 0.5)",
-      "0 0 0px hsl(var(--primary) / 0)", // End: no glow
+    textShadow: [ // More pronounced glow effect
+      "0 0 0px hsl(var(--primary) / 0)",
+      "0 0 15px hsl(var(--primary) / 0.9)", // Brighter mid-glow
+      "0 0 30px hsl(var(--primary) / 0.6)", // Wider glow
+      "0 0 5px hsl(var(--primary) / 0.8)", // Lingering glow
+      "0 0 0px hsl(var(--primary) / 0)",
     ],
     transition: {
-      duration: 0.5, // Duration of each letter's animation
-      ease: "easeOut",
-      // Repeat glow effect? (Optional)
-      // textShadow: {
-      //   duration: 1.5, // Duration for the glow cycle
-      //   repeat: Infinity,
-      //   repeatType: "mirror", // Glow in and out
-      //   ease: "easeInOut"
-      // }
+      duration: 0.8, // Slightly longer duration for each letter
+      ease: [0.2, 0.65, 0.3, 0.9], // Custom easing for a smoother pop
+      textShadow: { // Separate transition for the glow
+          duration: 1.0, // Duration for one glow cycle
+          ease: "easeInOut",
+          delay: 0.3 // Delay the start of the glow slightly after the letter appears
+      }
     },
   },
 };
@@ -114,7 +112,7 @@ export default function Home() {
     <div className="space-y-16">
       {/* Animated Static Title Above Hero */}
       <motion.h1
-        className="text-center text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl mb-8 overflow-hidden py-2" // Added overflow-hidden and padding
+        className="text-center text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl mb-8 overflow-hidden py-2 whitespace-nowrap" // Added whitespace-nowrap to prevent wrapping
         variants={titleContainerVariants}
         initial="hidden"
         animate="visible"
@@ -124,10 +122,10 @@ export default function Home() {
           <motion.span
             key={`${char}-${index}`}
             variants={letterVariants}
-            className="inline-block whitespace-pre" // Use whitespace-pre for spaces
-            style={{ color: char === ' ' ? 'transparent' : undefined }} // Make spaces invisible but take space
+            className="inline-block" // Changed from whitespace-pre
+            // style={{ color: char === ' ' ? 'transparent' : undefined }} // No longer needed with inline-block
           >
-            {char}
+            {char === ' ' ? '\u00A0' : char} {/* Replace space with non-breaking space */}
           </motion.span>
         ))}
       </motion.h1>
