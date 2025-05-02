@@ -24,7 +24,8 @@ export type Block =
   | { id: string; type: 'video'; url: string }
   | { id: string; type: 'quote'; content: string; citation?: string }
   | { id: string; type: 'code'; language: string; content: string }
-  | { id: string; type: 'divider' }; // Assuming divider is simple or add props
+  | { id: string; type: 'divider' }
+  | { id: string; type: 'section'; sectionType: string; settings: Record<string, any> }; // Added Section Block Type
 
 // Define Template Structure
 interface Template {
@@ -229,6 +230,11 @@ const blocksToHtml = (blocks: Block[]): string => {
                  } else {
                      html += `<p><a href="${block.url}" target="_blank" rel="noopener noreferrer">Video izle: ${block.url}</a></p>\n`; // Fallback link
                  }
+                 break;
+             case 'section':
+                 // Sections might not have a direct HTML representation here,
+                 // or you could add a placeholder comment.
+                 html += `<!-- Section: ${block.sectionType} -->\n`;
                  break;
         }
     });

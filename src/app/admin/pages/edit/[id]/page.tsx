@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -7,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor";
 import type { Block } from "@/components/admin/template-selector";
 import SeoPreview from "@/components/admin/seo-preview";
 import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import { cn } from "@/lib/utils"; // Import cn
 
 // Mock data fetching - Replace with actual API call
 interface PageData {
@@ -26,6 +29,7 @@ interface PageData {
     keywords?: string[];
     canonicalUrl?: string;
     imageUrl?: string; // Add imageUrl for preview consistency
+    settings?: Record<string, any>; // General settings for the page layout
 }
 
 // Mock function - Updated to include blocks and SEO fields
@@ -36,15 +40,17 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             title: 'Anasayfa',
             slug: '',
             blocks: [
-                { id: 'hpb1', type: 'heading', level: 1, content: 'TeknoBiyo\'ya Hoş Geldiniz!' },
-                { id: 'hpb2', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' },
-                { id: 'hpb3', type: 'divider' },
-                { id: 'hpb4', type: 'heading', level: 2, content: 'Öne Çıkanlar' },
-                { id: 'hpb5', type: 'text', content: '[Öne çıkan makaleler burada listelenecek...]' },
+                { id: 'hpb-welcome', type: 'heading', level: 1, content: 'TeknoBiyo\'ya Hoş Geldiniz!' }, // Example non-visual block
+                { id: 'hpb-intro', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' }, // Example non-visual block
+                // --- Blocks representing visual sections ---
+                { id: 'hp-section-featured', type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkanlar', count: 3 } },
+                { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler' } },
+                { id: 'hp-section-recent', type: 'section', sectionType: 'recent-articles', settings: { title: 'En Son Eklenenler', count: 3 } },
             ],
             seoTitle: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
             seoDescription: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
-            imageUrl: 'https://picsum.photos/seed/homepage/1200/600'
+            imageUrl: 'https://picsum.photos/seed/homepage/1200/600',
+            settings: {} // Add page-level settings if needed
         },
         {
             id: 'hakkimizda',
@@ -53,11 +59,11 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             blocks: [
                 { id: 'ab1', type: 'heading', level: 2, content: 'Biz Kimiz?' },
                 { id: 'ab2', type: 'text', content: 'TeknoBiyo, teknoloji ve biyoloji dünyalarının kesişim noktasında yer alan, meraklı zihinler için hazırlanmış bir bilgi platformudur...' },
-                { id: 'ab3', type: 'image', url: 'https://picsum.photos/seed/teamwork/800/600', alt: 'Ekip Çalışması' },
+                { id: 'ab3', type: 'image', url: 'https://picsum.photos/seed/teamwork/800/600', alt: 'Ekip Çalışması', caption: 'Vizyonumuz' },
             ],
             seoTitle: 'Hakkımızda | TeknoBiyo',
             seoDescription: 'TeknoBiyo\'nun arkasındaki vizyonu, misyonu ve değerleri keşfedin.',
-            imageUrl: 'https://picsum.photos/seed/teamwork/1200/600' // Added imageUrl
+            imageUrl: 'https://picsum.photos/seed/teamwork/1200/600'
         },
         {
             id: 'iletisim',
@@ -66,11 +72,11 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             blocks: [
                 { id: 'cb1', type: 'heading', level: 2, content: 'Bizimle İletişime Geçin' },
                 { id: 'cb2', type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşın.' },
-                // Placeholder for contact form/info blocks
+                { id: 'cb-form', type: 'section', sectionType: 'contact-form', settings: {} }, // Placeholder for form block
             ],
             seoTitle: 'İletişim | TeknoBiyo',
             seoDescription: 'TeknoBiyo ile iletişime geçin. Sorularınız ve önerileriniz için buradayız.',
-             imageUrl: 'https://picsum.photos/seed/contactus/1200/600' // Added imageUrl
+             imageUrl: 'https://picsum.photos/seed/contactus/1200/600'
         },
     ];
     return pages.find(page => page.id === id) || null;
@@ -92,7 +98,8 @@ export default function EditPage() {
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
     const [previewDevice, setPreviewDevice] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // State for selected block
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // State for selected block in editor/preview
+    const [editorView, setEditorView] = React.useState<'editor' | 'seo'>('editor'); // State for left pane view
 
 
     React.useEffect(() => {
@@ -104,7 +111,7 @@ export default function EditPage() {
                         setTitle(data.title);
                         setSlug(data.slug);
                         setBlocks(data.blocks || []);
-                        setSeoTitle(data.seoTitle || '');
+                        setSeoTitle(data.seoTitle || data.title || ''); // Default SEO title to page title
                         setSeoDescription(data.seoDescription || '');
                         setKeywords(data.keywords || []);
                         setCanonicalUrl(data.canonicalUrl || '');
@@ -121,6 +128,7 @@ export default function EditPage() {
         }
     }, [pageId]);
 
+    // Slug generation
     const generateSlug = (text: string) => {
         return text
             .toLowerCase()
@@ -129,6 +137,7 @@ export default function EditPage() {
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
+    // Auto-update slug when title changes (if slug is empty or matches old title slug)
     React.useEffect(() => {
         if (title && pageData && title !== pageData.title) {
              if (!slug || slug === generateSlug(pageData.title)) {
@@ -137,16 +146,18 @@ export default function EditPage() {
         }
      }, [title, pageData, slug]);
 
+    // Auto-update SEO title if empty
      React.useEffect(() => {
         if (title && !seoTitle && pageData && title !== pageData.title) {
             setSeoTitle(title);
         }
      }, [title, seoTitle, pageData]);
 
+     // Auto-update SEO description if empty (use first text block if available)
      React.useEffect(() => {
         if (blocks.length > 0 && !seoDescription && pageData) {
             const firstTextBlock = blocks.find(b => b.type === 'text') as Extract<Block, { type: 'text' }> | undefined;
-            if (firstTextBlock && firstTextBlock.content && firstTextBlock.content !== (pageData.blocks.find(b => b.id === firstTextBlock.id) as Extract<Block, { type: 'text' }>)?.content) {
+            if (firstTextBlock && firstTextBlock.content && firstTextBlock.content !== (pageData.blocks.find(b => b.id === firstTextBlock.id && b.type === 'text') as Extract<Block, { type: 'text' }>)?.content) {
                  const desc = firstTextBlock.content.length > 160 ? firstTextBlock.content.substring(0, 157) + '...' : firstTextBlock.content;
                  setSeoDescription(desc);
             }
@@ -167,6 +178,7 @@ export default function EditPage() {
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
+             ...(type === 'section' && { sectionType: 'custom-text', settings: { content: '' } }), // Example new section block
         } as Block;
         setBlocks([...blocks, newBlock]);
         setSelectedBlockId(newBlock.id); // Select the newly added block
@@ -191,14 +203,18 @@ export default function EditPage() {
         setBlocks(reorderedBlocks);
     };
 
-    // Callback for selecting block from preview
-    const handleBlockSelect = (id: string) => {
+    // Callback for selecting block from preview OR editor
+    const handleBlockSelect = (id: string | null) => {
         setSelectedBlockId(id);
-        // Optional: Scroll editor to the selected block
-         const editorElement = document.querySelector(`[data-block-wrapper-id="${id}"]`);
-         if (editorElement) {
-             editorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-         }
+        if (id) {
+            // Optional: Scroll editor to the selected block if selection came from preview
+             const editorElement = document.querySelector(`[data-block-wrapper-id="${id}"]`);
+             if (editorElement) {
+                 editorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+             }
+             // Switch to editor view if SEO view is active
+             setEditorView('editor');
+        }
     };
     // --- End Block Handlers ---
 
@@ -210,14 +226,21 @@ export default function EditPage() {
         }
         const saveData = { pageId, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl };
         console.log("Updating page:", saveData);
+        // TODO: Implement actual API call to save the page data
         toast({
             title: "Sayfa Güncellendi",
             description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,
         });
+        // Update local state to reflect saved data (optional, depends on API response)
         if(pageData) setPageData({...pageData, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl });
     };
 
      const handleDelete = () => {
+        // Prevent deleting homepage
+        if (pageId === 'anasayfa') {
+            toast({ variant: "destructive", title: "Hata", description: "Anasayfa silinemez." });
+            return;
+        }
         if (window.confirm(`"${title}" başlıklı sayfayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
             console.log("Deleting page:", pageId);
             // TODO: Implement actual API call to delete the page
@@ -231,20 +254,21 @@ export default function EditPage() {
     };
 
     // --- Preview Data for Renderer ---
-    const currentPreviewData: PageData = {
+    const currentPreviewData: PageData = React.useMemo(() => ({
         id: pageId || 'preview',
         title: title,
         slug: slug,
-        blocks: blocks,
+        blocks: blocks, // Pass current blocks state to preview
         seoTitle: seoTitle,
         seoDescription: seoDescription,
-        imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || pageData?.imageUrl || 'https://picsum.photos/seed/page-preview/1200/600',
-    };
+        imageUrl: pageData?.imageUrl || (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/page-preview/1200/600',
+        settings: pageData?.settings || {} // Pass settings
+    }), [pageId, title, slug, blocks, seoTitle, seoDescription, pageData]);
 
     const getPreviewSizeClass = () => {
       switch (previewDevice) {
-        case 'mobile': return 'w-[375px] h-[667px]';
-        case 'tablet': return 'w-[768px] h-[1024px]';
+        case 'mobile': return 'w-[375px] h-[667px] max-w-full max-h-full'; // Added max constraints
+        case 'tablet': return 'w-[768px] h-[1024px] max-w-full max-h-full';
         default: return 'w-full h-full';
       }
     }
@@ -255,6 +279,7 @@ export default function EditPage() {
     }
 
      if (!pageData) {
+         // Should be handled by notFound(), but as a fallback
          return <div className="text-center py-10">Sayfa bulunamadı.</div>;
     }
 
@@ -262,11 +287,31 @@ export default function EditPage() {
     return (
         <div className="flex flex-col h-screen overflow-hidden">
              {/* Top Bar */}
-             <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-20">
-                <Button variant="ghost" size="sm" asChild>
-                    <Link href="/admin/pages"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
-                </Button>
-                 <h1 className="text-xl font-semibold truncate" title={`Sayfayı Düzenle: ${pageData.title}`}>Sayfayı Düzenle</h1>
+             <div className="flex items-center justify-between px-4 py-2 border-b bg-card sticky top-0 z-20 h-14">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href="/admin/pages"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
+                    </Button>
+                    <Separator orientation="vertical" className="h-6"/>
+                     {/* Editor/SEO Toggle */}
+                     <Button
+                       variant={editorView === 'editor' ? 'secondary' : 'ghost'}
+                       size="sm"
+                       onClick={() => setEditorView('editor')}
+                     >
+                       <Settings className="mr-2 h-4 w-4" /> Düzenleyici
+                     </Button>
+                     <Button
+                        variant={editorView === 'seo' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => setEditorView('seo')}
+                     >
+                       <Eye className="mr-2 h-4 w-4" /> SEO Ayarları
+                     </Button>
+                </div>
+                 <h1 className="text-lg font-semibold truncate hidden md:block" title={`Sayfayı Düzenle: ${pageData.title}`}>
+                     {pageData.title}
+                 </h1>
                  <div className="flex items-center gap-2">
                      {/* Preview Device Toggles */}
                      <Button
@@ -298,134 +343,151 @@ export default function EditPage() {
                       </Button>
                       <Separator orientation="vertical" className="h-6 mx-2" />
 
-                     <Button variant="destructive" size="sm" onClick={handleDelete}>
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
+                     {pageId !== 'anasayfa' && ( // Conditionally render delete button
+                        <Button variant="destructive" size="sm" onClick={handleDelete}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                     )}
                       <Button size="sm" onClick={handleSave} disabled={!title}>
                         <Save className="mr-2 h-4 w-4" /> Kaydet
                     </Button>
                  </div>
             </div>
 
-            {/* Main Content Area (Editor + Preview) */}
+            {/* Main Content Area (Editor/SEO + Preview) */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Editor Area */}
-                 <div className="flex-1 overflow-y-auto p-6 space-y-6 border-r">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Temel Bilgiler</CardTitle>
-                            <CardDescription>Sayfanın başlığını ve URL'sini düzenleyin.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="page-title">Sayfa Başlığı <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="page-title"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="page-slug">URL Metni (Slug)</Label>
-                                <Input
-                                    id="page-slug"
-                                    value={slug}
-                                    onChange={(e) => setSlug(generateSlug(e.target.value))}
-                                    disabled={pageId === 'anasayfa'}
-                                    placeholder={pageId === 'anasayfa' ? "(Anasayfa)" : "sayfa-url"}
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    {pageId === 'anasayfa' ? "Anasayfa URL'si değiştirilemez." : "Tarayıcı adres çubuğunda görünecek kısım."}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                 {/* Left Pane (Editor or SEO) */}
+                 <ScrollArea className="flex-1 border-r w-1/2 lg:w-2/5 xl:w-1/2">
+                    <div className="p-6 space-y-6">
+                        {editorView === 'editor' && (
+                            <>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Temel Bilgiler</CardTitle>
+                                        <CardDescription>Sayfanın başlığını ve URL'sini düzenleyin.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="page-title">Sayfa Başlığı <span className="text-destructive">*</span></Label>
+                                            <Input
+                                                id="page-title"
+                                                value={title}
+                                                onChange={(e) => setTitle(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="page-slug">URL Metni (Slug)</Label>
+                                            <Input
+                                                id="page-slug"
+                                                value={slug}
+                                                onChange={(e) => setSlug(generateSlug(e.target.value))}
+                                                disabled={pageId === 'anasayfa'}
+                                                placeholder={pageId === 'anasayfa' ? "(Anasayfa)" : "sayfa-url"}
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                {pageId === 'anasayfa' ? "Anasayfa URL'si değiştirilemez." : "Tarayıcı adres çubuğunda görünecek kısım."}
+                                            </p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
 
-                    <Separator />
-
-                    {/* Block Editor Section */}
-                     <BlockEditor
-                       blocks={blocks}
-                       onAddBlock={handleAddBlock}
-                       onDeleteBlock={handleDeleteBlock}
-                       onUpdateBlock={handleUpdateBlock}
-                       onReorderBlocks={handleReorderBlocks}
-                       selectedBlockId={selectedBlockId} // Pass selected block ID
-                       onBlockSelect={handleBlockSelect} // Pass selection handler
-                     />
-
-                    {/* SEO Settings */}
-                    <Card>
-                            <CardHeader>
-                                <CardTitle>SEO Ayarları</CardTitle>
-                                <CardDescription>Sayfanızın arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="seo-title">SEO Başlığı</Label>
-                                    <Input
-                                        id="seo-title"
-                                        value={seoTitle}
-                                        onChange={(e) => setSeoTitle(e.target.value)}
-                                        maxLength={60}
-                                        placeholder="Arama sonuçlarında görünecek başlık"
-                                    />
-                                    <p className="text-xs text-muted-foreground">Tavsiye: 50-60 karakter. ({seoTitle.length}/60)</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="seo-description">Meta Açıklama</Label>
-                                    <Input
-                                        id="seo-description"
-                                        value={seoDescription}
-                                        onChange={(e) => setSeoDescription(e.target.value)}
-                                        maxLength={160}
-                                        placeholder="Arama sonuçlarında görünecek kısa açıklama"
-                                    />
-                                    <p className="text-xs text-muted-foreground">Tavsiye: 150-160 karakter. ({seoDescription.length}/160)</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="keywords">Anahtar Kelimeler</Label>
-                                    <Input
-                                        id="keywords"
-                                        value={keywords.join(', ')}
-                                        onChange={(e) => setKeywords(e.target.value.split(',').map(kw => kw.trim()).filter(kw => kw !== ''))}
-                                        placeholder="Anahtar kelimeleri virgülle ayırın"
-                                    />
-                                    <p className="text-xs text-muted-foreground">Sayfanızla ilgili anahtar kelimeleri belirtin.</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="canonical-url">Canonical URL</Label>
-                                    <Input
-                                        id="canonical-url"
-                                        type="url"
-                                        value={canonicalUrl}
-                                        onChange={(e) => setCanonicalUrl(e.target.value)}
-                                        placeholder="https://teknobiyo.com/orijinal-sayfa-url"
-                                    />
-                                    <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
-                                </div>
                                 <Separator />
-                                  <SeoPreview
-                                      title={seoTitle || title}
-                                      description={seoDescription || ''}
-                                      slug={slug || '/'}
-                                      category="sayfa"
-                                  />
-                            </CardContent>
-                      </Card>
-                 </div>
+
+                                {/* Block Editor Section */}
+                                 <BlockEditor
+                                   blocks={blocks}
+                                   onAddBlock={handleAddBlock}
+                                   onDeleteBlock={handleDeleteBlock}
+                                   onUpdateBlock={handleUpdateBlock}
+                                   onReorderBlocks={handleReorderBlocks}
+                                   selectedBlockId={selectedBlockId} // Pass selected block ID
+                                   onBlockSelect={handleBlockSelect} // Pass selection handler
+                                 />
+                             </>
+                        )}
+
+                        {editorView === 'seo' && (
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle>SEO Ayarları</CardTitle>
+                                    <CardDescription>Sayfanızın arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="seo-title">SEO Başlığı</Label>
+                                        <Input
+                                            id="seo-title"
+                                            value={seoTitle}
+                                            onChange={(e) => setSeoTitle(e.target.value)}
+                                            maxLength={60}
+                                            placeholder="Arama sonuçlarında görünecek başlık"
+                                        />
+                                        <p className="text-xs text-muted-foreground">Tavsiye: 50-60 karakter. ({seoTitle.length}/60)</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="seo-description">Meta Açıklama</Label>
+                                        <Textarea // Use Textarea for better editing
+                                            id="seo-description"
+                                            value={seoDescription}
+                                            onChange={(e) => setSeoDescription(e.target.value)}
+                                            maxLength={160}
+                                            rows={4}
+                                            placeholder="Arama sonuçlarında görünecek kısa açıklama"
+                                        />
+                                        <p className="text-xs text-muted-foreground">Tavsiye: 150-160 karakter. ({seoDescription.length}/160)</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="keywords">Anahtar Kelimeler</Label>
+                                        <Input
+                                            id="keywords"
+                                            value={keywords.join(', ')}
+                                            onChange={(e) => setKeywords(e.target.value.split(',').map(kw => kw.trim()).filter(kw => kw !== ''))}
+                                            placeholder="Anahtar kelimeleri virgülle ayırın"
+                                        />
+                                        <p className="text-xs text-muted-foreground">Sayfanızla ilgili anahtar kelimeleri belirtin.</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="canonical-url">Canonical URL</Label>
+                                        <Input
+                                            id="canonical-url"
+                                            type="url"
+                                            value={canonicalUrl}
+                                            onChange={(e) => setCanonicalUrl(e.target.value)}
+                                            placeholder="https://teknobiyo.com/orijinal-sayfa-url"
+                                        />
+                                        <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
+                                    </div>
+                                    <Separator />
+                                      <SeoPreview
+                                          title={seoTitle || title}
+                                          description={seoDescription || ''}
+                                          slug={slug || '/'}
+                                          category="sayfa"
+                                      />
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                 </ScrollArea>
 
                   {/* Right Preview Pane */}
-                   <aside className="w-1/2 lg:w-2/5 xl:w-1/2 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-center">
-                     <div className={`border bg-background shadow-lg rounded-lg overflow-hidden transform scale-95 origin-top ${getPreviewSizeClass()} transition-all duration-300 ease-in-out`}>
+                   <div className="flex-1 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-start relative">
+                     <div className={cn(
+                         "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative", // Added relative positioning
+                         getPreviewSizeClass()
+                     )}>
+                       {/* Added overlay to prevent interaction with iframe/content */}
+                       <div className="absolute inset-0 z-10 bg-transparent" />
                        <PagePreviewRenderer
+                          key={previewDevice} // Force re-render on device change
                           pageData={currentPreviewData}
                           selectedBlockId={selectedBlockId} // Pass selected block ID
                           onBlockSelect={handleBlockSelect} // Pass selection handler
+                          isPreview={true} // Indicate this is a preview render
                        />
                      </div>
-                   </aside>
+                   </div>
             </div>
         </div>
     );

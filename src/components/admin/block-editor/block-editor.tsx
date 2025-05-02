@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -22,6 +23,7 @@ import {
   Quote,
   Code,
   Minus,
+  LayoutGrid, // Added icon for section
 } from "lucide-react";
 import type { Block } from "@/components/admin/template-selector";
 import BlockWrapper from './block-wrapper';
@@ -30,6 +32,7 @@ import HeadingBlock from './heading-block';
 import ImageBlock from './image-block';
 import QuoteBlock from './quote-block';
 import DividerBlock from './divider-block';
+import SectionBlock from './section-block'; // Import SectionBlock
 import PlaceholderBlock from './placeholder-block';
 
 const ItemTypes = {
@@ -43,7 +46,7 @@ interface DraggableBlockProps {
     onDelete: (id: string) => void;
     onUpdate: (block: Block) => void;
     isSelected: boolean; // Is this block currently selected?
-    onSelect: (id: string) => void; // Callback to select this block
+    onSelect: (id: string | null) => void; // Callback to select this block (allow null)
 }
 
 const DraggableBlock: React.FC<DraggableBlockProps> = ({
@@ -92,22 +95,26 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({
 
   drag(drop(ref));
 
-  const handleContentChange = (id: string, content: any, field?: string, level?: number) => {
+  const handleContentChange = (id: string, contentOrSettings: any, field?: string, level?: number) => {
     const updatedBlock = { ...block };
     switch (block.type) {
         case 'text':
         case 'quote':
         case 'code':
-            updatedBlock.content = content;
+            updatedBlock.content = contentOrSettings;
             break;
         case 'heading':
-            updatedBlock.content = content;
+            updatedBlock.content = contentOrSettings;
             if (level) updatedBlock.level = level;
             break;
          case 'image':
-             if (field === 'url') updatedBlock.url = content;
-             if (field === 'alt') updatedBlock.alt = content;
-             if (field === 'caption') updatedBlock.caption = content;
+             if (field === 'url') updatedBlock.url = contentOrSettings;
+             if (field === 'alt') updatedBlock.alt = contentOrSettings;
+             if (field === 'caption') updatedBlock.caption = contentOrSettings;
+             break;
+         case 'section':
+             // Assume contentOrSettings is the new settings object
+             updatedBlock.settings = { ...updatedBlock.settings, ...contentOrSettings };
              break;
          // Handle other block types
     }
@@ -131,6 +138,7 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({
             {block.type === 'image' && <ImageBlock block={block} onChange={handleContentChange} />}
             {block.type === 'quote' && <QuoteBlock block={block} onChange={handleContentChange} />}
              {block.type === 'divider' && <DividerBlock />}
+             {block.type === 'section' && <SectionBlock block={block} onChange={handleContentChange} />} {/* Render SectionBlock */}
             {(block.type === 'gallery' || block.type === 'video' || block.type === 'code' ) && (
                  <PlaceholderBlock type={block.type} />
             )}
@@ -147,7 +155,7 @@ interface BlockEditorProps {
   onUpdateBlock: (block: Block) => void;
   onReorderBlocks: (reorderedBlocks: Block[]) => void;
   selectedBlockId: string | null; // ID of the currently selected block
-  onBlockSelect: (id: string) => void; // Callback when a block is selected (e.g., from preview)
+  onBlockSelect: (id: string | null) => void; // Callback when a block is selected (e.g., from preview)
 }
 
 export const BlockEditor: React.FC<BlockEditorProps> = ({
@@ -174,10 +182,13 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
   return (
      <DndProvider backend={HTML5Backend}>
        <div>
-         <h2 className="text-lg font-semibold mb-1">Makale Bölümleri</h2>
-         <p className="text-sm text-muted-foreground mb-4">İçeriğinizi düzenlemek için bölümler ekleyin ve sürükleyerek sıralayın.</p>
+         <h2 className="text-lg font-semibold mb-1">Sayfa Bölümleri</h2>
+         <p className="text-sm text-muted-foreground mb-4">İçeriğinizi veya sayfa yapısını düzenlemek için bölümler ekleyin ve sürükleyerek sıralayın.</p>
 
-         <div className="space-y-4">
+         <div
+             className="space-y-4"
+             onClick={() => onBlockSelect(null)} // Click outside blocks to deselect
+         >
              {blocks.map((block, index) => (
                  <DraggableBlock
                     key={block.id}
@@ -234,6 +245,14 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
                <DropdownMenuItem onSelect={() => onAddBlock('divider')}>
                  <Minus className="mr-2 h-4 w-4" />
                  <span>Ayırıcı</span>
+               </DropdownMenuItem>
+               {/* Add Section Block */}
+               <DropdownMenuSeparator />
+               <DropdownMenuLabel>Yapı Blokları</DropdownMenuLabel>
+               <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => onAddBlock('section')}>
+                 <LayoutGrid className="mr-2 h-4 w-4" />
+                 <span>Bölüm (Section)</span>
                </DropdownMenuItem>
                {/* Add more block types here */}
              </DropdownMenuContent>
