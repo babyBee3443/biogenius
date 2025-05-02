@@ -48,6 +48,7 @@ const getPageById = async (id: string): Promise<PageData | null> => {
                 { id: 'hp-section-featured', type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkanlar', count: 3 } },
                 { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler' } },
                 { id: 'hp-section-recent', type: 'section', sectionType: 'recent-articles', settings: { title: 'En Son Eklenenler', count: 3 } },
+                 { id: 'hp-section-custom-text', type: 'section', sectionType: 'custom-text', settings: { content: '<p>Bu alana <strong>özel metin</strong> veya HTML ekleyebilirsiniz.</p>' } },
             ],
             seoTitle: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
             seoDescription: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
@@ -362,7 +363,7 @@ export default function EditPage() {
             {/* Main Content Area (Editor/SEO + Preview) */}
              <div className="flex flex-1 overflow-hidden">
                  {/* Left Pane (Editor or SEO) - Adjusted width */}
-                 <ScrollArea className="border-r w-1/2 lg:w-1/3 xl:w-2/5"> {/* Editor pane width adjusted */}
+                 <ScrollArea className="border-r w-[400px] lg:w-[450px] xl:w-[500px]"> {/* Fixed width editor pane */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -476,7 +477,7 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                  {/* Right Preview Pane - Made wider */}
+                  {/* Right Preview Pane - Flex-grow */}
                    <div className="flex-1 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-start relative">
                      <div className={cn(
                          "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative",
@@ -485,7 +486,7 @@ export default function EditPage() {
                        {/* Removed overlay for direct interaction (be careful with iframe approach if re-enabled) */}
                        {/* <div className="absolute inset-0 z-10 bg-transparent" /> */}
                        <PagePreviewRenderer
-                          key={previewDevice + '-' + currentPreviewData.id + '-' + blocks.length} // Force re-render on device change or block changes
+                          key={previewDevice + '-' + currentPreviewData.id + '-' + blocks.map(b => b.id).join('-')} // More specific key including block IDs
                           pageData={currentPreviewData} // Pass data recalculated by useMemo
                           selectedBlockId={selectedBlockId}
                           onBlockSelect={handleBlockSelect}
