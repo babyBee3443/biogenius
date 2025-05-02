@@ -4,64 +4,80 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils" // Import cn
+import { motion } from "framer-motion" // Import motion
+import { cn } from "@/lib/utils"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-
-  // Use useEffect to avoid hydration mismatch for theme state
   const [mounted, setMounted] = React.useState(false)
+
   React.useEffect(() => setMounted(true), [])
 
+  // Adjust these values based on exact styling needs
+  const toggleWidth = 130; // Total width in px
+  const indicatorSize = 32; // h-8 w-8 -> 32px
+  const padding = 4; // p-1 -> 4px
+
+  // Calculate the distance the indicator should move
+  const moveDistance = toggleWidth - (padding * 2) - indicatorSize;
+
+
   if (!mounted) {
-    // Render placeholder or null during server render / hydration mismatch phase
-    return (
-        <div className="flex items-center space-x-1 bg-secondary p-1 rounded-full">
-            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-background text-muted-foreground" disabled>
-                <Sun className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-muted-foreground" disabled>
-                 <Moon className="h-4 w-4" />
-            </Button>
-        </div>
-    );
+    // Render a static placeholder to avoid layout shifts and match dimensions
+    return <div style={{ height: '40px', width: `${toggleWidth}px` }} className="rounded-full bg-secondary animate-pulse"></div>;
   }
 
-
   const isLight = theme === "light";
+  const toggleTheme = () => setTheme(isLight ? "dark" : "light");
 
   return (
-    <div className="flex items-center space-x-1 bg-secondary/70 p-1 rounded-full border border-border/30">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setTheme("light")}
+    <button
+      onClick={toggleTheme}
+      style={{ width: `${toggleWidth}px`, height: '40px' }} // Apply dimensions using style for precision
+      className={cn(
+        "relative flex items-center rounded-full p-1 cursor-pointer transition-all duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        isLight
+          ? "bg-gradient-to-r from-pink-400 via-orange-300 to-yellow-300" // Day mode gradient
+          : "bg-gradient-to-r from-blue-600 to-indigo-700" // Night mode gradient
+      )}
+      aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+    >
+      {/* Sliding Indicator */}
+      <motion.div
+        layout // Enables smooth layout animation
+        transition={{ type: "spring", stiffness: 500, damping: 35 }}
         className={cn(
-          "h-7 w-7 rounded-full transition-colors",
-          isLight
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+          "absolute h-8 w-8 rounded-full bg-white shadow-md flex items-center justify-center",
+           // Use absolute positioning with left defined by padding
+           "top-1 left-1"
         )}
+        // Animate the x position based on the theme
+        initial={false} // Don't animate on initial load
+        animate={{ x: isLight ? 0 : moveDistance }} // Move indicator based on calculated distance
       >
-        <Sun className="h-4 w-4" />
-        <span className="sr-only">Açık Tema</span>
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setTheme("dark")}
-        className={cn(
-          "h-7 w-7 rounded-full transition-colors",
-          !isLight
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+        {isLight ? (
+          <Sun className="h-5 w-5 text-yellow-500" />
+        ) : (
+          <Moon className="h-5 w-5 text-blue-500" />
         )}
-      >
-        <Moon className="h-4 w-4" />
-        <span className="sr-only">Koyu Tema</span>
-      </Button>
-    </div>
-  )
+      </motion.div>
+
+      {/* Labels */}
+       <span style={{ left: `${padding + indicatorSize + 8}px` }} // Position relative to indicator + padding
+            className={cn(
+           "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
+           isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0"
+        )}>
+           DAY MODE
+       </span>
+       <span style={{ right: `${padding + indicatorSize + 8}px` }} // Position relative to indicator + padding
+            className={cn(
+           "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
+           !isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0"
+        )}>
+          NIGHT MODE
+      </span>
+
+    </button>
+  );
 }
