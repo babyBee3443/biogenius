@@ -1,9 +1,9 @@
-
 "use client";
 
 import * as React from 'react';
 import Image from 'next/image';
-import type { Block } from '@/components/admin/template-selector'; // Reuse Block type
+import type { Block } from '@/components/admin/template-selector';
+import { cn } from '@/lib/utils'; // Import cn utility
 
 // Define the props for the PagePreviewRenderer
 interface PagePreviewRendererProps {
@@ -15,12 +15,12 @@ interface PagePreviewRendererProps {
         seoTitle?: string;
         seoDescription?: string;
         imageUrl?: string;
-        // category?: string; // Consider if needed for styling previews
     };
+    selectedBlockId: string | null; // ID of the block selected in the editor
+    onBlockSelect: (id: string) => void; // Callback when a block is clicked in preview
 }
 
 // --- Block Rendering Components (Simplified versions for preview) ---
-// These are similar to the ones in `/admin/preview/page.tsx` but adapted for component use
 
 const TextBlockPreview: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
     <p className="text-base leading-relaxed mb-4">{block.content || <span className="text-muted-foreground italic">[Boş Metin Bloğu]</span>}</p>
@@ -45,7 +45,7 @@ const ImageBlockPreview: React.FC<{ block: Extract<Block, { type: 'image' }> }> 
             <Image
                 src={block.url}
                 alt={block.alt || 'Görsel'}
-                width={800} // Adjust as needed for preview size
+                width={800}
                 height={450}
                 className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             />
@@ -75,57 +75,76 @@ const PlaceholderBlockPreview: React.FC<{ type: string }> = ({ type }) => (
     </div>
 );
 
-// Function to render a single block
-const renderPreviewBlock = (block: Block) => {
+// Function to render a single block with selection handling
+const renderPreviewBlock = (
+    block: Block,
+    isSelected: boolean,
+    onClick: () => void
+) => {
+    let content;
     switch (block.type) {
         case 'text':
-            return <TextBlockPreview key={block.id} block={block} />;
+            content = <TextBlockPreview block={block} />;
+            break;
         case 'heading':
-            return <HeadingBlockPreview key={block.id} block={block} />;
+            content = <HeadingBlockPreview block={block} />;
+            break;
         case 'image':
-            return <ImageBlockPreview key={block.id} block={block} />;
+            content = <ImageBlockPreview block={block} />;
+            break;
         case 'quote':
-            return <QuoteBlockPreview key={block.id} block={block} />;
+            content = <QuoteBlockPreview block={block} />;
+            break;
         case 'divider':
-            return <DividerBlockPreview key={block.id} />;
-        // Add cases for other block types if previews are available
-        case 'gallery':
-        case 'video':
-        case 'code':
+            content = <DividerBlockPreview />;
+            break;
         default:
-            return <PlaceholderBlockPreview key={block.id} type={block.type} />;
+            content = <PlaceholderBlockPreview type={block.type} />;
     }
+
+    return (
+        <div
+            key={block.id}
+            onClick={onClick}
+            className={cn(
+                "cursor-pointer transition-all duration-200 ease-in-out p-1 -m-1 rounded", // Add padding/margin for click area and rounding
+                {
+                     "ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/10": isSelected, // Highlight selected block
+                     "hover:bg-muted/50": !isSelected // Subtle hover effect
+                }
+            )}
+             data-preview-block-id={block.id} // Add data attribute for potential targeting
+        >
+            {content}
+        </div>
+    );
 };
 
 
 // --- The Main Preview Renderer Component ---
-const PagePreviewRenderer: React.FC<PagePreviewRendererProps> = ({ pageData }) => {
-    const { title, blocks, imageUrl } = pageData;
+const PagePreviewRenderer: React.FC<PagePreviewRendererProps> = ({
+    pageData,
+    selectedBlockId,
+    onBlockSelect,
+ }) => {
+    const { title, blocks } = pageData;
 
-    // Basic structure mimicking a simplified page layout
     return (
         <div className="p-4 bg-background text-foreground h-full overflow-y-auto">
             <header className="mb-6">
                 <h1 className="text-3xl font-bold mb-2">{title || <span className="text-muted-foreground italic">[Başlık Yok]</span>}</h1>
             </header>
 
-            {/* Optional: Render a main image if available and not handled by blocks */}
-            {/* {imageUrl && !blocks.some(b => b.type === 'image') && (
-                <div className="mb-6 shadow rounded-lg overflow-hidden">
-                    <Image
-                        src={imageUrl}
-                        alt={title || "Ana Görsel"}
-                        width={1200}
-                        height={600}
-                        className="w-full h-auto object-cover"
-                    />
-                </div>
-            )} */}
-
             {/* Render Blocks */}
             <div className="prose dark:prose-invert max-w-none">
                 {blocks.length > 0 ? (
-                    blocks.map(renderPreviewBlock)
+                    blocks.map(block =>
+                        renderPreviewBlock(
+                            block,
+                            block.id === selectedBlockId,
+                            () => onBlockSelect(block.id)
+                        )
+                    )
                 ) : (
                     <p className="text-muted-foreground italic">(Bu sayfada henüz içerik bölümü yok)</p>
                 )}

@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone } from "lucide-react"; // Replaced Eye with device icons
+import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor";
 import type { Block } from "@/components/admin/template-selector";
 import SeoPreview from "@/components/admin/seo-preview";
-import PagePreviewRenderer from "@/components/admin/page-preview-renderer"; // Import the new preview renderer
+import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
 
 // Mock data fetching - Replace with actual API call
 interface PageData {
@@ -92,6 +92,7 @@ export default function EditPage() {
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
     const [previewDevice, setPreviewDevice] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // State for selected block
 
 
     React.useEffect(() => {
@@ -168,10 +169,14 @@ export default function EditPage() {
             ...(type === 'divider' && {}),
         } as Block;
         setBlocks([...blocks, newBlock]);
+        setSelectedBlockId(newBlock.id); // Select the newly added block
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks(blocks.filter(block => block.id !== id));
+        if (selectedBlockId === id) {
+            setSelectedBlockId(null); // Deselect if deleted
+        }
     };
 
     const handleUpdateBlock = (updatedBlock: Block) => {
@@ -184,6 +189,16 @@ export default function EditPage() {
 
     const handleReorderBlocks = (reorderedBlocks: Block[]) => {
         setBlocks(reorderedBlocks);
+    };
+
+    // Callback for selecting block from preview
+    const handleBlockSelect = (id: string) => {
+        setSelectedBlockId(id);
+        // Optional: Scroll editor to the selected block
+         const editorElement = document.querySelector(`[data-block-wrapper-id="${id}"]`);
+         if (editorElement) {
+             editorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+         }
     };
     // --- End Block Handlers ---
 
@@ -224,14 +239,13 @@ export default function EditPage() {
         seoTitle: seoTitle,
         seoDescription: seoDescription,
         imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || pageData?.imageUrl || 'https://picsum.photos/seed/page-preview/1200/600',
-        // category: 'Sayfa', // Not directly applicable, maybe derive later
     };
 
     const getPreviewSizeClass = () => {
       switch (previewDevice) {
-        case 'mobile': return 'w-[375px] h-[667px]'; // iPhone SE size
-        case 'tablet': return 'w-[768px] h-[1024px]'; // iPad portrait
-        default: return 'w-full h-full'; // Desktop
+        case 'mobile': return 'w-[375px] h-[667px]';
+        case 'tablet': return 'w-[768px] h-[1024px]';
+        default: return 'w-full h-full';
       }
     }
 
@@ -246,7 +260,7 @@ export default function EditPage() {
 
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden"> {/* Full height */}
+        <div className="flex flex-col h-screen overflow-hidden">
              {/* Top Bar */}
              <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-20">
                 <Button variant="ghost" size="sm" asChild>
@@ -287,7 +301,6 @@ export default function EditPage() {
                      <Button variant="destructive" size="sm" onClick={handleDelete}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
-                      {/* Removed separate Preview Button */}
                       <Button size="sm" onClick={handleSave} disabled={!title}>
                         <Save className="mr-2 h-4 w-4" /> Kaydet
                     </Button>
@@ -338,9 +351,11 @@ export default function EditPage() {
                        onDeleteBlock={handleDeleteBlock}
                        onUpdateBlock={handleUpdateBlock}
                        onReorderBlocks={handleReorderBlocks}
+                       selectedBlockId={selectedBlockId} // Pass selected block ID
+                       onBlockSelect={handleBlockSelect} // Pass selection handler
                      />
 
-                    {/* SEO Settings (Moved from Sidebar) */}
+                    {/* SEO Settings */}
                     <Card>
                             <CardHeader>
                                 <CardTitle>SEO Ayarları</CardTitle>
@@ -391,7 +406,6 @@ export default function EditPage() {
                                     <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
                                 </div>
                                 <Separator />
-                                  {/* SEO Preview */}
                                   <SeoPreview
                                       title={seoTitle || title}
                                       description={seoDescription || ''}
@@ -405,7 +419,11 @@ export default function EditPage() {
                   {/* Right Preview Pane */}
                    <aside className="w-1/2 lg:w-2/5 xl:w-1/2 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-center">
                      <div className={`border bg-background shadow-lg rounded-lg overflow-hidden transform scale-95 origin-top ${getPreviewSizeClass()} transition-all duration-300 ease-in-out`}>
-                       <PagePreviewRenderer pageData={currentPreviewData} />
+                       <PagePreviewRenderer
+                          pageData={currentPreviewData}
+                          selectedBlockId={selectedBlockId} // Pass selected block ID
+                          onBlockSelect={handleBlockSelect} // Pass selection handler
+                       />
                      </div>
                    </aside>
             </div>

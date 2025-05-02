@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -25,7 +24,7 @@ import {
   Minus,
 } from "lucide-react";
 import type { Block } from "@/components/admin/template-selector";
-import BlockWrapper from './block-wrapper'; // Wrapper for drag/delete controls
+import BlockWrapper from './block-wrapper';
 import TextBlock from './text-block';
 import HeadingBlock from './heading-block';
 import ImageBlock from './image-block';
@@ -43,9 +42,19 @@ interface DraggableBlockProps {
     moveBlock: (dragIndex: number, hoverIndex: number) => void;
     onDelete: (id: string) => void;
     onUpdate: (block: Block) => void;
+    isSelected: boolean; // Is this block currently selected?
+    onSelect: (id: string) => void; // Callback to select this block
 }
 
-const DraggableBlock: React.FC<DraggableBlockProps> = ({ block, index, moveBlock, onDelete, onUpdate }) => {
+const DraggableBlock: React.FC<DraggableBlockProps> = ({
+    block,
+    index,
+    moveBlock,
+    onDelete,
+    onUpdate,
+    isSelected,
+    onSelect,
+ }) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const [{ handlerId }, drop] = useDrop({
     accept: ItemTypes.BLOCK,
@@ -60,22 +69,16 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({ block, index, moveBlock
       const hoverIndex = index;
       if (dragIndex === hoverIndex) return;
 
-      // Determine rectangle on screen
       const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      // Get vertical middle
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      // Determine mouse position
       const clientOffset = monitor.getClientOffset();
-      // Get pixels to the top
       const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
 
-      // Dragging downwards
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
-      // Dragging upwards
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       moveBlock(dragIndex, hoverIndex);
-      item.index = hoverIndex; // Update the item's index to the new hovering index
+      item.index = hoverIndex;
     },
   });
 
@@ -87,11 +90,9 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({ block, index, moveBlock
     }),
   });
 
-  // Attach the drag source and drop target refs
   drag(drop(ref));
 
   const handleContentChange = (id: string, content: any, field?: string, level?: number) => {
-    // More structured update based on block type
     const updatedBlock = { ...block };
     switch (block.type) {
         case 'text':
@@ -115,20 +116,21 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({ block, index, moveBlock
 
 
   return (
-     <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1 }} data-handler-id={handlerId}>
+     <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1 }} data-handler-id={handlerId} data-block-wrapper-id={block.id}>
         <BlockWrapper
             blockId={block.id}
             blockType={block.type}
             blockNumber={index + 1}
             onDelete={onDelete}
-            dragHandleRef={preview} // Pass the preview ref for the drag handle visual
+            dragHandleRef={preview}
+            isSelected={isSelected} // Pass selection state
+            onSelect={() => onSelect(block.id)} // Pass selection handler
         >
             {block.type === 'text' && <TextBlock block={block} onChange={handleContentChange} />}
             {block.type === 'heading' && <HeadingBlock block={block} onChange={handleContentChange} />}
             {block.type === 'image' && <ImageBlock block={block} onChange={handleContentChange} />}
             {block.type === 'quote' && <QuoteBlock block={block} onChange={handleContentChange} />}
              {block.type === 'divider' && <DividerBlock />}
-            {/* Placeholder for other block types */}
             {(block.type === 'gallery' || block.type === 'video' || block.type === 'code' ) && (
                  <PlaceholderBlock type={block.type} />
             )}
@@ -142,8 +144,10 @@ interface BlockEditorProps {
   blocks: Block[];
   onAddBlock: (type: Block['type']) => void;
   onDeleteBlock: (id: string) => void;
-  onUpdateBlock: (block: Block) => void; // More generic update
+  onUpdateBlock: (block: Block) => void;
   onReorderBlocks: (reorderedBlocks: Block[]) => void;
+  selectedBlockId: string | null; // ID of the currently selected block
+  onBlockSelect: (id: string) => void; // Callback when a block is selected (e.g., from preview)
 }
 
 export const BlockEditor: React.FC<BlockEditorProps> = ({
@@ -152,6 +156,8 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
   onDeleteBlock,
   onUpdateBlock,
   onReorderBlocks,
+  selectedBlockId,
+  onBlockSelect,
 }) => {
 
   const moveBlock = React.useCallback(
@@ -180,6 +186,8 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
                     moveBlock={moveBlock}
                     onDelete={onDeleteBlock}
                     onUpdate={onUpdateBlock}
+                    isSelected={block.id === selectedBlockId} // Determine if selected
+                    onSelect={onBlockSelect} // Pass handler
                 />
              ))}
          </div>
