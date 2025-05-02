@@ -67,65 +67,83 @@ const recentArticles: Article[] = [
 ];
 
 
-// Animation variants for the title
+// Animation variants for the title reveal
 const titleContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.04, // Slightly faster stagger
-      delayChildren: 0.2, // Initial delay before starting animation
+      staggerChildren: 0.04, // Stagger the appearance of each letter
+      delayChildren: 0.2,
     },
   },
 };
 
-const letterVariants = {
-  hidden: { opacity: 0, y: 15, filter: "blur(5px)" }, // Reduced blur and y offset
-  visible: {
+const letterRevealVariants = {
+  hidden: { opacity: 0, y: 15, filter: "blur(3px)" }, // Initial state: invisible, slightly down, blurred
+  visible: { // Target state: visible, original position, no blur
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    textShadow: [ // Adjusted glow effect - quicker pulse
-      "0 0 0px hsl(var(--primary) / 0)",
-      "0 0 8px hsl(var(--primary) / 0.7)", // Smaller, less intense peak glow
-      "0 0 15px hsl(var(--primary) / 0.4)", // Wider, dimmer glow
-      "0 0 0px hsl(var(--primary) / 0)",
-    ],
     transition: {
-      duration: 0.6, // Slightly faster duration
-      ease: [0.2, 0.65, 0.3, 0.9], // Custom easing
-      textShadow: { // Glow animation timing
-          duration: 0.5, // Faster glow pulse
-          ease: "linear", // Linear for a shimmer feel
-          delay: 0.1 // Reduced delay
-      }
+      duration: 0.6,
+      ease: [0.2, 0.65, 0.3, 0.9], // Custom easing for a smooth reveal
     },
   },
 };
 
-
-const titleText = "Teknoloji ve Biyolojinin Kesişim Noktası";
+// Define the text parts and their colors
+const titleParts = [
+  { text: "Teknoloji", colorClass: "text-blue-600 dark:text-blue-400" },
+  { text: " ve ", colorClass: "" }, // Default color for connecting words
+  { text: "Biyolojinin", colorClass: "text-green-600 dark:text-green-400" },
+  { text: " Kesişim Noktası", colorClass: "" },
+];
 
 
 export default function Home() {
+  let charIndex = 0; // Keep track of the global character index for stagger delay
+
   return (
     <div className="space-y-16">
       {/* Animated Static Title Above Hero */}
       <motion.h1
-        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2 whitespace-nowrap" // Reduced font size classes
+        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2 whitespace-nowrap"
         variants={titleContainerVariants}
         initial="hidden"
         animate="visible"
-        aria-label={titleText}
+        aria-label="Teknoloji ve Biyolojinin Kesişim Noktası"
       >
-        {titleText.split("").map((char, index) => (
-          <motion.span
-            key={`${char}-${index}`}
-            variants={letterVariants}
-            className="inline-block"
-          >
-            {char === ' ' ? '\u00A0' : char} {/* Replace space with non-breaking space */}
-          </motion.span>
+        {titleParts.map((part, partIndex) => (
+          part.text.split("").map((char) => {
+            const currentIndex = charIndex++;
+            return (
+              <motion.span
+                key={`${partIndex}-${currentIndex}`}
+                variants={letterRevealVariants}
+                className={`inline-block ${part.colorClass}`}
+                // Add continuous shimmer animation directly
+                animate={{
+                    textShadow: [
+                      "0 0 1px hsl(var(--primary) / 0)",
+                      "0 0 5px hsl(var(--primary) / 0.4)", // Subtle glow
+                      "0 0 1px hsl(var(--primary) / 0)",
+                    ],
+                }}
+                transition={{
+                  textShadow: {
+                    delay: currentIndex * 0.05, // Stagger start of shimmer based on letter index
+                    duration: 2.5, // Duration of one shimmer cycle
+                    repeat: Infinity,
+                    repeatType: "mirror", // Go back and forth
+                    ease: "easeInOut",
+                  },
+                }}
+              >
+                {char === ' ' ? '\u00A0' : char} {/* Non-breaking space for spaces */}
+              </motion.span>
+            );
+          })
         ))}
       </motion.h1>
 
