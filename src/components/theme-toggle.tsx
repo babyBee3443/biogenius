@@ -40,7 +40,7 @@ export function ThemeToggle() {
           ? "bg-gradient-to-r from-pink-400 via-orange-300 to-yellow-300" // Day mode gradient
           : "bg-gradient-to-r from-blue-600 to-indigo-700" // Night mode gradient
       )}
-      aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+      aria-label={isLight ? "Koyu temaya geç" : "Açık temaya geç"} // Updated aria-label
     >
       {/* Sliding Indicator */}
       <motion.div
@@ -68,14 +68,14 @@ export function ThemeToggle() {
            "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
            isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0"
         )}>
-           DAY MODE
+           AÇIK TEMA {/* Translated text */}
        </span>
        <span style={{ right: `${padding + indicatorSize + 8}px` }} // Position relative to indicator + padding
             className={cn(
            "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
            !isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0"
         )}>
-          NIGHT MODE
+          KOYU TEMA {/* Translated text */}
       </span>
 
     </button>
