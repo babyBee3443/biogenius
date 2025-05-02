@@ -92,17 +92,22 @@ const letterRevealVariants = {
   },
 };
 
-// Define the text parts and their styles
-// Removed image masking properties (masked, imageUrl, aiHint)
+// Define the text parts and their styles, including images for masking
 const titleParts = [
   {
       text: "Teknoloji",
-      colorClass: "text-blue-600 dark:text-blue-400",
+      colorClass: "text-blue-600 dark:text-blue-400", // Base color (fallback)
+      masked: true,
+      imageUrl: "https://picsum.photos/seed/techmask/1200/300", // Placeholder image for Teknoloji
+      aiHint: "technology circuit board abstract",
    },
   { text: " ve ", colorClass: "text-foreground" }, // Use default foreground color
   {
       text: "Biyolojinin",
-      colorClass: "text-green-600 dark:text-green-400",
+      colorClass: "text-green-600 dark:text-green-400", // Base color (fallback)
+      masked: true,
+      imageUrl: "https://picsum.photos/seed/biomask/1200/300", // Placeholder image for Biyoloji
+      aiHint: "biology nature plants dna",
    },
   { text: " Kesişim Noktası", colorClass: "text-foreground" }, // Use default foreground color
 ];
@@ -115,54 +120,74 @@ export default function Home() {
     <div className="space-y-16">
       {/* Animated Static Title Above Hero */}
       <motion.h1
-        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2 whitespace-nowrap"
+        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2" // Adjusted whitespace-nowrap for wrapping
         variants={titleContainerVariants}
         initial="hidden"
         animate="visible"
         aria-label="Teknoloji ve Biyolojinin Kesişim Noktası"
       >
-        {titleParts.map((part, partIndex) => (
-          part.text.split("").map((char) => {
-            const currentIndex = charIndex++;
+        {titleParts.map((part, partIndex) => {
+            // Generate a unique key for the part to help React with updates
+            const partKey = `part-${partIndex}-${part.text}`;
 
-            const shimmerAnimation = {
-                textShadow: [
-                  "0 0 1px hsl(var(--foreground) / 0.1)", // Base subtle shadow
-                  `0 0 8px ${part.colorClass.includes('blue') ? 'hsl(var(--primary))' : part.colorClass.includes('green') ? 'hsl(120 70% 45%)' : 'hsl(var(--foreground) / 0.5)'}`, // Brighter glow based on color, slower transition
-                  "0 0 1px hsl(var(--foreground) / 0.1)", // Back to base
-                ],
-            };
-
-            const shimmerTransition = {
-                 // Transition for the textShadow animation
-                 textShadow: {
-                    delay: currentIndex * 0.1, // Slightly increased delay per character for slower overall effect
-                    duration: 6, // Further slowed down duration of one glow cycle
-                    repeat: Infinity, // Repeat indefinitely
-                    repeatType: "mirror", // Go back and forth smoothly (glow in/out)
-                    ease: "easeInOut",
-                  },
-            };
-
+            // Prepare inline style for masked parts
+            const maskStyle = part.masked && part.imageUrl ? {
+                backgroundImage: `url(${part.imageUrl})`,
+            } : {};
 
             return (
-              <motion.span
-                key={`${partIndex}-${currentIndex}`}
-                variants={letterRevealVariants}
-                className={cn(
-                    "inline-block",
-                    part.colorClass // Apply color class directly
-                )}
-                // Removed style={maskStyle}
-                // Removed data-ai-hint
-                animate={shimmerAnimation} // Apply shimmer animation
-                transition={shimmerTransition} // Apply transition for shimmer
-              >
-                {char === ' ' ? '\u00A0' : char} {/* Non-breaking space for spaces */}
-              </motion.span>
+                 // Use a span for the whole word part if masked, to apply background correctly
+                 <span
+                     key={partKey}
+                     className={cn(
+                         "inline-block", // Ensure spans behave correctly
+                         part.masked ? 'bg-cover bg-center bg-clip-text text-transparent' : part.colorClass
+                     )}
+                     style={maskStyle}
+                     {...(part.masked && { "data-ai-hint": part.aiHint })}
+                 >
+                     {part.text.split("").map((char) => {
+                        const currentIndex = charIndex++;
+
+                         // Shimmer animation remains the same
+                         const shimmerAnimation = {
+                             textShadow: [
+                               "0 0 1px hsl(var(--foreground) / 0.1)",
+                               `0 0 5px ${part.masked ? 'hsl(var(--foreground) / 0.6)' : (part.colorClass.includes('blue') ? 'hsl(var(--primary) / 0.8)' : part.colorClass.includes('green') ? 'hsl(120 70% 45% / 0.8)' : 'hsl(var(--foreground) / 0.5)')}`, // Adjusted glow for masked text
+                               "0 0 1px hsl(var(--foreground) / 0.1)",
+                             ],
+                         };
+
+                         const shimmerTransition = {
+                              textShadow: {
+                                 delay: currentIndex * 0.15, // Further slowed down delay
+                                 duration: 7, // Further slowed down duration
+                                 repeat: Infinity,
+                                 repeatType: "mirror",
+                                 ease: "easeInOut",
+                               },
+                         };
+
+                         // Render each character within its own motion.span for individual animation
+                         return (
+                            <motion.span
+                                key={`${partKey}-char-${currentIndex}`}
+                                variants={letterRevealVariants}
+                                className={cn(
+                                    "inline-block",
+                                     // Apply base color if not masked, otherwise handled by parent span
+                                     !part.masked ? part.colorClass : ''
+                                )}
+                                animate={shimmerAnimation}
+                                transition={shimmerTransition}
+                            >
+                                {char === ' ' ? '\u00A0' : char}
+                            </motion.span>
+                        );
+                    })}
+                </span>
             );
-          })
-        ))}
+        })}
       </motion.h1>
 
        {/* Hero Section - No longer includes the static title */}

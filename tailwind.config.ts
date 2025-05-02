@@ -92,8 +92,24 @@ export default {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'spin-slow': 'spin-slow 15s linear infinite', // Added slow spin animation
-  		}
+  		},
+       textShadow: { // Add text-shadow utilities
+          sm: '0 1px 2px var(--tw-shadow-color, rgba(0,0,0,0.4))',
+          DEFAULT: '0 2px 4px var(--tw-shadow-color, rgba(0,0,0,0.5))',
+          md: '0 2px 4px var(--tw-shadow-color, rgba(0,0,0,0.5))',
+          lg: '0 4px 8px var(--tw-shadow-color, rgba(0,0,0,0.6))',
+        },
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // Add a plugin for text-shadow if needed for more complex scenarios or variants
+    function ({ addUtilities, theme, e }: { addUtilities: Function, theme: Function, e: Function }) {
+      const values = theme('textShadow');
+      const utilities = Object.entries(values).map(([key, value]) => ({
+        [`.${e(`text-shadow${key === 'DEFAULT' ? '' : `-${key}`}`)}`]: { 'text-shadow': value },
+      }));
+      addUtilities(utilities);
+    }
+  ],
 } satisfies Config;
