@@ -74,7 +74,7 @@ const titleContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05, // Slightly slower stagger for smoother sequential glow
+      staggerChildren: 0.05, // Stagger reveal slightly
       delayChildren: 0.2,
     },
   },
@@ -98,13 +98,13 @@ const titleParts = [
   {
       text: "Teknoloji",
       colorClass: "text-blue-600 dark:text-blue-400",
-      glowColor: "hsl(var(--primary) / 0.6)", // Use primary color for glow, slightly reduced opacity
+      glowColor: "hsl(var(--primary) / 0.5)", // Blue glow, reduced opacity
    },
   { text: " ve ", colorClass: "text-foreground" },
   {
       text: "Biyolojinin",
       colorClass: "text-green-600 dark:text-green-400",
-      glowColor: "hsl(120 60% 50% / 0.6)", // Green glow, slightly reduced opacity
+      glowColor: "hsl(120 60% 50% / 0.5)", // Green glow, reduced opacity
    },
   { text: " Kesişim Noktası", colorClass: "text-foreground" },
 ];
@@ -125,29 +125,32 @@ export default function Home() {
       >
         {titleParts.map((part, partIndex) => {
             const partKey = `part-${partIndex}-${part.text}`;
+             // Calculate the start index of the current part for delay calculation
+            const partStartIndex = charIndex;
+
             return (
                  // Use a span for the whole word part
                  <span
                      key={partKey}
                      className="inline-block" // Ensure spans behave correctly
                  >
-                     {part.text.split("").map((char) => {
-                        const currentIndex = charIndex++;
+                     {part.text.split("").map((char, index) => {
+                        const currentIndex = charIndex++; // Increment global index
 
                         // Define the shimmer animation using textShadow - More Subtle Glow
                         const shimmerAnimation = part.glowColor ? {
                              textShadow: [
-                               "0 0 1px hsl(var(--foreground) / 0.05)", // Very subtle base shadow
-                               `0 0 4px ${part.glowColor}, 0 0 8px ${part.glowColor}`, // Softer glow (reduced radius)
-                               "0 0 1px hsl(var(--foreground) / 0.05)", // Back to subtle
+                               "0 0 1px hsl(var(--foreground) / 0.1)", // Very subtle base shadow
+                               `0 0 4px ${part.glowColor}, 0 0 6px ${part.glowColor}`, // Soft glow (small radius)
+                               "0 0 1px hsl(var(--foreground) / 0.1)", // Back to subtle
                              ],
                         } : {}; // No glow for normal text
 
-                        // Define the transition for the shimmer - Slower
+                        // Define the transition for the shimmer - Slower sequential delay
                          const shimmerTransition = part.glowColor ? {
                               textShadow: {
-                                 delay: currentIndex * 0.12, // Slightly slower sequential delay
-                                 duration: 2.5, // Slower glow pulse duration
+                                 delay: (currentIndex - partStartIndex) * 0.2, // Delay relative to the start of the *part*, slower multiplier
+                                 duration: 3.5, // Slower glow pulse duration
                                  repeat: Infinity,
                                  repeatType: "mirror", // Glow in and out smoothly
                                  ease: "easeInOut",
@@ -277,3 +280,5 @@ export default function Home() {
     </div>
   );
 }
+
+  
