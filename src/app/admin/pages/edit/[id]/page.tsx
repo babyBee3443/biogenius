@@ -46,7 +46,7 @@ const getPageById = async (id: string): Promise<PageData | null> => {
                 { id: 'hpb-intro', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' },
                 // --- Blocks representing visual sections ---
                 { id: 'hp-section-featured', type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkanlar', count: 3 } },
-                { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler' } },
+                { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler', techButtonLabel: 'Teknoloji', bioButtonLabel: 'Biyoloji'} }, // Added labels
                 { id: 'hp-section-recent', type: 'section', sectionType: 'recent-articles', settings: { title: 'En Son Eklenenler', count: 3 } },
                  { id: 'hp-section-custom-text', type: 'section', sectionType: 'custom-text', settings: { content: '<p>Bu alana <strong>özel metin</strong> veya HTML ekleyebilirsiniz.</p>' } },
             ],
@@ -75,7 +75,7 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             blocks: [
                 { id: 'cb1', type: 'heading', level: 2, content: 'Bizimle İletişime Geçin' },
                 { id: 'cb2', type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşın.' },
-                { id: 'cb-form', type: 'section', sectionType: 'contact-form', settings: {} }, // Placeholder for form block
+                { id: 'cb-form', type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@teknobiyo.example.com' } }, // Placeholder for form block
             ],
             seoTitle: 'İletişim | TeknoBiyo',
             seoDescription: 'TeknoBiyo ile iletişime geçin. Sorularınız ve önerileriniz için buradayız.',
@@ -362,8 +362,8 @@ export default function EditPage() {
 
             {/* Main Content Area (Editor/SEO + Preview) */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Pane (Editor or SEO) - Adjusted width */}
-                 <ScrollArea className="border-r w-[400px] lg:w-[450px] xl:w-[500px]"> {/* Fixed width editor pane */}
+                 {/* Left Pane (Editor or SEO) - Adjusted width to use percentage */}
+                 <ScrollArea className="border-r w-full md:w-1/3 lg:w-1/3 xl:w-1/3"> {/* Use percentage width */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -498,3 +498,5 @@ export default function EditPage() {
         </div>
     );
 }
+
+    
