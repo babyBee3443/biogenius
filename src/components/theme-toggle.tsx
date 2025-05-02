@@ -37,8 +37,8 @@ export function ThemeToggle() {
       className={cn(
         "relative flex items-center rounded-full p-1 cursor-pointer transition-all duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         isLight
-          ? "bg-gradient-to-r from-pink-400 via-orange-300 to-yellow-300" // Day mode gradient
-          : "bg-gradient-to-r from-blue-600 to-indigo-700" // Night mode gradient
+          ? "bg-gradient-to-r from-blue-400 to-green-400" // Light theme: Light Blue to Light Green
+          : "bg-gradient-to-r from-blue-600 to-green-600" // Dark theme: Darker Blue to Darker Green
       )}
       aria-label={isLight ? "Koyu temaya geç" : "Açık temaya geç"} // Updated aria-label
     >
@@ -56,9 +56,9 @@ export function ThemeToggle() {
         animate={{ x: isLight ? 0 : moveDistance }} // Move indicator based on calculated distance
       >
         {isLight ? (
-          <Sun className="h-5 w-5 text-yellow-500" />
+          <Sun className="h-5 w-5 text-blue-500" /> // Changed Sun color
         ) : (
-          <Moon className="h-5 w-5 text-blue-500" />
+          <Moon className="h-5 w-5 text-green-500" /> // Changed Moon color
         )}
       </motion.div>
 
@@ -81,3 +81,4 @@ export function ThemeToggle() {
     </button>
   );
 }
+
