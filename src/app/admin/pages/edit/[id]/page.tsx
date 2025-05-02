@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -8,28 +7,29 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Eye } from "lucide-react"; // Added Eye for preview
+import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone } from "lucide-react"; // Replaced Eye with device icons
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { BlockEditor } from "@/components/admin/block-editor"; // Import BlockEditor
-import type { Block } from "@/components/admin/template-selector"; // Import Block type
-import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
+import { BlockEditor } from "@/components/admin/block-editor";
+import type { Block } from "@/components/admin/template-selector";
+import SeoPreview from "@/components/admin/seo-preview";
+import PagePreviewRenderer from "@/components/admin/page-preview-renderer"; // Import the new preview renderer
 
 // Mock data fetching - Replace with actual API call
 interface PageData {
     id: string;
     title: string;
     slug: string;
-    blocks: Block[]; // Changed content structure to blocks
-    seoTitle?: string; // Optional SEO fields
+    blocks: Block[];
+    seoTitle?: string;
     seoDescription?: string;
     keywords?: string[];
     canonicalUrl?: string;
+    imageUrl?: string; // Add imageUrl for preview consistency
 }
 
 // Mock function - Updated to include blocks and SEO fields
 const getPageById = async (id: string): Promise<PageData | null> => {
-    // await new Promise(resolve => setTimeout(resolve, 300)); // Removed delay
     const pages: PageData[] = [
         {
             id: 'anasayfa',
@@ -40,11 +40,11 @@ const getPageById = async (id: string): Promise<PageData | null> => {
                 { id: 'hpb2', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' },
                 { id: 'hpb3', type: 'divider' },
                 { id: 'hpb4', type: 'heading', level: 2, content: 'Öne Çıkanlar' },
-                // Placeholder for dynamically loading featured articles
                 { id: 'hpb5', type: 'text', content: '[Öne çıkan makaleler burada listelenecek...]' },
             ],
             seoTitle: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
             seoDescription: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
+            imageUrl: 'https://picsum.photos/seed/homepage/1200/600'
         },
         {
             id: 'hakkimizda',
@@ -57,6 +57,7 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             ],
             seoTitle: 'Hakkımızda | TeknoBiyo',
             seoDescription: 'TeknoBiyo\'nun arkasındaki vizyonu, misyonu ve değerleri keşfedin.',
+            imageUrl: 'https://picsum.photos/seed/teamwork/1200/600' // Added imageUrl
         },
         {
             id: 'iletisim',
@@ -69,6 +70,7 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             ],
             seoTitle: 'İletişim | TeknoBiyo',
             seoDescription: 'TeknoBiyo ile iletişime geçin. Sorularınız ve önerileriniz için buradayız.',
+             imageUrl: 'https://picsum.photos/seed/contactus/1200/600' // Added imageUrl
         },
     ];
     return pages.find(page => page.id === id) || null;
@@ -84,11 +86,12 @@ export default function EditPage() {
     const [loading, setLoading] = React.useState(true);
     const [title, setTitle] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [blocks, setBlocks] = React.useState<Block[]>([]); // State for blocks
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
+    const [previewDevice, setPreviewDevice] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
 
     React.useEffect(() => {
@@ -99,7 +102,7 @@ export default function EditPage() {
                         setPageData(data);
                         setTitle(data.title);
                         setSlug(data.slug);
-                        setBlocks(data.blocks || []); // Initialize blocks
+                        setBlocks(data.blocks || []);
                         setSeoTitle(data.seoTitle || '');
                         setSeoDescription(data.seoDescription || '');
                         setKeywords(data.keywords || []);
@@ -111,13 +114,12 @@ export default function EditPage() {
                 .catch(error => {
                     console.error("Error fetching page data:", error);
                     toast({ variant: "destructive", title: "Hata", description: "Sayfa bilgileri yüklenirken bir sorun oluştu." });
-                    notFound(); // Or handle error differently
+                    notFound();
                 })
                 .finally(() => setLoading(false));
         }
     }, [pageId]);
 
-    // Basic slug generation
     const generateSlug = (text: string) => {
         return text
             .toLowerCase()
@@ -126,9 +128,7 @@ export default function EditPage() {
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
-    // Auto-update slug when title changes (optional, only if slug wasn't manually set differently)
     React.useEffect(() => {
-        // Only auto-update slug if it's empty or matches the generated slug of the *original* title
         if (title && pageData && title !== pageData.title) {
              if (!slug || slug === generateSlug(pageData.title)) {
                  setSlug(generateSlug(title));
@@ -136,14 +136,12 @@ export default function EditPage() {
         }
      }, [title, pageData, slug]);
 
-     // Auto-generate SEO Title
      React.useEffect(() => {
         if (title && !seoTitle && pageData && title !== pageData.title) {
             setSeoTitle(title);
         }
      }, [title, seoTitle, pageData]);
 
-     // Auto-generate SEO Description (basic - could use AI or first paragraph later)
      React.useEffect(() => {
         if (blocks.length > 0 && !seoDescription && pageData) {
             const firstTextBlock = blocks.find(b => b.type === 'text') as Extract<Block, { type: 'text' }> | undefined;
@@ -191,18 +189,16 @@ export default function EditPage() {
 
 
     const handleSave = () => {
-         if (!title) { // Slug can be empty for homepage
+         if (!title) {
             toast({ variant: "destructive", title: "Hata", description: "Sayfa başlığı zorunludur." });
             return;
         }
-        // TODO: Implement actual API call to update the page structure including blocks and SEO fields
         const saveData = { pageId, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl };
         console.log("Updating page:", saveData);
         toast({
             title: "Sayfa Güncellendi",
             description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,
         });
-         // Optionally refetch or update local state
         if(pageData) setPageData({...pageData, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl });
     };
 
@@ -215,70 +211,93 @@ export default function EditPage() {
                  title: "Sayfa Silindi",
                  description: `"${title}" başlıklı sayfa silindi.`,
             });
-            router.push('/admin/pages'); // Redirect after delete
+            router.push('/admin/pages');
         }
     };
 
-     // --- Preview Handler ---
-     const handlePreview = () => {
-        const previewData = {
-            id: pageId || 'preview',
-            title,
-            description: seoDescription || '', // Use SEO description or fallback
-            // Assuming category isn't directly applicable to pages like articles, maybe derive or omit
-            // category: 'Page',
-            imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/page-preview/1200/600', // Use first image or placeholder
-            blocks,
-        };
-         try {
-             // Using localStorage for preview, same mechanism as articles
-             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
-             window.open('/admin/preview', '_blank'); // Open preview in a new tab
-         } catch (error) {
-             console.error("Error saving preview data to localStorage:", error);
-             toast({
-                 variant: "destructive",
-                 title: "Önizleme Hatası",
-                 description: "Önizleme verisi kaydedilemedi.",
-             });
-         }
-     };
+    // --- Preview Data for Renderer ---
+    const currentPreviewData: PageData = {
+        id: pageId || 'preview',
+        title: title,
+        slug: slug,
+        blocks: blocks,
+        seoTitle: seoTitle,
+        seoDescription: seoDescription,
+        imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || pageData?.imageUrl || 'https://picsum.photos/seed/page-preview/1200/600',
+        // category: 'Sayfa', // Not directly applicable, maybe derive later
+    };
+
+    const getPreviewSizeClass = () => {
+      switch (previewDevice) {
+        case 'mobile': return 'w-[375px] h-[667px]'; // iPhone SE size
+        case 'tablet': return 'w-[768px] h-[1024px]'; // iPad portrait
+        default: return 'w-full h-full'; // Desktop
+      }
+    }
 
 
     if (loading) {
-        return <div className="flex justify-center items-center h-64">Sayfa bilgileri yükleniyor...</div>;
+        return <div className="flex justify-center items-center h-screen">Sayfa bilgileri yükleniyor...</div>;
     }
 
      if (!pageData) {
-         return <div className="text-center py-10">Sayfa bulunamadı.</div>; // Should be caught by notFound earlier
+         return <div className="text-center py-10">Sayfa bulunamadı.</div>;
     }
 
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-screen overflow-hidden"> {/* Full height */}
              {/* Top Bar */}
-             <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
+             <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-20">
                 <Button variant="ghost" size="sm" asChild>
                     <Link href="/admin/pages"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
                 </Button>
                  <h1 className="text-xl font-semibold truncate" title={`Sayfayı Düzenle: ${pageData.title}`}>Sayfayı Düzenle</h1>
                  <div className="flex items-center gap-2">
+                     {/* Preview Device Toggles */}
+                     <Button
+                        variant={previewDevice === 'desktop' ? 'secondary' : 'ghost'}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setPreviewDevice('desktop')}
+                        title="Masaüstü Önizleme"
+                      >
+                        <Monitor className="h-4 w-4" />
+                      </Button>
+                      <Button
+                         variant={previewDevice === 'tablet' ? 'secondary' : 'ghost'}
+                         size="icon"
+                         className="h-8 w-8"
+                         onClick={() => setPreviewDevice('tablet')}
+                         title="Tablet Önizleme"
+                      >
+                         <Tablet className="h-4 w-4" />
+                      </Button>
+                      <Button
+                         variant={previewDevice === 'mobile' ? 'secondary' : 'ghost'}
+                         size="icon"
+                         className="h-8 w-8"
+                         onClick={() => setPreviewDevice('mobile')}
+                         title="Mobil Önizleme"
+                      >
+                         <Smartphone className="h-4 w-4" />
+                      </Button>
+                      <Separator orientation="vertical" className="h-6 mx-2" />
+
                      <Button variant="destructive" size="sm" onClick={handleDelete}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
-                      <Button variant="outline" size="sm" onClick={handlePreview}>
-                        <Eye className="mr-2 h-4 w-4" /> Önizle
-                     </Button>
+                      {/* Removed separate Preview Button */}
                       <Button size="sm" onClick={handleSave} disabled={!title}>
                         <Save className="mr-2 h-4 w-4" /> Kaydet
                     </Button>
                  </div>
             </div>
 
-            {/* Main Content Area */}
+            {/* Main Content Area (Editor + Preview) */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Content Area (Editor) */}
-                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                 {/* Left Editor Area */}
+                 <div className="flex-1 overflow-y-auto p-6 space-y-6 border-r">
                     <Card>
                         <CardHeader>
                             <CardTitle>Temel Bilgiler</CardTitle>
@@ -300,7 +319,7 @@ export default function EditPage() {
                                     id="page-slug"
                                     value={slug}
                                     onChange={(e) => setSlug(generateSlug(e.target.value))}
-                                    disabled={pageId === 'anasayfa'} // Disable slug editing for homepage
+                                    disabled={pageId === 'anasayfa'}
                                     placeholder={pageId === 'anasayfa' ? "(Anasayfa)" : "sayfa-url"}
                                 />
                                 <p className="text-xs text-muted-foreground">
@@ -321,11 +340,8 @@ export default function EditPage() {
                        onReorderBlocks={handleReorderBlocks}
                      />
 
-                 </div>
-
-                  {/* Right Sidebar (SEO) */}
-                  <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
-                       <Card>
+                    {/* SEO Settings (Moved from Sidebar) */}
+                    <Card>
                             <CardHeader>
                                 <CardTitle>SEO Ayarları</CardTitle>
                                 <CardDescription>Sayfanızın arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
@@ -344,7 +360,7 @@ export default function EditPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="seo-description">Meta Açıklama</Label>
-                                    <Input // Changed to Input for page consistency, can be Textarea if needed
+                                    <Input
                                         id="seo-description"
                                         value={seoDescription}
                                         onChange={(e) => setSeoDescription(e.target.value)}
@@ -374,24 +390,25 @@ export default function EditPage() {
                                     />
                                     <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
                                 </div>
+                                <Separator />
+                                  {/* SEO Preview */}
+                                  <SeoPreview
+                                      title={seoTitle || title}
+                                      description={seoDescription || ''}
+                                      slug={slug || '/'}
+                                      category="sayfa"
+                                  />
                             </CardContent>
                       </Card>
+                 </div>
 
-                      <Separator />
-
-                      {/* SEO Preview */}
-                       <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.6))] h-fit">
-                          <SeoPreview
-                              title={seoTitle || title}
-                              description={seoDescription || ''}
-                              slug={slug || '/'} // Show root path for empty slug (homepage)
-                              category="sayfa" // Generic category for pages
-                          />
-                       </div>
-                  </aside>
+                  {/* Right Preview Pane */}
+                   <aside className="w-1/2 lg:w-2/5 xl:w-1/2 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-center">
+                     <div className={`border bg-background shadow-lg rounded-lg overflow-hidden transform scale-95 origin-top ${getPreviewSizeClass()} transition-all duration-300 ease-in-out`}>
+                       <PagePreviewRenderer pageData={currentPreviewData} />
+                     </div>
+                   </aside>
             </div>
         </div>
     );
 }
-
-    
