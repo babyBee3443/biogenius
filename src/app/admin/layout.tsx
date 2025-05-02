@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare } from 'lucide-react'; // Added MenuSquare for Navigation
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers } from 'lucide-react'; // Added Layers icon
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -87,6 +87,14 @@ export default function AdminLayout({
                             <Link href="/admin/articles/new">
                             <PlusCircle />
                             <span>Yeni Makale</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Sayfa Yönetimi">
+                            <Link href="/admin/pages">
+                            <Layers />
+                            <span>Sayfa Yönetimi</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
