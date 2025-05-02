@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from 'next/image';
 import { ArrowRight } from "lucide-react";
 import Hero from "@/components/hero"; // Import the Hero component
+import { cn } from '@/lib/utils'; // Import cn for conditional classes
 
 interface Article {
   id: string;
@@ -92,12 +93,24 @@ const letterRevealVariants = {
   },
 };
 
-// Define the text parts and their colors
+// Define the text parts and their styles/images
 const titleParts = [
-  { text: "Teknoloji", colorClass: "text-blue-600 dark:text-blue-400" },
-  { text: " ve ", colorClass: "" }, // Default color for connecting words
-  { text: "Biyolojinin", colorClass: "text-green-600 dark:text-green-400" },
-  { text: " Kesişim Noktası", colorClass: "" },
+  {
+      text: "Teknoloji",
+      colorClass: "text-blue-600 dark:text-blue-400",
+      masked: true,
+      imageUrl: "https://picsum.photos/seed/tech-text/200/50",
+      aiHint: "technology abstract circuit",
+   },
+  { text: " ve ", colorClass: "", masked: false }, // Default color for connecting words
+  {
+      text: "Biyolojinin",
+      colorClass: "text-green-600 dark:text-green-400",
+      masked: true,
+      imageUrl: "https://picsum.photos/seed/bio-text/200/50",
+      aiHint: "biology dna nature",
+   },
+  { text: " Kesişim Noktası", colorClass: "", masked: false },
 ];
 
 
@@ -117,30 +130,50 @@ export default function Home() {
         {titleParts.map((part, partIndex) => (
           part.text.split("").map((char) => {
             const currentIndex = charIndex++;
-            return (
-              <motion.span
-                key={`${partIndex}-${currentIndex}`}
-                variants={letterRevealVariants}
-                className={`inline-block ${part.colorClass}`}
-                // Add continuous shimmer animation directly
-                animate={{
-                    // Define the glow effect using textShadow keyframes
-                    textShadow: [
-                      "0 0 1px hsl(var(--foreground) / 0.1)", // Base subtle shadow
-                      "0 0 6px hsl(var(--primary) / 0.6)",    // Glow effect using primary color
-                      "0 0 1px hsl(var(--foreground) / 0.1)", // Back to base
-                    ],
-                }}
-                transition={{
-                  // Transition for the textShadow animation
-                  textShadow: {
-                    delay: currentIndex * 0.05, // Stagger start based on letter index
-                    duration: 2.5, // Duration of one glow cycle
+            const isMasked = part.masked;
+            const maskStyle = isMasked ? {
+              backgroundImage: `url(${part.imageUrl})`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              backgroundSize: 'cover', // Adjust as needed (cover, contain)
+              backgroundPosition: 'center',
+            } : {};
+
+            const shimmerAnimation = !isMasked ? {
+                textShadow: [
+                  "0 0 1px hsl(var(--foreground) / 0.1)", // Base subtle shadow
+                  "0 0 6px hsl(var(--primary) / 0.4)",    // Reduced Glow effect using primary color
+                  "0 0 1px hsl(var(--foreground) / 0.1)", // Back to base
+                ],
+            } : {};
+
+            const shimmerTransition = !isMasked ? {
+                 // Transition for the textShadow animation
+                 textShadow: {
+                    delay: currentIndex * 0.08, // Slightly increased delay per character
+                    duration: 4, // Slowed down duration of one glow cycle
                     repeat: Infinity, // Repeat indefinitely
                     repeatType: "mirror", // Go back and forth smoothly (glow in/out)
                     ease: "easeInOut",
                   },
-                }}
+            } : {
+                // No textShadow transition for masked parts
+            };
+
+
+            return (
+              <motion.span
+                key={`${partIndex}-${currentIndex}`}
+                variants={letterRevealVariants}
+                className={cn(
+                    "inline-block",
+                    !isMasked && part.colorClass // Apply color class only if not masked
+                )}
+                style={maskStyle} // Apply background mask styles if needed
+                data-ai-hint={isMasked ? part.aiHint : undefined}
+                animate={shimmerAnimation} // Apply shimmer only if not masked
+                transition={shimmerTransition} // Apply transition only if not masked
               >
                 {char === ' ' ? '\u00A0' : char} {/* Non-breaking space for spaces */}
               </motion.span>
@@ -250,4 +283,3 @@ export default function Home() {
     </div>
   );
 }
-
