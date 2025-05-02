@@ -81,11 +81,10 @@ const titleContainerVariants = {
 };
 
 const letterRevealVariants = {
-  hidden: { opacity: 0, y: 15, filter: "blur(3px)" }, // Initial state: invisible, slightly down, blurred
-  visible: { // Target state: visible, original position, no blur
+  hidden: { opacity: 0, y: 15 }, // Initial state: invisible, slightly down
+  visible: { // Target state: visible, original position
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
       duration: 0.6,
       ease: [0.2, 0.65, 0.3, 0.9], // Custom easing for a smooth reveal
@@ -93,24 +92,19 @@ const letterRevealVariants = {
   },
 };
 
-// Define the text parts and their styles/images
+// Define the text parts and their styles
+// Removed image masking properties (masked, imageUrl, aiHint)
 const titleParts = [
   {
       text: "Teknoloji",
       colorClass: "text-blue-600 dark:text-blue-400",
-      masked: true,
-      imageUrl: "https://picsum.photos/seed/tech-text/200/50",
-      aiHint: "technology abstract circuit",
    },
-  { text: " ve ", colorClass: "", masked: false }, // Default color for connecting words
+  { text: " ve ", colorClass: "text-foreground" }, // Use default foreground color
   {
       text: "Biyolojinin",
       colorClass: "text-green-600 dark:text-green-400",
-      masked: true,
-      imageUrl: "https://picsum.photos/seed/bio-text/200/50",
-      aiHint: "biology dna nature",
    },
-  { text: " Kesişim Noktası", colorClass: "", masked: false },
+  { text: " Kesişim Noktası", colorClass: "text-foreground" }, // Use default foreground color
 ];
 
 
@@ -130,35 +124,24 @@ export default function Home() {
         {titleParts.map((part, partIndex) => (
           part.text.split("").map((char) => {
             const currentIndex = charIndex++;
-            const isMasked = part.masked;
-            const maskStyle = isMasked ? {
-              backgroundImage: `url(${part.imageUrl})`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              color: 'transparent',
-              backgroundSize: 'cover', // Adjust as needed (cover, contain)
-              backgroundPosition: 'center',
-            } : {};
 
-            const shimmerAnimation = !isMasked ? {
+            const shimmerAnimation = {
                 textShadow: [
                   "0 0 1px hsl(var(--foreground) / 0.1)", // Base subtle shadow
-                  "0 0 6px hsl(var(--primary) / 0.4)",    // Reduced Glow effect using primary color
+                  `0 0 8px ${part.colorClass.includes('blue') ? 'hsl(var(--primary))' : part.colorClass.includes('green') ? 'hsl(120 70% 45%)' : 'hsl(var(--foreground) / 0.5)'}`, // Brighter glow based on color, slower transition
                   "0 0 1px hsl(var(--foreground) / 0.1)", // Back to base
                 ],
-            } : {};
+            };
 
-            const shimmerTransition = !isMasked ? {
+            const shimmerTransition = {
                  // Transition for the textShadow animation
                  textShadow: {
-                    delay: currentIndex * 0.08, // Slightly increased delay per character
-                    duration: 4, // Slowed down duration of one glow cycle
+                    delay: currentIndex * 0.1, // Slightly increased delay per character for slower overall effect
+                    duration: 6, // Further slowed down duration of one glow cycle
                     repeat: Infinity, // Repeat indefinitely
                     repeatType: "mirror", // Go back and forth smoothly (glow in/out)
                     ease: "easeInOut",
                   },
-            } : {
-                // No textShadow transition for masked parts
             };
 
 
@@ -168,12 +151,12 @@ export default function Home() {
                 variants={letterRevealVariants}
                 className={cn(
                     "inline-block",
-                    !isMasked && part.colorClass // Apply color class only if not masked
+                    part.colorClass // Apply color class directly
                 )}
-                style={maskStyle} // Apply background mask styles if needed
-                data-ai-hint={isMasked ? part.aiHint : undefined}
-                animate={shimmerAnimation} // Apply shimmer only if not masked
-                transition={shimmerTransition} // Apply transition only if not masked
+                // Removed style={maskStyle}
+                // Removed data-ai-hint
+                animate={shimmerAnimation} // Apply shimmer animation
+                transition={shimmerTransition} // Apply transition for shimmer
               >
                 {char === ' ' ? '\u00A0' : char} {/* Non-breaking space for spaces */}
               </motion.span>
