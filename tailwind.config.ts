@@ -106,6 +106,7 @@ export default {
     // Add a plugin for text-shadow if needed for more complex scenarios or variants
     function ({ addUtilities, theme, e }: { addUtilities: Function, theme: Function, e: Function }) {
       const values = theme('textShadow');
+      if (!values) return; // Check if values exist
       const utilities = Object.entries(values).map(([key, value]) => ({
         [`.${e(`text-shadow${key === 'DEFAULT' ? '' : `-${key}`}`)}`]: { 'text-shadow': value },
       }));

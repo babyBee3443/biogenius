@@ -43,10 +43,6 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Text Masking Variables (Fallback if needed) */
-    --text-mask-tech-url: url('https://picsum.photos/seed/techmask/1200/300');
-    --text-mask-bio-url: url('https://picsum.photos/seed/biomask/1200/300');
   }
   .dark {
      /* Dark Theme - Refined Palette */
@@ -82,10 +78,6 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Update Text Masking Variables for Dark Theme if needed */
-    /* --text-mask-tech-url: url('...'); */
-    /* --text-mask-bio-url: url('...'); */
   }
 }
 

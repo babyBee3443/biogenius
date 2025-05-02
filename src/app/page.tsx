@@ -98,13 +98,11 @@ const titleParts = [
   {
       text: "Teknoloji",
       colorClass: "text-blue-600 dark:text-blue-400",
-      glowColor: "hsl(var(--primary) / 0.5)", // Blue glow, reduced opacity
    },
   { text: " ve ", colorClass: "text-foreground" },
   {
       text: "Biyolojinin",
       colorClass: "text-green-600 dark:text-green-400",
-      glowColor: "hsl(120 60% 50% / 0.5)", // Green glow, reduced opacity
    },
   { text: " Kesişim Noktası", colorClass: "text-foreground" },
 ];
@@ -137,29 +135,8 @@ export default function Home() {
                      {part.text.split("").map((char, index) => {
                         const currentIndex = charIndex++; // Increment global index
 
-                        // Define the shimmer animation using textShadow - More Subtle Glow
-                        const shimmerAnimation = part.glowColor ? {
-                             textShadow: [
-                               "0 0 1px hsl(var(--foreground) / 0.1)", // Very subtle base shadow
-                               `0 0 4px ${part.glowColor}, 0 0 6px ${part.glowColor}`, // Soft glow (small radius)
-                               "0 0 1px hsl(var(--foreground) / 0.1)", // Back to subtle
-                             ],
-                        } : {}; // No glow for normal text
-
-                        // Define the transition for the shimmer - Slower sequential delay
-                         const shimmerTransition = part.glowColor ? {
-                              textShadow: {
-                                 delay: (currentIndex - partStartIndex) * 0.2, // Delay relative to the start of the *part*, slower multiplier
-                                 duration: 3.5, // Slower glow pulse duration
-                                 repeat: Infinity,
-                                 repeatType: "mirror", // Glow in and out smoothly
-                                 ease: "easeInOut",
-                               },
-                         } : {};
-
-
-                         // Render each character within its own motion.span for individual animation
-                         return (
+                        // Render each character within its own motion.span for individual animation
+                        return (
                             <motion.span
                                 key={`${partKey}-char-${currentIndex}`}
                                 variants={letterRevealVariants} // Basic reveal animation
@@ -167,8 +144,6 @@ export default function Home() {
                                     "inline-block",
                                     part.colorClass // Apply color class directly
                                 )}
-                                // Apply shimmer animation and transition only if glowColor is defined
-                                {...(part.glowColor && { animate: shimmerAnimation, transition: shimmerTransition })}
                             >
                                 {char === ' ' ? '\u00A0' : char} {/* Render space or character */}
                             </motion.span>
@@ -280,5 +255,3 @@ export default function Home() {
     </div>
   );
 }
-
-  
