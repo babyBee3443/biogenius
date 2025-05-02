@@ -98,16 +98,16 @@ const titleParts = [
       text: "Teknoloji",
       colorClass: "text-blue-600 dark:text-blue-400", // Base color (fallback)
       masked: true,
-      imageUrl: "https://picsum.photos/seed/techmask/1200/300", // Placeholder image for Teknoloji
-      aiHint: "technology circuit board abstract",
+      imageUrl: "https://picsum.photos/seed/techblue/1200/300", // Updated URL
+      aiHint: "blue technology circuit abstract", // Updated hint
    },
   { text: " ve ", colorClass: "text-foreground" }, // Use default foreground color
   {
       text: "Biyolojinin",
       colorClass: "text-green-600 dark:text-green-400", // Base color (fallback)
       masked: true,
-      imageUrl: "https://picsum.photos/seed/biomask/1200/300", // Placeholder image for Biyoloji
-      aiHint: "biology nature plants dna",
+      imageUrl: "https://picsum.photos/seed/biogreen/1200/300", // Updated URL
+      aiHint: "green biology nature plants dna abstract", // Updated hint
    },
   { text: " Kesişim Noktası", colorClass: "text-foreground" }, // Use default foreground color
 ];
@@ -160,8 +160,8 @@ export default function Home() {
 
                          const shimmerTransition = {
                               textShadow: {
-                                 delay: currentIndex * 0.15, // Further slowed down delay
-                                 duration: 7, // Further slowed down duration
+                                 delay: currentIndex * 0.2, // Slowed down delay further
+                                 duration: 8, // Slowed down duration further
                                  repeat: Infinity,
                                  repeatType: "mirror",
                                  ease: "easeInOut",
