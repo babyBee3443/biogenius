@@ -124,18 +124,20 @@ export default function Home() {
                 className={`inline-block ${part.colorClass}`}
                 // Add continuous shimmer animation directly
                 animate={{
+                    // Define the glow effect using textShadow keyframes
                     textShadow: [
-                      "0 0 1px hsl(var(--primary) / 0)",
-                      "0 0 5px hsl(var(--primary) / 0.4)", // Subtle glow
-                      "0 0 1px hsl(var(--primary) / 0)",
+                      "0 0 1px hsl(var(--foreground) / 0.1)", // Base subtle shadow
+                      "0 0 6px hsl(var(--primary) / 0.6)",    // Glow effect using primary color
+                      "0 0 1px hsl(var(--foreground) / 0.1)", // Back to base
                     ],
                 }}
                 transition={{
+                  // Transition for the textShadow animation
                   textShadow: {
-                    delay: currentIndex * 0.05, // Stagger start of shimmer based on letter index
-                    duration: 2.5, // Duration of one shimmer cycle
-                    repeat: Infinity,
-                    repeatType: "mirror", // Go back and forth
+                    delay: currentIndex * 0.05, // Stagger start based on letter index
+                    duration: 2.5, // Duration of one glow cycle
+                    repeat: Infinity, // Repeat indefinitely
+                    repeatType: "mirror", // Go back and forth smoothly (glow in/out)
                     ease: "easeInOut",
                   },
                 }}
@@ -248,3 +250,4 @@ export default function Home() {
     </div>
   );
 }
+
