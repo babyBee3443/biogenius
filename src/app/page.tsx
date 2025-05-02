@@ -98,13 +98,13 @@ const titleParts = [
   {
       text: "Teknoloji",
       colorClass: "text-blue-600 dark:text-blue-400",
-      glowColor: "hsl(var(--primary) / 0.7)", // Use primary color for glow
+      glowColor: "hsl(var(--primary) / 0.6)", // Use primary color for glow, slightly reduced opacity
    },
   { text: " ve ", colorClass: "text-foreground" },
   {
       text: "Biyolojinin",
       colorClass: "text-green-600 dark:text-green-400",
-      glowColor: "hsl(120 60% 50% / 0.7)", // Green glow
+      glowColor: "hsl(120 60% 50% / 0.6)", // Green glow, slightly reduced opacity
    },
   { text: " Kesişim Noktası", colorClass: "text-foreground" },
 ];
@@ -134,20 +134,20 @@ export default function Home() {
                      {part.text.split("").map((char) => {
                         const currentIndex = charIndex++;
 
-                        // Define the shimmer animation using textShadow
+                        // Define the shimmer animation using textShadow - More Subtle Glow
                         const shimmerAnimation = part.glowColor ? {
                              textShadow: [
-                               "0 0 1px hsl(var(--foreground) / 0.1)", // Base subtle shadow
-                               `0 0 8px ${part.glowColor}, 0 0 15px ${part.glowColor}`, // Stronger glow
-                               "0 0 1px hsl(var(--foreground) / 0.1)", // Back to subtle
+                               "0 0 1px hsl(var(--foreground) / 0.05)", // Very subtle base shadow
+                               `0 0 4px ${part.glowColor}, 0 0 8px ${part.glowColor}`, // Softer glow (reduced radius)
+                               "0 0 1px hsl(var(--foreground) / 0.05)", // Back to subtle
                              ],
                         } : {}; // No glow for normal text
 
-                        // Define the transition for the shimmer
+                        // Define the transition for the shimmer - Slower
                          const shimmerTransition = part.glowColor ? {
                               textShadow: {
-                                 delay: currentIndex * 0.1, // Sequential delay for each letter
-                                 duration: 1.5, // Duration of one glow pulse
+                                 delay: currentIndex * 0.12, // Slightly slower sequential delay
+                                 duration: 2.5, // Slower glow pulse duration
                                  repeat: Infinity,
                                  repeatType: "mirror", // Glow in and out smoothly
                                  ease: "easeInOut",
