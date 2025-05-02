@@ -73,36 +73,36 @@ const titleContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05, // Speed up stagger slightly
+      staggerChildren: 0.04, // Slightly faster stagger
       delayChildren: 0.2, // Initial delay before starting animation
     },
   },
 };
 
 const letterVariants = {
-  hidden: { opacity: 0, y: 20, filter: "blur(8px)" }, // Start more blurred and further down
+  hidden: { opacity: 0, y: 15, filter: "blur(5px)" }, // Reduced blur and y offset
   visible: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    textShadow: [ // More pronounced glow effect
+    textShadow: [ // Adjusted glow effect - quicker pulse
       "0 0 0px hsl(var(--primary) / 0)",
-      "0 0 15px hsl(var(--primary) / 0.9)", // Brighter mid-glow
-      "0 0 30px hsl(var(--primary) / 0.6)", // Wider glow
-      "0 0 5px hsl(var(--primary) / 0.8)", // Lingering glow
+      "0 0 8px hsl(var(--primary) / 0.7)", // Smaller, less intense peak glow
+      "0 0 15px hsl(var(--primary) / 0.4)", // Wider, dimmer glow
       "0 0 0px hsl(var(--primary) / 0)",
     ],
     transition: {
-      duration: 0.8, // Slightly longer duration for each letter
-      ease: [0.2, 0.65, 0.3, 0.9], // Custom easing for a smoother pop
-      textShadow: { // Separate transition for the glow
-          duration: 1.0, // Duration for one glow cycle
-          ease: "easeInOut",
-          delay: 0.3 // Delay the start of the glow slightly after the letter appears
+      duration: 0.6, // Slightly faster duration
+      ease: [0.2, 0.65, 0.3, 0.9], // Custom easing
+      textShadow: { // Glow animation timing
+          duration: 0.5, // Faster glow pulse
+          ease: "linear", // Linear for a shimmer feel
+          delay: 0.1 // Reduced delay
       }
     },
   },
 };
+
 
 const titleText = "Teknoloji ve Biyolojinin Kesişim Noktası";
 
@@ -112,7 +112,7 @@ export default function Home() {
     <div className="space-y-16">
       {/* Animated Static Title Above Hero */}
       <motion.h1
-        className="text-center text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl mb-8 overflow-hidden py-2 whitespace-nowrap" // Added whitespace-nowrap to prevent wrapping
+        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2 whitespace-nowrap" // Reduced font size classes
         variants={titleContainerVariants}
         initial="hidden"
         animate="visible"
@@ -122,8 +122,7 @@ export default function Home() {
           <motion.span
             key={`${char}-${index}`}
             variants={letterVariants}
-            className="inline-block" // Changed from whitespace-pre
-            // style={{ color: char === ' ' ? 'transparent' : undefined }} // No longer needed with inline-block
+            className="inline-block"
           >
             {char === ' ' ? '\u00A0' : char} {/* Replace space with non-breaking space */}
           </motion.span>
