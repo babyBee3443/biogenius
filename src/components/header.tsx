@@ -22,7 +22,7 @@ interface ArticleStub {
 // Mock search function - replace with actual API call
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
+  // await new Promise(resolve => setTimeout(resolve, 300)); // Removed delay
   if (!query) return [];
   const mockData: ArticleStub[] = [
     { id: '1', title: 'Yapay Zeka Devrimi', category: 'Teknoloji' },

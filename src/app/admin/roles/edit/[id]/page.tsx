@@ -29,7 +29,7 @@ interface PermissionCategory {
 }
 
 const getRoleById = async (id: string): Promise<Role | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // await new Promise(resolve => setTimeout(resolve, 300)); // Removed delay
     const rolesData: Role[] = [
         {
             id: 'admin', name: 'Admin', description: 'Tam yetkili yönetici', permissions: ['Dashboard Görüntüleme', 'Ayarları Görüntüleme', 'Ayarları Düzenleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme/Silme', 'Kullanıcı Düzenleme', 'Rolleri Yönetme', 'Yorumları Yönetme', 'Medya Yönetimi', 'Site Ayarlarını Yönetme', 'Sayfaları Yönetme', 'İstatistikleri Görüntüleme', 'Raporlama', 'Güvenlik Ayarları', 'Entegrasyon Yönetimi', 'E-posta Ayarları', 'Tema Ayarları', 'Menü Yönetimi', 'Dil Yönetimi', 'Yedekleme/Kurtarma', 'İş Akışı Yönetimi', 'Sistem Güncelleme']
@@ -45,7 +45,7 @@ const getRoleById = async (id: string): Promise<Role | null> => {
 };
 
 const getAllPermissions = async (): Promise<PermissionCategory[]> => {
-    await new Promise(resolve => setTimeout(resolve, 100)); // Simulate fetch delay
+    // await new Promise(resolve => setTimeout(resolve, 100)); // Removed delay
     return [
         {
             name: "Genel", permissions: [{ id: "Dashboard Görüntüleme", description: "Ana gösterge panelini görüntüleme." }],

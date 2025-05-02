@@ -39,21 +39,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; //
 
 // Simulate fetching total article count
 async function getTotalArticleCount(): Promise<number> {
-  await new Promise(resolve => setTimeout(resolve, 150)); // Simulate delay
+  // await new Promise(resolve => setTimeout(resolve, 150)); // Removed delay
   // Replace with: const snapshot = await getDocs(collection(db, 'articles')); return snapshot.size;
   return 8; // Mock value
 }
 
 // Simulate fetching total user count
 async function getTotalUserCount(): Promise<number> {
-  await new Promise(resolve => setTimeout(resolve, 200)); // Simulate delay
+  // await new Promise(resolve => setTimeout(resolve, 200)); // Removed delay
   // Replace with: const snapshot = await getDocs(collection(db, 'users')); return snapshot.size;
   return 5; // Mock value
 }
 
 // Simulate fetching total comment count
 async function getTotalCommentCount(): Promise<number> {
-  await new Promise(resolve => setTimeout(resolve, 250)); // Simulate delay
+  // await new Promise(resolve => setTimeout(resolve, 250)); // Removed delay
    // Replace with: const snapshot = await getDocs(collection(db, 'comments')); return snapshot.size;
   return 12; // Mock value
 }
@@ -66,7 +66,7 @@ interface Article {
 }
 // Simulate fetching recent/popular articles
 async function getRecentArticles(limit: number = 5): Promise<Article[]> {
-   await new Promise(resolve => setTimeout(resolve, 300));
+   // await new Promise(resolve => setTimeout(resolve, 300)); // Removed delay
    // Replace with actual query, potentially ordering by creation date or view count
    return [
      { id: '1', title: 'Yapay Zeka Devrimi', category: 'Teknoloji' },
@@ -86,7 +86,7 @@ interface User {
 }
 // Simulate fetching recent/active users
 async function getActiveUsers(limit: number = 5): Promise<User[]> {
-   await new Promise(resolve => setTimeout(resolve, 350));
+   // await new Promise(resolve => setTimeout(resolve, 350)); // Removed delay
     // Replace with actual query, potentially ordering by last login date
    return [
      { id: 'u1', name: 'Ali Veli', email: 'ali.veli@example.com', avatar: 'https://picsum.photos/seed/u1/32/32', lastLogin: '2024-07-22 10:30' },

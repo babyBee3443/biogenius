@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge"; // For status/role
 // Mock data fetching - replace with actual API call
 const getUserById = async (id: string): Promise<User | null> => {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // await new Promise(resolve => setTimeout(resolve, 500)); // Removed delay
 
     const users: User[] = [
          { id: 'u1', name: 'Ali Veli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22 10:30' },
@@ -40,7 +40,7 @@ interface User {
 
 // Mock activity data - replace with actual API call
 const getUserActivity = async (userId: string): Promise<UserActivity[]> => {
-     await new Promise(resolve => setTimeout(resolve, 700));
+     // await new Promise(resolve => setTimeout(resolve, 700)); // Removed delay
      if (userId === 'u1') {
          return [
              { timestamp: '2024-07-22 11:00', action: 'Makale oluşturdu: "Yeni Teknoloji Trendleri"' },

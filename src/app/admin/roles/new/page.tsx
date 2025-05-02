@@ -22,7 +22,7 @@ interface PermissionCategory {
 }
 
 const getAllPermissions = async (): Promise<PermissionCategory[]> => {
-    await new Promise(resolve => setTimeout(resolve, 100)); // Simulate fetch delay
+    // await new Promise(resolve => setTimeout(resolve, 100)); // Removed delay
     // Reusing the same structure as edit page
     return [
         {

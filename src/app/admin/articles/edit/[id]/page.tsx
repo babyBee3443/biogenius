@@ -50,7 +50,7 @@ interface ArticleData {
 
 // Mock Function
 const getArticleById = async (id: string): Promise<ArticleData | null> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // await new Promise(resolve => setTimeout(resolve, 500)); // Removed delay
     const articles: ArticleData[] = [
          {
             id: '1',
