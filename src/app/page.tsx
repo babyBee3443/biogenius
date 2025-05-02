@@ -74,42 +74,39 @@ const titleContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.04, // Stagger the appearance of each letter
+      staggerChildren: 0.05, // Slightly slower stagger for smoother sequential glow
       delayChildren: 0.2,
     },
   },
 };
 
 const letterRevealVariants = {
-  hidden: { opacity: 0, y: 15 }, // Initial state: invisible, slightly down
-  visible: { // Target state: visible, original position
+  hidden: { opacity: 0.5, y: 10 }, // Start slightly faded and down
+  visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
-      ease: [0.2, 0.65, 0.3, 0.9], // Custom easing for a smooth reveal
+      duration: 0.5,
+      ease: "easeOut",
     },
   },
 };
 
-// Define the text parts and their styles, including images for masking
+
+// Define the text parts and their styles
 const titleParts = [
   {
       text: "Teknoloji",
-      colorClass: "text-blue-600 dark:text-blue-400", // Base color (fallback)
-      masked: true,
-      imageUrl: "https://picsum.photos/seed/techblue/1200/300", // Updated URL
-      aiHint: "blue technology circuit abstract", // Updated hint
+      colorClass: "text-blue-600 dark:text-blue-400",
+      glowColor: "hsl(var(--primary) / 0.7)", // Use primary color for glow
    },
-  { text: " ve ", colorClass: "text-foreground" }, // Use default foreground color
+  { text: " ve ", colorClass: "text-foreground" },
   {
       text: "Biyolojinin",
-      colorClass: "text-green-600 dark:text-green-400", // Base color (fallback)
-      masked: true,
-      imageUrl: "https://picsum.photos/seed/biogreen/1200/300", // Updated URL
-      aiHint: "green biology nature plants dna abstract", // Updated hint
+      colorClass: "text-green-600 dark:text-green-400",
+      glowColor: "hsl(120 60% 50% / 0.7)", // Green glow
    },
-  { text: " Kesişim Noktası", colorClass: "text-foreground" }, // Use default foreground color
+  { text: " Kesişim Noktası", colorClass: "text-foreground" },
 ];
 
 
@@ -118,70 +115,59 @@ export default function Home() {
 
   return (
     <div className="space-y-16">
-      {/* Animated Static Title Above Hero */}
+      {/* Animated Title */}
       <motion.h1
-        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2" // Adjusted whitespace-nowrap for wrapping
+        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2"
         variants={titleContainerVariants}
         initial="hidden"
         animate="visible"
         aria-label="Teknoloji ve Biyolojinin Kesişim Noktası"
       >
         {titleParts.map((part, partIndex) => {
-            // Generate a unique key for the part to help React with updates
             const partKey = `part-${partIndex}-${part.text}`;
-
-            // Prepare inline style for masked parts
-            const maskStyle = part.masked && part.imageUrl ? {
-                backgroundImage: `url(${part.imageUrl})`,
-            } : {};
-
             return (
-                 // Use a span for the whole word part if masked, to apply background correctly
+                 // Use a span for the whole word part
                  <span
                      key={partKey}
-                     className={cn(
-                         "inline-block", // Ensure spans behave correctly
-                         part.masked ? 'bg-cover bg-center bg-clip-text text-transparent' : part.colorClass
-                     )}
-                     style={maskStyle}
-                     {...(part.masked && { "data-ai-hint": part.aiHint })}
+                     className="inline-block" // Ensure spans behave correctly
                  >
                      {part.text.split("").map((char) => {
                         const currentIndex = charIndex++;
 
-                         // Shimmer animation remains the same
-                         const shimmerAnimation = {
+                        // Define the shimmer animation using textShadow
+                        const shimmerAnimation = part.glowColor ? {
                              textShadow: [
-                               "0 0 1px hsl(var(--foreground) / 0.1)",
-                               `0 0 5px ${part.masked ? 'hsl(var(--foreground) / 0.6)' : (part.colorClass.includes('blue') ? 'hsl(var(--primary) / 0.8)' : part.colorClass.includes('green') ? 'hsl(120 70% 45% / 0.8)' : 'hsl(var(--foreground) / 0.5)')}`, // Adjusted glow for masked text
-                               "0 0 1px hsl(var(--foreground) / 0.1)",
+                               "0 0 1px hsl(var(--foreground) / 0.1)", // Base subtle shadow
+                               `0 0 8px ${part.glowColor}, 0 0 15px ${part.glowColor}`, // Stronger glow
+                               "0 0 1px hsl(var(--foreground) / 0.1)", // Back to subtle
                              ],
-                         };
+                        } : {}; // No glow for normal text
 
-                         const shimmerTransition = {
+                        // Define the transition for the shimmer
+                         const shimmerTransition = part.glowColor ? {
                               textShadow: {
-                                 delay: currentIndex * 0.2, // Slowed down delay further
-                                 duration: 8, // Slowed down duration further
+                                 delay: currentIndex * 0.1, // Sequential delay for each letter
+                                 duration: 1.5, // Duration of one glow pulse
                                  repeat: Infinity,
-                                 repeatType: "mirror",
+                                 repeatType: "mirror", // Glow in and out smoothly
                                  ease: "easeInOut",
                                },
-                         };
+                         } : {};
+
 
                          // Render each character within its own motion.span for individual animation
                          return (
                             <motion.span
                                 key={`${partKey}-char-${currentIndex}`}
-                                variants={letterRevealVariants}
+                                variants={letterRevealVariants} // Basic reveal animation
                                 className={cn(
                                     "inline-block",
-                                     // Apply base color if not masked, otherwise handled by parent span
-                                     !part.masked ? part.colorClass : ''
+                                    part.colorClass // Apply color class directly
                                 )}
-                                animate={shimmerAnimation}
-                                transition={shimmerTransition}
+                                // Apply shimmer animation and transition only if glowColor is defined
+                                {...(part.glowColor && { animate: shimmerAnimation, transition: shimmerTransition })}
                             >
-                                {char === ' ' ? '\u00A0' : char}
+                                {char === ' ' ? '\u00A0' : char} {/* Render space or character */}
                             </motion.span>
                         );
                     })}
@@ -190,7 +176,7 @@ export default function Home() {
         })}
       </motion.h1>
 
-       {/* Hero Section - No longer includes the static title */}
+       {/* Hero Section */}
        <Hero />
 
       {/* Featured Articles Showcase */}
