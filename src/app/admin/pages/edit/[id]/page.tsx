@@ -362,8 +362,8 @@ export default function EditPage() {
 
             {/* Main Content Area (Editor/SEO + Preview) */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Pane (Editor or SEO) - Adjusted width, fixed positioning */}
-                 <ScrollArea className="w-[380px] xl:w-[450px] flex-shrink-0 border-r h-full"> {/* Fixed width, full height */}
+                 {/* Left Pane (Editor or SEO) */}
+                 <ScrollArea className="w-2/5 flex-shrink-0 border-r h-full"> {/* Changed width to 2/5 */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -477,8 +477,8 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                  {/* Right Preview Pane - Takes maximum remaining space */}
-                   <div className="flex-1 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-start relative">
+                  {/* Right Preview Pane - Takes remaining space */}
+                   <div className="w-3/5 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-start relative"> {/* Changed width to 3/5 */}
                      <div className={cn(
                          "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative",
                          getPreviewSizeClass()
