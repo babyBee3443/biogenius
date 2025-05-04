@@ -31,7 +31,7 @@ let mockArticles: ArticleData[] = [
         excerpt: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
         blocks: [
             { id: 'b1', type: 'text', content: 'Yapay zeka (AI), makinelerin öğrenme, problem çözme ve karar verme gibi tipik olarak insan zekası gerektiren görevleri yerine getirme yeteneğidir.' },
-            { id: 'b2', type: 'image', url: 'https://picsum.photos/seed/ai-edit/800/400', alt: 'Yapay Zeka Görseli', caption: 'AI teknolojileri gelişiyor.' },
+            { id: 'b2', type: 'image', url: 'https://picsum.photos/seed/ai-edit/800/400', alt: 'Yapay Zeka Görseli', caption: 'AI teknolojileri gelişiyor.', "data-ai-hint": "artificial intelligence abstract" },
             { id: 'b3', type: 'heading', level: 2, content: 'AI\'nın Etki Alanları' },
             { id: 'b4', type: 'text', content: 'Sağlık hizmetlerinde AI, hastalıkların daha erken teşhis edilmesine yardımcı olmaktadır...' },
             { id: 'b5', type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
@@ -79,7 +79,7 @@ let mockArticles: ArticleData[] = [
             { id: 'm1', type: 'text', content: 'İnsan vücudu, kendi hücrelerimizden kat kat fazla sayıda mikroorganizmaya ev sahipliği yapar...' },
             { id: 'm2', type: 'heading', level: 2, content: 'Sağlık Üzerindeki Rolü' },
             { id: 'm3', type: 'text', content: 'Bağırsak mikrobiyomu, sindirime yardımcı olmaktan bağışıklık sistemini eğitmeye kadar birçok önemli işlevi yerine getirir.' },
-            { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
+            { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.', "data-ai-hint": "microbiome bacteria gut" },
         ],
         category: 'Biyoloji',
         status: 'İncelemede',
@@ -112,8 +112,7 @@ let mockArticles: ArticleData[] = [
         createdAt: '2024-06-15T14:00:00Z',
         updatedAt: '2024-07-01T10:00:00Z',
     },
-    // Add other mock articles from previous examples here, ensuring they have all fields
-      {
+    {
         id: '3',
         title: 'Kuantum Bilgisayarlar',
         excerpt: 'Hesaplamanın geleceği...',
@@ -178,7 +177,7 @@ let mockArticles: ArticleData[] = [
         seoTitle: 'Kanser İmmünoterapisi | TeknoBiyo',
         seoDescription: 'Vücudun kendi bağışıklık sistemini kanser hücreleriyle savaşmak için güçlendiren tedavi yöntemleri.',
         slug: 'kanser-immünoterapisi',
-        isFeatured: true, // Make this one featured
+        isFeatured: true,
         keywords: ['kanser', 'immünoterapi', 'bağışıklık sistemi', 'tedavi'],
         canonicalUrl: '',
         authorId: 'mock-editor',
@@ -199,7 +198,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  */
 export const getArticles = async (): Promise<ArticleData[]> => {
     await delay(150); // Simulate network delay
-    // Return a deep copy to prevent direct modification of the mock DB
+    // Return a deep copy to prevent direct modification of the mock DB elsewhere
     return JSON.parse(JSON.stringify(mockArticles));
 };
 
@@ -229,7 +228,7 @@ export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' |
         updatedAt: new Date().toISOString(),
     };
     mockArticles.push(newArticle);
-    console.log("Article created:", newArticle);
+    console.log("Article created:", JSON.parse(JSON.stringify(newArticle))); // Log deep copy
     // Return a deep copy
     return JSON.parse(JSON.stringify(newArticle));
 };
@@ -247,15 +246,17 @@ export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 
         console.error("Article not found for update:", id);
         return null;
     }
-    const updatedArticle: ArticleData = {
-        ...mockArticles[articleIndex],
-        ...data,
+
+    // Update the article directly in the mockArticles array
+    mockArticles[articleIndex] = {
+        ...mockArticles[articleIndex], // Keep existing data
+        ...data,                      // Apply updates
         updatedAt: new Date().toISOString(), // Always update the updatedAt timestamp
     };
-    mockArticles[articleIndex] = updatedArticle;
-    console.log("Article updated:", updatedArticle);
-    // Return a deep copy
-    return JSON.parse(JSON.stringify(updatedArticle));
+
+    console.log("Article updated:", JSON.parse(JSON.stringify(mockArticles[articleIndex]))); // Log deep copy of updated article
+    // Return a deep copy of the updated article
+    return JSON.parse(JSON.stringify(mockArticles[articleIndex]));
 };
 
 /**

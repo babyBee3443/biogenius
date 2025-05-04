@@ -28,7 +28,7 @@ import Image from 'next/image';
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+import { useDebouncedCallback } from 'use-debounce';
 import { getArticleById, updateArticle, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 // --- Main Page Component ---
@@ -44,6 +44,7 @@ export default function EditArticlePage() {
     const [saving, setSaving] = React.useState(false); // Added saving state
     const [error, setError] = React.useState<string | null>(null); // Added error state
 
+    // Form Field States (Sync with articleData on load and save)
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
     const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
@@ -70,7 +71,8 @@ export default function EditArticlePage() {
                 .then(data => {
                     if (isMounted) {
                         if (data) {
-                            setArticleData(data);
+                            setArticleData(data); // Store fetched data
+                            // Sync form state with fetched data
                             setTitle(data.title);
                             setExcerpt(data.excerpt || '');
                             setCategory(data.category);
@@ -118,12 +120,15 @@ export default function EditArticlePage() {
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
-     // Auto-update slug when title changes (only if slug hasn't been manually changed)
+     // Auto-update slug when title changes (only if slug hasn't been manually changed or matches old slug)
     React.useEffect(() => {
         if (title && articleData && title !== articleData.title) {
-             if (!slug || slug === generateSlug(articleData.title)) { // Check if slug matches old title's slug
+             // Check if slug is empty OR if slug matches the slug generated from the *original* title
+             if (!slug || slug === generateSlug(articleData.title)) {
                  setSlug(generateSlug(title));
              }
+        } else if (title && !slug) { // Generate slug if title exists but slug is empty (e.g., on initial load from incomplete data)
+            setSlug(generateSlug(title));
         }
     }, [title, articleData, slug]); // Depend on slug
 
@@ -182,24 +187,24 @@ export default function EditArticlePage() {
 
      // Debounced save function
      const debouncedSave = useDebouncedCallback(
-        async (dataToSave: ArticleData) => {
+        async (dataToSave: ArticleData): Promise<ArticleData | null> => { // Return updated data or null
             setSaving(true);
             try {
                 const updated = await updateArticle(dataToSave.id, dataToSave);
                 if (updated) {
-                    // Update local state *after* successful save
-                    setArticleData(updated);
-                    // Optionally re-sync fields if backend modifies data (e.g., updatedAt)
-                    toast({
+                     toast({
                          title: "Makale Kaydedildi",
                          description: `"${updated.title}" başlıklı makale başarıyla kaydedildi (${updated.status}).`,
                      });
+                     return updated; // Return the updated data on success
                 } else {
                      toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilemedi." });
+                     return null;
                 }
             } catch (error) {
                 console.error("Error saving article:", error);
                 toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilirken bir hata oluştu." });
+                return null; // Return null on error
             } finally {
                 setSaving(false);
             }
@@ -208,7 +213,7 @@ export default function EditArticlePage() {
     );
 
 
-    const handleSave = (publish: boolean = false) => {
+    const handleSave = async (publish: boolean = false) => { // Make handleSave async
         const finalStatus = publish ? "Yayınlandı" : status;
         if (!category) {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
@@ -219,28 +224,38 @@ export default function EditArticlePage() {
              return;
         }
 
+         // Use the most recent articleData from state or fallback to initial if null
+         const baseData = articleData || { id: articleId, createdAt: new Date().toISOString(), authorId: 'mock-admin' };
+
          const currentData: ArticleData = {
-            id: articleId,
+            ...baseData, // Spread existing data (like id, createdAt, authorId)
             title,
-            excerpt: excerpt || "", // Ensure excerpt is always a string
+            excerpt: excerpt || "",
             category,
-            status: finalStatus,
+            status: finalStatus, // Use the final determined status
             mainImageUrl: mainImageUrl || null,
             isFeatured,
-            slug: slug || generateSlug(title), // Ensure slug exists
+            slug: slug || generateSlug(title),
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
             blocks: blocks || [],
-            seoTitle: seoTitle || title, // Fallback to title
-            seoDescription: seoDescription || excerpt.substring(0, 160) || "", // Fallback to excerpt
-            // Add/update other necessary fields like authorId, createdAt, updatedAt
-             createdAt: articleData?.createdAt || new Date().toISOString(), // Keep original creation date
-             updatedAt: new Date().toISOString(), // Set current date/time for update
-             authorId: articleData?.authorId || 'mock-admin', // Assign author if missing
+            seoTitle: seoTitle || title,
+            seoDescription: seoDescription || excerpt.substring(0, 160) || "",
+            updatedAt: new Date().toISOString(), // Always set current update time
         };
 
          console.log("Preparing to save:", currentData);
-         debouncedSave(currentData); // Call debounced save function
+
+         // Call debounced save and wait for the result
+         const savedArticle = await debouncedSave(currentData);
+
+         if (savedArticle) {
+             // Update the main articleData state with the returned saved data
+             setArticleData(savedArticle);
+             // Optionally re-sync individual form fields if necessary, though usually
+             // relying on articleData should be sufficient if components rerender based on it.
+             // Example: setStatus(savedArticle.status);
+         }
 
          if (publish && !saving) { // Show immediate feedback for publish action if not currently saving
              toast({
@@ -533,7 +548,8 @@ export default function EditArticlePage() {
                          <CardContent className="space-y-4">
                               <div className="space-y-2">
                                  <Label htmlFor="status">Yayın Durumu</Label>
-                                 <Select value={status} onValueChange={(value) => setStatus(value as ArticleData['status'])}>
+                                 {/* Use the status from the latest articleData state */}
+                                 <Select value={articleData?.status ?? status} onValueChange={(value) => setStatus(value as ArticleData['status'])}>
                                      <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                                      <SelectContent>
                                          <SelectItem value="Taslak">Taslak</SelectItem>
@@ -547,11 +563,12 @@ export default function EditArticlePage() {
                                <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                              <Button className="w-full" onClick={() => handleSave()} disabled={saving}>
+                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving}> {/* Pass false explicitly */}
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 Kaydet
                              </Button>
-                             {status !== 'Yayınlandı' && (
+                             {/* Show publish button only if the current status is not 'Yayınlandı' */}
+                             {(articleData?.status ?? status) !== 'Yayınlandı' && (
                                  <Button className="w-full" onClick={() => handleSave(true)} disabled={saving}>
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                      Yayınla
