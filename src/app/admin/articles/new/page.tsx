@@ -32,6 +32,7 @@ import {
   Code,
   PlusCircle, // Added for Add Block button
   Minus, // Added for Divider
+  LayoutGrid, // Added for Section Block
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -123,6 +124,7 @@ export default function NewArticlePage() {
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
              ...(type === 'divider' && {}),
+             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }), // Add section block default
         } as Block; // Added type assertion
         setBlocks([...blocks, newBlock]);
     };
@@ -277,6 +279,8 @@ export default function NewArticlePage() {
                                 onDeleteBlock={handleDeleteBlock}
                                 onUpdateBlock={handleUpdateBlock}
                                 onReorderBlocks={handleReorderBlocks}
+                                selectedBlockId={null} // Add selectedBlockId prop
+                                onBlockSelect={() => {}} // Add onBlockSelect prop
                              />
 
                         </TabsContent>
@@ -433,3 +437,5 @@ export default function NewArticlePage() {
         </div>
     );
 }
+
+    

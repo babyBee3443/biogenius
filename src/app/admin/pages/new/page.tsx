@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Eye } from "lucide-react"; // Added Eye for preview
+import { ArrowLeft, Save, Eye, LayoutGrid } from "lucide-react"; // Added Eye for preview, LayoutGrid for Section
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor"; // Import BlockEditor
 import type { Block } from "@/components/admin/template-selector"; // Import Block type
 import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
+import { Textarea } from "@/components/ui/textarea"; // Import Textarea for SEO Description
 
 
 export default function NewPage() {
@@ -79,6 +80,7 @@ export default function NewPage() {
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
+            ...(type === 'section' && { sectionType: 'custom-text', settings: {} }), // Add section block default
         } as Block;
         setBlocks([...blocks, newBlock]);
      };
@@ -196,6 +198,8 @@ export default function NewPage() {
                        onDeleteBlock={handleDeleteBlock}
                        onUpdateBlock={handleUpdateBlock}
                        onReorderBlocks={handleReorderBlocks}
+                       selectedBlockId={null} // Add selectedBlockId prop
+                       onBlockSelect={() => {}} // Add onBlockSelect prop
                      />
                  </div>
 
@@ -220,11 +224,12 @@ export default function NewPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="seo-description">Meta Açıklama</Label>
-                                    <Input
+                                    <Textarea
                                         id="seo-description"
                                         value={seoDescription}
                                         onChange={(e) => setSeoDescription(e.target.value)}
                                         maxLength={160}
+                                        rows={4}
                                         placeholder="Arama sonuçlarında görünecek kısa açıklama"
                                     />
                                     <p className="text-xs text-muted-foreground">Tavsiye: 150-160 karakter. ({seoDescription.length}/160)</p>

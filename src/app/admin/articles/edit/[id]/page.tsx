@@ -72,6 +72,26 @@ const getArticleById = async (id: string): Promise<ArticleData | null> => {
             keywords: ['ai', 'makine öğrenimi', 'yapay zeka'],
             canonicalUrl: '',
         },
+        {
+            id: '4', // Added data for this article
+            title: 'Mikrobiyom: İçimizdeki Gizli Dünya',
+            excerpt: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri.',
+            blocks: [
+                { id: 'm1', type: 'text', content: 'İnsan vücudu, kendi hücrelerimizden kat kat fazla sayıda bakteri, virüs, mantar ve diğer mikroorganizmalara ev sahipliği yapar. Bu mikroskobik canlıların oluşturduğu topluluğa "mikrobiyom" adı verilir.' },
+                { id: 'm2', type: 'heading', level: 2, content: 'Sağlık Üzerindeki Rolü' },
+                { id: 'm3', type: 'text', content: 'Bağırsak mikrobiyomu, sindirime yardımcı olmaktan, bağışıklık sistemini eğitmeye, vitamin üretmekten zararlı patojenlere karşı korumaya kadar birçok önemli işlevi yerine getirir.' },
+                { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
+            ],
+            category: 'Biyoloji',
+            status: 'İncelemede', // Example status
+            mainImageUrl: 'https://picsum.photos/seed/microbiome/600/400',
+            seoTitle: 'Mikrobiyom: İçimizdeki Dünya | TeknoBiyo',
+            seoDescription: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri ve mikrobiyom dengesinin önemi.',
+            slug: 'mikrobiyom-icimizdeki-dunya',
+            isFeatured: false,
+            keywords: ['mikrobiyom', 'bağırsak', 'sağlık', 'bakteri', 'probiyotik'],
+            canonicalUrl: '',
+        },
         // Add other articles if needed
     ];
     return articles.find(article => article.id === id) || null;
@@ -181,6 +201,7 @@ export default function EditArticlePage() {
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
+            ...(type === 'section' && { sectionType: 'custom-text', settings: {} }), // Add section block default
         } as Block;
         setBlocks([...blocks, newBlock]);
     };
@@ -357,6 +378,8 @@ export default function EditArticlePage() {
                                 onDeleteBlock={handleDeleteBlock}
                                 onUpdateBlock={handleUpdateBlock}
                                 onReorderBlocks={handleReorderBlocks}
+                                selectedBlockId={null} // Add selectedBlockId prop
+                                onBlockSelect={() => {}} // Add onBlockSelect prop
                               />
 
                          </TabsContent>
@@ -518,3 +541,5 @@ export default function EditArticlePage() {
          </div>
     );
 }
+
+    
