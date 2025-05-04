@@ -18,40 +18,23 @@ interface Article {
   imageUrl: string;
 }
 
-// Mock data for featured articles (replace with actual data fetching)
-const featuredArticles: Article[] = [
-  {
-    id: '1',
-    title: 'Yapay Zeka Devrimi: Yeni Bir Çağın Başlangıcı',
-    description: 'Yapay zeka teknolojilerinin günümüzdeki ve gelecekteki etkilerini keşfedin.',
-    category: 'Teknoloji',
-    imageUrl: 'https://picsum.photos/seed/ai-hero/1920/1080',
-  },
-  {
-    id: '2',
-    title: 'Gen Düzenleme Teknolojileri: CRISPR ve Ötesi',
-    description: 'CRISPR gibi gen düzenleme teknolojilerinin potansiyelini ve etik boyutlarını inceleyin.',
-    category: 'Biyoloji',
-    imageUrl: 'https://picsum.photos/seed/crispr-hero/1920/1080',
-  },
-  {
-    id: '3',
-    title: 'Kuantum Bilgisayarlar: Hesaplamanın Geleceği',
-    description: 'Kuantum bilgisayarların nasıl çalıştığını ve hangi alanlarda devrim yaratabileceğini öğrenin.',
-    category: 'Teknoloji',
-    imageUrl: 'https://picsum.photos/seed/quantum-hero/1920/1080',
-  },
-];
+interface HeroProps {
+  articles: Article[]; // Accept articles as a prop
+}
 
-const Hero = () => {
+const Hero: React.FC<HeroProps> = ({ articles }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(true);
 
+  // Filter articles locally if needed (e.g., select only featured from the passed list)
+  // For now, we assume the passed articles are already filtered/selected for the Hero
+  const displayArticles = articles.slice(0, 5); // Limit to max 5 for Hero display
+
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (isPlaying) {
+    if (isPlaying && displayArticles.length > 1) { // Only set interval if playing and more than one article
       interval = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % featuredArticles.length);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % displayArticles.length);
       }, 5000); // Change slide every 5 seconds
     }
 
@@ -60,15 +43,24 @@ const Hero = () => {
         clearInterval(interval);
       }
     };
-  }, [isPlaying]); // Re-run effect if isPlaying changes
+  }, [isPlaying, displayArticles.length]); // Re-run effect if isPlaying or articles change
 
-  const currentArticle = featuredArticles[currentIndex];
+  if (displayArticles.length === 0) {
+      return (
+           <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner">
+              <div className="container relative z-10 text-muted-foreground px-4">
+                <p>Gösterilecek öne çıkan makale bulunamadı.</p>
+              </div>
+           </section>
+      );
+  }
+
+
+  const currentArticle = displayArticles[currentIndex];
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index);
     setIsPlaying(false); // Pause auto-play on manual interaction
-    // Optional: Resume playing after a delay
-    // setTimeout(() => setIsPlaying(true), 10000);
   };
 
   const togglePlay = () => {
@@ -143,23 +135,25 @@ const Hero = () => {
       </div>
 
       {/* Navigation Dots & Play/Pause */}
-      <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-3">
-        <Button variant="ghost" size="icon" onClick={togglePlay} className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full">
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            <span className="sr-only">{isPlaying ? "Durdur" : "Oynat"}</span>
-        </Button>
-        {featuredArticles.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => handleDotClick(index)}
-            className={cn(
-              'h-2 w-2 rounded-full transition-colors duration-300',
-              currentIndex === index ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'
-            )}
-            aria-label={`Makaleye git ${index + 1}`}
-          />
-        ))}
-      </div>
+      {displayArticles.length > 1 && ( // Only show controls if more than one article
+        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-3">
+          <Button variant="ghost" size="icon" onClick={togglePlay} className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full">
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              <span className="sr-only">{isPlaying ? "Durdur" : "Oynat"}</span>
+          </Button>
+          {displayArticles.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => handleDotClick(index)}
+              className={cn(
+                'h-2 w-2 rounded-full transition-colors duration-300',
+                currentIndex === index ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'
+              )}
+              aria-label={`Makaleye git ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };

@@ -33,6 +33,7 @@ import ImageBlock from './image-block';
 import QuoteBlock from './quote-block';
 import DividerBlock from './divider-block';
 import SectionBlock from './section-block'; // Import SectionBlock
+import VideoBlock from './video-block'; // Import VideoBlock
 import PlaceholderBlock from './placeholder-block';
 
 const ItemTypes = {
@@ -95,30 +96,37 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({
 
   drag(drop(ref));
 
-  const handleContentChange = (id: string, contentOrSettings: any, field?: string, level?: number) => {
-    const updatedBlock = { ...block };
-    switch (block.type) {
-        case 'text':
-        case 'quote':
-        case 'code':
-            updatedBlock.content = contentOrSettings;
-            break;
-        case 'heading':
-            updatedBlock.content = contentOrSettings;
-            if (level) updatedBlock.level = level;
-            break;
-         case 'image':
-             if (field === 'url') updatedBlock.url = contentOrSettings;
-             if (field === 'alt') updatedBlock.alt = contentOrSettings;
-             if (field === 'caption') updatedBlock.caption = contentOrSettings;
-             break;
-         case 'section':
-             // Assume contentOrSettings is the new settings object
-             updatedBlock.settings = { ...updatedBlock.settings, ...contentOrSettings };
-             break;
-         // Handle other block types
-    }
-     onUpdate(updatedBlock as Block);
+  // Simplified onChange handler - pass the whole block for complex updates
+  const handleBlockChange = (id: string, value: any, field?: string, level?: number) => {
+      const updatedBlock = { ...block };
+
+      switch (block.type) {
+          case 'text':
+          case 'quote':
+          case 'code': // Assuming simple content update for code for now
+              updatedBlock.content = value;
+              break;
+          case 'heading':
+              if (field === 'content') updatedBlock.content = value;
+              if (field === 'level' && typeof value === 'number') updatedBlock.level = value;
+              break;
+          case 'image':
+               if (field === 'url') updatedBlock.url = value;
+               if (field === 'alt') updatedBlock.alt = value;
+               if (field === 'caption') updatedBlock.caption = value;
+               break;
+           case 'video':
+                if (field === 'url') updatedBlock.url = value;
+                if (field === 'youtubeId') updatedBlock.youtubeId = value; // Handle youtubeId update
+                break;
+           case 'section':
+               // Here, 'value' is expected to be the new settings object
+               updatedBlock.settings = { ...updatedBlock.settings, ...value };
+               break;
+          // Handle gallery updates if needed
+      }
+
+      onUpdate(updatedBlock as Block);
   };
 
 
@@ -133,13 +141,14 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({
             isSelected={isSelected} // Pass selection state
             onSelect={() => onSelect(block.id)} // Pass selection handler
         >
-            {block.type === 'text' && <TextBlock block={block} onChange={handleContentChange} />}
-            {block.type === 'heading' && <HeadingBlock block={block} onChange={handleContentChange} />}
-            {block.type === 'image' && <ImageBlock block={block} onChange={handleContentChange} />}
-            {block.type === 'quote' && <QuoteBlock block={block} onChange={handleContentChange} />}
-             {block.type === 'divider' && <DividerBlock />}
-             {block.type === 'section' && <SectionBlock block={block} onChange={handleContentChange} />} {/* Render SectionBlock */}
-            {(block.type === 'gallery' || block.type === 'video' || block.type === 'code' ) && (
+            {block.type === 'text' && <TextBlock block={block} onChange={handleBlockChange} />}
+            {block.type === 'heading' && <HeadingBlock block={block} onChange={handleBlockChange} />}
+            {block.type === 'image' && <ImageBlock block={block} onChange={handleBlockChange} />}
+            {block.type === 'quote' && <QuoteBlock block={block} onChange={handleBlockChange} />}
+            {block.type === 'video' && <VideoBlock block={block} onChange={handleBlockChange} />}
+            {block.type === 'divider' && <DividerBlock />}
+            {block.type === 'section' && <SectionBlock block={block} onChange={handleBlockChange} />}
+            {(block.type === 'gallery' || block.type === 'code' ) && (
                  <PlaceholderBlock type={block.type} />
             )}
         </BlockWrapper>
@@ -187,7 +196,12 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
 
          <div
              className="space-y-4"
-             onClick={() => onBlockSelect(null)} // Click outside blocks to deselect
+             onClick={(e) => {
+                // Check if the click target is the background div itself
+                 if (e.target === e.currentTarget) {
+                     onBlockSelect(null);
+                 }
+             }} // Click outside blocks to deselect
          >
              {blocks.map((block, index) => (
                  <DraggableBlock

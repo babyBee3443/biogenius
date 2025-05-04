@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -15,56 +16,36 @@ import {
   Save,
   Eye,
   Upload,
-  GripVertical,
-  Trash2,
-  Bold,
-  Italic,
-  Underline,
-  Link as LinkIcon,
-  List,
-  ListOrdered,
-  Type,
-  Heading2,
-  Image as ImageIcon,
-  GalleryHorizontal,
-  Video,
-  Quote,
-  Code,
-  PlusCircle, // Added for Add Block button
-  Minus, // Added for Divider
-  LayoutGrid, // Added for Section Block
+  PlusCircle,
+  Loader2, // Added Loader for saving state
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import Image from 'next/image'; // Used for image previews if needed
-import { TemplateSelector, Block } from "@/components/admin/template-selector"; // Import Block type as well
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Added DropdownMenu
-import { BlockEditor } from "@/components/admin/block-editor/block-editor"; // Import BlockEditor
-import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
-
+import Image from 'next/image';
+import { TemplateSelector, Block } from "@/components/admin/template-selector";
+import { BlockEditor } from "@/components/admin/block-editor/block-editor";
+import SeoPreview from "@/components/admin/seo-preview";
+import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 // --- Main Page Component ---
 
 export default function NewArticlePage() {
+    const router = useRouter(); // Initialize router
+
     // --- State ---
+    const [saving, setSaving] = React.useState(false); // Added saving state
+
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
-    const [category, setCategory] = React.useState<"Teknoloji" | "Biyoloji" | "">("");
+    const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
-    const [status, setStatus] = React.useState("Taslak");
+    const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
     // Block Editor State
     const [blocks, setBlocks] = React.useState<Block[]>([
-        // Initial block for example
         { id: `block-${Date.now()}`, type: 'text', content: '' },
     ]);
 
@@ -75,6 +56,8 @@ export default function NewArticlePage() {
     const [slug, setSlug] = React.useState("");
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
+
 
     // --- Handlers ---
 
@@ -91,6 +74,8 @@ export default function NewArticlePage() {
      React.useEffect(() => {
          if (title) {
              setSlug(generateSlug(title));
+         } else {
+             setSlug(''); // Clear slug if title is empty
          }
      }, [title]);
 
@@ -104,7 +89,6 @@ export default function NewArticlePage() {
      // Auto-generate SEO Description from excerpt if empty
     React.useEffect(() => {
        if (excerpt && !seoDescription) {
-         // Simple trim and take first 160 chars
          const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
          setSeoDescription(desc);
        }
@@ -113,27 +97,28 @@ export default function NewArticlePage() {
 
     const handleAddBlock = (type: Block['type']) => {
         const newBlock: Block = {
-            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`, // More unique ID
+            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             type: type,
-            // Default content based on type
             ...(type === 'text' && { content: '' }),
             ...(type === 'heading' && { level: 2, content: '' }),
             ...(type === 'image' && { url: '', alt: '', caption: '' }),
             ...(type === 'gallery' && { images: [] }),
-            ...(type === 'video' && { url: '' }),
+            ...(type === 'video' && { url: '', youtubeId: '' }), // Added youtubeId
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
              ...(type === 'divider' && {}),
-             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }), // Add section block default
-        } as Block; // Added type assertion
+             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
+        } as Block;
         setBlocks([...blocks, newBlock]);
+         setSelectedBlockId(newBlock.id); // Select the newly added block
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks(blocks.filter(block => block.id !== id));
+         if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
     };
 
-     // Update block state (generic, used by BlockEditor)
+     // Update block state
      const handleUpdateBlock = (updatedBlock: Block) => {
          setBlocks(prevBlocks =>
              prevBlocks.map(block =>
@@ -142,54 +127,115 @@ export default function NewArticlePage() {
          );
      };
 
-     // Reorder blocks (generic, used by BlockEditor)
+     // Reorder blocks
      const handleReorderBlocks = (reorderedBlocks: Block[]) => {
          setBlocks(reorderedBlocks);
      };
 
+     // Block selection
+     const handleBlockSelect = (id: string | null) => {
+         setSelectedBlockId(id);
+     };
+
+
+     // Debounced save function for creating articles
+     const debouncedCreate = useDebouncedCallback(
+         async (dataToSave: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'>) => {
+             setSaving(true);
+             try {
+                 const newArticle = await createArticle(dataToSave);
+                 if (newArticle) {
+                     toast({
+                         title: "Makale Oluşturuldu",
+                         description: `"${newArticle.title}" başlıklı makale başarıyla oluşturuldu (${newArticle.status}).`,
+                     });
+                      // Redirect to the edit page of the newly created article
+                      router.push(`/admin/articles/edit/${newArticle.id}`);
+                 } else {
+                      toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulamadı." });
+                      setSaving(false); // Allow retry on failure
+                 }
+             } catch (error) {
+                 console.error("Error creating article:", error);
+                 toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulurken bir hata oluştu." });
+                 setSaving(false); // Allow retry on failure
+             }
+             // No finally block needed for saving=false here because we redirect on success
+         },
+         1000 // Debounce time in ms
+     );
 
     const handleSave = (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
-         // TODO: Implement actual API call to save the article
-         const blocksToSave = blocks; // Process blocks if needed
-         console.log("Saving article:", { title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, keywords: keywords.join(','), canonicalUrl, blocks: blocksToSave, seoTitle, seoDescription });
-         toast({
-             title: publish ? "Makale Yayınlandı" : "Makale Kaydedildi",
-             description: `"${title}" başlıklı makale başarıyla ${publish ? 'yayınlandı' : 'kaydedildi (' + finalStatus + ')'}.`,
-         });
-         // Redirect or clear form based on action
+         if (!category) {
+             toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
+             return;
+         }
+         if (!title) {
+             toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen makale başlığını girin." });
+             return;
+         }
+
+         const newArticleData: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'> = {
+             title,
+             excerpt: excerpt || "",
+             category,
+             status: finalStatus,
+             mainImageUrl: mainImageUrl || null,
+             isFeatured,
+             slug: slug || generateSlug(title),
+             keywords: keywords || [],
+             canonicalUrl: canonicalUrl || "",
+             blocks: blocks || [],
+             seoTitle: seoTitle || title,
+             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
+             authorId: 'mock-admin', // Assign a default author ID
+         };
+
+         console.log("Preparing to create article:", newArticleData);
+         debouncedCreate(newArticleData); // Call debounced create function
+
+         if (publish && !saving) {
+             toast({
+                 title: publish ? "Makale Yayınlanıyor..." : "Makale Kaydediliyor...",
+                 description: `"${title}" başlıklı makale oluşturuluyor.`,
+             });
+         }
     };
 
-     // Handler for template selection (assuming template gives blocks)
+     // Handler for template selection
      const handleTemplateSelect = (templateBlocks: Block[]) => {
-        // Ask for confirmation before overwriting existing content
         if (blocks.length > 1 || (blocks.length === 1 && blocks[0].type === 'text' && (blocks[0] as Extract<Block, { type: 'text' }>).content !== '')) {
             if (!window.confirm("Mevcut içerik bölümlerinin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
-                 setIsTemplateSelectorOpen(false); // Close selector if cancelled
+                 setIsTemplateSelectorOpen(false);
                  return;
             }
         }
-        // Ensure new unique IDs for blocks from the template
         const newBlocks = templateBlocks.map(block => ({
             ...block,
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
         }));
-        setBlocks(newBlocks); // Update blocks state with template
-        setIsTemplateSelectorOpen(false); // Close the selector
+        setBlocks(newBlocks);
+        setIsTemplateSelectorOpen(false);
+        toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
      };
 
       const handlePreview = () => {
+          if (!category) {
+              toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
+              return;
+          }
          const previewData = {
-             id: 'preview', // Use a temporary ID
-             title,
-             description: excerpt, // Use excerpt as description for preview
-             category: category || 'Teknoloji', // Default category if not set
-             imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600', // Placeholder if no image
-             blocks, // Pass the current blocks
+             id: 'preview',
+             title: title || 'Başlıksız Makale',
+             description: excerpt || '',
+             category: category,
+             imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
+             blocks,
          };
          try {
              localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
-             window.open('/admin/preview', '_blank'); // Open preview in a new tab
+             window.open('/admin/preview', '_blank');
          } catch (error) {
              console.error("Error saving preview data to localStorage:", error);
              toast({
@@ -200,10 +246,6 @@ export default function NewArticlePage() {
          }
      };
 
-
-     // TODO: Add handlers for media upload, etc.
-
-
     return (
         <div className="flex flex-col h-full">
             {/* Top Bar */}
@@ -212,7 +254,6 @@ export default function NewArticlePage() {
                     <Link href="/admin/articles"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
                 </Button>
                 <h1 className="text-xl font-semibold">Yeni Makale Oluştur</h1>
-                {/* Placeholder for potential actions or user info */}
                 <div className="w-20"></div> {/* Spacer */}
             </div>
 
@@ -232,12 +273,12 @@ export default function NewArticlePage() {
                         <TabsContent value="content" className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label htmlFor="title">Makale Başlığı</Label>
+                                    <Label htmlFor="title">Makale Başlığı <span className="text-destructive">*</span></Label>
                                     <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Makalenizin başlığını girin" required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="category">Kategori</Label>
-                                    <Select value={category} onValueChange={(value) => setCategory(value as "Teknoloji" | "Biyoloji")} required>
+                                    <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
+                                    <Select value={category} onValueChange={(value) => setCategory(value as ArticleData['category'])} required>
                                         <SelectTrigger id="category">
                                             <SelectValue placeholder="Kategori seçin" />
                                         </SelectTrigger>
@@ -261,7 +302,7 @@ export default function NewArticlePage() {
                                 </div>
                                 {mainImageUrl && (
                                     <div className="mt-2 rounded border p-2 w-fit">
-                                        <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded"/>
+                                        <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded" data-ai-hint="article cover placeholder"/>
                                     </div>
                                 )}
                             </div>
@@ -279,8 +320,8 @@ export default function NewArticlePage() {
                                 onDeleteBlock={handleDeleteBlock}
                                 onUpdateBlock={handleUpdateBlock}
                                 onReorderBlocks={handleReorderBlocks}
-                                selectedBlockId={null} // Add selectedBlockId prop
-                                onBlockSelect={() => {}} // Add onBlockSelect prop
+                                selectedBlockId={selectedBlockId}
+                                onBlockSelect={handleBlockSelect}
                              />
 
                         </TabsContent>
@@ -388,7 +429,7 @@ export default function NewArticlePage() {
                 </div>
 
                  {/* Right Sidebar (Actions & Status) */}
-                 <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block"> {/* Hide on smaller screens for simplicity for now */}
+                 <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block"> {/* Hide on smaller screens */}
                      <Card>
                         <CardHeader>
                            <CardTitle>Durum</CardTitle>
@@ -396,7 +437,7 @@ export default function NewArticlePage() {
                         <CardContent className="space-y-4">
                              <div className="space-y-2">
                                 <Label htmlFor="status">Yayın Durumu</Label>
-                                <Select value={status} onValueChange={setStatus}>
+                                <Select value={status} onValueChange={(value) => setStatus(value as ArticleData['status'])}>
                                     <SelectTrigger id="status">
                                         <SelectValue placeholder="Durum seçin" />
                                     </SelectTrigger>
@@ -408,23 +449,20 @@ export default function NewArticlePage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            {/* Optional: Add visibility, publish date */}
                              <Separator />
-                              <Button variant="outline" className="w-full justify-center" onClick={handlePreview}>
+                              <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                             <Button className="w-full" onClick={() => handleSave(status === 'Yayınlandı')}>
-                                <Save className="mr-2 h-4 w-4" /> Kaydet
+                             <Button className="w-full" onClick={() => handleSave()} disabled={saving}>
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Kaydet
                             </Button>
-                            {/* Conditionally show Publish button */}
                              {status !== 'Yayınlandı' && (
-                                 <Button className="w-full" variant="default" onClick={() => handleSave(true)}>
-                                     <Upload className="mr-2 h-4 w-4" /> Yayınla
+                                 <Button className="w-full" variant="default" onClick={() => handleSave(true)} disabled={saving}>
+                                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Yayınla
                                  </Button>
                              )}
                         </CardContent>
                      </Card>
-                    {/* Keywords moved to main SEO section */}
                  </aside>
              </div>
 
@@ -432,10 +470,8 @@ export default function NewArticlePage() {
              <TemplateSelector
                  isOpen={isTemplateSelectorOpen}
                  onClose={() => setIsTemplateSelectorOpen(false)}
-                 onSelectTemplateBlocks={handleTemplateSelect} // Use the new prop
+                 onSelectTemplateBlocks={handleTemplateSelect}
              />
         </div>
     );
 }
-
-    

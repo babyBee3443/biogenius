@@ -21,7 +21,7 @@ export type Block =
   | { id: string; type: 'heading'; level: number; content: string }
   | { id: string; type: 'image'; url: string; alt: string; caption?: string }
   | { id: string; type: 'gallery'; images: { url: string; alt: string }[] }
-  | { id: string; type: 'video'; url: string }
+  | { id: string; type: 'video'; url: string; youtubeId?: string | null } // Added optional youtubeId
   | { id: string; type: 'quote'; content: string; citation?: string }
   | { id: string; type: 'code'; language: string; content: string }
   | { id: string; type: 'divider' }
@@ -65,6 +65,7 @@ const templates: Template[] = [
       { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 1' },
       { id: generateId(), type: 'text', content: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.' },
       { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 2' },
+       { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', youtubeId: 'dQw4w9WgXcQ' }, // Added example video block
       { id: generateId(), type: 'text', content: 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.' },
       { id: generateId(), type: 'quote', content: 'Bu alana önemli bir alıntı veya vurgu ekleyebilirsiniz.', citation: 'Kaynak (isteğe bağlı)' },
       { id: generateId(), type: 'text', content: 'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.' },
@@ -224,10 +225,11 @@ const blocksToHtml = (blocks: Block[]): string => {
                  html += `</div>\n`;
                  break;
              case 'video':
-                 if (block.url.includes('youtube.com') || block.url.includes('youtu.be')) {
-                     const videoId = block.url.split('v=')[1]?.split('&')[0] || block.url.split('/').pop();
+                 // Use youtubeId if available, otherwise try to extract from URL
+                 const videoId = block.youtubeId || block.url.split('v=')[1]?.split('&')[0] || block.url.split('/').pop();
+                 if (videoId && videoId.length === 11) { // Basic check for YouTube ID length
                      html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
-                 } else {
+                 } else if (block.url) {
                      html += `<p><a href="${block.url}" target="_blank" rel="noopener noreferrer">Video izle: ${block.url}</a></p>\n`; // Fallback link
                  }
                  break;
@@ -278,6 +280,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
                                 width={300}
                                 height={200}
                                 className="w-full h-full object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                                data-ai-hint="template preview abstract design"
                              />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div> {/* Gradient overlay */}
                               <CardTitle className="absolute bottom-2 left-3 text-sm font-semibold text-white p-1 bg-black/50 rounded text-shadow-sm">{template.name}</CardTitle> {/* Title on image */}

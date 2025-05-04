@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { notFound, useParams } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation'; // Added useRouter
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,103 +17,39 @@ import {
   Eye,
   Upload,
   Trash2,
-  History, // Keep for revisions potentially
-  MessageSquare, // Keep for comments potentially
+  History,
+  MessageSquare,
+  Loader2, // Added Loader for saving state
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import Image from 'next/image'; // Keep for image previews
-import { TemplateSelector, Block } from "@/components/admin/template-selector"; // Import Block type
-import { BlockEditor } from "@/components/admin/block-editor/block-editor"; // Import BlockEditor
-import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
-
-
-// --- Mock Data Fetching ---
-// TODO: Replace with actual API calls and data structure
-interface ArticleData {
-  id: string;
-  title: string;
-  excerpt: string;
-  blocks: Block[]; // New block-based content
-  category: 'Teknoloji' | 'Biyoloji';
-  status: string;
-  mainImageUrl: string | null; // Corresponds to Ana Görsel URL
-  seoTitle: string;
-  seoDescription: string;
-  slug: string;
-  isFeatured: boolean;
-  keywords: string[];
-  canonicalUrl: string;
-  // Add other fields like author, createdAt, updatedAt etc.
-}
-
-// Mock Function
-const getArticleById = async (id: string): Promise<ArticleData | null> => {
-    // await new Promise(resolve => setTimeout(resolve, 500)); // Removed delay
-    const articles: ArticleData[] = [
-         {
-            id: '1',
-            title: 'Yapay Zeka Devrimi',
-            excerpt: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
-            blocks: [
-                { id: 'b1', type: 'text', content: 'Yapay zeka (AI), makinelerin öğrenme, problem çözme ve karar verme gibi tipik olarak insan zekası gerektiren görevleri yerine getirme yeteneğidir.' },
-                { id: 'b2', type: 'image', url: 'https://picsum.photos/seed/ai-edit/800/400', alt: 'Yapay Zeka Görseli', caption: 'AI teknolojileri gelişiyor.' },
-                { id: 'b3', type: 'heading', level: 2, content: 'AI\'nın Etki Alanları' },
-                { id: 'b4', type: 'text', content: 'Sağlık hizmetlerinde AI, hastalıkların daha erken teşhis edilmesine yardımcı olmaktadır...' }
-            ],
-            category: 'Teknoloji',
-            status: 'Yayınlandı',
-            mainImageUrl: 'https://picsum.photos/seed/ai/600/400',
-            seoTitle: 'Yapay Zeka Devrimi | TeknoBiyo',
-            seoDescription: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
-            slug: 'yapay-zeka-devrimi',
-            isFeatured: true,
-            keywords: ['ai', 'makine öğrenimi', 'yapay zeka'],
-            canonicalUrl: '',
-        },
-        {
-            id: '4', // Added data for this article
-            title: 'Mikrobiyom: İçimizdeki Gizli Dünya',
-            excerpt: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri.',
-            blocks: [
-                { id: 'm1', type: 'text', content: 'İnsan vücudu, kendi hücrelerimizden kat kat fazla sayıda bakteri, virüs, mantar ve diğer mikroorganizmalara ev sahipliği yapar. Bu mikroskobik canlıların oluşturduğu topluluğa "mikrobiyom" adı verilir.' },
-                { id: 'm2', type: 'heading', level: 2, content: 'Sağlık Üzerindeki Rolü' },
-                { id: 'm3', type: 'text', content: 'Bağırsak mikrobiyomu, sindirime yardımcı olmaktan, bağışıklık sistemini eğitmeye, vitamin üretmekten zararlı patojenlere karşı korumaya kadar birçok önemli işlevi yerine getirir.' },
-                { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
-            ],
-            category: 'Biyoloji',
-            status: 'İncelemede', // Example status
-            mainImageUrl: 'https://picsum.photos/seed/microbiome/600/400',
-            seoTitle: 'Mikrobiyom: İçimizdeki Dünya | TeknoBiyo',
-            seoDescription: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri ve mikrobiyom dengesinin önemi.',
-            slug: 'mikrobiyom-icimizdeki-dunya',
-            isFeatured: false,
-            keywords: ['mikrobiyom', 'bağırsak', 'sağlık', 'bakteri', 'probiyotik'],
-            canonicalUrl: '',
-        },
-        // Add other articles if needed
-    ];
-    return articles.find(article => article.id === id) || null;
-};
-
+import Image from 'next/image';
+import { TemplateSelector, Block } from "@/components/admin/template-selector";
+import { BlockEditor } from "@/components/admin/block-editor/block-editor";
+import SeoPreview from "@/components/admin/seo-preview";
+import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+import { getArticleById, updateArticle, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 // --- Main Page Component ---
 
 export default function EditArticlePage() {
     const params = useParams();
+    const router = useRouter();
     const articleId = params.id as string;
 
     // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [saving, setSaving] = React.useState(false); // Added saving state
+    const [error, setError] = React.useState<string | null>(null); // Added error state
 
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
-    const [category, setCategory] = React.useState<"Teknoloji" | "Biyoloji" | "">("");
+    const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
-    const [status, setStatus] = React.useState("Taslak");
+    const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
     const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
@@ -122,38 +58,55 @@ export default function EditArticlePage() {
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
 
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
 
     // --- Data Fetching ---
     React.useEffect(() => {
+        let isMounted = true;
         if (articleId) {
             setLoading(true);
+            setError(null); // Reset error on new fetch
             getArticleById(articleId)
                 .then(data => {
-                    if (data) {
-                        setArticleData(data);
-                        // Initialize state from fetched data
-                        setTitle(data.title);
-                        setExcerpt(data.excerpt);
-                        setCategory(data.category);
-                        setStatus(data.status);
-                        setMainImageUrl(data.mainImageUrl || "");
-                        setIsFeatured(data.isFeatured);
-                        setBlocks(data.blocks || []); // Initialize with fetched blocks
-                        setSeoTitle(data.seoTitle);
-                        setSeoDescription(data.seoDescription);
-                        setSlug(data.slug);
-                        setKeywords(data.keywords || []);
-                        setCanonicalUrl(data.canonicalUrl || "");
-                    } else {
-                        notFound(); // Redirect to 404 if article not found
+                    if (isMounted) {
+                        if (data) {
+                            setArticleData(data);
+                            setTitle(data.title);
+                            setExcerpt(data.excerpt || '');
+                            setCategory(data.category);
+                            setStatus(data.status);
+                            setMainImageUrl(data.mainImageUrl || "");
+                            setIsFeatured(data.isFeatured);
+                            setBlocks(data.blocks || []);
+                            setSeoTitle(data.seoTitle || '');
+                            setSeoDescription(data.seoDescription || '');
+                            setSlug(data.slug);
+                            setKeywords(data.keywords || []);
+                            setCanonicalUrl(data.canonicalUrl || "");
+                        } else {
+                            setError("Makale bulunamadı.");
+                            // Consider using notFound() here, but might cause issues if API call fails temporarily
+                            // notFound();
+                        }
                     }
                 })
-                .catch(error => {
-                    console.error("Error fetching article:", error);
-                    toast({ variant: "destructive", title: "Hata", description: "Makale yüklenirken bir sorun oluştu." });
+                .catch(err => {
+                    if (isMounted) {
+                        console.error("Error fetching article:", err);
+                        setError("Makale yüklenirken bir sorun oluştu.");
+                        toast({ variant: "destructive", title: "Hata", description: "Makale yüklenirken bir sorun oluştu." });
+                    }
                 })
-                .finally(() => setLoading(false));
+                .finally(() => {
+                    if (isMounted) {
+                        setLoading(false);
+                    }
+                });
+        } else {
+            setError("Geçersiz makale ID.");
+            setLoading(false);
         }
+        return () => { isMounted = false }; // Cleanup function
     }, [articleId]);
 
      // --- Handlers ---
@@ -165,12 +118,14 @@ export default function EditArticlePage() {
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
-     // Auto-update slug when title changes (optional)
+     // Auto-update slug when title changes (only if slug hasn't been manually changed)
     React.useEffect(() => {
-        if (title && !slug && articleData && title !== articleData.title) { // Only auto-update if slug is empty and title changed
-            setSlug(generateSlug(title));
+        if (title && articleData && title !== articleData.title) {
+             if (!slug || slug === generateSlug(articleData.title)) { // Check if slug matches old title's slug
+                 setSlug(generateSlug(title));
+             }
         }
-    }, [title, slug, articleData]); // Depend on slug too
+    }, [title, articleData, slug]); // Depend on slug
 
      // Auto-generate SEO Title from main title if empty
      React.useEffect(() => {
@@ -182,7 +137,6 @@ export default function EditArticlePage() {
       // Auto-generate SEO Description from excerpt if empty
      React.useEffect(() => {
         if (excerpt && !seoDescription && articleData && excerpt !== articleData.excerpt) {
-          // Simple trim and take first 160 chars
           const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
           setSeoDescription(desc);
         }
@@ -197,17 +151,19 @@ export default function EditArticlePage() {
             ...(type === 'heading' && { level: 2, content: '' }),
             ...(type === 'image' && { url: '', alt: '', caption: '' }),
             ...(type === 'gallery' && { images: [] }),
-            ...(type === 'video' && { url: '' }),
+            ...(type === 'video' && { url: '', youtubeId: '' }), // Added youtubeId
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
-            ...(type === 'section' && { sectionType: 'custom-text', settings: {} }), // Add section block default
+            ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
         setBlocks([...blocks, newBlock]);
+        setSelectedBlockId(newBlock.id); // Select the newly added block
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks(blocks.filter(block => block.id !== id));
+        if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
     };
 
       // Update block state (generic, used by BlockEditor)
@@ -224,59 +180,132 @@ export default function EditArticlePage() {
           setBlocks(reorderedBlocks);
       };
 
-    const handleSave = (publish: boolean = false) => {
-         const finalStatus = publish ? "Yayınlandı" : status;
-         // TODO: Implement actual API call to update the article
-         console.log("Updating article:", { articleId, title, excerpt, category, status: finalStatus, mainImageUrl, isFeatured, slug, keywords: keywords.join(','), canonicalUrl, blocks, seoTitle, seoDescription });
+     // Debounced save function
+     const debouncedSave = useDebouncedCallback(
+        async (dataToSave: ArticleData) => {
+            setSaving(true);
+            try {
+                const updated = await updateArticle(dataToSave.id, dataToSave);
+                if (updated) {
+                    // Update local state *after* successful save
+                    setArticleData(updated);
+                    // Optionally re-sync fields if backend modifies data (e.g., updatedAt)
+                    toast({
+                         title: "Makale Kaydedildi",
+                         description: `"${updated.title}" başlıklı makale başarıyla kaydedildi (${updated.status}).`,
+                     });
+                } else {
+                     toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilemedi." });
+                }
+            } catch (error) {
+                console.error("Error saving article:", error);
+                toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilirken bir hata oluştu." });
+            } finally {
+                setSaving(false);
+            }
+        },
+        1000 // Debounce time in ms (e.g., 1 second)
+    );
 
-         toast({
-             title: "Makale Güncellendi",
-             description: `"${title}" başlıklı makale başarıyla güncellendi (${finalStatus}).`,
-         });
+
+    const handleSave = (publish: boolean = false) => {
+        const finalStatus = publish ? "Yayınlandı" : status;
+        if (!category) {
+             toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
+             return;
+        }
+        if (!title) {
+             toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen makale başlığını girin." });
+             return;
+        }
+
+         const currentData: ArticleData = {
+            id: articleId,
+            title,
+            excerpt: excerpt || "", // Ensure excerpt is always a string
+            category,
+            status: finalStatus,
+            mainImageUrl: mainImageUrl || null,
+            isFeatured,
+            slug: slug || generateSlug(title), // Ensure slug exists
+            keywords: keywords || [],
+            canonicalUrl: canonicalUrl || "",
+            blocks: blocks || [],
+            seoTitle: seoTitle || title, // Fallback to title
+            seoDescription: seoDescription || excerpt.substring(0, 160) || "", // Fallback to excerpt
+            // Add/update other necessary fields like authorId, createdAt, updatedAt
+             createdAt: articleData?.createdAt || new Date().toISOString(), // Keep original creation date
+             updatedAt: new Date().toISOString(), // Set current date/time for update
+             authorId: articleData?.authorId || 'mock-admin', // Assign author if missing
+        };
+
+         console.log("Preparing to save:", currentData);
+         debouncedSave(currentData); // Call debounced save function
+
+         if (publish && !saving) { // Show immediate feedback for publish action if not currently saving
+             toast({
+                 title: "Makale Yayınlanıyor...",
+                 description: `"${title}" başlıklı makale yayınlanmak üzere kaydediliyor.`,
+             });
+         }
     };
 
-     const handleDelete = () => {
+     const handleDelete = async () => {
         if (window.confirm(`"${title}" başlıklı makaleyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-            console.log("Deleting article:", articleId);
-            // TODO: Implement actual API call to delete the article
-             toast({
-                 variant: "destructive",
-                 title: "Makale Silindi",
-                 description: `"${title}" başlıklı makale silindi.`,
-            });
-            // TODO: Redirect to articles list page after deletion
-             // router.push('/admin/articles');
+            setSaving(true); // Indicate deletion in progress
+            try {
+                const success = await deleteArticle(articleId);
+                if (success) {
+                    toast({
+                        variant: "destructive",
+                        title: "Makale Silindi",
+                        description: `"${title}" başlıklı makale silindi.`,
+                    });
+                    router.push('/admin/articles'); // Redirect after successful deletion
+                } else {
+                     toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinemedi." });
+                     setSaving(false);
+                }
+             } catch (error) {
+                 console.error("Error deleting article:", error);
+                 toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinirken bir hata oluştu." });
+                 setSaving(false);
+             }
         }
     };
 
      const handleTemplateSelect = (templateBlocks: Block[]) => {
-         if (blocks.length > 0) {
+         if (blocks.length > 0 && blocks.some(b => (b.type === 'text' && b.content !== '') || b.type !== 'text')) { // Check if there's actual content
             if (!window.confirm("Mevcut içerik bölümlerinin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
                  setIsTemplateSelectorOpen(false);
                  return;
             }
         }
-         // Ensure new unique IDs for blocks from the template
          const newBlocks = templateBlocks.map(block => ({
             ...block,
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
         }));
         setBlocks(newBlocks);
         setIsTemplateSelectorOpen(false);
+        toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
      };
 
       const handlePreview = () => {
+         if (!category) {
+             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
+             return;
+         }
          const previewData = {
-             id: articleId || 'preview', // Use actual ID if available
-             title,
-             description: excerpt,
-             category: category || 'Teknoloji',
+             id: articleId || 'preview',
+             title: title || 'Başlıksız Makale',
+             description: excerpt || '',
+             category: category, // Use selected category
              imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
              blocks,
          };
          try {
              localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
-             window.open('/admin/preview', '_blank'); // Open preview in a new tab
+             window.open('/admin/preview', '_blank');
          } catch (error) {
              console.error("Error saving preview data to localStorage:", error);
              toast({
@@ -287,16 +316,30 @@ export default function EditArticlePage() {
          }
      };
 
+      // --- Block Selection Handler ---
+     const handleBlockSelect = (id: string | null) => {
+         setSelectedBlockId(id);
+         // Optional: Scroll to the selected block in the editor view if needed
+     };
+
      // --- Rendering ---
 
     if (loading) {
-        // TODO: Replace with a proper Skeleton loader for the editor layout
-        return <div className="flex justify-center items-center h-screen">Makale yükleniyor...</div>;
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                Makale yükleniyor...
+            </div>
+        );
+    }
+
+    if (error) {
+         return <div className="text-center py-10 text-destructive">{error}</div>;
     }
 
     if (!articleData) {
-         // Should be handled by notFound(), but as a fallback
-         return <div className="text-center py-10">Makale bulunamadı.</div>;
+         // Should be handled by error state, but as a fallback
+         return <div className="text-center py-10">Makale bulunamadı veya yüklenemedi.</div>;
     }
 
 
@@ -308,12 +351,10 @@ export default function EditArticlePage() {
                     <Link href="/admin/articles"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
                 </Button>
                  <h1 className="text-xl font-semibold truncate" title={`Makaleyi Düzenle: ${articleData.title}`}>Makaleyi Düzenle</h1>
-                 {/* Action Buttons */}
                 <div className="flex items-center gap-2">
-                     <Button variant="destructive" size="sm" onClick={handleDelete}>
-                        <Trash2 className="h-4 w-4" />
+                     <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
-                    {/* Add other actions like Revision History here if needed */}
                     {/* <Button variant="outline" size="sm"><History className="mr-2 h-4 w-4"/> Revizyonlar</Button> */}
                 </div>
             </div>
@@ -334,13 +375,15 @@ export default function EditArticlePage() {
                          <TabsContent value="content" className="space-y-6">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                  <div className="space-y-2">
-                                     <Label htmlFor="title">Makale Başlığı</Label>
+                                     <Label htmlFor="title">Makale Başlığı <span className="text-destructive">*</span></Label>
                                      <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
                                  </div>
                                  <div className="space-y-2">
-                                     <Label htmlFor="category">Kategori</Label>
-                                     <Select value={category} onValueChange={(value) => setCategory(value as "Teknoloji" | "Biyoloji")} required>
-                                         <SelectTrigger id="category"><SelectValue /></SelectTrigger>
+                                     <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
+                                     <Select value={category} onValueChange={(value) => setCategory(value as ArticleData['category'])} required>
+                                         <SelectTrigger id="category">
+                                             <SelectValue placeholder="Kategori seçin" />
+                                         </SelectTrigger>
                                          <SelectContent>
                                              <SelectItem value="Teknoloji">Teknoloji</SelectItem>
                                              <SelectItem value="Biyoloji">Biyoloji</SelectItem>
@@ -360,7 +403,7 @@ export default function EditArticlePage() {
                                  </div>
                                  {mainImageUrl && (
                                      <div className="mt-2 rounded border p-2 w-fit">
-                                         <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded"/>
+                                         <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded" data-ai-hint="article cover placeholder"/>
                                      </div>
                                  )}
                              </div>
@@ -378,8 +421,8 @@ export default function EditArticlePage() {
                                 onDeleteBlock={handleDeleteBlock}
                                 onUpdateBlock={handleUpdateBlock}
                                 onReorderBlocks={handleReorderBlocks}
-                                selectedBlockId={null} // Add selectedBlockId prop
-                                onBlockSelect={() => {}} // Add onBlockSelect prop
+                                selectedBlockId={selectedBlockId}
+                                onBlockSelect={handleBlockSelect}
                               />
 
                          </TabsContent>
@@ -490,7 +533,7 @@ export default function EditArticlePage() {
                          <CardContent className="space-y-4">
                               <div className="space-y-2">
                                  <Label htmlFor="status">Yayın Durumu</Label>
-                                 <Select value={status} onValueChange={setStatus}>
+                                 <Select value={status} onValueChange={(value) => setStatus(value as ArticleData['status'])}>
                                      <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                                      <SelectContent>
                                          <SelectItem value="Taslak">Taslak</SelectItem>
@@ -501,24 +544,23 @@ export default function EditArticlePage() {
                                  </Select>
                              </div>
                               <Separator />
-                               <Button variant="outline" className="w-full justify-center" onClick={handlePreview}>
+                               <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                              <Button className="w-full" onClick={() => handleSave(status === 'Yayınlandı')}>
-                                <Save className="mr-2 h-4 w-4" />
-                                {status === 'Yayınlandı' ? 'Güncelle' : 'Kaydet'}
+                              <Button className="w-full" onClick={() => handleSave()} disabled={saving}>
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                Kaydet
                              </Button>
                              {status !== 'Yayınlandı' && (
-                                 <Button className="w-full" onClick={() => handleSave(true)}>
-                                     <Upload className="mr-2 h-4 w-4" /> Yayınla
+                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving}>
+                                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                     Yayınla
                                  </Button>
                              )}
                          </CardContent>
                       </Card>
 
-                      {/* Keywords moved to main SEO section */}
-
-                      {/* Placeholder for Comments - Keep if still relevant */}
+                      {/* Placeholder for Comments */}
                        <Card>
                           <CardHeader>
                              <CardTitle>Yorumlar</CardTitle>
@@ -541,5 +583,3 @@ export default function EditArticlePage() {
          </div>
     );
 }
-
-    
