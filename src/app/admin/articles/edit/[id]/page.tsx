@@ -189,7 +189,9 @@ export default function EditArticlePage() {
       };
 
     const handleSave = async (publish: boolean = false) => {
+        // Determine the status to save based on the 'publish' flag and current status
         const finalStatus = publish ? "Yayınlandı" : status;
+
         if (!category) {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
              return;
@@ -200,13 +202,13 @@ export default function EditArticlePage() {
         }
 
          // Use the most recent articleData from state or fallback to initial if null
-         const baseData = articleData || { id: articleId, createdAt: new Date().toISOString(), authorId: 'mock-admin' };
-
+         // IMPORTANT: Do not include 'id', 'createdAt', 'authorId' in the update payload itself
+         // They are part of the base data but not usually part of what you send for an update.
          const currentData: Partial<ArticleData> = { // Use Partial for update data
             title,
             excerpt: excerpt || "",
             category,
-            status: finalStatus,
+            status: finalStatus, // Use the determined final status
             mainImageUrl: mainImageUrl || null,
             isFeatured,
             isHero, // Include isHero in save data
@@ -216,10 +218,10 @@ export default function EditArticlePage() {
             blocks: blocks || [],
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            // updatedAt will be handled by updateArticle function
+            // 'updatedAt' will be handled by the updateArticle function on the backend/mock
         };
 
-         console.log("Preparing to save:", currentData);
+         console.log("Preparing to save article:", articleId, "with data:", currentData);
          setSaving(true);
 
          try {
@@ -228,11 +230,11 @@ export default function EditArticlePage() {
              if (updatedArticle) {
                   // Update the main articleData state with the returned saved data
                  setArticleData(updatedArticle);
-                  // Re-sync individual form fields with the response to be safe
+                  // Re-sync individual form fields with the *response* to ensure consistency
                  setTitle(updatedArticle.title);
                  setExcerpt(updatedArticle.excerpt || '');
                  setCategory(updatedArticle.category);
-                 setStatus(updatedArticle.status); // Ensure status updates visually
+                 setStatus(updatedArticle.status); // Ensure status updates visually based on saved data
                  setMainImageUrl(updatedArticle.mainImageUrl || "");
                  setIsFeatured(updatedArticle.isFeatured);
                  setIsHero(updatedArticle.isHero); // Sync isHero after save
@@ -311,6 +313,10 @@ export default function EditArticlePage() {
              category: category, // Use selected category
              imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
              blocks,
+             // Explicitly add status for more accurate preview rendering if needed
+             status: status,
+             isFeatured: isFeatured,
+             isHero: isHero,
          };
          try {
              localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
@@ -329,6 +335,14 @@ export default function EditArticlePage() {
      const handleBlockSelect = (id: string | null) => {
          setSelectedBlockId(id);
          // Optional: Scroll to the selected block in the editor view if needed
+     };
+
+     // --- Revert to Draft Handler ---
+     const handleRevertToDraft = () => {
+        // Set status state to 'Taslak' immediately for visual feedback
+        setStatus('Taslak');
+        // Trigger save with publish=false to update the backend/mock
+        handleSave(false);
      };
 
      // --- Rendering ---
@@ -579,7 +593,7 @@ export default function EditArticlePage() {
                              )}
                               {/* Show revert to draft button only if currently 'Yayınlandı' */}
                               {status === 'Yayınlandı' && (
-                                <Button variant="outline" className="w-full" onClick={() => { setStatus('Taslak'); handleSave(false); }} disabled={saving}>
+                                <Button variant="outline" className="w-full" onClick={handleRevertToDraft} disabled={saving}>
                                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
                                     Taslağa Geri Al
                                 </Button>
@@ -610,4 +624,3 @@ export default function EditArticlePage() {
          </div>
     );
 }
-```
