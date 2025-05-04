@@ -5,7 +5,7 @@ import type { Block } from "@/components/admin/template-selector";
 export interface ArticleData {
     id: string;
     title: string;
-    excerpt?: string; // Made optional
+    excerpt?: string;
     blocks: Block[];
     category: 'Teknoloji' | 'Biyoloji';
     status: 'Taslak' | 'İncelemede' | 'Yayınlandı' | 'Arşivlendi';
@@ -16,22 +16,24 @@ export interface ArticleData {
     isFeatured: boolean;
     keywords?: string[];
     canonicalUrl?: string;
-    authorId: string; // Added author ID
+    authorId: string;
     createdAt: string; // ISO Date string
     updatedAt: string; // ISO Date string
 }
 
 
-// --- Mock Database (In-memory array) ---
-// Initialize with some default data
-let mockArticles: ArticleData[] = [
+// --- localStorage Setup ---
+const LOCAL_STORAGE_KEY = 'teknobiyo_mock_articles';
+
+// --- Initial Mock Data (Defaults if localStorage is empty) ---
+const defaultMockArticles: ArticleData[] = [
      {
         id: '1',
         title: 'Yapay Zeka Devrimi',
         excerpt: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
         blocks: [
             { id: 'b1', type: 'text', content: 'Yapay zeka (AI), makinelerin öğrenme, problem çözme ve karar verme gibi tipik olarak insan zekası gerektiren görevleri yerine getirme yeteneğidir.' },
-            { id: 'b2', type: 'image', url: 'https://picsum.photos/seed/ai-edit/800/400', alt: 'Yapay Zeka Görseli', caption: 'AI teknolojileri gelişiyor.', "data-ai-hint": "artificial intelligence abstract" },
+            { id: 'b2', type: 'image', url: 'https://picsum.photos/seed/ai-edit/800/400', alt: 'Yapay Zeka Görseli', caption: 'AI teknolojileri gelişiyor.' },
             { id: 'b3', type: 'heading', level: 2, content: 'AI\'nın Etki Alanları' },
             { id: 'b4', type: 'text', content: 'Sağlık hizmetlerinde AI, hastalıkların daha erken teşhis edilmesine yardımcı olmaktadır...' },
             { id: 'b5', type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
@@ -79,7 +81,7 @@ let mockArticles: ArticleData[] = [
             { id: 'm1', type: 'text', content: 'İnsan vücudu, kendi hücrelerimizden kat kat fazla sayıda mikroorganizmaya ev sahipliği yapar...' },
             { id: 'm2', type: 'heading', level: 2, content: 'Sağlık Üzerindeki Rolü' },
             { id: 'm3', type: 'text', content: 'Bağırsak mikrobiyomu, sindirime yardımcı olmaktan bağışıklık sistemini eğitmeye kadar birçok önemli işlevi yerine getirir.' },
-            { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.', "data-ai-hint": "microbiome bacteria gut" },
+            { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
         ],
         category: 'Biyoloji',
         status: 'İncelemede',
@@ -98,7 +100,7 @@ let mockArticles: ArticleData[] = [
         id: '5',
         title: 'Blockchain Teknolojisi',
         excerpt: 'Kripto paraların ötesinde, dağıtık defter teknolojisinin potansiyel uygulama alanları.',
-        blocks: [], // Add blocks if needed
+        blocks: [],
         category: 'Teknoloji',
         status: 'Arşivlendi',
         mainImageUrl: 'https://picsum.photos/seed/blockchain-archived/600/400',
@@ -187,89 +189,135 @@ let mockArticles: ArticleData[] = [
 
 ];
 
-// --- CRUD Functions ---
+// --- In-Memory Data Store with localStorage Persistence ---
+let mockArticles: ArticleData[] = [];
+
+// Function to load data from localStorage or use defaults
+const loadData = () => {
+    // Check if running in a browser environment
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (storedData) {
+            try {
+                mockArticles = JSON.parse(storedData);
+                console.log("Loaded articles from localStorage.");
+            } catch (error) {
+                console.error("Error parsing localStorage data, using defaults:", error);
+                mockArticles = defaultMockArticles;
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
+            }
+        } else {
+            console.log("No data in localStorage, using defaults.");
+            mockArticles = defaultMockArticles;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
+        }
+    } else {
+        // Fallback for non-browser environments (e.g., server-side rendering build time)
+        console.log("localStorage not available, using default data in memory.");
+        mockArticles = defaultMockArticles;
+    }
+};
+
+// Function to save data to localStorage
+const saveData = () => {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
+            console.log("Saved articles to localStorage.");
+        } catch (error) {
+            console.error("Error saving data to localStorage:", error);
+        }
+    }
+};
+
+// Load data when the module is first imported in a browser context
+loadData();
+
+
+// --- CRUD Functions (Modified for localStorage) ---
 
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Fetches all articles.
+ * Fetches all articles from the in-memory store.
  * @returns A promise that resolves to an array of ArticleData.
  */
 export const getArticles = async (): Promise<ArticleData[]> => {
-    await delay(150); // Simulate network delay
-    // Return a deep copy to prevent direct modification of the mock DB elsewhere
+    await delay(50); // Shorter delay for reads
+    // Return a deep copy to prevent direct modification
     return JSON.parse(JSON.stringify(mockArticles));
 };
 
 /**
- * Fetches a single article by its ID.
+ * Fetches a single article by its ID from the in-memory store.
  * @param id - The ID of the article to fetch.
  * @returns A promise that resolves to the ArticleData or null if not found.
  */
 export const getArticleById = async (id: string): Promise<ArticleData | null> => {
-    await delay(100);
+    await delay(50);
     const article = mockArticles.find(article => article.id === id);
     // Return a deep copy
     return article ? JSON.parse(JSON.stringify(article)) : null;
 };
 
 /**
- * Creates a new article.
+ * Creates a new article and saves it to the in-memory store and localStorage.
  * @param data - The data for the new article (without id, createdAt, updatedAt).
  * @returns A promise that resolves to the newly created ArticleData.
  */
 export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'>): Promise<ArticleData> => {
-    await delay(200);
+    await delay(100); // Slightly longer delay for writes
     const newArticle: ArticleData = {
         ...data,
-        id: `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`, // Generate a mock ID
+        id: `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
     mockArticles.push(newArticle);
-    console.log("Article created:", JSON.parse(JSON.stringify(newArticle))); // Log deep copy
-    // Return a deep copy
+    saveData(); // Save to localStorage
+    console.log("Article created:", JSON.parse(JSON.stringify(newArticle)));
     return JSON.parse(JSON.stringify(newArticle));
 };
 
 /**
- * Updates an existing article.
+ * Updates an existing article in the in-memory store and localStorage.
  * @param id - The ID of the article to update.
  * @param data - The partial data to update the article with.
  * @returns A promise that resolves to the updated ArticleData or null if not found.
  */
 export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 'id' | 'createdAt'>>): Promise<ArticleData | null> => {
-    await delay(250);
+    await delay(100);
     const articleIndex = mockArticles.findIndex(article => article.id === id);
     if (articleIndex === -1) {
         console.error("Article not found for update:", id);
         return null;
     }
 
-    // Update the article directly in the mockArticles array
+    // Update the article
     mockArticles[articleIndex] = {
-        ...mockArticles[articleIndex], // Keep existing data
-        ...data,                      // Apply updates
-        updatedAt: new Date().toISOString(), // Always update the updatedAt timestamp
+        ...mockArticles[articleIndex],
+        ...data,
+        updatedAt: new Date().toISOString(),
     };
 
-    console.log("Article updated:", JSON.parse(JSON.stringify(mockArticles[articleIndex]))); // Log deep copy of updated article
-    // Return a deep copy of the updated article
+    saveData(); // Save to localStorage
+    console.log("Article updated:", JSON.parse(JSON.stringify(mockArticles[articleIndex])));
     return JSON.parse(JSON.stringify(mockArticles[articleIndex]));
 };
 
 /**
- * Deletes an article by its ID.
+ * Deletes an article by its ID from the in-memory store and localStorage.
  * @param id - The ID of the article to delete.
  * @returns A promise that resolves to true if deletion was successful, false otherwise.
  */
 export const deleteArticle = async (id: string): Promise<boolean> => {
-    await delay(300);
+    await delay(150);
     const initialLength = mockArticles.length;
     mockArticles = mockArticles.filter(article => article.id !== id);
     const success = mockArticles.length < initialLength;
     if (success) {
+        saveData(); // Save to localStorage
         console.log("Article deleted:", id);
     } else {
         console.error("Article not found for deletion:", id);
@@ -277,7 +325,7 @@ export const deleteArticle = async (id: string): Promise<boolean> => {
     return success;
 };
 
-// Function to generate slugs (already exists in components, keep here for consistency)
+// Function to generate slugs (remains the same)
 export const generateSlug = (text: string) => {
     return text
         .toLowerCase()
@@ -285,3 +333,6 @@ export const generateSlug = (text: string) => {
         .replace(/[^a-z0-9 -]/g, '')
         .replace(/\s+/g, '-').replace(/-+/g, '-');
 };
+
+// Export the loadData function if manual reloading is needed elsewhere (optional)
+export { loadData as reloadMockData };

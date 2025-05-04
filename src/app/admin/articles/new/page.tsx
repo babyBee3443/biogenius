@@ -26,7 +26,7 @@ import Image from 'next/image';
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+// Removed useDebouncedCallback import
 import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 // --- Main Page Component ---
@@ -137,35 +137,7 @@ export default function NewArticlePage() {
          setSelectedBlockId(id);
      };
 
-
-     // Debounced save function for creating articles
-     const debouncedCreate = useDebouncedCallback(
-         async (dataToSave: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'>) => {
-             setSaving(true);
-             try {
-                 const newArticle = await createArticle(dataToSave);
-                 if (newArticle) {
-                     toast({
-                         title: "Makale Oluşturuldu",
-                         description: `"${newArticle.title}" başlıklı makale başarıyla oluşturuldu (${newArticle.status}).`,
-                     });
-                      // Redirect to the edit page of the newly created article
-                      router.push(`/admin/articles/edit/${newArticle.id}`);
-                 } else {
-                      toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulamadı." });
-                      setSaving(false); // Allow retry on failure
-                 }
-             } catch (error) {
-                 console.error("Error creating article:", error);
-                 toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulurken bir hata oluştu." });
-                 setSaving(false); // Allow retry on failure
-             }
-             // No finally block needed for saving=false here because we redirect on success
-         },
-         1000 // Debounce time in ms
-     );
-
-    const handleSave = (publish: boolean = false) => {
+    const handleSave = async (publish: boolean = false) => {
          const finalStatus = publish ? "Yayınlandı" : status;
          if (!category) {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
@@ -175,6 +147,8 @@ export default function NewArticlePage() {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen makale başlığını girin." });
              return;
          }
+
+         setSaving(true);
 
          const newArticleData: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'> = {
              title,
@@ -193,13 +167,25 @@ export default function NewArticlePage() {
          };
 
          console.log("Preparing to create article:", newArticleData);
-         debouncedCreate(newArticleData); // Call debounced create function
 
-         if (publish && !saving) {
-             toast({
-                 title: publish ? "Makale Yayınlanıyor..." : "Makale Kaydediliyor...",
-                 description: `"${title}" başlıklı makale oluşturuluyor.`,
-             });
+         try {
+             const newArticle = await createArticle(newArticleData);
+             if (newArticle) {
+                 toast({
+                     title: "Makale Oluşturuldu",
+                     description: `"${newArticle.title}" başlıklı makale başarıyla oluşturuldu (${newArticle.status}).`,
+                 });
+                  // Redirect to the edit page of the newly created article
+                  router.push(`/admin/articles/edit/${newArticle.id}`);
+                  // No need to setSaving(false) here as we are navigating away
+             } else {
+                  toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulamadı." });
+                  setSaving(false); // Allow retry on failure
+             }
+         } catch (error) {
+             console.error("Error creating article:", error);
+             toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulurken bir hata oluştu." });
+             setSaving(false); // Allow retry on failure
          }
     };
 

@@ -28,7 +28,7 @@ import Image from 'next/image';
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { useDebouncedCallback } from 'use-debounce';
+// Removed useDebouncedCallback import
 import { getArticleById, updateArticle, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 // --- Main Page Component ---
@@ -185,35 +185,7 @@ export default function EditArticlePage() {
           setBlocks(reorderedBlocks);
       };
 
-     // Debounced save function
-     const debouncedSave = useDebouncedCallback(
-        async (dataToSave: ArticleData): Promise<ArticleData | null> => { // Return updated data or null
-            setSaving(true);
-            try {
-                const updated = await updateArticle(dataToSave.id, dataToSave);
-                if (updated) {
-                     toast({
-                         title: "Makale Kaydedildi",
-                         description: `"${updated.title}" başlıklı makale başarıyla kaydedildi (${updated.status}).`,
-                     });
-                     return updated; // Return the updated data on success
-                } else {
-                     toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilemedi." });
-                     return null;
-                }
-            } catch (error) {
-                console.error("Error saving article:", error);
-                toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilirken bir hata oluştu." });
-                return null; // Return null on error
-            } finally {
-                setSaving(false);
-            }
-        },
-        1000 // Debounce time in ms (e.g., 1 second)
-    );
-
-
-    const handleSave = async (publish: boolean = false) => { // Make handleSave async
+    const handleSave = async (publish: boolean = false) => {
         const finalStatus = publish ? "Yayınlandı" : status;
         if (!category) {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
@@ -227,12 +199,11 @@ export default function EditArticlePage() {
          // Use the most recent articleData from state or fallback to initial if null
          const baseData = articleData || { id: articleId, createdAt: new Date().toISOString(), authorId: 'mock-admin' };
 
-         const currentData: ArticleData = {
-            ...baseData, // Spread existing data (like id, createdAt, authorId)
+         const currentData: Partial<ArticleData> = { // Use Partial for update data
             title,
             excerpt: excerpt || "",
             category,
-            status: finalStatus, // Use the final determined status
+            status: finalStatus,
             mainImageUrl: mainImageUrl || null,
             isFeatured,
             slug: slug || generateSlug(title),
@@ -241,27 +212,45 @@ export default function EditArticlePage() {
             blocks: blocks || [],
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            updatedAt: new Date().toISOString(), // Always set current update time
+            // updatedAt will be handled by updateArticle function
         };
 
          console.log("Preparing to save:", currentData);
+         setSaving(true);
 
-         // Call debounced save and wait for the result
-         const savedArticle = await debouncedSave(currentData);
+         try {
+             const updatedArticle = await updateArticle(articleId, currentData);
 
-         if (savedArticle) {
-             // Update the main articleData state with the returned saved data
-             setArticleData(savedArticle);
-             // Optionally re-sync individual form fields if necessary, though usually
-             // relying on articleData should be sufficient if components rerender based on it.
-             // Example: setStatus(savedArticle.status);
-         }
+             if (updatedArticle) {
+                  // Update the main articleData state with the returned saved data
+                 setArticleData(updatedArticle);
+                  // Re-sync individual form fields with the response to be safe
+                 setTitle(updatedArticle.title);
+                 setExcerpt(updatedArticle.excerpt || '');
+                 setCategory(updatedArticle.category);
+                 setStatus(updatedArticle.status); // Ensure status updates visually
+                 setMainImageUrl(updatedArticle.mainImageUrl || "");
+                 setIsFeatured(updatedArticle.isFeatured);
+                 setBlocks(updatedArticle.blocks || []);
+                 setSeoTitle(updatedArticle.seoTitle || '');
+                 setSeoDescription(updatedArticle.seoDescription || '');
+                 setSlug(updatedArticle.slug);
+                 setKeywords(updatedArticle.keywords || []);
+                 setCanonicalUrl(updatedArticle.canonicalUrl || "");
 
-         if (publish && !saving) { // Show immediate feedback for publish action if not currently saving
-             toast({
-                 title: "Makale Yayınlanıyor...",
-                 description: `"${title}" başlıklı makale yayınlanmak üzere kaydediliyor.`,
-             });
+                 toast({
+                     title: "Makale Kaydedildi",
+                     description: `"${updatedArticle.title}" başlıklı makale başarıyla kaydedildi (${updatedArticle.status}).`,
+                 });
+
+             } else {
+                  toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilemedi." });
+             }
+         } catch (error) {
+             console.error("Error saving article:", error);
+             toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilirken bir hata oluştu." });
+         } finally {
+             setSaving(false);
          }
     };
 
@@ -548,8 +537,8 @@ export default function EditArticlePage() {
                          <CardContent className="space-y-4">
                               <div className="space-y-2">
                                  <Label htmlFor="status">Yayın Durumu</Label>
-                                 {/* Use the status from the latest articleData state */}
-                                 <Select value={articleData?.status ?? status} onValueChange={(value) => setStatus(value as ArticleData['status'])}>
+                                 {/* Use the status from the component state */}
+                                 <Select value={status} onValueChange={(value) => setStatus(value as ArticleData['status'])}>
                                      <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                                      <SelectContent>
                                          <SelectItem value="Taslak">Taslak</SelectItem>
@@ -568,11 +557,18 @@ export default function EditArticlePage() {
                                 Kaydet
                              </Button>
                              {/* Show publish button only if the current status is not 'Yayınlandı' */}
-                             {(articleData?.status ?? status) !== 'Yayınlandı' && (
+                             {status !== 'Yayınlandı' && (
                                  <Button className="w-full" onClick={() => handleSave(true)} disabled={saving}>
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                      Yayınla
                                  </Button>
+                             )}
+                              {/* Show revert to draft button only if currently 'Yayınlandı' */}
+                              {status === 'Yayınlandı' && (
+                                <Button variant="outline" className="w-full" onClick={() => { setStatus('Taslak'); handleSave(false); }} disabled={saving}>
+                                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
+                                    Taslağa Geri Al
+                                </Button>
                              )}
                          </CardContent>
                       </Card>
