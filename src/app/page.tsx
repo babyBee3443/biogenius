@@ -10,80 +10,21 @@ import Image from 'next/image';
 import { ArrowRight } from "lucide-react";
 import Hero from "@/components/hero"; // Import the Hero component
 import { cn } from '@/lib/utils'; // Import cn for conditional classes
+import { getArticles, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
-interface Article {
-  id: string;
-  title: string;
-  description: string;
-  category: 'Teknoloji' | 'Biyoloji';
-  imageUrl: string;
-  status: 'Yayınlandı' | 'Taslak' | 'İncelemede' | 'Arşivlendi'; // Added status
-}
-
-// Mock data with status
-const allMockArticles: Article[] = [
+// Define the text parts and their styles
+const titleParts = [
     {
-        id: '1',
-        title: 'Yapay Zeka Devrimi: Yeni Bir Çağın Başlangıcı',
-        description: 'Yapay zeka teknolojilerinin günümüzdeki ve gelecekteki etkilerini keşfedin.',
-        category: 'Teknoloji',
-        imageUrl: 'https://picsum.photos/seed/ai/600/400',
-        status: 'Yayınlandı', // Published
+        text: "Teknoloji",
+        colorClass: "text-blue-600 dark:text-blue-400",
     },
+    { text: " ve ", colorClass: "text-foreground" },
     {
-        id: '2',
-        title: 'Gen Düzenleme Teknolojileri: CRISPR ve Ötesi',
-        description: 'CRISPR gibi gen düzenleme teknolojilerinin potansiyelini ve etik boyutlarını inceleyin.',
-        category: 'Biyoloji',
-        imageUrl: 'https://picsum.photos/seed/crispr/600/400',
-        status: 'Yayınlandı', // Published
+        text: "Biyolojinin",
+        colorClass: "text-green-600 dark:text-green-400",
     },
-    {
-        id: '3',
-        title: 'Kuantum Bilgisayarlar: Hesaplamanın Geleceği',
-        description: 'Kuantum bilgisayarların nasıl çalıştığını ve hangi alanlarda devrim yaratabileceğini öğrenin.',
-        category: 'Teknoloji',
-        imageUrl: 'https://picsum.photos/seed/quantum/600/400',
-        status: 'Taslak', // Draft - Should not be shown if filtering
-    },
-    {
-      id: '4',
-      title: 'Mikrobiyom: İçimizdeki Gizli Dünya',
-      description: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri.',
-      category: 'Biyoloji',
-      imageUrl: 'https://picsum.photos/seed/microbiome/600/400',
-      status: 'İncelemede', // In Review - Should not be shown
-    },
-     {
-      id: '5',
-      title: 'Blockchain Teknolojisi ve Uygulama Alanları',
-      description: 'Blockchain\'in finans dışındaki potansiyel kullanım alanları.',
-      category: 'Teknoloji',
-      imageUrl: 'https://picsum.photos/seed/blockchain/600/400',
-      status: 'Yayınlandı', // Published
-    },
-     {
-      id: '6',
-      title: 'Sentetik Biyoloji: Yaşamı Yeniden Tasarlamak',
-      description: 'Sentetik biyolojinin tıp, enerji ve malzeme bilimindeki uygulamaları.',
-      category: 'Biyoloji',
-      imageUrl: 'https://picsum.photos/seed/syntheticbio/600/400',
-      status: 'Yayınlandı', // Published
-    },
-    // Add more articles as needed, ensuring they have a 'status'
+    { text: " Kesişim Noktası", colorClass: "text-foreground" },
 ];
-
-// Filter articles for display
-const featuredArticles: Article[] = allMockArticles
-    .filter(article => article.status === 'Yayınlandı' && ['1', '2', '5'].includes(article.id)) // Example: IDs 1, 2, 5 are featured AND published
-    .slice(0, 3); // Limit to 3 featured
-
-const recentArticles: Article[] = allMockArticles
-    .filter(article => article.status === 'Yayınlandı') // Only published
-    .sort((a, b) => parseInt(b.id) - parseInt(a.id)) // Simulate recency by sorting by ID desc (replace with actual date)
-    .filter(article => !featuredArticles.some(fa => fa.id === article.id)) // Exclude if already featured
-    .slice(0, 3); // Limit to 3 recent
-
 
 // Animation variants for the title reveal
 const titleContainerVariants = {
@@ -109,25 +50,40 @@ const letterRevealVariants = {
   },
 };
 
-
-// Define the text parts and their styles
-const titleParts = [
-  {
-      text: "Teknoloji",
-      colorClass: "text-blue-600 dark:text-blue-400",
-      // Removed background image/clip styles
-   },
-  { text: " ve ", colorClass: "text-foreground" },
-  {
-      text: "Biyolojinin",
-      colorClass: "text-green-600 dark:text-green-400",
-      // Removed background image/clip styles
-   },
-  { text: " Kesişim Noktası", colorClass: "text-foreground" },
-];
-
-
 export default function Home() {
+  const [allArticles, setAllArticles] = React.useState<ArticleData[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    getArticles()
+      .then(data => {
+        setAllArticles(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching articles:", err);
+        // Handle error state if needed
+        setLoading(false);
+      });
+  }, []);
+
+  // Filter articles for display only after data is loaded
+  const publishedArticles = allArticles.filter(article => article.status === 'Yayınlandı');
+
+  const featuredArticles: ArticleData[] = publishedArticles
+    .filter(article => article.isFeatured === true)
+    .slice(0, 3); // Limit to 3 featured
+
+  const recentArticles: ArticleData[] = publishedArticles
+    .filter(article => !article.isFeatured) // Exclude featured articles from recent
+    // Sort by creation date descending (assuming createdAt is a valid date string)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3); // Limit to 3 recent
+
+  if (loading) {
+     // Optional: Render a loading state
+     return <div className="container py-12 text-center">Yükleniyor...</div>;
+  }
 
   return (
     <div className="space-y-16">
@@ -148,7 +104,6 @@ export default function Home() {
                         className={cn(
                             "inline-block", // Keep inline-block for transform origin
                             part.colorClass,
-                            // Removed shimmer styles
                         )}
                     >
                         {char === ' ' ? '\u00A0' : char}
@@ -158,8 +113,8 @@ export default function Home() {
         ))}
       </motion.h1>
 
-       {/* Hero Section - Filter articles passed to Hero */}
-       <Hero articles={allMockArticles.filter(a => a.status === 'Yayınlandı')} />
+       {/* Hero Section - Pass only published articles */}
+       <Hero articles={publishedArticles} />
 
       {/* Featured Articles Showcase */}
       <section id="featured-articles"> {/* Added ID for linking from Hero button */}
@@ -170,7 +125,7 @@ export default function Home() {
                 <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group">
                 <CardHeader className="p-0 relative">
                     <Image
-                    src={article.imageUrl}
+                    src={article.mainImageUrl || 'https://picsum.photos/seed/placeholder/600/400'} // Fallback image
                     alt={article.title}
                     width={600}
                     height={400}
@@ -182,7 +137,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent className="p-6 flex flex-col flex-grow">
                     <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground mb-5 flex-grow">{article.description}</CardDescription>
+                    <CardDescription className="text-muted-foreground mb-5 flex-grow line-clamp-3">{article.excerpt}</CardDescription> {/* Limit excerpt lines */}
                     <div className="mt-auto flex justify-between items-center">
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${article.category === 'Teknoloji' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}>
                         {article.category}
@@ -233,7 +188,7 @@ export default function Home() {
                 <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group">
                 <CardHeader className="p-0 relative">
                     <Image
-                        src={article.imageUrl}
+                        src={article.mainImageUrl || 'https://picsum.photos/seed/placeholder-recent/600/400'} // Fallback image
                         alt={article.title}
                         width={600}
                         height={400}
@@ -244,7 +199,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent className="p-6 flex flex-col flex-grow">
                     <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground mb-5 flex-grow">{article.description}</CardDescription>
+                    <CardDescription className="text-muted-foreground mb-5 flex-grow line-clamp-3">{article.excerpt}</CardDescription> {/* Limit excerpt lines */}
                     <div className="mt-auto flex justify-between items-center">
                         <span className={`text-xs font-semibold px-2 py-1 rounded ${article.category === 'Teknoloji' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}>
                         {article.category}
@@ -267,4 +222,3 @@ export default function Home() {
     </div>
   );
 }
-

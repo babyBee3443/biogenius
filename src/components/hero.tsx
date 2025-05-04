@@ -8,27 +8,20 @@ import Link from 'next/link';
 import { ArrowRight, Pause, Play } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-
-// Define the structure for articles to be displayed
-interface Article {
-  id: string;
-  title: string;
-  description: string;
-  category: 'Teknoloji' | 'Biyoloji';
-  imageUrl: string;
-}
+import type { ArticleData } from '@/lib/mock-data'; // Import ArticleData type
 
 interface HeroProps {
-  articles: Article[]; // Accept articles as a prop
+  articles: ArticleData[]; // Accept ArticleData[]
 }
 
 const Hero: React.FC<HeroProps> = ({ articles }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(true);
 
-  // Filter articles locally if needed (e.g., select only featured from the passed list)
-  // For now, we assume the passed articles are already filtered/selected for the Hero
-  const displayArticles = articles.slice(0, 5); // Limit to max 5 for Hero display
+  // Filter articles for Hero: Must be Published AND Featured
+  const displayArticles = articles
+    .filter(article => article.status === 'Yayınlandı' && article.isFeatured === true)
+    .slice(0, 5); // Limit to max 5 for Hero display
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -49,7 +42,7 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
       return (
            <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner">
               <div className="container relative z-10 text-muted-foreground px-4">
-                <p>Gösterilecek öne çıkan makale bulunamadı.</p>
+                <p>Gösterilecek öne çıkan makale bulunamadı. (Yayınlanmış ve Öne Çıkarılmış makale ekleyin)</p>
               </div>
            </section>
       );
@@ -92,7 +85,7 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
           exit="exit"
         >
           <Image
-            src={currentArticle.imageUrl}
+            src={currentArticle.mainImageUrl || 'https://picsum.photos/seed/hero-placeholder/1920/1080'} // Fallback image
             alt={currentArticle.title}
             layout="fill"
             objectFit="cover"
@@ -121,8 +114,8 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
                 <h2 className="mt-2 text-xl font-semibold md:text-2xl text-shadow-md">
                     {currentArticle.title}
                 </h2>
-              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm">
-                {currentArticle.description}
+              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm line-clamp-3"> {/* Limit description lines */}
+                {currentArticle.excerpt}
               </p>
               <Button size="lg" asChild className="mt-6">
                 <Link href={`/articles/${currentArticle.id}`}>
