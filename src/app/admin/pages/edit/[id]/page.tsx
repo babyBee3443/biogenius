@@ -8,18 +8,27 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea"; // Import Textarea
+import { Switch } from "@/components/ui/switch"; // Import Switch
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye, Film } from "lucide-react"; // Added Film icon for Hero
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor";
 import type { Block } from "@/components/admin/template-selector";
 import SeoPreview from "@/components/admin/seo-preview";
-import PagePreviewRenderer from "@/components/admin/page-preview-renderer"; // Ensure this is correctly imported
+import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-// Mock data fetching - Replace with actual API call
+// --- Types ---
+interface HeroSettings {
+    enabled: boolean;
+    articleSource: 'latest' | 'featured';
+    intervalSeconds: number;
+    maxArticles: number;
+}
+
 interface PageData {
     id: string;
     title: string;
@@ -29,11 +38,13 @@ interface PageData {
     seoDescription?: string;
     keywords?: string[];
     canonicalUrl?: string;
-    imageUrl?: string; // Add imageUrl for preview consistency
-    settings?: Record<string, any>; // General settings for the page layout
+    imageUrl?: string;
+    settings?: Record<string, any>;
+    heroSettings?: HeroSettings; // Add heroSettings
 }
 
-// Mock function - Updated to include blocks and SEO fields
+// --- Mock Data ---
+// Updated mock function to include heroSettings for homepage
 const getPageById = async (id: string): Promise<PageData | null> => {
     const pages: PageData[] = [
         {
@@ -41,19 +52,25 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             title: 'Anasayfa',
             slug: '',
             blocks: [
-                // Example structural blocks (might be hidden in editor preview)
+                // Structural blocks (hidden in editor preview)
                 { id: 'hpb-welcome', type: 'heading', level: 1, content: 'TeknoBiyo\'ya Hoş Geldiniz!' },
                 { id: 'hpb-intro', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' },
-                // --- Blocks representing visual sections ---
+                // Visual sections
                 { id: 'hp-section-featured', type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkanlar', count: 3 } },
-                { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler', techButtonLabel: 'Teknoloji', bioButtonLabel: 'Biyoloji'} }, // Added labels
+                { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler', techButtonLabel: 'Teknoloji', bioButtonLabel: 'Biyoloji'} },
                 { id: 'hp-section-recent', type: 'section', sectionType: 'recent-articles', settings: { title: 'En Son Eklenenler', count: 3 } },
-                 { id: 'hp-section-custom-text', type: 'section', sectionType: 'custom-text', settings: { content: '<p>Bu alana <strong>özel metin</strong> veya HTML ekleyebilirsiniz.</p>' } },
+                { id: 'hp-section-custom-text', type: 'section', sectionType: 'custom-text', settings: { content: '<p>Bu alana <strong>özel metin</strong> veya HTML ekleyebilirsiniz.</p>' } },
             ],
             seoTitle: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
             seoDescription: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
             imageUrl: 'https://picsum.photos/seed/homepage/1200/600',
-            settings: {} // Add page-level settings if needed
+            settings: {},
+            heroSettings: { // Default Hero Settings for Homepage
+                enabled: true,
+                articleSource: 'featured', // Show featured articles by default
+                intervalSeconds: 5,
+                maxArticles: 3,
+            }
         },
         {
             id: 'hakkimizda',
@@ -75,7 +92,7 @@ const getPageById = async (id: string): Promise<PageData | null> => {
             blocks: [
                 { id: 'cb1', type: 'heading', level: 2, content: 'Bizimle İletişime Geçin' },
                 { id: 'cb2', type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşın.' },
-                { id: 'cb-form', type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@teknobiyo.example.com' } }, // Placeholder for form block
+                { id: 'cb-form', type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@teknobiyo.example.com' } },
             ],
             seoTitle: 'İletişim | TeknoBiyo',
             seoDescription: 'TeknoBiyo ile iletişime geçin. Sorularınız ve önerileriniz için buradayız.',
@@ -101,9 +118,17 @@ export default function EditPage() {
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
     const [previewDevice, setPreviewDevice] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // State for selected block in editor/preview
-    const [editorView, setEditorView] = React.useState<'editor' | 'seo'>('editor'); // State for left pane view
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+    const [editorView, setEditorView] = React.useState<'editor' | 'seo'>('editor');
 
+    // --- State for Hero Settings ---
+    const [heroSettings, setHeroSettings] = React.useState<HeroSettings>({
+        enabled: true,
+        articleSource: 'latest',
+        intervalSeconds: 5,
+        maxArticles: 3,
+    });
+    // ---
 
     React.useEffect(() => {
         if (pageId) {
@@ -114,10 +139,13 @@ export default function EditPage() {
                         setTitle(data.title);
                         setSlug(data.slug);
                         setBlocks(data.blocks || []);
-                        setSeoTitle(data.seoTitle || data.title || ''); // Default SEO title to page title
+                        setSeoTitle(data.seoTitle || data.title || '');
                         setSeoDescription(data.seoDescription || '');
                         setKeywords(data.keywords || []);
                         setCanonicalUrl(data.canonicalUrl || '');
+                        if (data.heroSettings) { // Load hero settings if available
+                            setHeroSettings(data.heroSettings);
+                        }
                     } else {
                         notFound();
                     }
@@ -181,16 +209,16 @@ export default function EditPage() {
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
-             ...(type === 'section' && { sectionType: 'custom-text', settings: { content: '' } }), // Example new section block
+             ...(type === 'section' && { sectionType: 'custom-text', settings: { content: '' } }),
         } as Block;
         setBlocks([...blocks, newBlock]);
-        setSelectedBlockId(newBlock.id); // Select the newly added block
+        setSelectedBlockId(newBlock.id);
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks(blocks.filter(block => block.id !== id));
         if (selectedBlockId === id) {
-            setSelectedBlockId(null); // Deselect if deleted
+            setSelectedBlockId(null);
         }
     };
 
@@ -206,40 +234,50 @@ export default function EditPage() {
         setBlocks(reorderedBlocks);
     };
 
-    // Callback for selecting block from preview OR editor
     const handleBlockSelect = (id: string | null) => {
         setSelectedBlockId(id);
         if (id) {
-            // Optional: Scroll editor to the selected block if selection came from preview
              const editorElement = document.querySelector(`[data-block-wrapper-id="${id}"]`);
              if (editorElement) {
                  editorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
              }
-             // Switch to editor view if SEO view is active
              setEditorView('editor');
         }
     };
     // --- End Block Handlers ---
 
+    // --- Hero Settings Handlers ---
+    const handleHeroSettingChange = <K extends keyof HeroSettings>(key: K, value: HeroSettings[K]) => {
+        setHeroSettings(prev => ({ ...prev, [key]: value }));
+    };
+    // ---
 
     const handleSave = () => {
          if (!title) {
             toast({ variant: "destructive", title: "Hata", description: "Sayfa başlığı zorunludur." });
             return;
         }
-        const saveData = { pageId, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl };
+        const saveData = {
+            pageId,
+            title,
+            slug,
+            blocks,
+            seoTitle,
+            seoDescription,
+            keywords,
+            canonicalUrl,
+            ...(pageId === 'anasayfa' && { heroSettings }), // Only include heroSettings for homepage
+        };
         console.log("Updating page:", saveData);
         // TODO: Implement actual API call to save the page data
         toast({
             title: "Sayfa Güncellendi",
             description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,
         });
-        // Update local state to reflect saved data (optional, depends on API response)
-        if(pageData) setPageData({...pageData, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl });
+        if(pageData) setPageData({...pageData, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl, ...(pageId === 'anasayfa' && { heroSettings }) });
     };
 
      const handleDelete = () => {
-        // Prevent deleting homepage
         if (pageId === 'anasayfa') {
             toast({ variant: "destructive", title: "Hata", description: "Anasayfa silinemez." });
             return;
@@ -257,18 +295,17 @@ export default function EditPage() {
     };
 
     // --- Preview Data for Renderer ---
-    // Use useMemo to recalculate only when dependencies change
     const currentPreviewData: PageData = React.useMemo(() => ({
         id: pageId || 'preview',
         title: title,
         slug: slug,
-        blocks: blocks, // Pass current blocks state to preview
+        blocks: blocks,
         seoTitle: seoTitle,
         seoDescription: seoDescription,
         imageUrl: pageData?.imageUrl || (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/page-preview/1200/600',
-        settings: pageData?.settings || {} // Pass settings
-        // Add all relevant state variables that affect the preview as dependencies
-    }), [pageId, title, slug, blocks, seoTitle, seoDescription, pageData, keywords, canonicalUrl]);
+        settings: pageData?.settings || {},
+        ...(pageId === 'anasayfa' && { heroSettings }), // Pass current hero settings for homepage preview
+    }), [pageId, title, slug, blocks, seoTitle, seoDescription, pageData, keywords, canonicalUrl, heroSettings]); // Add heroSettings dependency
 
 
     const getPreviewSizeClass = () => {
@@ -285,21 +322,20 @@ export default function EditPage() {
     }
 
      if (!pageData) {
-         // Should be handled by notFound(), but as a fallback
          return <div className="text-center py-10">Sayfa bulunamadı.</div>;
     }
 
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden">
+         // Removed overflow-hidden from outer div to allow ScrollArea to manage scrolling
+        <div className="flex flex-col h-screen">
              {/* Top Bar */}
-             <div className="flex items-center justify-between px-4 py-2 border-b bg-card sticky top-0 z-20 h-14">
+             <div className="flex items-center justify-between px-4 py-2 border-b bg-card sticky top-0 z-20 h-14 flex-shrink-0"> {/* Ensure top bar doesn't shrink */}
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" asChild>
                         <Link href="/admin/pages"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
                     </Button>
                     <Separator orientation="vertical" className="h-6"/>
-                     {/* Editor/SEO Toggle */}
                      <Button
                        variant={editorView === 'editor' ? 'secondary' : 'ghost'}
                        size="sm"
@@ -349,7 +385,7 @@ export default function EditPage() {
                       </Button>
                       <Separator orientation="vertical" className="h-6 mx-2" />
 
-                     {pageId !== 'anasayfa' && ( // Conditionally render delete button
+                     {pageId !== 'anasayfa' && (
                         <Button variant="destructive" size="sm" onClick={handleDelete}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -361,9 +397,10 @@ export default function EditPage() {
             </div>
 
             {/* Main Content Area (Editor/SEO + Preview) */}
+             {/* Use flex-1 and overflow-hidden on the container of the two panes */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Pane (Editor or SEO) */}
-                 <ScrollArea className="w-2/5 flex-shrink-0 border-r h-full"> {/* Changed width to 2/5 */}
+                 {/* Left Pane (Editor or SEO) - Use ScrollArea */}
+                 <ScrollArea className="flex-shrink-0 border-r w-[500px] h-full"> {/* Increased fixed width */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -398,6 +435,69 @@ export default function EditPage() {
                                     </CardContent>
                                 </Card>
 
+                                {pageId === 'anasayfa' && ( // Show Hero Settings only for homepage
+                                     <Card>
+                                         <CardHeader>
+                                             <CardTitle className="flex items-center gap-2"><Film className="h-5 w-5" /> Hero Bölümü Ayarları</CardTitle>
+                                             <CardDescription>Anasayfa üst kısmındaki kayan makale bölümünü yönetin.</CardDescription>
+                                         </CardHeader>
+                                         <CardContent className="space-y-4">
+                                             <div className="flex items-center justify-between space-x-2">
+                                                 <Label htmlFor="hero-enabled">Hero Bölümünü Göster</Label>
+                                                 <Switch
+                                                     id="hero-enabled"
+                                                     checked={heroSettings.enabled}
+                                                     onCheckedChange={(checked) => handleHeroSettingChange('enabled', checked)}
+                                                 />
+                                             </div>
+                                              <Separator />
+                                             {heroSettings.enabled && ( // Show other settings only if enabled
+                                                 <>
+                                                     <div className="space-y-2">
+                                                         <Label htmlFor="hero-source">Gösterilecek Makaleler</Label>
+                                                         <Select
+                                                             value={heroSettings.articleSource}
+                                                             onValueChange={(value: 'latest' | 'featured') => handleHeroSettingChange('articleSource', value)}
+                                                         >
+                                                             <SelectTrigger id="hero-source">
+                                                                 <SelectValue placeholder="Kaynak seçin" />
+                                                             </SelectTrigger>
+                                                             <SelectContent>
+                                                                 <SelectItem value="latest">En Son Eklenenler</SelectItem>
+                                                                 <SelectItem value="featured">Öne Çıkanlar</SelectItem>
+                                                             </SelectContent>
+                                                         </Select>
+                                                     </div>
+                                                     <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="hero-interval">Geçiş Süresi (saniye)</Label>
+                                                            <Input
+                                                                id="hero-interval"
+                                                                type="number"
+                                                                min="1"
+                                                                max="30"
+                                                                value={heroSettings.intervalSeconds}
+                                                                onChange={(e) => handleHeroSettingChange('intervalSeconds', parseInt(e.target.value) || 1)}
+                                                            />
+                                                        </div>
+                                                         <div className="space-y-2">
+                                                            <Label htmlFor="hero-max">Maksimum Makale</Label>
+                                                            <Input
+                                                                id="hero-max"
+                                                                type="number"
+                                                                min="1"
+                                                                max="10"
+                                                                value={heroSettings.maxArticles}
+                                                                onChange={(e) => handleHeroSettingChange('maxArticles', parseInt(e.target.value) || 1)}
+                                                            />
+                                                        </div>
+                                                     </div>
+                                                 </>
+                                              )}
+                                         </CardContent>
+                                     </Card>
+                                )}
+
                                 <Separator />
 
                                 {/* Block Editor Section */}
@@ -407,8 +507,8 @@ export default function EditPage() {
                                    onDeleteBlock={handleDeleteBlock}
                                    onUpdateBlock={handleUpdateBlock}
                                    onReorderBlocks={handleReorderBlocks}
-                                   selectedBlockId={selectedBlockId} // Pass selected block ID
-                                   onBlockSelect={handleBlockSelect} // Pass selection handler
+                                   selectedBlockId={selectedBlockId}
+                                   onBlockSelect={handleBlockSelect}
                                  />
                              </>
                         )}
@@ -477,24 +577,35 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                  {/* Right Preview Pane - Takes remaining space */}
-                   <div className="w-3/5 bg-muted/30 p-4 overflow-hidden flex flex-col items-center justify-start relative"> {/* Changed width to 3/5 */}
+                  {/* Right Preview Pane - Takes remaining space and handles its own overflow */}
+                   <div className="flex-1 bg-muted/30 p-4 overflow-auto flex flex-col items-center justify-start relative"> {/* Allow overflow */}
                      <div className={cn(
-                         "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative",
-                         getPreviewSizeClass()
+                         "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative w-full h-full max-w-full max-h-full", // Make it take full space of its container
+                         // Remove device-specific size classes to let it fill
+                         // getPreviewSizeClass()
                      )}>
-                       {/* Removed overlay for direct interaction (be careful with iframe approach if re-enabled) */}
-                       {/* <div className="absolute inset-0 z-10 bg-transparent" /> */}
-                       <PagePreviewRenderer
-                          key={previewDevice + '-' + currentPreviewData.id + '-' + blocks.map(b => b.id).join('-')} // More specific key including block IDs
-                          pageData={currentPreviewData} // Pass data recalculated by useMemo
-                          selectedBlockId={selectedBlockId}
-                          onBlockSelect={handleBlockSelect}
-                          isPreview={true}
-                       />
+                       {/* Scale the preview content based on device selection */}
+                        <div className={cn(
+                             "transition-transform duration-300 ease-in-out origin-top",
+                             {
+                                 'scale-[0.5] w-[750px] h-[1334px] mx-auto': previewDevice === 'mobile', // Scale down and set fixed size based on ratio
+                                 'scale-[0.7] w-[1097px] h-[1463px] mx-auto': previewDevice === 'tablet', // Scale down and set fixed size based on ratio
+                                 'scale-100 w-full h-full': previewDevice === 'desktop', // No scaling for desktop
+                             }
+                        )}>
+                           <PagePreviewRenderer
+                              key={previewDevice + '-' + currentPreviewData.id + '-' + blocks.map(b => b.id).join('-')}
+                              pageData={currentPreviewData}
+                              selectedBlockId={selectedBlockId}
+                              onBlockSelect={handleBlockSelect}
+                              isPreview={true}
+                           />
+                        </div>
                      </div>
                    </div>
             </div>
         </div>
     );
 }
+
+    

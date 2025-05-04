@@ -5,20 +5,122 @@ import * as React from 'react';
 import Image from 'next/image';
 import type { Block } from '@/components/admin/template-selector';
 import { cn } from '@/lib/utils';
-import { Loader2, Mail, Phone, MapPin } from 'lucide-react'; // Import needed icons
-import { Button } from '@/components/ui/button'; // Import Button for teasers
-import Link from 'next/link'; // Import Link for teasers
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // For contact info
-import { Input } from '@/components/ui/input'; // For contact form
-import { Label } from '@/components/ui/label'; // For contact form
-import { Textarea } from '@/components/ui/textarea'; // For contact form
+import { Loader2, Mail, Phone, MapPin, Film } from 'lucide-react'; // Import needed icons, added Film
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+
+// --- Types (assuming these are defined elsewhere or globally) ---
+interface HeroSettings {
+    enabled: boolean;
+    articleSource: 'latest' | 'featured';
+    intervalSeconds: number;
+    maxArticles: number;
+}
+
+interface ArticleStub {
+  id: string;
+  title: string;
+  description: string;
+  category: 'Teknoloji' | 'Biyoloji';
+  imageUrl: string;
+}
+// ---
 
 // --- Mock Components for Homepage Sections ---
-// These components simulate what the real homepage components might look like.
-// They should fetch their own data in a real application, but for preview, we use settings.
+// Simulate fetching featured/latest articles for Hero Preview
+const getMockArticlesForHero = (source: 'latest' | 'featured', count: number): ArticleStub[] => {
+     const allMockArticles: ArticleStub[] = [
+         { id: 'hero-1', title: 'Yapay Zeka Sanatı', description: 'AI tarafından üretilen sanat eserleri.', category: 'Teknoloji', imageUrl: 'https://picsum.photos/seed/hero-ai/1920/1080' },
+         { id: 'hero-2', title: 'CRISPR ile Hastalık Tedavisi', description: 'Gen düzenlemenin tıptaki yeri.', category: 'Biyoloji', imageUrl: 'https://picsum.photos/seed/hero-crispr/1920/1080' },
+         { id: 'hero-3', title: 'Kuantum İnternet', description: 'Geleceğin iletişim ağı.', category: 'Teknoloji', imageUrl: 'https://picsum.photos/seed/hero-quantum/1920/1080' },
+         { id: 'hero-4', title: 'Nöroteknoloji', description: 'Beyin-bilgisayar arayüzleri.', category: 'Teknoloji', imageUrl: 'https://picsum.photos/seed/hero-neuro/1920/1080' },
+         { id: 'hero-5', title: 'Sentetik Biyolojide Son Gelişmeler', description: 'Yaşamı programlamak.', category: 'Biyoloji', imageUrl: 'https://picsum.photos/seed/hero-synbio/1920/1080' },
+     ];
+     // Simple filter/sort simulation
+     if (source === 'featured') {
+         return allMockArticles.filter(a => ['hero-1', 'hero-2', 'hero-3'].includes(a.id)).slice(0, count);
+     }
+     // Default to 'latest' (just slicing for mock purposes)
+     return allMockArticles.slice(0, count);
+ };
+
+
+const HeroSectionPreview: React.FC<{ settings: HeroSettings | undefined }> = ({ settings }) => {
+    if (!settings || !settings.enabled) {
+        return (
+            <div className="p-6 border border-dashed border-gray-500/50 rounded my-4 bg-gray-500/5 text-center text-muted-foreground italic">
+                [Hero Bölümü Devre Dışı]
+            </div>
+        );
+    }
+
+    // Simulate fetching articles based on settings
+    const articles = getMockArticlesForHero(settings.articleSource, settings.maxArticles);
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+
+    // Basic auto-play simulation (only advances, doesn't respect interval perfectly in preview)
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setCurrentIndex((prev) => (prev + 1) % articles.length);
+        }, settings.intervalSeconds * 1000);
+        return () => clearTimeout(timer);
+    }, [currentIndex, articles.length, settings.intervalSeconds]);
+
+    if (articles.length === 0) {
+        return (
+            <div className="p-6 border border-dashed border-yellow-500/50 rounded my-4 bg-yellow-500/5 text-center text-yellow-700">
+                [Hero için uygun makale bulunamadı (Kaynak: {settings.articleSource}, Max: {settings.maxArticles}) - Makale ekleyin veya ayarları kontrol edin]
+            </div>
+        );
+    }
+
+    const currentArticle = articles[currentIndex];
+
+    return (
+        <div className="relative h-48 md:h-56 p-6 border border-dashed border-indigo-500/50 rounded my-4 bg-indigo-500/5 overflow-hidden flex items-center justify-center text-center">
+             {/* Background Image Simulation */}
+             <div className="absolute inset-0 z-0">
+                 <Image
+                    src={currentArticle.imageUrl}
+                    alt={currentArticle.title}
+                    layout="fill"
+                    objectFit="cover"
+                    className="filter brightness-50"
+                    data-ai-hint="hero abstract background"
+                 />
+                 <div className="absolute inset-0 bg-black/30"></div>
+             </div>
+             {/* Content Simulation */}
+            <div className="relative z-10 text-white">
+                <h2 className="text-lg font-semibold md:text-xl">{currentArticle.title}</h2>
+                <p className="mt-2 text-xs md:text-sm max-w-md mx-auto text-gray-200">{currentArticle.description}</p>
+                <Button size="sm" className="mt-4" disabled>Devamını Oku (Önizleme)</Button>
+            </div>
+            {/* Dots Simulation */}
+            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-2">
+                 {articles.map((_, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full',
+                      currentIndex === index ? 'bg-white scale-110' : 'bg-white/50'
+                    )}
+                  />
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+// --- Other Mock Components (Unchanged) ---
 const FeaturedArticlesSection: React.FC<{ settings: any }> = ({ settings }) => {
     const count = settings?.count || 3;
-    const items = Array.from({ length: count }, (_, i) => i + 1); // Create array based on count
+    const items = Array.from({ length: count }, (_, i) => i + 1);
 
     return (
         <div className="p-6 border border-dashed border-blue-500/50 rounded my-4 bg-blue-500/5">
@@ -57,7 +159,7 @@ const CategoryTeaserSection: React.FC<{ settings: any }> = ({ settings }) => (
 
 const RecentArticlesSection: React.FC<{ settings: any }> = ({ settings }) => {
     const count = settings?.count || 3;
-    const items = Array.from({ length: count }, (_, i) => i + 1); // Create array based on count
+    const items = Array.from({ length: count }, (_, i) => i + 1);
 
     return (
      <div className="p-6 border border-dashed border-purple-500/50 rounded my-4 bg-purple-500/5">
@@ -77,7 +179,6 @@ const RecentArticlesSection: React.FC<{ settings: any }> = ({ settings }) => {
 const ContactFormSection: React.FC<{ settings: any }> = ({ settings }) => (
      <div className="p-6 border border-dashed border-orange-500/50 rounded my-4 bg-orange-500/5">
         <h2 className="text-xl font-semibold mb-4 text-orange-800 dark:text-orange-300">{settings?.title || 'İletişim Formu'}</h2>
-        {/* Basic form structure for preview */}
         <form className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -101,14 +202,13 @@ const ContactFormSection: React.FC<{ settings: any }> = ({ settings }) => (
 
 const CustomTextSection: React.FC<{ settings: any }> = ({ settings }) => (
      <div className="p-6 border border-dashed border-gray-500/50 rounded my-4 bg-gray-500/5">
-         {/* Render HTML carefully - consider sanitization or a safe rendering method */}
         <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: settings?.content || '<p class="italic text-gray-500">[Özel Metin İçeriği Yok]</p>' }} />
     </div>
 );
 // --- End Mock Components ---
 
 
-// Define the props for the PagePreviewRenderer
+// --- Props for PagePreviewRenderer ---
 interface PagePreviewRendererProps {
     pageData: {
         id: string;
@@ -118,18 +218,18 @@ interface PagePreviewRendererProps {
         seoTitle?: string;
         seoDescription?: string;
         imageUrl?: string;
-        settings?: Record<string, any>; // Add settings
+        settings?: Record<string, any>;
+        heroSettings?: HeroSettings; // Add heroSettings
     };
-    selectedBlockId: string | null; // ID of the block selected in the editor
-    onBlockSelect: (id: string | null) => void; // Callback when a block is clicked in preview (can be null to deselect)
-    isPreview?: boolean; // Flag to indicate if this is rendering in the live preview pane vs final page
+    selectedBlockId: string | null;
+    onBlockSelect: (id: string | null) => void;
+    isPreview?: boolean;
 }
 
 // --- Block Rendering Components (Simplified versions for preview) ---
-
+// ... (TextBlockPreview, HeadingBlockPreview, ImageBlockPreview, etc. remain unchanged) ...
 const TextBlockPreview: React.FC<{ block: Extract<Block, { type: 'text' }>, isSelected: boolean, onClick: (e: React.MouseEvent) => void }> = ({ block, isSelected, onClick }) => (
      <div onClick={onClick} className={cn("cursor-pointer transition-colors duration-150 p-1 -m-1 rounded", { 'bg-primary/10': isSelected, 'hover:bg-muted/50': !isSelected })}>
-        {/* Render basic HTML or use dangerouslySetInnerHTML for more complex content from editor */}
         <p className="text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br />') || '<span class="text-muted-foreground italic">[Boş Metin Bloğu]</span>' }} />
     </div>
 );
@@ -144,7 +244,6 @@ const HeadingBlockPreview: React.FC<{ block: Extract<Block, { type: 'heading' }>
         5: 'text-base font-semibold mb-2 mt-2',
         6: 'text-sm font-semibold mb-2 mt-2',
     };
-    // Hide specific structural headings if needed (e.g., ones used only for layout hints)
     if (block.id.startsWith('hpb-')) return null;
 
     return (
@@ -166,8 +265,6 @@ const ImageBlockPreview: React.FC<{ block: Extract<Block, { type: 'image' }>, is
                     width={800}
                     height={450}
                     className="rounded-lg shadow-md mx-auto max-w-full h-auto"
-                    // Add unoptimized prop if using external URLs heavily without specific host config
-                    // unoptimized
                 />
             ) : (
                 <div className="bg-muted rounded-lg aspect-video flex items-center justify-center text-muted-foreground italic">
@@ -194,11 +291,8 @@ const DividerBlockPreview: React.FC<{ isSelected: boolean, onClick: (e: React.Mo
     </div>
 );
 
-// Section Block Preview
 const SectionBlockPreview: React.FC<{ block: Extract<Block, { type: 'section' }>, isSelected: boolean, onClick: (e: React.MouseEvent) => void }> = ({ block, isSelected, onClick }) => {
     const { sectionType, settings } = block;
-
-    // Render the appropriate mock component based on sectionType
     let SectionComponent;
     switch (sectionType) {
         case 'featured-articles': SectionComponent = FeaturedArticlesSection; break;
@@ -212,20 +306,17 @@ const SectionBlockPreview: React.FC<{ block: Extract<Block, { type: 'section' }>
     return (
         <div
             key={block.id}
-            onClick={onClick} // Allow clicking the section wrapper
+            onClick={onClick}
             className={cn(
-                "cursor-pointer transition-all duration-200 ease-in-out rounded relative my-4", // Added margin
-                 // Apply ring only when selected
+                "cursor-pointer transition-all duration-200 ease-in-out rounded relative my-4",
                 { 'ring-2 ring-primary ring-offset-2 ring-offset-background': isSelected }
             )}
              data-preview-block-id={block.id}
         >
-            {/* Add overlay for better selection indication */}
             {isSelected && <div className="absolute inset-0 bg-primary/5 rounded pointer-events-none z-0"></div>}
-            <div className="relative z-10"> {/* Content above overlay */}
+            <div className="relative z-10">
                 <SectionComponent settings={settings} />
             </div>
-            {/* Tooltip shown only when selected */}
             {isSelected && (
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full shadow whitespace-nowrap z-20">
                     Düzenlemek için sol panele bakın
@@ -250,31 +341,38 @@ const PagePreviewRenderer: React.FC<PagePreviewRendererProps> = ({
     pageData,
     selectedBlockId,
     onBlockSelect,
-    isPreview = false, // isPreview is often true in the editor context
+    isPreview = false,
  }) => {
-    const { id: pageId, title, blocks, slug } = pageData;
+    const { id: pageId, title, blocks, slug, heroSettings } = pageData; // Destructure heroSettings
 
 
-    // Always use component-based rendering for direct updates
     return (
         <div
-            className="p-6 bg-background text-foreground h-full overflow-y-auto relative" // Added relative positioning
-            onClick={() => onBlockSelect(null)} // Click background to deselect
+            className="p-6 bg-background text-foreground h-full overflow-y-auto relative"
+            onClick={() => onBlockSelect(null)}
          >
-            {isPreview && ( // Show header only in the editor preview pane
+            {isPreview && (
                  <header className="mb-6 border-b pb-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
                     <h1 className="text-2xl font-bold mb-1">{title || <span className="text-muted-foreground italic">[Başlık Yok]</span>}</h1>
                     <p className="text-sm text-muted-foreground">URL: /{slug || ''}</p>
                  </header>
              )}
 
+            {/* Render Hero Section Preview (Only for homepage preview) */}
+             {isPreview && pageId === 'anasayfa' && (
+                 <HeroSectionPreview settings={heroSettings} />
+             )}
+
             {/* Render Blocks */}
             <div className="prose dark:prose-invert max-w-none">
                 {blocks.length > 0 ? (
                      blocks.map(block => {
+                         // Skip rendering hero block if it's handled separately
+                         // if (isPreview && pageId === 'anasayfa' && block.id === 'hp-hero') return null;
+
                          const isSelected = block.id === selectedBlockId;
                          const handleSelect = (e: React.MouseEvent) => {
-                             e.stopPropagation(); // Prevent background click
+                             e.stopPropagation();
                              onBlockSelect(block.id);
                          };
 
@@ -285,7 +383,6 @@ const PagePreviewRenderer: React.FC<PagePreviewRendererProps> = ({
                             case 'quote': return <QuoteBlockPreview key={block.id} block={block} isSelected={isSelected} onClick={handleSelect} />;
                             case 'divider': return <DividerBlockPreview key={block.id} isSelected={isSelected} onClick={handleSelect} />;
                             case 'section': return <SectionBlockPreview key={block.id} block={block} isSelected={isSelected} onClick={handleSelect} />;
-                             // Add other block types here
                              default: return <PlaceholderBlockPreview key={block.id} type={block.type} isSelected={isSelected} onClick={handleSelect}/>;
                          }
                     })
@@ -298,3 +395,5 @@ const PagePreviewRenderer: React.FC<PagePreviewRendererProps> = ({
 };
 
 export default PagePreviewRenderer;
+
+    
