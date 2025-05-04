@@ -14,6 +14,7 @@ export interface ArticleData {
     seoDescription?: string;
     slug: string;
     isFeatured: boolean;
+    isHero: boolean; // Added field for Hero section
     keywords?: string[];
     canonicalUrl?: string;
     authorId: string;
@@ -26,7 +27,7 @@ export interface ArticleData {
 const LOCAL_STORAGE_KEY = 'teknobiyo_mock_articles';
 
 // --- Initial Mock Data (Defaults if localStorage is empty) ---
-const defaultMockArticles: ArticleData[] = [
+let defaultMockArticles: ArticleData[] = [
      {
         id: '1',
         title: 'Yapay Zeka Devrimi',
@@ -45,6 +46,7 @@ const defaultMockArticles: ArticleData[] = [
         seoDescription: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
         slug: 'yapay-zeka-devrimi',
         isFeatured: true,
+        isHero: true, // Example: Also in Hero
         keywords: ['ai', 'makine öğrenimi', 'yapay zeka'],
         canonicalUrl: '',
         authorId: 'mock-admin',
@@ -67,6 +69,7 @@ const defaultMockArticles: ArticleData[] = [
         seoDescription: 'CRISPR ve diğer gen düzenleme araçlarının bilim ve tıp üzerindeki etkileri.',
         slug: 'gen-duzenleme-teknolojileri',
         isFeatured: false,
+        isHero: false,
         keywords: ['crispr', 'genetik', 'biyoteknoloji'],
         canonicalUrl: '',
         authorId: 'mock-editor',
@@ -84,17 +87,18 @@ const defaultMockArticles: ArticleData[] = [
             { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
         ],
         category: 'Biyoloji',
-        status: 'İncelemede',
+        status: 'Yayınlandı', // Changed to Yayınlandı for testing
         mainImageUrl: 'https://picsum.photos/seed/microbiome/600/400',
         seoTitle: 'Mikrobiyom: İçimizdeki Dünya | TeknoBiyo',
         seoDescription: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri ve mikrobiyom dengesinin önemi.',
         slug: 'mikrobiyom-icimizdeki-dunya',
         isFeatured: false,
+        isHero: true, // Example: In Hero but not Featured
         keywords: ['mikrobiyom', 'bağırsak', 'sağlık', 'bakteri', 'probiyotik'],
         canonicalUrl: '',
         authorId: 'mock-editor',
         createdAt: '2024-07-21T08:00:00Z',
-        updatedAt: '2024-07-22T16:45:00Z',
+        updatedAt: '2024-07-26T10:00:00Z', // Updated timestamp
     },
      {
         id: '5',
@@ -108,6 +112,7 @@ const defaultMockArticles: ArticleData[] = [
         seoDescription: 'Kripto paraların ötesinde, dağıtık defter teknolojisinin potansiyel uygulama alanları.',
         slug: 'blockchain-teknolojisi',
         isFeatured: false,
+        isHero: false,
         keywords: ['blockchain', 'kripto', 'dağıtık defter'],
         canonicalUrl: '',
         authorId: 'mock-admin',
@@ -126,6 +131,7 @@ const defaultMockArticles: ArticleData[] = [
         seoDescription: 'Kuantum mekaniği prensiplerini kullanan yeni nesil hesaplama makineleri.',
         slug: 'kuantum-bilgisayarlar',
         isFeatured: false,
+        isHero: false,
         keywords: ['kuantum', 'hesaplama', 'kübit'],
         canonicalUrl: '',
         authorId: 'mock-admin',
@@ -144,6 +150,7 @@ const defaultMockArticles: ArticleData[] = [
         seoDescription: 'Biyolojik sistemleri mühendislik prensipleriyle tasarlama ve inşa etme alanı.',
         slug: 'sentetik-biyoloji',
         isFeatured: false,
+        isHero: false,
         keywords: ['sentetik biyoloji', 'mühendislik', 'dna'],
         canonicalUrl: '',
         authorId: 'mock-editor',
@@ -162,6 +169,7 @@ const defaultMockArticles: ArticleData[] = [
         seoDescription: 'Yapay sinir ağları ve derin öğrenme modellerinin çalışma prensipleri.',
         slug: 'nöral-ağlar-derin-öğrenme',
         isFeatured: false,
+        isHero: false,
         keywords: ['nöral ağ', 'derin öğrenme', 'yapay zeka', 'makine öğrenimi'],
         canonicalUrl: '',
         authorId: 'mock-admin',
@@ -180,6 +188,7 @@ const defaultMockArticles: ArticleData[] = [
         seoDescription: 'Vücudun kendi bağışıklık sistemini kanser hücreleriyle savaşmak için güçlendiren tedavi yöntemleri.',
         slug: 'kanser-immünoterapisi',
         isFeatured: true,
+        isHero: true, // Example: Both Featured and Hero
         keywords: ['kanser', 'immünoterapi', 'bağışıklık sistemi', 'tedavi'],
         canonicalUrl: '',
         authorId: 'mock-editor',
@@ -188,6 +197,13 @@ const defaultMockArticles: ArticleData[] = [
     },
 
 ];
+
+// Ensure defaultMockArticles has the new field even if localStorage doesn't
+defaultMockArticles = defaultMockArticles.map(article => ({
+    ...article,
+    isHero: article.isHero ?? false, // Add default if missing
+}));
+
 
 // --- In-Memory Data Store with localStorage Persistence ---
 let mockArticles: ArticleData[] = [];
@@ -199,21 +215,26 @@ const loadData = () => {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedData) {
             try {
-                mockArticles = JSON.parse(storedData);
-                console.log("Loaded articles from localStorage.");
+                const parsedData: ArticleData[] = JSON.parse(storedData);
+                 // Ensure all loaded articles have the isHero field
+                mockArticles = parsedData.map(article => ({
+                    ...article,
+                    isHero: article.isHero ?? false, // Add default if missing
+                }));
+                // console.log("Loaded articles from localStorage.");
             } catch (error) {
                 console.error("Error parsing localStorage data, using defaults:", error);
                 mockArticles = defaultMockArticles;
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
             }
         } else {
-            console.log("No data in localStorage, using defaults.");
+            // console.log("No data in localStorage, using defaults.");
             mockArticles = defaultMockArticles;
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
         }
     } else {
         // Fallback for non-browser environments (e.g., server-side rendering build time)
-        console.log("localStorage not available, using default data in memory.");
+        // console.log("localStorage not available, using default data in memory.");
         mockArticles = defaultMockArticles;
     }
 };
@@ -223,7 +244,7 @@ const saveData = () => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
-            console.log("Saved articles to localStorage.");
+            // console.log("Saved articles to localStorage."); // Keep console less noisy
         } catch (error) {
             console.error("Error saving data to localStorage:", error);
         }
@@ -244,7 +265,9 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * @returns A promise that resolves to an array of ArticleData.
  */
 export const getArticles = async (): Promise<ArticleData[]> => {
-    await delay(50); // Shorter delay for reads
+    await delay(10); // Shorter delay for reads
+    // Load data again in case it was modified externally (though unlikely in this setup)
+    loadData();
     // Return a deep copy to prevent direct modification
     return JSON.parse(JSON.stringify(mockArticles));
 };
@@ -255,7 +278,8 @@ export const getArticles = async (): Promise<ArticleData[]> => {
  * @returns A promise that resolves to the ArticleData or null if not found.
  */
 export const getArticleById = async (id: string): Promise<ArticleData | null> => {
-    await delay(50);
+    await delay(10);
+    loadData(); // Ensure latest data
     const article = mockArticles.find(article => article.id === id);
     // Return a deep copy
     return article ? JSON.parse(JSON.stringify(article)) : null;
@@ -267,16 +291,18 @@ export const getArticleById = async (id: string): Promise<ArticleData | null> =>
  * @returns A promise that resolves to the newly created ArticleData.
  */
 export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'>): Promise<ArticleData> => {
-    await delay(100); // Slightly longer delay for writes
+    await delay(50); // Slightly longer delay for writes
+    loadData(); // Ensure we're adding to the current list
     const newArticle: ArticleData = {
         ...data,
+        isHero: data.isHero ?? false, // Ensure isHero has a default value
         id: `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
     mockArticles.push(newArticle);
     saveData(); // Save to localStorage
-    console.log("Article created:", JSON.parse(JSON.stringify(newArticle)));
+    // console.log("Article created:", JSON.parse(JSON.stringify(newArticle)));
     return JSON.parse(JSON.stringify(newArticle));
 };
 
@@ -287,23 +313,25 @@ export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' |
  * @returns A promise that resolves to the updated ArticleData or null if not found.
  */
 export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 'id' | 'createdAt'>>): Promise<ArticleData | null> => {
-    await delay(100);
+    await delay(50);
+    loadData(); // Load latest data before updating
     const articleIndex = mockArticles.findIndex(article => article.id === id);
     if (articleIndex === -1) {
         console.error("Article not found for update:", id);
         return null;
     }
 
-    // Update the article
-    mockArticles[articleIndex] = {
+    // Update the article in the in-memory array
+    const updatedArticle = {
         ...mockArticles[articleIndex],
         ...data,
         updatedAt: new Date().toISOString(),
     };
+    mockArticles[articleIndex] = updatedArticle;
 
-    saveData(); // Save to localStorage
-    console.log("Article updated:", JSON.parse(JSON.stringify(mockArticles[articleIndex])));
-    return JSON.parse(JSON.stringify(mockArticles[articleIndex]));
+    saveData(); // Save the entire updated array to localStorage
+    // console.log("Article updated:", JSON.parse(JSON.stringify(updatedArticle)));
+    return JSON.parse(JSON.stringify(updatedArticle));
 };
 
 /**
@@ -312,13 +340,14 @@ export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 
  * @returns A promise that resolves to true if deletion was successful, false otherwise.
  */
 export const deleteArticle = async (id: string): Promise<boolean> => {
-    await delay(150);
+    await delay(80);
+    loadData(); // Load latest data
     const initialLength = mockArticles.length;
     mockArticles = mockArticles.filter(article => article.id !== id);
     const success = mockArticles.length < initialLength;
     if (success) {
         saveData(); // Save to localStorage
-        console.log("Article deleted:", id);
+        // console.log("Article deleted:", id);
     } else {
         console.error("Article not found for deletion:", id);
     }

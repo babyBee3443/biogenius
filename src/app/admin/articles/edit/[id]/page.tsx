@@ -20,6 +20,7 @@ import {
   History,
   MessageSquare,
   Loader2, // Added Loader for saving state
+  Star, // Icon for Hero
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +51,7 @@ export default function EditArticlePage() {
     const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
+    const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
     const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -79,6 +81,7 @@ export default function EditArticlePage() {
                             setStatus(data.status);
                             setMainImageUrl(data.mainImageUrl || "");
                             setIsFeatured(data.isFeatured);
+                            setIsHero(data.isHero); // Sync isHero state
                             setBlocks(data.blocks || []);
                             setSeoTitle(data.seoTitle || '');
                             setSeoDescription(data.seoDescription || '');
@@ -206,6 +209,7 @@ export default function EditArticlePage() {
             status: finalStatus,
             mainImageUrl: mainImageUrl || null,
             isFeatured,
+            isHero, // Include isHero in save data
             slug: slug || generateSlug(title),
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
@@ -231,6 +235,7 @@ export default function EditArticlePage() {
                  setStatus(updatedArticle.status); // Ensure status updates visually
                  setMainImageUrl(updatedArticle.mainImageUrl || "");
                  setIsFeatured(updatedArticle.isFeatured);
+                 setIsHero(updatedArticle.isHero); // Sync isHero after save
                  setBlocks(updatedArticle.blocks || []);
                  setSeoTitle(updatedArticle.seoTitle || '');
                  setSeoDescription(updatedArticle.seoDescription || '');
@@ -411,10 +416,19 @@ export default function EditArticlePage() {
                                      </div>
                                  )}
                              </div>
-                             <div className="flex items-center space-x-2 pt-2">
-                                 <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
-                                 <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
+                             <div className="flex items-center gap-4 pt-2"> {/* Changed spacing */}
+                                 <div className="flex items-center space-x-2">
+                                     <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
+                                     <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
+                                 </div>
+                                 <div className="flex items-center space-x-2">
+                                     <Switch id="hero-article" checked={isHero} onCheckedChange={setIsHero} />
+                                     <Label htmlFor="hero-article" className="flex items-center">
+                                         <Star className="mr-1 h-3.5 w-3.5 text-yellow-500"/> Hero'da Göster
+                                     </Label>
+                                 </div>
                              </div>
+
 
                               <Separator className="my-8" />
 
@@ -596,3 +610,4 @@ export default function EditArticlePage() {
          </div>
     );
 }
+```

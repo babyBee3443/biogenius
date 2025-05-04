@@ -5,7 +5,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowRight, Pause, Play, BadgePercent } from 'lucide-react'; // Added BadgePercent for Ad
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import type { ArticleData } from '@/lib/mock-data'; // Import ArticleData type
@@ -18,9 +18,9 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(true);
 
-  // Filter articles for Hero: Must be Published AND Featured
+  // Filter articles for Hero: Must be Published AND isHero
   const displayArticles = articles
-    .filter(article => article.status === 'Yayınlandı' && article.isFeatured === true)
+    .filter(article => article.status === 'Yayınlandı' && article.isHero === true) // Filter by isHero
     .slice(0, 5); // Limit to max 5 for Hero display
 
   React.useEffect(() => {
@@ -38,18 +38,50 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
     };
   }, [isPlaying, displayArticles.length]); // Re-run effect if isPlaying or articles change
 
-  if (displayArticles.length === 0) {
+  // --- Ad Display Logic ---
+  const shouldShowAd = displayArticles.length === 0;
+
+  if (shouldShowAd) {
       return (
-           <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner">
-              <div className="container relative z-10 text-muted-foreground px-4">
-                <p>Gösterilecek öne çıkan makale bulunamadı. (Yayınlanmış ve Öne Çıkarılmış makale ekleyin)</p>
+           <section className="relative overflow-hidden bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner border border-primary/10">
+              <div className="container relative z-10 px-4">
+                 <motion.div
+                     initial={{ opacity: 0, scale: 0.9 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     transition={{ duration: 0.5, ease: "easeOut" }}
+                 >
+                     <BadgePercent className="h-16 w-16 text-primary mb-4 mx-auto" />
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">TeknoBiyo'ya Özel İndirimler!</h2>
+                    <p className="text-muted-foreground max-w-md mx-auto mb-6">Bilim ve teknoloji dünyasını keşfederken avantajlı fırsatları kaçırmayın.</p>
+                    <Button size="lg">
+                        Fırsatları Gör <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                 </motion.div>
               </div>
            </section>
       );
   }
+  // --- End Ad Display Logic ---
 
+  // Ensure currentIndex is valid after articles might change
+  React.useEffect(() => {
+    if (currentIndex >= displayArticles.length) {
+      setCurrentIndex(0);
+    }
+  }, [displayArticles, currentIndex]);
+
+  // Handle the case where displayArticles is initially empty and then populated
+  if (displayArticles.length === 0) {
+     // You might want a loading state here, but returning null avoids errors
+     return null;
+  }
 
   const currentArticle = displayArticles[currentIndex];
+
+  // Ensure currentArticle is defined before accessing its properties
+  if (!currentArticle) {
+    return null; // Or a loading/error state
+  }
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index);

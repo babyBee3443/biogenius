@@ -18,6 +18,7 @@ import {
   Upload,
   PlusCircle,
   Loader2, // Added Loader for saving state
+  Star, // Icon for Hero
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,7 +27,7 @@ import Image from 'next/image';
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-// Removed useDebouncedCallback import
+import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
 import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 // --- Main Page Component ---
@@ -42,6 +43,7 @@ export default function NewArticlePage() {
     const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
+    const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
     // Block Editor State
@@ -157,6 +159,7 @@ export default function NewArticlePage() {
              status: finalStatus,
              mainImageUrl: mainImageUrl || null,
              isFeatured,
+             isHero, // Include isHero in save data
              slug: slug || generateSlug(title),
              keywords: keywords || [],
              canonicalUrl: canonicalUrl || "",
@@ -292,10 +295,19 @@ export default function NewArticlePage() {
                                     </div>
                                 )}
                             </div>
-                            <div className="flex items-center space-x-2 pt-2">
-                                <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
-                                <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
-                            </div>
+                            <div className="flex items-center gap-4 pt-2"> {/* Changed spacing */}
+                                 <div className="flex items-center space-x-2">
+                                     <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
+                                     <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
+                                 </div>
+                                 <div className="flex items-center space-x-2">
+                                     <Switch id="hero-article" checked={isHero} onCheckedChange={setIsHero} />
+                                     <Label htmlFor="hero-article" className="flex items-center">
+                                         <Star className="mr-1 h-3.5 w-3.5 text-yellow-500"/> Hero'da Göster
+                                     </Label>
+                                 </div>
+                             </div>
+
 
                              <Separator className="my-8" />
 
@@ -461,3 +473,4 @@ export default function NewArticlePage() {
         </div>
     );
 }
+```

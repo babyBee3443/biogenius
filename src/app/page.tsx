@@ -11,6 +11,7 @@ import { ArrowRight } from "lucide-react";
 import Hero from "@/components/hero"; // Import the Hero component
 import { cn } from '@/lib/utils'; // Import cn for conditional classes
 import { getArticles, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
 
 // Define the text parts and their styles
 const titleParts = [
@@ -39,7 +40,7 @@ const titleContainerVariants = {
 };
 
 const letterRevealVariants = {
-  hidden: { opacity: 0.5, y: 10 }, // Start slightly faded and down
+  hidden: { opacity: 0, y: 10 }, // Start slightly faded and down
   visible: {
     opacity: 1,
     y: 0,
@@ -70,20 +71,61 @@ export default function Home() {
   // Filter articles for display only after data is loaded
   const publishedArticles = allArticles.filter(article => article.status === 'Yayınlandı');
 
+  // Articles specifically marked for the Hero section
+  const heroArticles: ArticleData[] = publishedArticles
+    .filter(article => article.isHero === true)
+    .slice(0, 5); // Limit Hero articles
+
+  // Articles specifically marked as Featured (but NOT necessarily in Hero)
   const featuredArticles: ArticleData[] = publishedArticles
     .filter(article => article.isFeatured === true)
     .slice(0, 3); // Limit to 3 featured
 
+  // Recent articles: Published, NOT in Hero, NOT Featured
   const recentArticles: ArticleData[] = publishedArticles
-    .filter(article => !article.isFeatured) // Exclude featured articles from recent
+    .filter(article => !article.isHero && !article.isFeatured)
     // Sort by creation date descending (assuming createdAt is a valid date string)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3); // Limit to 3 recent
 
+  // --- Loading State ---
   if (loading) {
-     // Optional: Render a loading state
-     return <div className="container py-12 text-center">Yükleniyor...</div>;
+     return (
+        <div className="space-y-16">
+             {/* Title Skeleton */}
+            <Skeleton className="h-16 w-3/4 mx-auto mb-8" />
+            {/* Hero Skeleton */}
+            <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />
+             {/* Featured Articles Skeletons */}
+             <section>
+                <Skeleton className="h-8 w-48 mb-8" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <Skeleton className="h-72 w-full" />
+                    <Skeleton className="h-72 w-full" />
+                    <Skeleton className="h-72 w-full" />
+                </div>
+            </section>
+             {/* Category Teaser Skeletons */}
+            <section>
+                 <Skeleton className="h-8 w-40 mb-8" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Skeleton className="h-40 w-full" />
+                    <Skeleton className="h-40 w-full" />
+                </div>
+            </section>
+             {/* Recent Articles Skeletons */}
+            <section>
+                <Skeleton className="h-8 w-56 mb-8" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <Skeleton className="h-72 w-full" />
+                    <Skeleton className="h-72 w-full" />
+                    <Skeleton className="h-72 w-full" />
+                </div>
+            </section>
+        </div>
+     );
   }
+  // --- End Loading State ---
 
   return (
     <div className="space-y-16">
@@ -113,8 +155,8 @@ export default function Home() {
         ))}
       </motion.h1>
 
-       {/* Hero Section - Pass only published articles */}
-       <Hero articles={publishedArticles} />
+       {/* Hero Section - Pass only articles marked for Hero */}
+       <Hero articles={heroArticles} />
 
       {/* Featured Articles Showcase */}
       <section id="featured-articles"> {/* Added ID for linking from Hero button */}
