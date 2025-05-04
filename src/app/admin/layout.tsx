@@ -184,7 +184,7 @@ export default function AdminLayout({
            </SidebarGroup>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="flex flex-col">
+      <SidebarInset className="flex flex-col"> {/* Removed pt-14 as header is inside */}
          {/* Header for mobile and top bar content */}
          <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:justify-end">
            <SidebarTrigger className="md:hidden" />
@@ -201,6 +201,7 @@ export default function AdminLayout({
              </Button>
            </div>
          </header>
+         {/* Main content pushes below the sticky header automatically due to flex layout */}
          <main className="flex-1 p-4 md:p-6">
             {/* Removed Card wrapping here, let individual pages manage their main container */}
             {children}
