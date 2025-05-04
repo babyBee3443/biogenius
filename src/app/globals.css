@@ -90,7 +90,17 @@ body {
     /* Smoother font rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /* Subtle Background Gradient */
+    /* Light Mode */
+    background-image: linear-gradient(135deg, hsla(175, 80%, 30%, 0.03), hsla(120, 60%, 40%, 0.03));
+    background-attachment: fixed; /* Keep gradient fixed during scroll */
   }
+  /* Dark Mode */
+  .dark body {
+    background-image: linear-gradient(135deg, hsla(175, 75%, 45%, 0.04), hsla(120, 50%, 30%, 0.04));
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight; /* Tighter tracking for headings */
   }
@@ -200,4 +210,3 @@ body {
     transform: rotate(360deg);
   }
 }
-
