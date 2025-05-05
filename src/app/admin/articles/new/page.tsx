@@ -41,7 +41,8 @@ import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-reac
 
 // Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-const defaultBlocks: Block[] = [{ id: generateBlockId(), type: 'text', content: '' }];
+// Initialize blocks state as empty array
+const defaultBlock = { id: generateBlockId(), type: 'text', content: '' };
 
 // --- Main Page Component ---
 
@@ -60,8 +61,14 @@ export default function NewArticlePage() {
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
-    // Block Editor State - Initialize with default block
-    const [blocks, setBlocks] = React.useState<Block[]>(defaultBlocks);
+    // Block Editor State - Initialize as empty array
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
+
+    // Set default block after hydration
+    React.useEffect(() => {
+      setBlocks([{ id: generateBlockId(), type: 'text', content: '' }]);
+    }, []); // Empty dependency array ensures this runs only once on the client
+
 
     // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -179,7 +186,7 @@ export default function NewArticlePage() {
              slug: slug || generateSlug(title),
              keywords: keywords || [],
              canonicalUrl: canonicalUrl || "",
-             blocks: blocks.length > 0 ? blocks : defaultBlocks, // Use default if empty
+             blocks: blocks.length > 0 ? blocks : [{ id: generateBlockId(), type: 'text', content: '' }], // Use default if empty
              seoTitle: seoTitle || title,
              seoDescription: seoDescription || excerpt.substring(0, 160) || "",
              authorId: 'mock-admin', // Assign a default author ID
@@ -505,7 +512,7 @@ export default function NewArticlePage() {
                  isOpen={isTemplateSelectorOpen}
                  onClose={() => setIsTemplateSelectorOpen(false)}
                  onSelectTemplateBlocks={handleTemplateSelect}
-                 blocksCurrentlyExist={blocks.length > 1 || (blocks[0] && blocks[0].content !== '')} // Pass if blocks exist
+                 blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && blocks[0]?.content !== '')} // Check if blocks have actual content
              />
         </div>
     );

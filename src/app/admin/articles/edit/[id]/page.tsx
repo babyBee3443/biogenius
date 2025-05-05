@@ -41,7 +41,6 @@ import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Lay
 
 // Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-const defaultBlocks: Block[] = [{ id: generateBlockId(), type: 'text', content: '' }];
 
 
 // --- Main Page Component ---
@@ -66,7 +65,7 @@ export default function EditArticlePage() {
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
-    const [blocks, setBlocks] = React.useState<Block[]>([]);
+    const [blocks, setBlocks] = React.useState<Block[]>([]); // Initialize as empty array
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
@@ -147,8 +146,10 @@ export default function EditArticlePage() {
              if (!slug || slug === generateSlug(articleData.title)) {
                  setSlug(generateSlug(title));
              }
-        } else if (title && !slug) { // Generate slug if title exists but slug is empty (e.g., on initial load from incomplete data)
+        } else if (title && !slug && !articleData) { // Generate slug if title exists but slug is empty (new article scenario?)
             setSlug(generateSlug(title));
+        } else if (title && !slug && articleData && !articleData.slug) { // Generate slug if loaded article has no slug
+             setSlug(generateSlug(title));
         }
     }, [title, articleData, slug]); // Depend on slug
 
@@ -156,6 +157,8 @@ export default function EditArticlePage() {
      React.useEffect(() => {
        if (title && !seoTitle && articleData && title !== articleData.title) {
          setSeoTitle(title);
+       } else if (title && !seoTitle && !articleData) { // For new articles
+          setSeoTitle(title);
        }
      }, [title, seoTitle, articleData]);
 
@@ -164,6 +167,9 @@ export default function EditArticlePage() {
         if (excerpt && !seoDescription && articleData && excerpt !== articleData.excerpt) {
           const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
           setSeoDescription(desc);
+        } else if (excerpt && !seoDescription && !articleData) { // For new articles
+           const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
+           setSeoDescription(desc);
         }
      }, [excerpt, seoDescription, articleData]);
 
@@ -249,7 +255,7 @@ export default function EditArticlePage() {
             slug: slug || generateSlug(title),
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
-            blocks: blocks || [{ id: generateBlockId(), type: 'text', content: '' }], // Fallback to default block
+            blocks: blocks.length > 0 ? blocks : [{ id: generateBlockId(), type: 'text', content: '' }], // Use default if empty
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
             // 'updatedAt' will be handled by the updateArticle function on the backend/mock
@@ -412,8 +418,7 @@ export default function EditArticlePage() {
          return <div className="text-center py-10 text-destructive">{error}</div>;
     }
 
-    if (!articleData) {
-         // Should be handled by error state, but as a fallback
+    if (!articleData && !loading) { // Show not found if loading is finished and articleData is still null
          return <div className="text-center py-10">Makale bulunamadı veya yüklenemedi.</div>;
     }
 
@@ -425,11 +430,15 @@ export default function EditArticlePage() {
                 <Button variant="ghost" size="sm" asChild>
                     <Link href="/admin/articles"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
                 </Button>
-                 <h1 className="text-xl font-semibold truncate" title={`Makaleyi Düzenle: ${articleData.title}`}>Makaleyi Düzenle</h1>
+                 <h1 className="text-xl font-semibold truncate" title={`Makaleyi Düzenle: ${title || 'Yeni Makale'}`}>
+                    {articleData ? `Makaleyi Düzenle` : 'Yeni Makale'}
+                </h1>
                 <div className="flex items-center gap-2">
-                     <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </Button>
+                     {articleData && ( // Only show delete for existing articles
+                        <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      )}
                     {/* <Button variant="outline" size="sm"><History className="mr-2 h-4 w-4"/> Revizyonlar</Button> */}
                 </div>
             </div>
@@ -677,10 +686,9 @@ export default function EditArticlePage() {
               <TemplateSelector
                   isOpen={isTemplateSelectorOpen}
                   onClose={() => setIsTemplateSelectorOpen(false)}
-                  onSelectTemplateBlocks={handleTemplateSelect} // Changed prop name
+                  onSelectTemplateBlocks={handleTemplateSelect}
+                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && blocks[0]?.content !== '')} // Check if blocks have actual content
               />
          </div>
     );
 }
-
-    
