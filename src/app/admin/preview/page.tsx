@@ -1,15 +1,19 @@
+
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from 'next/navigation'; // Keep useSearchParams
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2, AlertTriangle, Tag, BookCopy } from 'lucide-react'; // Added Tag, BookCopy
 import type { Block } from '@/components/admin/template-selector';
-import type { ArticleData } from '@/lib/mock-data';
+import type { ArticleData, NoteData } from '@/lib/mock-data'; // Import both types
+import { Badge } from '@/components/ui/badge'; // Import Badge
+import { Separator } from '@/components/ui/separator'; // Import Separator
 
 // --- Block Rendering Components (Simplified versions for preview) ---
+// ... (Keep the existing Block Rendering Components: TextBlockRenderer, HeadingBlockRenderer, etc.) ...
 
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
   <div dangerouslySetInnerHTML={{ __html: block.content?.replace(/\n/g, '<br />') || '<p class="italic text-muted-foreground">[Boş Metin Bloğu]</p>' }} />
@@ -23,7 +27,7 @@ const HeadingBlockRenderer: React.FC<{ block: Extract<Block, { type: 'heading' }
 const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }> = ({ block }) => (
     <figure className="my-6">
         {block.url ? (
-            <Image src={block.url} alt={block.alt || 'Makale Görseli'} width={800} height={400} className="rounded-lg shadow-md mx-auto max-w-full h-auto" data-ai-hint="article content placeholder"/>
+            <Image src={block.url} alt={block.alt || 'Görsel'} width={800} height={400} className="rounded-lg shadow-md mx-auto max-w-full h-auto" data-ai-hint="preview content image"/>
         ) : (
             <div className="bg-muted rounded-lg aspect-video flex items-center justify-center text-muted-foreground italic">
                 [Görsel Alanı - URL Yok]
@@ -100,101 +104,93 @@ const renderBlock = (block: Block) => {
     }
 };
 
+
+// --- Data Types for Preview ---
+type PreviewData = (Partial<ArticleData> & { previewType?: 'article' }) | (Partial<NoteData> & { previewType: 'note' });
+
 const PREVIEW_STORAGE_KEY = 'preview_data'; // Use the fixed key
 
 export default function ArticlePreviewPage() {
-  const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
+  const [previewData, setPreviewData] = React.useState<PreviewData | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const searchParams = useSearchParams(); // Use useSearchParams hook
+  const searchParams = useSearchParams();
 
   React.useEffect(() => {
     let isMounted = true;
-    console.log("[ArticlePreviewPage] useEffect triggered.");
+    console.log("[PreviewPage] useEffect triggered.");
 
     if (typeof window === 'undefined') {
-      console.log("[ArticlePreviewPage] Running on server, skipping localStorage logic.");
+      console.log("[PreviewPage] Running on server, skipping localStorage logic.");
       setIsLoading(false);
       return;
     }
-    console.log("[ArticlePreviewPage] Running on client.");
+    console.log("[PreviewPage] Running on client.");
 
     const loadPreview = () => {
         if (!isMounted) return;
 
-        console.log(`[ArticlePreviewPage] Attempting to load data from localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[PreviewPage] Attempting to load data from localStorage with key: ${PREVIEW_STORAGE_KEY}`);
         try {
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
 
             if (storedData) {
-                console.log(`[ArticlePreviewPage] Found data in localStorage for key ${PREVIEW_STORAGE_KEY}. Length: ${storedData.length}.`);
-                // console.log(`[ArticlePreviewPage] Raw data:`, storedData.substring(0, 500) + '...'); // Log beginning of raw data
-
+                console.log(`[PreviewPage] Found data in localStorage. Length: ${storedData.length}.`);
                 let parsedData;
                 try {
                     parsedData = JSON.parse(storedData);
-                    console.log("[ArticlePreviewPage] Parsed data successfully.");
-                    // console.log("[ArticlePreviewPage] Parsed data content:", parsedData); // More detailed log
+                    console.log("[PreviewPage] Parsed data successfully.");
 
                     if (!parsedData || typeof parsedData !== 'object' || Object.keys(parsedData).length === 0) {
                          const errorMsg = `Geçersiz veya boş önizleme verisi yapısı.`;
-                         console.error("[ArticlePreviewPage]", errorMsg, parsedData);
+                         console.error("[PreviewPage]", errorMsg, parsedData);
                          if (isMounted) setError(errorMsg);
-                         return; // Stop execution if data is invalid
+                         return;
                     }
-                } catch (parseError: any) {
-                    console.error("[ArticlePreviewPage] JSON parse error:", parseError);
-                    // console.error("[ArticlePreviewPage] Raw data causing parse error:", storedData);
-                    if (isMounted) setError(`Önizleme verisi okunamadı (JSON Parse Hatası): ${parseError.message}.`);
-                    return; // Stop execution on parse error
-                }
+                    // Basic validation based on expected type (article or note)
+                     if ((!parsedData.previewType || parsedData.previewType === 'article') && typeof parsedData.title === 'string' && Array.isArray(parsedData.blocks)) {
+                        console.log("[PreviewPage] Data appears to be valid article/general data.");
+                        if (isMounted) setPreviewData(parsedData);
+                    } else if (parsedData.previewType === 'note' && typeof parsedData.title === 'string' && Array.isArray(parsedData.contentBlocks)) {
+                        // Remap contentBlocks to blocks for consistent rendering
+                        const noteData = { ...parsedData, blocks: parsedData.contentBlocks };
+                        console.log("[PreviewPage] Data appears to be valid note data. Remapped contentBlocks.");
+                        if (isMounted) setPreviewData(noteData);
+                    } else {
+                         const errorMsg = `Önizleme verisi beklenen yapıda değil (eksik title, blocks/contentBlocks veya geçersiz previewType).`;
+                         console.error("[PreviewPage]", errorMsg, parsedData);
+                         if (isMounted) setError(errorMsg);
+                    }
 
-                // Basic validation and normalization (Ensure required fields exist)
-                if (typeof parsedData.title === 'string' && parsedData.title && Array.isArray(parsedData.blocks)) {
-                    const normalizedData: Partial<ArticleData> = {
-                        ...parsedData,
-                        excerpt: parsedData.excerpt ?? parsedData.description, // Normalize excerpt/description
-                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl, // Normalize image URL
-                    };
-                    console.log("[ArticlePreviewPage] Data validated and normalized.");
-                    // console.log("[ArticlePreviewPage] Normalized data:", normalizedData);
-                    if (isMounted) {
-                         setPreviewData(normalizedData);
-                         setError(null);
-                    }
-                } else {
-                    const missingFields = [];
-                    if (typeof parsedData.title !== 'string' || !parsedData.title) missingFields.push("title");
-                    if (!Array.isArray(parsedData.blocks)) missingFields.push("blocks");
-                    const errorMsg = `Önizleme verisi eksik alanlar içeriyor: ${missingFields.join(', ')}.`;
-                    console.error("[ArticlePreviewPage]", errorMsg, parsedData);
-                    if (isMounted) setError(errorMsg);
+                } catch (parseError: any) {
+                    console.error("[PreviewPage] JSON parse error:", parseError);
+                    if (isMounted) setError(`Önizleme verisi okunamadı (JSON Parse Hatası): ${parseError.message}.`);
+                    return;
                 }
             } else {
                 const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${PREVIEW_STORAGE_KEY}). Lütfen makaleyi veya şablonu kaydedip tekrar deneyin.`;
-                console.error("[ArticlePreviewPage]", errorMsg);
+                console.error("[PreviewPage]", errorMsg);
                 if (isMounted) setError(errorMsg);
             }
         } catch (e: any) {
-            console.error("[ArticlePreviewPage] LocalStorage erişim hatası:", e);
+            console.error("[PreviewPage] LocalStorage erişim hatası:", e);
             if (isMounted) setError(`Önizleme verisi yüklenirken bir hata oluştu: ${e.message}`);
         } finally {
              if (isMounted) setIsLoading(false);
         }
     };
 
-    // Load preview data immediately on mount
     loadPreview();
 
     return () => {
       isMounted = false;
-      console.log("[ArticlePreviewPage] Component unmounted.");
+      console.log("[PreviewPage] Component unmounted.");
     };
 
-  }, []); // Empty dependency array - runs only once on mount
+  }, []);
 
    if (isLoading) {
-     console.log("[ArticlePreviewPage] Rendering loading state.");
+     console.log("[PreviewPage] Rendering loading state.");
      return (
         <div className="flex justify-center items-center h-screen text-lg">
             <Loader2 className="mr-3 h-6 w-6 animate-spin" />
@@ -204,7 +200,7 @@ export default function ArticlePreviewPage() {
    }
 
    if (error) {
-        console.error("[ArticlePreviewPage] Rendering error state:", error); // Log the error being displayed
+        console.error("[PreviewPage] Rendering error state:", error);
         return (
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
                  <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
@@ -215,9 +211,8 @@ export default function ArticlePreviewPage() {
         );
     }
 
-   // Assert previewData is not null here because error/loading states handle it
    if (!previewData) {
-     console.error("[ArticlePreviewPage] Rendering error state: previewData is null/undefined after checks.");
+     console.error("[PreviewPage] Rendering error state: previewData is null/undefined after checks.");
      return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
@@ -228,26 +223,18 @@ export default function ArticlePreviewPage() {
      );
    }
 
-   // Final check for empty object (should have been caught earlier)
-   if (Object.keys(previewData).length === 0) {
-        console.error("[ArticlePreviewPage] Rendering error state: previewData is empty object.");
-        return (
-             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-                 <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h1 className="text-2xl font-bold text-destructive mb-4">Önizleme Hatası</h1>
-                <p className="text-muted-foreground mb-6">Boş önizleme verisi alındı.</p>
-                <Button onClick={() => window.close()} variant="outline">Sekmeyi Kapat</Button>
-            </div>
-        );
-    }
+    console.log("[PreviewPage] Rendering preview for:", previewData.title, "Type:", previewData.previewType);
 
+    // Determine if it's an article or note based on previewType or structure
+    const isNote = previewData.previewType === 'note';
+    const isArticle = !isNote; // Assume article if not explicitly note
 
-    console.log("[ArticlePreviewPage] Rendering article preview for:", previewData.title);
-    const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = previewData;
-
-  const categoryLinkClass = category === 'Teknoloji'
-    ? 'text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'
-    : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300';
+    const commonData = {
+        title: previewData.title || "[Başlık Yok]",
+        blocks: previewData.blocks || [],
+        imageUrl: (isArticle ? (previewData as Partial<ArticleData>).mainImageUrl : (previewData as Partial<NoteData>).imageUrl) || null,
+        createdAt: previewData.createdAt,
+    };
 
   return (
     <div className="bg-background min-h-screen">
@@ -259,63 +246,71 @@ export default function ArticlePreviewPage() {
             </Button>
         </div>
 
-        <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
-          <header className="mb-10">
-             <span className={`text-sm font-medium mb-3 inline-block tracking-wide uppercase ${categoryLinkClass}`}>
-               {category || '[Kategori Yok]'}
-             </span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{title || "[Başlık Yok]"}</h1>
-             {excerpt && <p className="text-lg md:text-xl text-muted-foreground">{excerpt}</p>}
-             {(authorId || createdAt) && (
-                 <p className="text-sm text-muted-foreground mt-3">
-                    {authorId && `Yazar: ${authorId}`}
-                    {authorId && createdAt && ' | '}
-                    {createdAt && `Yayınlanma: ${new Date(createdAt).toLocaleDateString('tr-TR')}`}
-                 </p>
-             )}
-          </header>
-
-          {mainImageUrl && (
-            <div className="mb-10 shadow-xl rounded-lg overflow-hidden">
-              <Image
-                src={mainImageUrl}
-                alt={title || "Ana Görsel"}
-                width={1200}
-                height={600}
-                className="w-full h-auto object-cover"
-                priority
-                data-ai-hint="preview main image"
-              />
-            </div>
-          )}
-
-          <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
-            {blocks && blocks.length > 0 ? (
-                 blocks.map(renderBlock)
-             ) : (
-                 <p className="text-muted-foreground italic">(İçerik Bölümü Yok)</p>
-             )}
-          </div>
-
-           <div className="mt-16 border-t border-border/50 pt-10 space-y-10">
-                <div>
-                    <h2 className="text-2xl font-semibold mb-4">İlgili Makaleler (Placeholder)</h2>
-                    <p className="text-muted-foreground text-sm">Gerçek makalede ilgili içerikler burada görünecektir.</p>
-                </div>
-                 <div>
-                    <h2 className="text-2xl font-semibold mb-4">Paylaş (Placeholder)</h2>
-                    <div className="flex space-x-3">
-                        <Button variant="outline" size="icon" aria-label="Twitter'da paylaş"><Twitter className="h-5 w-5" /></Button>
-                        <Button variant="outline" size="icon" aria-label="Facebook'ta paylaş"><Facebook className="h-5 w-5" /></Button>
-                        <Button variant="outline" size="icon" aria-label="LinkedIn'de paylaş"><Linkedin className="h-5 w-5" /></Button>
+        {isArticle && (
+             <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+                <header className="mb-10">
+                     <span className={`text-sm font-medium mb-3 inline-block tracking-wide uppercase ${ (previewData as Partial<ArticleData>).category === 'Teknoloji' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+                       {(previewData as Partial<ArticleData>).category || '[Kategori Yok]'}
+                     </span>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{commonData.title}</h1>
+                     {(previewData as Partial<ArticleData>).excerpt && <p className="text-lg md:text-xl text-muted-foreground">{(previewData as Partial<ArticleData>).excerpt}</p>}
+                     {((previewData as Partial<ArticleData>).authorId || commonData.createdAt) && (
+                         <p className="text-sm text-muted-foreground mt-3">
+                            {(previewData as Partial<ArticleData>).authorId && `Yazar: ${(previewData as Partial<ArticleData>).authorId}`}
+                            {(previewData as Partial<ArticleData>).authorId && commonData.createdAt && ' | '}
+                            {commonData.createdAt && `Yayınlanma: ${new Date(commonData.createdAt).toLocaleDateString('tr-TR')}`}
+                         </p>
+                     )}
+                </header>
+                 {commonData.imageUrl && (
+                    <div className="mb-10 shadow-xl rounded-lg overflow-hidden">
+                    <Image src={commonData.imageUrl} alt={commonData.title} width={1200} height={600} className="w-full h-auto object-cover" priority data-ai-hint="preview main image"/>
                     </div>
-                </div>
-                <div>
-                    <h2 className="text-2xl font-semibold mb-4">Yorumlar (Placeholder)</h2>
-                    <p className="text-muted-foreground text-sm">Gerçek makalede yorum bölümü burada yer alacaktır.</p>
-                </div>
-            </div>
-        </article>
+                 )}
+                 <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
+                    {commonData.blocks.length > 0 ? commonData.blocks.map(renderBlock) : <p className="text-muted-foreground italic">(İçerik Bölümü Yok)</p>}
+                 </div>
+                 <div className="mt-16 border-t border-border/50 pt-10 space-y-10">
+                    {/* Article specific footer elements */}
+                    <div><h2 className="text-2xl font-semibold mb-4">İlgili Makaleler (Placeholder)</h2><p className="text-muted-foreground text-sm">...</p></div>
+                    <div><h2 className="text-2xl font-semibold mb-4">Paylaş (Placeholder)</h2><div className="flex space-x-3">...</div></div>
+                    <div><h2 className="text-2xl font-semibold mb-4">Yorumlar (Placeholder)</h2><p className="text-muted-foreground text-sm">...</p></div>
+                 </div>
+            </article>
+         )}
+
+        {isNote && (
+             <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+                 <header className="mb-8">
+                     <Link href="/biyoloji-notlari" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center mb-2"><ArrowLeft className="mr-1 h-3 w-3" /> Biyoloji Notlarına Dön</Link>
+                     <h1 className="text-3xl md:text-4xl font-bold mb-3 leading-tight flex items-center gap-2"><BookCopy className="h-7 w-7 text-green-600"/> {commonData.title}</h1>
+                     <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
+                         <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">{(previewData as Partial<NoteData>).category || '[Kategori]'}</Badge>
+                         <Badge variant="outline">{(previewData as Partial<NoteData>).level || '[Seviye]'}</Badge>
+                         {commonData.createdAt && <span>| Son Güncelleme: {new Date(commonData.createdAt).toLocaleDateString('tr-TR')}</span>}
+                     </div>
+                     {(previewData as Partial<NoteData>).tags && (previewData as Partial<NoteData>).tags!.length > 0 && (
+                         <div className="flex flex-wrap gap-2 mt-3">
+                             {(previewData as Partial<NoteData>).tags!.map(tag => <Badge key={tag} variant="outline" className="text-xs font-normal flex items-center gap-1"><Tag className="h-3 w-3"/>{tag}</Badge>)}
+                         </div>
+                     )}
+                 </header>
+                  {commonData.imageUrl && (
+                    <div className="mb-8 shadow-lg rounded-lg overflow-hidden">
+                        <Image src={commonData.imageUrl} alt={commonData.title} width={800} height={400} className="w-full h-auto object-cover" priority data-ai-hint="biology note header image"/>
+                    </div>
+                  )}
+                  {(previewData as Partial<NoteData>).summary && (
+                    <p className="text-lg text-muted-foreground mb-8 p-4 bg-secondary/40 rounded-md border border-border/50">{(previewData as Partial<NoteData>).summary}</p>
+                  )}
+                  <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
+                    {commonData.blocks.length > 0 ? commonData.blocks.map(renderBlock) : <p className="text-muted-foreground italic">(İçerik Bölümü Yok)</p>}
+                  </div>
+                   <Separator className="my-12"/>
+                  {/* Note specific footer elements */}
+                   <div><h2 className="text-2xl font-semibold mb-4">İlgili Notlar (Placeholder)</h2><p className="text-muted-foreground text-sm">...</p></div>
+            </article>
+         )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -18,15 +19,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Keep AlertDialogTrigger
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Ensure ScrollArea is imported
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Eye } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
-import type { ArticleData } from '@/lib/mock-data'; // Import ArticleData
+import type { ArticleData } from '@/lib/mock-data';
 
 // --- Block Types (Should match the editor's block types) ---
 export type Block =
@@ -47,8 +48,8 @@ interface Template {
   description: string;
   previewImageUrl: string;
   blocks: Block[];
-  category?: 'Teknoloji' | 'Biyoloji';
-  // Add other ArticleData fields that are relevant for a template
+  type: 'article' | 'note'; // Add type property
+  category?: 'Teknoloji' | 'Biyoloji'; // Make category optional for general templates
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string[];
@@ -62,6 +63,7 @@ interface TemplateSelectorProps {
   onSelectTemplate?: (content: string) => void; // Keep for potential backward compatibility if needed
   onSelectTemplateBlocks: (blocks: Block[]) => void;
   blocksCurrentlyExist: boolean; // Indicates if there are blocks in the editor
+  templateTypeFilter?: 'article' | 'note'; // Optional filter
 }
 
 
@@ -69,12 +71,13 @@ interface TemplateSelectorProps {
 // Ensure each template has unique content, topics, images, etc.
 const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-const templates: Template[] = [
+const allTemplates: Template[] = [
   {
     id: 'standard-article',
     name: 'Standart Makale',
     description: 'Giriş, ana görsel, alt başlıklar ve sonuç bölümü içeren temel makale düzeni.',
     previewImageUrl: 'https://picsum.photos/seed/template-std-ai/300/200',
+    type: 'article', // Type specified
     category: 'Teknoloji',
     excerpt: 'Yapay zeka etiği ve toplumsal etkileri üzerine odaklanan standart bir makale yapısı.',
     seoTitle: 'Yapay Zeka Etiği ve Toplumsal Sorumluluklar',
@@ -99,6 +102,7 @@ const templates: Template[] = [
     name: 'Listeleme Makalesi',
     description: 'Belirli bir konuda numaralı veya madde işaretli öneriler/bilgiler sunan format.',
     previewImageUrl: 'https://picsum.photos/seed/template-list-brain/300/200',
+    type: 'article', // Type specified
     category: 'Biyoloji',
     excerpt: 'Beyin sağlığınızı korumak ve geliştirmek için bilimsel temelli 7 basit yöntemi listeleyen bir şablon.',
     seoTitle: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem',
@@ -142,6 +146,7 @@ const templates: Template[] = [
     name: 'Görsel Galerisi',
     description: 'Görsellerin ön planda olduğu, açıklamalı ve tematik galeri düzeni.',
     previewImageUrl: 'https://picsum.photos/seed/template-gallery-space/300/200',
+    type: 'article', // Type specified
     category: 'Teknoloji',
     excerpt: 'James Webb Uzay Teleskobu tarafından çekilen nefes kesici uzay fotoğraflarından oluşan bir galeri.',
     seoTitle: 'James Webb Teleskobu Harikaları: Uzay Galerisi',
@@ -165,6 +170,7 @@ const templates: Template[] = [
     name: 'SSS Makalesi',
     description: 'Belirli bir konudaki sıkça sorulan sorulara net cevaplar veren format.',
     previewImageUrl: 'https://picsum.photos/seed/template-faq-solar/300/200',
+    type: 'article', // Type specified
     category: 'Teknoloji',
     excerpt: 'Ev tipi güneş enerjisi sistemleri hakkında merak edilen temel sorular ve yanıtları.',
     seoTitle: 'Ev Tipi Güneş Enerjisi Sistemleri Hakkında SSS',
@@ -196,6 +202,7 @@ const templates: Template[] = [
     name: 'Nasıl Yapılır Rehberi',
     description: 'Belirli bir işlemi adım adım anlatan, öğretici içerikler için ideal.',
     previewImageUrl: 'https://picsum.photos/seed/template-howto-plant/300/200',
+    type: 'article', // Type specified
     category: 'Biyoloji',
     excerpt: 'Evde kolayca mikro yeşillik yetiştirmek için adım adım pratik bir rehber.',
     seoTitle: 'Evde Mikro Yeşillik Nasıl Yetiştirilir? Adım Adım Rehber',
@@ -233,6 +240,7 @@ const templates: Template[] = [
     name: 'Röportaj Makalesi',
     description: 'Bir uzmanla yapılan söyleşiyi soru-cevap formatında detaylı bir şekilde sunar.',
     previewImageUrl: 'https://picsum.photos/seed/template-interview-neuro/300/200',
+    type: 'article', // Type specified
     category: 'Biyoloji',
     excerpt: 'Nörobilim uzmanı Dr. Elif Aydın ile beyin plastisitesi ve öğrenme üzerine bir röportaj.',
     seoTitle: 'Röportaj: Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme',
@@ -262,11 +270,68 @@ const templates: Template[] = [
         { id: generateId(), type: 'text', content: 'Dr. Elif Aydın\'a beyin plastisitesi konusundaki değerli bilgileri paylaştığı için teşekkür ediyoruz. Beynimizin bu inanılmaz uyum yeteneği, sürekli gelişim ve öğrenme için bize büyük bir potansiyel sunuyor.' },
     ]
   },
+    // --- Note Templates ---
+   {
+    id: 'note-basic-concept',
+    name: 'Temel Kavram Notu',
+    description: 'Bir biyoloji kavramını açıklayan, tanım ve anahtar noktaları içeren basit not düzeni.',
+    previewImageUrl: 'https://picsum.photos/seed/note-concept-dna/300/200',
+    type: 'note', // Type specified
+    blocks: [
+        { id: generateId(), type: 'heading', level: 2, content: '[Kavram Adı]' },
+        { id: generateId(), type: 'text', content: '**Tanım:** [Kavramın kısa ve net tanımı buraya gelecek.]' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Anahtar Noktalar' },
+        { id: generateId(), type: 'text', content: '- [Anahtar nokta 1]\n- [Anahtar nokta 2]\n- [Anahtar nokta 3]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-concept-placeholder/600/300', alt: 'Kavramla İlgili Görsel', caption:'[Görsel açıklaması]' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Örnek/İlişkili Konular' },
+        { id: generateId(), type: 'text', content: '[Kavramın anlaşıldığı bir örnek veya ilişkili diğer konular.]' },
+    ]
+   },
+   {
+    id: 'note-process-steps',
+    name: 'Süreç Adımları Notu',
+    description: 'Biyolojik bir süreci (örn. fotosentez, mitoz) adım adım açıklayan not düzeni.',
+    previewImageUrl: 'https://picsum.photos/seed/note-process-mitosis/300/200',
+    type: 'note', // Type specified
+    blocks: [
+        { id: generateId(), type: 'heading', level: 2, content: '[Süreç Adı]' },
+        { id: generateId(), type: 'text', content: '[Sürecin genel bir özeti veya amacı.]' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [Adımın Adı]' },
+        { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-process-step1/500/250', alt: 'Adım 1 Görseli', caption:'[Adım 1 ile ilgili görsel]' },
+        { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [Adımın Adı]' },
+        { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-process-step2/500/250', alt: 'Adım 2 Görseli', caption:'[Adım 2 ile ilgili görsel]' },
+        { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'heading', level: 3, content: '[... Diğer Adımlar ...]' },
+        { id: generateId(), type: 'text', content: '[Sürecin sonucu veya önemi.]' },
+    ]
+   },
+    {
+    id: 'note-comparison',
+    name: 'Karşılaştırma Notu',
+    description: 'İki veya daha fazla biyolojik kavramı/yapıyı karşılaştıran not düzeni.',
+    previewImageUrl: 'https://picsum.photos/seed/note-compare-cells/300/200',
+    type: 'note', // Type specified
+    blocks: [
+        { id: generateId(), type: 'heading', level: 2, content: '[Kavram 1] ve [Kavram 2] Karşılaştırması' },
+        { id: generateId(), type: 'text', content: '[Karşılaştırılan kavramların kısa bir tanıtımı.]' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Benzerlikler' },
+        { id: generateId(), type: 'text', content: '- [Benzerlik 1]\n- [Benzerlik 2]' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Farklılıklar' },
+        // Simple text-based table structure
+        { id: generateId(), type: 'text', content: '**Özellik** | **[Kavram 1]** | **[Kavram 2]**' },
+        { id: generateId(), type: 'text', content: '---|---|---' }, // Markdown table separator
+        { id: generateId(), type: 'text', content: '[Farklılık 1] | [Kavram 1 Açıklama] | [Kavram 2 Açıklama]' },
+        { id: generateId(), type: 'text', content: '[Farklılık 2] | [Kavram 1 Açıklama] | [Kavram 2 Açıklama]' },
+        { id: generateId(), type: 'quote', content: '[Karşılaştırma ile ilgili önemli bir not veya özet.]', citation:'' },
+    ]
+   },
 ];
 
 // --- Helper Functions ---
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Use a fixed key
-
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Use the fixed key
 
 // Function to convert block structure to HTML (basic implementation for backward compatibility)
 // NOTE: This function is deprecated and might not fully represent complex block types.
@@ -343,25 +408,25 @@ export function TemplateSelector({
   onClose,
   onSelectTemplate,
   onSelectTemplateBlocks,
-  blocksCurrentlyExist
+  blocksCurrentlyExist,
+  templateTypeFilter // Added filter prop
 }: TemplateSelectorProps) {
     const [selectedTemplate, setSelectedTemplate] = React.useState<Template | null>(null);
-    const [isConfirmOpen, setIsConfirmOpen] = React.useState(false); // Explicit state for confirmation dialog
+    const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
 
     const handleSelectClick = (template: Template) => {
-        setSelectedTemplate(template); // Store the selected template temporarily
+        setSelectedTemplate(template);
         if (blocksCurrentlyExist) {
-            setIsConfirmOpen(true); // Open confirmation dialog if blocks exist
+            setIsConfirmOpen(true);
         } else {
-            applyTemplate(template); // Apply directly if no blocks exist
+            applyTemplate(template);
         }
     };
 
     const applyTemplate = (templateToApply: Template | null) => {
         if (!templateToApply) return;
 
-        // Generate new IDs for template blocks safely on the client
-         const newBlocks = templateToApply.blocks.map(block => ({
+        const newBlocks = templateToApply.blocks.map(block => ({
             ...block,
             id: generateId()
         }));
@@ -373,97 +438,110 @@ export function TemplateSelector({
              onSelectTemplate(htmlContent);
         }
         onClose();
-        setIsConfirmOpen(false); // Close confirmation dialog
-        setSelectedTemplate(null); // Reset selected template
-        // Toast message moved to the component calling this selector
+        setIsConfirmOpen(false);
+        setSelectedTemplate(null);
     };
 
      // Handler for template preview - pass the specific template's data
     const handlePreview = (template: Template) => {
-        if (typeof window === 'undefined') return; // Guard against server-side execution
+        if (typeof window === 'undefined') return;
 
-        const previewData: Partial<ArticleData> = {
-            id: `preview-${template.id}`, // Use a unique ID for template previews
+        // Adjust preview data based on template type
+        let previewData: Partial<ArticleData> | Record<string, any> = {
+            id: `preview-${template.id}`,
             title: template.seoTitle || template.name,
-            excerpt: template.excerpt || template.description,
             blocks: template.blocks,
-            category: template.category || 'Teknoloji',
-            status: 'Yayınlandı', // Simulate published status for preview
-            mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
-            seoTitle: template.seoTitle,
-            seoDescription: template.seoDescription,
-            keywords: template.keywords,
+            // Common fields
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            authorId: 'template-author',
             slug: `template-${template.id}-preview`,
-            isFeatured: false,
-            isHero: false,
         };
+
+        if (template.type === 'article') {
+            previewData = {
+                ...previewData,
+                previewType: 'article', // Add identifier for article
+                excerpt: template.excerpt || template.description,
+                category: template.category || 'Teknoloji',
+                status: 'Yayınlandı',
+                mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
+                seoTitle: template.seoTitle,
+                seoDescription: template.seoDescription,
+                keywords: template.keywords,
+                authorId: 'template-author',
+                isFeatured: false,
+                isHero: false,
+            };
+        } else if (template.type === 'note') {
+             previewData = {
+                 ...previewData,
+                 previewType: 'note', // Add identifier for note
+                 category: template.category || 'Genel', // Example default category for notes
+                 level: 'Lise 9', // Example default level
+                 tags: template.keywords || [], // Use keywords as tags for notes
+                 summary: template.excerpt || template.description,
+                 imageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
+             };
+        }
 
         console.log(`[TemplateSelector/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
         console.log(`[TemplateSelector/handlePreview] Preview Data:`, previewData);
 
         try {
-            const stringifiedData = JSON.stringify(previewData);
-            console.log(`[TemplateSelector/handlePreview] Stringified data length: ${stringifiedData.length}`);
-
-            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             console.log(`[TemplateSelector/handlePreview] Successfully saved data for key: ${PREVIEW_STORAGE_KEY}`);
 
             // Verification
             const stored = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            if (!stored || stored.length < 10) { // Basic check if data seems valid
+            if (!stored || stored.length < 10) {
                  throw new Error("Verification failed: Data not found or empty in localStorage immediately after set.");
             }
-            console.log("[TemplateSelector/handlePreview] Verification SUCCESS: Data found in localStorage.");
+            const parsed = JSON.parse(stored);
+             // More specific check based on type
+            if (template.type === 'article' && parsed.previewType !== 'article') throw new Error("Verification failed: Stored data is not article type.");
+            if (template.type === 'note' && parsed.previewType !== 'note') throw new Error("Verification failed: Stored data is not note type.");
 
-            const previewUrl = `/admin/preview`; // Use the fixed preview URL
+            console.log("[TemplateSelector/handlePreview] Verification SUCCESS.");
+
+            const previewUrl = `/admin/preview`;
             console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
-            // Add a small delay before opening the window
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
                     console.error("[TemplateSelector/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
-                    toast({
-                        variant: "destructive",
-                        title: "Önizleme Penceresi Açılamadı",
-                        description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                        duration: 10000,
-                    });
+                    toast({ variant: "destructive", title: "Önizleme Penceresi Açılamadı", description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.", duration: 10000 });
                 } else {
                     console.log("[TemplateSelector/handlePreview] Preview window opened successfully.");
                 }
-            }, 150); // 150ms delay
+            }, 150);
 
         } catch (error: any) {
             console.error("[TemplateSelector/handlePreview] Error during preview process:", error);
-            toast({
-                variant: "destructive",
-                title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
-                duration: 10000,
-            });
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`, duration: 10000 });
         }
     };
+
+    // Filter templates based on the provided type
+    const filteredTemplates = templateTypeFilter
+        ? allTemplates.filter(t => t.type === templateTypeFilter)
+        : allTemplates;
 
 
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col"> {/* Wider dialog, height limit, flex */}
+                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>Makale Şablonu Seç</DialogTitle>
+                        <DialogTitle>{templateTypeFilter === 'note' ? 'Not Şablonu Seç' : 'Makale Şablonu Seç'}</DialogTitle>
                         <DialogDescription>
                             İçeriğinizi oluşturmaya başlamak için hazır bir şablon seçin.
                             {blocksCurrentlyExist && <span className="text-destructive font-medium"> Şablon içeriği mevcut içeriğinizin üzerine yazılabilir (onayınızla).</span>}
                         </DialogDescription>
                     </DialogHeader>
-                     {/* Make ScrollArea take remaining space */}
                     <ScrollArea className="flex-grow w-full rounded-md border my-4">
                         <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
-                            {templates.map((template) => (
+                            {filteredTemplates.map((template) => ( // Use filteredTemplates
                                 <Card key={template.id} className="flex flex-col">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-base">{template.name}</CardTitle>
@@ -476,7 +554,7 @@ export function TemplateSelector({
                                                 layout="fill"
                                                 objectFit="cover"
                                                 className="rounded"
-                                                data-ai-hint={template.category?.toLowerCase() || 'abstract'} // Add hint
+                                                data-ai-hint={template.category?.toLowerCase() || 'abstract'}
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground flex-grow">{template.description}</p>
@@ -485,9 +563,9 @@ export function TemplateSelector({
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                             {/* Conditional rendering based on blocksCurrentlyExist */}
                                              <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={(open) => { if (!open) setSelectedTemplate(null); setIsConfirmOpen(open); }}>
                                                 <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                    {/* Added onClick to AlertDialogTrigger to handle the initial click */}
                                                     <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
@@ -510,6 +588,11 @@ export function TemplateSelector({
                                     </CardContent>
                                 </Card>
                             ))}
+                             {filteredTemplates.length === 0 && (
+                                <p className="text-muted-foreground text-center md:col-span-2 lg:col-span-3 py-4">
+                                    Bu tür için uygun şablon bulunamadı.
+                                </p>
+                            )}
                         </div>
                     </ScrollArea>
                     <DialogFooter>
@@ -519,7 +602,6 @@ export function TemplateSelector({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
         </>
     );
 }
