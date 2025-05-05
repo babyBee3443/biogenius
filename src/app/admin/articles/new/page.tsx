@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -61,8 +60,8 @@ export default function NewArticlePage() {
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
-    // Block Editor State - Initialize with empty array, add default block client-side
-    const [blocks, setBlocks] = React.useState<Block[]>([]);
+    // Block Editor State - Initialize with default block client-side
+    const [blocks, setBlocks] = React.useState<Block[]>(() => [createDefaultBlock()]); // Initialize with default block
 
     // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -75,10 +74,6 @@ export default function NewArticlePage() {
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
 
-     // Add default block only on the client after mount
-    React.useEffect(() => {
-        setBlocks([createDefaultBlock()]);
-    }, []);
 
     // --- Handlers ---
 
@@ -275,11 +270,20 @@ export default function NewArticlePage() {
             localStorage.setItem(previewKey, JSON.stringify(previewData));
             console.log(`[NewArticlePage/handlePreview] Saved data to localStorage with key: ${previewKey}. Verifying...`);
 
+            // Verification Step
             const storedData = localStorage.getItem(previewKey);
              if (!storedData) {
-                throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+                 console.error(`[NewArticlePage/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
+                 throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+             }
+            try {
+                 // Try parsing to ensure data is valid JSON
+                JSON.parse(storedData);
+                console.log(`[NewArticlePage/handlePreview] Verification successful. Data length: ${storedData.length}`);
+            } catch (parseError: any) {
+                 console.error(`[NewArticlePage/handlePreview] Verification failed: Data for key ${previewKey} is not valid JSON.`, parseError);
+                 throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
             }
-            console.log(`[NewArticlePage/handlePreview] Verification successful. Data length: ${storedData.length}`);
 
             const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
             window.open(previewUrl, '_blank');

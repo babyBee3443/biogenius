@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -268,7 +267,7 @@ export default function EditArticlePage() {
             // 'updatedAt' will be handled by the updateArticle function on the backend/mock
         };
 
-         console.log("Preparing to save article:", articleId, "with data:", currentData);
+         console.log("[EditArticlePage/handleSave] Preparing to save article:", articleId, "with data:", currentData);
          setSaving(true);
 
          try {
@@ -293,17 +292,18 @@ export default function EditArticlePage() {
                  setKeywords(updatedArticle.keywords || []);
                  setCanonicalUrl(updatedArticle.canonicalUrl || "");
                  // Keep templateApplied state as is after save, only modification actions reset it
-
+                  console.log("[EditArticlePage/handleSave] Save successful. Updated articleData state:", updatedArticle);
                  toast({
                      title: "Makale Kaydedildi",
                      description: `"${updatedArticle.title}" başlıklı makale başarıyla kaydedildi (${updatedArticle.status}).`,
                  });
 
              } else {
+                  console.error("[EditArticlePage/handleSave] Save failed. API returned no data.");
                   toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilemedi." });
              }
          } catch (error) {
-             console.error("Error saving article:", error);
+             console.error("[EditArticlePage/handleSave] Error during save:", error);
              toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilirken bir hata oluştu." });
          } finally {
              setSaving(false);
@@ -391,11 +391,21 @@ export default function EditArticlePage() {
             localStorage.setItem(previewKey, JSON.stringify(previewData));
             console.log(`[EditArticlePage/handlePreview] Saved data to localStorage with key: ${previewKey}. Verifying...`);
 
+            // Verification Step
             const storedData = localStorage.getItem(previewKey);
             if (!storedData) {
+                console.error(`[EditArticlePage/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
                 throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
             }
-             console.log(`[EditArticlePage/handlePreview] Verification successful. Data length: ${storedData.length}`);
+            try {
+                 // Try parsing to ensure data is valid JSON
+                JSON.parse(storedData);
+                console.log(`[EditArticlePage/handlePreview] Verification successful. Data length: ${storedData.length}`);
+            } catch (parseError: any) {
+                 console.error(`[EditArticlePage/handlePreview] Verification failed: Data for key ${previewKey} is not valid JSON.`, parseError);
+                 throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
+            }
+
 
             const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
             window.open(previewUrl, '_blank');

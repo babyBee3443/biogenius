@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -348,24 +347,33 @@ export function TemplateSelector({
     const [isConfirmOpen, setIsConfirmOpen] = React.useState(false); // Explicit state for confirmation dialog
 
     const handleSelectClick = (template: Template) => {
-        setSelectedTemplate(template);
+        setSelectedTemplate(template); // Store the selected template temporarily
         if (blocksCurrentlyExist) {
             setIsConfirmOpen(true); // Open confirmation dialog if blocks exist
         } else {
-            applyTemplate(template.blocks); // Apply directly if no blocks exist
+            applyTemplate(template); // Apply directly if no blocks exist
         }
     };
 
-    const applyTemplate = (blocks: Block[]) => {
-        onSelectTemplateBlocks(blocks);
+    const applyTemplate = (templateToApply: Template | null) => {
+        if (!templateToApply) return;
+
+        // Generate new IDs for template blocks safely on the client
+         const newBlocks = templateToApply.blocks.map(block => ({
+            ...block,
+            id: generateBlockId()
+        }));
+        onSelectTemplateBlocks(newBlocks);
+
         if (onSelectTemplate) {
              console.warn("TemplateSelector: onSelectTemplate is deprecated. Use onSelectTemplateBlocks instead.");
-             const htmlContent = blocksToHtml(blocks);
+             const htmlContent = blocksToHtml(newBlocks);
              onSelectTemplate(htmlContent);
         }
         onClose();
         setIsConfirmOpen(false); // Close confirmation dialog
         setSelectedTemplate(null); // Reset selected template
+        toast({ title: "Şablon Uygulandı", description: `"${templateToApply.name}" şablonu başarıyla uygulandı.` });
     };
 
      // Handle template preview - pass the specific template's data
@@ -398,13 +406,23 @@ export function TemplateSelector({
             localStorage.setItem(previewKey, JSON.stringify(previewData));
             console.log(`[TemplateSelector/handlePreview] Saved data to localStorage with key: ${previewKey}. Verifying...`);
 
+             // Verification Step
             const storedData = localStorage.getItem(previewKey);
              if (!storedData) {
-                throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+                 console.error(`[TemplateSelector/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
+                 throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+             }
+            try {
+                 // Try parsing to ensure data is valid JSON
+                JSON.parse(storedData);
+                console.log(`[TemplateSelector/handlePreview] Verification successful. Data length: ${storedData.length}`);
+            } catch (parseError: any) {
+                 console.error(`[TemplateSelector/handlePreview] Verification failed: Data for key ${previewKey} is not valid JSON.`, parseError);
+                 throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
             }
-            console.log(`[TemplateSelector/handlePreview] Verification successful. Data length: ${storedData.length}`);
 
-            const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' query param
+
+            const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
             window.open(previewUrl, '_blank');
             console.log(`[TemplateSelector/handlePreview] Opened preview window for URL: ${previewUrl}`);
 
@@ -456,10 +474,16 @@ export function TemplateSelector({
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                            {/* Trigger selection process */}
-                                             <Button size="sm" onClick={() => handleSelectClick(template)}>
-                                                 Seç
-                                             </Button>
+                                            {/* Wrap the "Seç" button in AlertDialogTrigger */}
+                                             <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={setIsConfirmOpen}>
+                                                  <AlertDialogTrigger asChild>
+                                                      {/* The original "Seç" button logic triggers the confirmation check */}
+                                                      <Button size="sm" onClick={() => handleSelectClick(template)}>
+                                                          Seç
+                                                      </Button>
+                                                  </AlertDialogTrigger>
+                                                  {/* Confirmation Dialog Content (moved outside the map) */}
+                                              </AlertDialog>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -474,23 +498,24 @@ export function TemplateSelector({
                 </DialogContent>
             </Dialog>
 
-            {/* Confirmation Dialog */}
-            <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+             {/* Centralized Confirmation Dialog */}
+             <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
-                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
+                     <AlertDialogHeader>
+                         <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                         <AlertDialogDescription>
+                             Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
+                             Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                         </AlertDialogDescription>
+                     </AlertDialogHeader>
+                     <AlertDialogFooter>
                          <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
-                         <AlertDialogAction onClick={() => selectedTemplate && applyTemplate(selectedTemplate.blocks)}>
+                         {/* Ensure applyTemplate is called with the stored selectedTemplate */}
+                         <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
                              Evet, Üzerine Yaz
                          </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
+                     </AlertDialogFooter>
+                 </AlertDialogContent>
              </AlertDialog>
         </>
     );
