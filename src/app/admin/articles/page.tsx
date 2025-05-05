@@ -221,7 +221,7 @@ export default function AdminArticlesPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{article.authorId || 'Bilinmiyor'}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(article.status)} className={article.status === 'Arşivlendi' ? 'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive' : ''}>
+                      <Badge variant={getStatusVariant(article.status)}>
                         {article.status}
                       </Badge>
                     </TableCell>
