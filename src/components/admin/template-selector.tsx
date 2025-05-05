@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -98,8 +97,8 @@ const templates: Template[] = [
         { id: generateId(), type: 'text', content: 'Pomodoro tekniği gibi zaman yönetimi yöntemleri, dikkatinizi odaklamanıza ve işleri belirli zaman dilimlerinde tamamlamanıza yardımcı olur. 25 dakika çalışıp 5 dakika mola vererek başlayabilirsiniz.' },
         { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: '2. Önceliklendirme Yapın (Eisenhower Matrisi)' },
-        { id: generateId(), type: 'text', content: 'Görevlerinizi aciliyet ve önem derecelerine göre sınıflandırın. Eisenhower Matrisi (Acil/Önemli Matrisi) bu konuda size yol gösterebilir. Önemli ama acil olmayan işlere odaklanmak uzun vadede daha verimli olmanızı sağlar.' },
         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-matrix/600/300', alt: 'Eisenhower Matrisi', caption: 'Görevleri sınıflandırın.' }, // Added specific image
+        { id: generateId(), type: 'text', content: 'Görevlerinizi aciliyet ve önem derecelerine göre sınıflandırın. Eisenhower Matrisi (Acil/Önemli Matrisi) bu konuda size yol gösterebilir. Önemli ama acil olmayan işlere odaklanmak uzun vadede daha verimli olmanızı sağlar.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: '3. Mola Vermeyi Unutmayın' },
         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-break/600/300', alt: 'Mola Veren Kişi' },
@@ -303,7 +302,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
      // Handle template preview - pass the specific template's data
      const handlePreview = (template: Template) => {
          // Construct the full ArticleData object for preview
-         const previewData: ArticleData = {
+         const previewData: Partial<ArticleData> = { // Use Partial as not all fields might be needed/defined in template
              id: `template-preview-${template.id}`, // Unique ID for preview
              title: template.name, // Use template name as title for preview list
              excerpt: template.excerpt || template.description,
@@ -322,7 +321,8 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
              authorId: 'template-author', // Placeholder author
              createdAt: new Date().toISOString(), // Current time for preview
              updatedAt: new Date().toISOString(),
-             content: '', // Add missing property
+             // Ensure 'content' field exists, even if empty, to match ArticleData
+             content: '',
          };
          try {
               console.log("Saving preview data for template:", template.id, previewData); // Debug log
@@ -392,5 +392,3 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
     </Dialog>
   );
 }
-
-    

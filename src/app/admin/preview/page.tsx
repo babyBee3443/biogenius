@@ -16,7 +16,7 @@ const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> =
   // Simple rendering, ensuring HTML is handled safely if needed.
   // Using dangerouslySetInnerHTML is risky without sanitization.
   // For preview, rendering plain text might be safer or use a basic markdown parser.
-  <p>{block.content || '[Boş Metin Bloğu]'}</p>
+  <p dangerouslySetInnerHTML={{ __html: block.content?.replace(/\n/g, '<br />') || '[Boş Metin Bloğu]' }} />
 );
 
 const HeadingBlockRenderer: React.FC<{ block: Extract<Block, { type: 'heading' }> }> = ({ block }) => {
@@ -116,6 +116,12 @@ export default function ArticlePreviewPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') {
+        // Don't run localStorage logic on the server
+        setIsLoading(false);
+        return;
+    }
+
     if (!previewKey) {
         setError("Önizleme anahtarı bulunamadı.");
         setIsLoading(false);
@@ -131,7 +137,8 @@ export default function ArticlePreviewPage() {
             // --- More Robust Validation ---
             if (
                 parsedData &&
-                typeof parsedData === 'object' && // Ensure it's an object
+                typeof parsedData === 'object' &&
+                Object.keys(parsedData).length > 0 && // Ensure it's not an empty object
                 typeof parsedData.title === 'string' && parsedData.title && // Must have a non-empty title
                 Array.isArray(parsedData.blocks) && // Must have blocks array
                 typeof parsedData.category === 'string' && parsedData.category // Must have a category
@@ -147,21 +154,21 @@ export default function ArticlePreviewPage() {
                  };
                  setPreviewData(normalizedData);
             } else {
-                 console.error("Invalid preview data structure:", parsedData); // Log invalid data
-                 setError("Önizleme verisi geçersiz veya eksik.");
+                 console.error("Invalid preview data structure from localStorage:", parsedData); // Log invalid data
+                 setError("Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.");
             }
         } else {
-            setError("Önizleme verisi bulunamadı.");
+            setError(`Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`);
         }
     } catch (e) {
          console.error("Error parsing preview data:", e);
-         setError("Önizleme verisi yüklenirken bir hata oluştu.");
+         setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
     } finally {
         setIsLoading(false);
-         // Optional: Clean up the specific localStorage item after loading
+         // Optional: Clean up the specific localStorage item after loading - maybe delay this or do it on window close
          // setTimeout(() => {
          //   localStorage.removeItem(previewKey);
-         // }, 500); // Small delay before removing
+         // }, 30000); // Remove after 30 seconds
     }
 
   }, [previewKey]); // Depend on the previewKey
@@ -270,5 +277,3 @@ export default function ArticlePreviewPage() {
     </div>
   );
 }
-
-    
