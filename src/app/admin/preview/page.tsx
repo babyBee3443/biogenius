@@ -6,7 +6,7 @@ import { notFound, useSearchParams } from 'next/navigation'; // Import useSearch
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2 } from 'lucide-react'; // Added Eye and VideoIcon
+import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2, AlertTriangle } from 'lucide-react'; // Added Eye, VideoIcon, Loader2, AlertTriangle
 import type { Block } from '@/components/admin/template-selector';
 import type { ArticleData } from '@/lib/mock-data'; // Import the standard ArticleData interface
 
@@ -106,48 +106,56 @@ const renderBlock = (block: Block) => {
     }
 };
 
-export default function ArticlePreviewPage() {
-  const searchParams = useSearchParams(); // Get query parameters
-  const previewKey = searchParams?.get('key'); // Get the unique key
+const POLLING_INTERVAL = 200; // Check every 200ms
+const POLLING_TIMEOUT = 3000; // Wait max 3 seconds
 
-  // Use a broader type initially, then refine
+export default function ArticlePreviewPage() {
+  const searchParams = useSearchParams();
+  const previewKey = searchParams?.get('key');
+
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    let isMounted = true; // Track component mount status
+    let isMounted = true;
+    let pollingIntervalId: NodeJS.Timeout | null = null;
+    let pollingTimeoutId: NodeJS.Timeout | null = null;
+
     console.log("[ArticlePreviewPage] useEffect triggered.");
 
     if (typeof window === 'undefined') {
-        console.log("[ArticlePreviewPage] Running on server, skipping localStorage logic.");
-        setIsLoading(false);
-        return;
+      console.log("[ArticlePreviewPage] Running on server, skipping localStorage logic.");
+      setIsLoading(false);
+      return;
     }
     console.log("[ArticlePreviewPage] Running on client.");
 
     if (!previewKey) {
-        const msg = "Önizleme anahtarı bulunamadı. Lütfen URL'yi kontrol edin.";
-        console.error("[ArticlePreviewPage]", msg);
-        if (isMounted) setError(msg);
-        if (isMounted) setIsLoading(false);
-        return;
+      const msg = "Önizleme anahtarı bulunamadı. Lütfen URL'yi kontrol edin.";
+      console.error("[ArticlePreviewPage]", msg);
+      if (isMounted) {
+        setError(msg);
+        setIsLoading(false);
+      }
+      return;
     }
 
     console.log("[ArticlePreviewPage] Attempting to load preview data for key:", previewKey);
 
-    // Add a small delay before accessing localStorage
-    const timerId = setTimeout(() => {
-        if (!isMounted) return; // Don't proceed if unmounted
+    const pollForData = () => {
+        if (!isMounted) return; // Stop if unmounted
 
         try {
-            console.log("[ArticlePreviewPage] Accessing localStorage.getItem with key:", previewKey);
+            console.log(`[ArticlePreviewPage] Polling localStorage for key: ${previewKey}`);
             const storedData = localStorage.getItem(previewKey);
-            console.log(`[ArticlePreviewPage] localStorage.getItem(${previewKey}) returned: ${storedData ? `Data of length ${storedData.length}` : 'null'}`);
-
 
             if (storedData) {
-                console.log(`[ArticlePreviewPage] Found data in localStorage for key ${previewKey}. Length: ${storedData.length}. Data (start):`, storedData.substring(0, 150) + "...");
+                console.log(`[ArticlePreviewPage] Found data in localStorage during poll for key ${previewKey}. Length: ${storedData.length}.`);
+
+                // Clear timers immediately upon finding data
+                if (pollingIntervalId) clearInterval(pollingIntervalId);
+                if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
 
                 let parsedData;
                 try {
@@ -155,80 +163,102 @@ export default function ArticlePreviewPage() {
                     console.log("[ArticlePreviewPage] Parsed data:", parsedData);
                 } catch (parseError) {
                     console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
-                    console.error("[ArticlePreviewPage] Raw data from localStorage:", storedData); // Log raw data on parse error
-                    if (isMounted) setError("Önizleme verisi bozuk. Lütfen tekrar deneyin.");
-                    if (isMounted) setIsLoading(false);
-                    return;
+                    console.error("[ArticlePreviewPage] Raw data from localStorage:", storedData);
+                    if (isMounted) {
+                        setError("Önizleme verisi bozuk. Lütfen tekrar deneyin.");
+                        setIsLoading(false);
+                    }
+                    return; // Stop execution
                 }
 
-
-                // --- More Robust Validation ---
                 if (
                     parsedData &&
                     typeof parsedData === 'object' &&
-                    Object.keys(parsedData).length > 0 && // Ensure it's not an empty object
-                    typeof parsedData.title === 'string' && parsedData.title && // Must have a non-empty title
-                    Array.isArray(parsedData.blocks) // Must have blocks array (can be empty)
-                    // Add other required fields like category if crucial for preview
-                    // && typeof parsedData.category === 'string' && parsedData.category
+                    Object.keys(parsedData).length > 0 &&
+                    typeof parsedData.title === 'string' && parsedData.title &&
+                    Array.isArray(parsedData.blocks)
                 ) {
-                    // Normalize data before setting state
                     const normalizedData: Partial<ArticleData> = {
                         ...parsedData,
-                        // Use excerpt if available, otherwise try description, else undefined
                         excerpt: parsedData.excerpt ?? parsedData.description,
-                        // Use mainImageUrl if available, otherwise try imageUrl, else undefined
                         mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
                     };
                     console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
-                    if (isMounted) setPreviewData(normalizedData);
-                    if (isMounted) setError(null); // Clear previous errors if successful
+                    if (isMounted) {
+                        setPreviewData(normalizedData);
+                        setError(null);
+                        setIsLoading(false);
+                    }
+                     // Clean up the localStorage item after successful load
+                    try {
+                        localStorage.removeItem(previewKey);
+                        console.log(`[ArticlePreviewPage] Successfully removed localStorage item ${previewKey} after loading.`);
+                    } catch (removeError) {
+                         console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey} after loading:`, removeError);
+                    }
                 } else {
                     const errorMsg = "Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.";
                     console.error("[ArticlePreviewPage]", errorMsg);
-                    console.error("[ArticlePreviewPage] Invalid preview data structure:", parsedData); // Log invalid data structure
-                    if (isMounted) setError(errorMsg);
+                    console.error("[ArticlePreviewPage] Invalid preview data structure:", parsedData);
+                    if (isMounted) {
+                        setError(errorMsg);
+                        setIsLoading(false);
+                    }
                 }
             } else {
-                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
-                console.error("[ArticlePreviewPage]", errorMsg);
-                if (isMounted) setError(errorMsg);
+                // Data not found yet, will poll again if timeout not reached
+                console.log(`[ArticlePreviewPage] Data not found for key ${previewKey}, polling again...`);
             }
         } catch (e) {
-            console.error("[ArticlePreviewPage] Error accessing or processing preview data:", e);
-            if (isMounted) setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
-        } finally {
-            console.log("[ArticlePreviewPage] Finished loading attempt. isLoading:", false);
-            if (isMounted) setIsLoading(false); // Ensure loading is set to false in all cases
-
-            // **REMOVED for debugging** - Do not remove the item immediately
-            // console.log(`[ArticlePreviewPage] Attempting to remove localStorage item with key: ${previewKey}`);
-            // try {
-            //     localStorage.removeItem(previewKey);
-            //     console.log(`[ArticlePreviewPage] Successfully removed localStorage item with key: ${previewKey}`);
-            // } catch (removeError) {
-            //     console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey}:`, removeError);
-            // }
+            console.error("[ArticlePreviewPage] Error accessing or processing preview data during poll:", e);
+            if (pollingIntervalId) clearInterval(pollingIntervalId);
+            if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
+            if (isMounted) {
+                setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
+                setIsLoading(false);
+            }
         }
-    }, 100); // 100ms delay before accessing localStorage
-
-    // Cleanup function to clear timeout and set isMounted to false
-    return () => {
-      isMounted = false;
-      clearTimeout(timerId);
-      console.log("[ArticlePreviewPage] Component unmounted or previewKey changed.");
-      // Consider removing the specific preview item here if needed on unmount
-      // try { localStorage.removeItem(previewKey); } catch (e) {}
     };
 
-  }, [previewKey]); // Depend ONLY on the previewKey
+    // Start polling
+    pollingIntervalId = setInterval(pollForData, POLLING_INTERVAL);
+
+    // Set timeout for polling
+    pollingTimeoutId = setTimeout(() => {
+        if (!isMounted || previewData) return; // Stop if unmounted or data already found
+
+        console.error(`[ArticlePreviewPage] Polling timed out after ${POLLING_TIMEOUT}ms for key: ${previewKey}`);
+        if (pollingIntervalId) clearInterval(pollingIntervalId); // Stop polling
+
+        const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
+        console.error("[ArticlePreviewPage]", errorMsg);
+        if (isMounted) {
+            setError(errorMsg);
+            setIsLoading(false);
+        }
+    }, POLLING_TIMEOUT);
+
+    // Initial check (optional, might find it immediately)
+    pollForData();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      if (pollingIntervalId) clearInterval(pollingIntervalId);
+      if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
+      console.log("[ArticlePreviewPage] Component unmounted or previewKey changed.");
+       // Attempt cleanup if the component unmounts before data is found/processed
+       // try { localStorage.removeItem(previewKey); } catch (e) { console.warn(`Cleanup failed for ${previewKey}`); }
+    };
+
+  }, [previewKey]); // Re-run effect only if previewKey changes
 
    if (isLoading) {
      console.log("[ArticlePreviewPage] Rendering loading state.");
      return (
         <div className="flex justify-center items-center h-screen text-lg">
             <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-            Önizleme yükleniyor...
+            Önizleme verisi bekleniyor...
         </div>
      );
    }
@@ -237,6 +267,7 @@ export default function ArticlePreviewPage() {
         console.log("[ArticlePreviewPage] Rendering error state:", error);
         return (
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+                 <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
                 <h1 className="text-2xl font-bold text-destructive mb-4">Önizleme Hatası</h1>
                 <p className="text-muted-foreground mb-6">{error}</p>
                 <Button onClick={() => window.close()} variant="outline">Sekmeyi Kapat</Button>
@@ -249,7 +280,6 @@ export default function ArticlePreviewPage() {
 
    if (!articleData || Object.keys(articleData).length === 0) { // Added check for empty object too
      console.log("[ArticlePreviewPage] Rendering notFound state (articleData is null or empty).");
-     // This case might be redundant due to error handling, but good as a fallback
      notFound();
    }
 
@@ -264,9 +294,10 @@ export default function ArticlePreviewPage() {
   return (
     <div className="bg-background min-h-screen"> {/* Ensure background covers */}
         {/* Preview Banner */}
-        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 text-center text-sm font-medium sticky top-0 z-50 border-b border-yellow-300 dark:border-yellow-700">
-            <Eye className="inline-block h-4 w-4 mr-2" /> Bu bir önizlemedir. Değişiklikler henüz kaydedilmedi.
-            <Button size="sm" variant="ghost" className="ml-4 h-auto p-1 text-yellow-800 dark:text-yellow-300" onClick={() => window.close()}>
+        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 text-center text-sm font-medium sticky top-0 z-50 border-b border-yellow-300 dark:border-yellow-700 flex items-center justify-center gap-4">
+            <Eye className="h-4 w-4 flex-shrink-0" />
+            <span>Bu bir önizlemedir. Değişiklikler henüz kaydedilmedi.</span>
+            <Button size="sm" variant="ghost" className="h-auto p-1 text-yellow-800 dark:text-yellow-300 ml-auto" onClick={() => window.close()}>
                 Kapat
             </Button>
         </div>
