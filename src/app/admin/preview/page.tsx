@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -104,9 +105,7 @@ export default function ArticlePreviewPage() {
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
   const searchParams = useSearchParams();
-  const templateKey = searchParams ? searchParams.get('templateKey') : null; // Get key safely
 
   React.useEffect(() => {
     let isMounted = true;
@@ -121,15 +120,19 @@ export default function ArticlePreviewPage() {
 
     const loadPreview = () => {
         if (!isMounted) return;
-        if (!templateKey) {
-            console.warn("[ArticlePreviewPage] No templateKey provided in URL.");
-            setError("Önizleme verisi anahtarı (templateKey) belirtilmemiş.");
+
+        const previewKey = searchParams ? searchParams.get('key') : null; // Get 'key' from query params
+
+        if (!previewKey) {
+            console.warn("[ArticlePreviewPage] No 'key' provided in URL query parameters.");
+            setError("Önizleme verisi anahtarı (key) belirtilmemiş.");
             setIsLoading(false);
             return;
         }
-        console.log(`[ArticlePreviewPage] Attempting to load data with key: ${templateKey}`);
+
+        console.log(`[ArticlePreviewPage] Attempting to load data with key: ${previewKey}`);
         try {
-            const storedData = localStorage.getItem(templateKey);
+            const storedData = localStorage.getItem(previewKey);
 
             if (storedData) {
                 console.log(`[ArticlePreviewPage] Found data in localStorage. Length: ${storedData.length}.`);
@@ -137,7 +140,6 @@ export default function ArticlePreviewPage() {
                 try {
                     parsedData = JSON.parse(storedData);
                     console.log("[ArticlePreviewPage] Parsed data:", parsedData);
-                    // Basic validation of the parsed data structure
                     if (!parsedData || typeof parsedData !== 'object' || Object.keys(parsedData).length === 0) {
                          throw new Error(`Invalid preview data structure: ${JSON.stringify(parsedData)}`);
                     }
@@ -148,23 +150,20 @@ export default function ArticlePreviewPage() {
                     return;
                 }
 
-                // Normalize and validate essential fields (title, blocks)
-                if (
-                    typeof parsedData.title === 'string' && parsedData.title &&
-                    Array.isArray(parsedData.blocks)
-                ) {
+                // Basic validation and normalization
+                if (typeof parsedData.title === 'string' && parsedData.title && Array.isArray(parsedData.blocks)) {
                     const normalizedData: Partial<ArticleData> = {
                         ...parsedData,
-                        excerpt: parsedData.excerpt ?? parsedData.description, // Handle potential description field
-                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl, // Handle potential imageUrl field
+                        excerpt: parsedData.excerpt ?? parsedData.description,
+                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
                     };
                     console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
                     if (isMounted) {
                          setPreviewData(normalizedData);
                          setError(null);
-                         // Consider removing the item ONLY if it's meant to be single-use
-                         // localStorage.removeItem(templateKey); // Commented out for debugging
-                         // console.log(`[ArticlePreviewPage] Item ${templateKey} NOT removed from localStorage (debugging).`);
+                          // Optionally remove the item after successful load if it's single-use
+                          // localStorage.removeItem(previewKey);
+                          // console.log(`[ArticlePreviewPage] Item ${previewKey} removed from localStorage.`);
                     }
                 } else {
                     const missingFields = [];
@@ -175,7 +174,7 @@ export default function ArticlePreviewPage() {
                     if (isMounted) setError(errorMsg);
                 }
             } else {
-                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${templateKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
+                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
                 console.error("[ArticlePreviewPage]", errorMsg);
                 if (isMounted) setError(errorMsg);
             }
@@ -187,25 +186,24 @@ export default function ArticlePreviewPage() {
         }
     };
 
-    // Ensure searchParams are ready before loading
-    if (searchParams) { // Check if searchParams object exists
+    // Wait for searchParams to be available
+     if (searchParams) {
         loadPreview();
-    } else if (isMounted) {
-        // Handle the case where searchParams might not be ready initially
-        // We could set loading to false here or wait a bit, but let's signal an issue for now.
-        setError("URL parametreleri yüklenemedi veya bekleniyor...");
-        setIsLoading(false);
+    } else {
+        // If searchParams are not immediately available (should be rare with App Router client components), handle it
+         console.warn("[ArticlePreviewPage] searchParams not immediately available.");
+         // You might set an error or show a loading indicator here, but let's rely on the check inside loadPreview for now.
+         // setError("URL parametreleri bekleniyor...");
+         // setIsLoading(false); // Or keep loading
     }
 
-    // Cleanup function
+
     return () => {
       isMounted = false;
-      // Consider removing item on unmount if not removed earlier
-      // if (templateKey) localStorage.removeItem(templateKey);
       console.log("[ArticlePreviewPage] Component unmounted.");
     };
 
-  }, [templateKey, searchParams]); // Add searchParams dependency
+  }, [searchParams]); // Depend on searchParams
 
    if (isLoading) {
      console.log("[ArticlePreviewPage] Rendering loading state.");

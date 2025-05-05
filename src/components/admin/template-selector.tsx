@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -327,7 +328,7 @@ const blocksToHtml = (blocks: Block[]): string => {
                  }
                  break;
             default:
-                 // Fallback for unknown block types
+                // Fallback for unknown block types
                 //  html += `<!-- Unsupported block type: ${block.type} -->\n`; // Removed logging of unknown types
                 break;
         }
@@ -344,11 +345,15 @@ export function TemplateSelector({
   blocksCurrentlyExist
 }: TemplateSelectorProps) {
     const [selectedTemplate, setSelectedTemplate] = React.useState<Template | null>(null);
-    // const [isConfirmOpen, setIsConfirmOpen] = React.useState(false); // Managed by AlertDialog now
+    const [isConfirmOpen, setIsConfirmOpen] = React.useState(false); // Explicit state for confirmation dialog
 
     const handleSelectClick = (template: Template) => {
         setSelectedTemplate(template);
-        // Confirmation is now handled by AlertDialogTrigger below
+        if (blocksCurrentlyExist) {
+            setIsConfirmOpen(true); // Open confirmation dialog if blocks exist
+        } else {
+            applyTemplate(template.blocks); // Apply directly if no blocks exist
+        }
     };
 
     const applyTemplate = (blocks: Block[]) => {
@@ -359,53 +364,64 @@ export function TemplateSelector({
              onSelectTemplate(htmlContent);
         }
         onClose();
-        // setIsConfirmOpen(false); // No longer needed
+        setIsConfirmOpen(false); // Close confirmation dialog
         setSelectedTemplate(null); // Reset selected template
     };
 
      // Handle template preview - pass the specific template's data
-     const handlePreview = (template: Template) => {
-         // Construct the full ArticleData object for preview
-         const previewData: Partial<ArticleData> = {
-             id: `preview-${template.id}`, // Use a distinct preview ID
-             title: template.seoTitle || template.name,
-             excerpt: template.excerpt || template.description,
-             blocks: template.blocks,
-             category: template.category || 'Teknoloji', // Default category if not set
-             status: 'Yayınlandı', // Preview as published
-             // Try to find the first image block's URL to use as mainImageUrl
-             mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
-             seoTitle: template.seoTitle,
-             seoDescription: template.seoDescription,
-             keywords: template.keywords,
-             createdAt: new Date().toISOString(), // Use current date for preview
-             updatedAt: new Date().toISOString(),
-             authorId: 'template-author',
-             slug: `template-${template.id}-preview`,
-             isFeatured: false,
-             isHero: false,
-         };
+    const handlePreview = (template: Template) => {
+        if (typeof window === 'undefined') return; // Guard against server-side execution
 
-         // Persist the preview data to localStorage using a unique key
-         try {
-             const previewKey = `articlePreviewData_${template.id}_${Date.now()}`; // Unique key per preview
-             localStorage.setItem(previewKey, JSON.stringify(previewData));
-             console.log(`[TemplateSelector] Saved preview data with key: ${previewKey}`);
+        const previewData: Partial<ArticleData> = {
+            id: `preview-${template.id}`,
+            title: template.seoTitle || template.name,
+            excerpt: template.excerpt || template.description,
+            blocks: template.blocks,
+            category: template.category || 'Teknoloji',
+            status: 'Yayınlandı',
+            mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
+            seoTitle: template.seoTitle,
+            seoDescription: template.seoDescription,
+            keywords: template.keywords,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            authorId: 'template-author',
+            slug: `template-${template.id}-preview`,
+            isFeatured: false,
+            isHero: false,
+        };
 
-             // Open preview with the correct key
-             window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
-         } catch (error) {
-             console.error("[TemplateSelector] Error saving preview data to localStorage:", error);
-             toast({
-                 variant: "destructive",
-                 title: "Önizleme Hatası",
-                 description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu olabilir.",
-             });
-         }
-     };
+        const previewKey = `preview_${template.id}_${Date.now()}`; // Ensure unique key
+        console.log(`[TemplateSelector/handlePreview] Preparing preview data for key: ${previewKey}`, previewData);
+
+        try {
+            localStorage.setItem(previewKey, JSON.stringify(previewData));
+            console.log(`[TemplateSelector/handlePreview] Saved data to localStorage with key: ${previewKey}. Verifying...`);
+
+            const storedData = localStorage.getItem(previewKey);
+             if (!storedData) {
+                throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+            }
+            console.log(`[TemplateSelector/handlePreview] Verification successful. Data length: ${storedData.length}`);
+
+            const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' query param
+            window.open(previewUrl, '_blank');
+            console.log(`[TemplateSelector/handlePreview] Opened preview window for URL: ${previewUrl}`);
+
+        } catch (error: any) {
+            console.error("[TemplateSelector/handlePreview] Error during preview process:", error);
+            toast({
+                variant: "destructive",
+                title: "Önizleme Hatası",
+                description: `Önizleme verisi kaydedilemedi veya açılamadı: ${error.message}`,
+                duration: 10000,
+            });
+        }
+    };
+
 
     return (
-        <AlertDialog> {/* Wrap the entire structure with AlertDialog */}
+        <>
             <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
                 <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col"> {/* Wider dialog, height limit, flex */}
                     <DialogHeader>
@@ -440,12 +456,10 @@ export function TemplateSelector({
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                             {/* Use AlertDialogTrigger for confirmation */}
-                                             <AlertDialogTrigger asChild>
-                                                 <Button size="sm" onClick={() => handleSelectClick(template)}> {/* Only set selected template here */}
-                                                     Seç
-                                                 </Button>
-                                             </AlertDialogTrigger>
+                                            {/* Trigger selection process */}
+                                             <Button size="sm" onClick={() => handleSelectClick(template)}>
+                                                 Seç
+                                             </Button>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -460,23 +474,24 @@ export function TemplateSelector({
                 </DialogContent>
             </Dialog>
 
-            {/* Confirmation Dialog Content - This is now correctly within AlertDialog context */}
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
-                        Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                     <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
-                     {/* Apply the template only when the confirmation action is clicked */}
-                     <AlertDialogAction onClick={() => selectedTemplate && applyTemplate(selectedTemplate.blocks)}>
-                         Evet, Üzerine Yaz
-                     </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+            {/* Confirmation Dialog */}
+            <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                 <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
+                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                         <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
+                         <AlertDialogAction onClick={() => selectedTemplate && applyTemplate(selectedTemplate.blocks)}>
+                             Evet, Üzerine Yaz
+                         </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+             </AlertDialog>
+        </>
     );
 }

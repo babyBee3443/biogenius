@@ -357,65 +357,60 @@ export default function EditArticlePage() {
      };
 
 
-      const handlePreview = () => {
-          if (!category) {
-              toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
-              return;
-          }
-         // Create data for preview, mirroring ArticleData structure as closely as possible
-         const previewData: Partial<ArticleData> = {
-             id: articleId || 'preview_edit', // Distinct ID for edit preview
-             title: title || 'Başlıksız Makale',
-             excerpt: excerpt || '', // Use excerpt for description
-             category: category, // Use selected category
-             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
-             blocks,
-             // Explicitly add status for more accurate preview rendering if needed
-             status: status,
-             isFeatured: isFeatured,
-             isHero: isHero,
-             authorId: articleData?.authorId || 'mock-admin', // Use original authorId if available
-             createdAt: articleData?.createdAt || new Date().toISOString(), // Use original createdAt if available
-             // Include SEO fields for completeness
-             seoTitle: seoTitle || title,
-             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-             slug: slug || generateSlug(title),
-             keywords: keywords || [],
-             canonicalUrl: canonicalUrl || "",
-         };
+     const handlePreview = () => {
+        if (typeof window === 'undefined') return; // Guard against server-side execution
 
-         // --- Debugging & Fixed Key ---
-         const previewKey = "fixedPreviewKey_edit"; // Use a fixed key for debugging
-         console.log(`[EditArticlePage/handlePreview] Preparing preview data for key: ${previewKey}`, previewData);
+        if (!category) {
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
+            return;
+        }
 
-         try {
-             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-                 console.log(`[EditArticlePage/handlePreview] Saving data to localStorage with key: ${previewKey}`);
-                 localStorage.setItem(previewKey, JSON.stringify(previewData));
-                 console.log(`[EditArticlePage/handlePreview] Data saved to localStorage. Verifying...`);
-                  // Verification step
-                 const storedData = localStorage.getItem(previewKey);
-                 if (storedData) {
-                     console.log(`[EditArticlePage/handlePreview] Verification successful: Data found for key ${previewKey}. Length: ${storedData.length}`);
-                 } else {
-                     console.error(`[EditArticlePage/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
-                 }
-                 window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
-                 console.log(`[EditArticlePage/handlePreview] Opened preview window.`);
-             } else {
-                  console.error("[EditArticlePage/handlePreview] localStorage is not available.");
-                 throw new Error("localStorage is not available.");
-             }
-         } catch (error) {
-             console.error("[EditArticlePage/handlePreview] Error saving preview data:", error);
-             toast({
-                 variant: "destructive",
-                 title: "Önizleme Hatası",
-                 description: `Önizleme verisi kaydedilemedi. Hata: ${(error as Error).message}`,
-                 duration: 10000,
-             });
-         }
-     };
+        const previewData: Partial<ArticleData> = {
+            id: articleId || 'preview_edit',
+            title: title || 'Başlıksız Makale',
+            excerpt: excerpt || '',
+            category: category,
+            mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
+            blocks,
+            status: status,
+            isFeatured: isFeatured,
+            isHero: isHero,
+            authorId: articleData?.authorId || 'mock-admin',
+            createdAt: articleData?.createdAt || new Date().toISOString(),
+            seoTitle: seoTitle || title,
+            seoDescription: seoDescription || excerpt.substring(0, 160) || "",
+            slug: slug || generateSlug(title),
+            keywords: keywords || [],
+            canonicalUrl: canonicalUrl || "",
+        };
+
+        const previewKey = `preview_${articleId || 'edit'}_${Date.now()}`;
+        console.log(`[EditArticlePage/handlePreview] Preparing preview data for key: ${previewKey}`, previewData);
+
+        try {
+            localStorage.setItem(previewKey, JSON.stringify(previewData));
+            console.log(`[EditArticlePage/handlePreview] Saved data to localStorage with key: ${previewKey}. Verifying...`);
+
+            const storedData = localStorage.getItem(previewKey);
+            if (!storedData) {
+                throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+            }
+             console.log(`[EditArticlePage/handlePreview] Verification successful. Data length: ${storedData.length}`);
+
+            const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
+            window.open(previewUrl, '_blank');
+            console.log(`[EditArticlePage/handlePreview] Opened preview window for URL: ${previewUrl}`);
+
+        } catch (error: any) {
+            console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
+            toast({
+                variant: "destructive",
+                title: "Önizleme Hatası",
+                description: `Önizleme verisi kaydedilemedi veya açılamadı: ${error.message}`,
+                duration: 10000,
+            });
+        }
+    };
 
 
       // --- Block Selection Handler ---
