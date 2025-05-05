@@ -136,7 +136,10 @@ export default function ArticlePreviewPage() {
 
     try {
         // Use the unique key to get the correct data
+        console.log("[ArticlePreviewPage] Accessing localStorage.getItem with key:", previewKey);
         const storedData = localStorage.getItem(previewKey);
+        console.log(`[ArticlePreviewPage] localStorage.getItem returned: ${storedData ? `Data of length ${storedData.length}` : 'null'}`);
+
 
         if (storedData) {
             console.log(`[ArticlePreviewPage] Found data in localStorage for key ${previewKey}. Length: ${storedData.length}. Data (start):`, storedData.substring(0, 150) + "...");

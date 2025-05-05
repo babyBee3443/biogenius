@@ -74,7 +74,7 @@ const templates: Template[] = [
       { id: generateId(), type: 'heading', level: 2, content: 'Konunun Derinlemesine İncelenmesi' },
       { id: generateId(), type: 'text', content: '**[Alt Konu 2]**\'nin daha detaylı incelendiği bölüm. Alt başlıklar kullanarak okunabilirliği artırın. İstatistikler, örnekler veya alıntılarla içeriği zenginleştirin. Örneğin, yapılan bir araştırmaya göre...' },
       { id: generateId(), type: 'heading', level: 2, content: 'Farklı Bir Perspektif ve Video İçerik' },
-      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
+      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', youtubeId: 'dQw4w9WgXcQ' }, // Example video
       { id: generateId(), type: 'text', content: 'Konuyla ilgili farklı görüşler veya alternatif yaklaşımlar bu bölümde ele alınabilir. Tartışmalı konular için dengeli bir sunum önemlidir. Videoda ise konunun [Video İçeriği Açıklaması] gösterilmektedir.' },
       { id: generateId(), type: 'quote', content: 'Bilgi güçtür, ancak paylaşıldığında daha da güçlenir.', citation: 'Francis Bacon (Uyarlanmış)' },
       { id: generateId(), type: 'text', content: 'Sonuç paragrafı, makalede ele alınan ana noktaları özetler (**[Alt Konu 1]** ve **[Alt Konu 2]** gibi) ve okuyucuya bir çıkarım veya geleceğe yönelik bir mesaj sunar.' },
@@ -323,7 +323,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
              createdAt: new Date().toISOString(), // Current time for preview
              updatedAt: new Date().toISOString(),
          };
-          console.log(`[TemplateSelector] Generated previewData for ${template.id}:`, previewData);
+          console.log(`[TemplateSelector] Generated previewData for ${template.id}:`, JSON.stringify(previewData, null, 2).substring(0, 500) + "..."); // Log truncated preview data
 
          try {
               // Generate a unique key for localStorage for each template preview
@@ -336,16 +336,28 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
                 console.warn(`[TemplateSelector] Preview data for ${template.id} might be too large for localStorage (${dataString.length} bytes).`);
              }
 
+             console.log(`[TemplateSelector] Attempting to save data to localStorage for key ${localStorageKey}. Data length: ${dataString.length}`);
              localStorage.setItem(localStorageKey, dataString);
-             console.log(`[TemplateSelector] Saved data to localStorage for key ${localStorageKey}. Data length: ${dataString.length}`);
+             console.log(`[TemplateSelector] Finished attempting to save data for key ${localStorageKey}.`);
 
-              // Verify data was saved correctly
+              // Verify data was saved correctly *immediately* after setting
              const savedData = localStorage.getItem(localStorageKey);
-             if (savedData === dataString) {
-                console.log(`[TemplateSelector] Successfully verified data saved for key ${localStorageKey}.`);
+             if (savedData) {
+                  console.log(`[TemplateSelector] Successfully retrieved data immediately after saving for key ${localStorageKey}. Length: ${savedData.length}.`);
+                 // Optional: Verify content match (can be slow for large data)
+                 // if (savedData === dataString) {
+                 //    console.log(`[TemplateSelector] Data content verification successful for key ${localStorageKey}.`);
+                 // } else {
+                 //    console.error(`[TemplateSelector] Data content verification failed! Retrieved data doesn't match for key ${localStorageKey}.`);
+                 // }
              } else {
-                console.error(`[TemplateSelector] Verification failed! Data retrieved from localStorage does not match for key ${localStorageKey}.`);
-                console.log("[TemplateSelector] Retrieved data:", savedData?.substring(0,100) + "...");
+                 console.error(`[TemplateSelector] Verification failed! Could not retrieve data immediately after saving for key ${localStorageKey}. LocalStorage might be disabled or full.`);
+                  toast({
+                     variant: "destructive",
+                     title: "Önizleme Hatası",
+                     description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu veya devre dışı olabilir.",
+                 });
+                 return; // Stop if saving failed
              }
 
 
