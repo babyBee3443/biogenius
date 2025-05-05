@@ -1,8 +1,44 @@
+
+"use client"; // Essential for hooks like useState, useEffect, useRouter
+
+import * as React from 'react';
+import { useRouter, useParams, notFound } from 'next/navigation'; // Import hooks
+import Link from 'next/link';
+import Image from 'next/image';
+import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-// Removed useDebouncedCallback import
+// import { useDebouncedCallback } from 'use-debounce'; // Removed unused import
 import { getArticleById, updateArticle, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star } from "lucide-react";
 
 // --- Main Page Component ---
 
@@ -165,7 +201,18 @@ export default function EditArticlePage() {
 
     const handleSave = async (publish: boolean = false) => {
         // Determine the status to save based on the 'publish' flag and current status
-        const finalStatus = publish ? "Yayınlandı" : status;
+        let finalStatus = status; // Default to current status
+
+        if (publish && status !== 'Yayınlandı') {
+            finalStatus = "Yayınlandı";
+        } else if (!publish && status === 'Yayınlandı') {
+             // If unpublishing, revert to 'Taslak'
+             finalStatus = "Taslak";
+        } else if (!publish && status !== 'Yayınlandı') {
+             // If saving as draft/review etc. keep the current status
+             finalStatus = status;
+        }
+
 
         if (!category) {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
@@ -282,21 +329,27 @@ export default function EditArticlePage() {
              toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
              return;
          }
-         const previewData = {
+         // Create data for preview, mirroring ArticleData structure as closely as possible
+         const previewData: Partial<ArticleData> = {
              id: articleId || 'preview',
              title: title || 'Başlıksız Makale',
-             description: excerpt || '',
+             excerpt: excerpt || '', // Use excerpt for description
              category: category, // Use selected category
-             imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
+             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
              blocks,
              // Explicitly add status for more accurate preview rendering if needed
              status: status,
              isFeatured: isFeatured,
              isHero: isHero,
+             authorId: articleData?.authorId || 'mock-admin', // Use original authorId if available
+             createdAt: articleData?.createdAt || new Date().toISOString(), // Use original createdAt if available
          };
          try {
-             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
-             window.open('/admin/preview', '_blank');
+              // Generate a unique key for the preview data in localStorage
+             const previewKey = `articlePreviewData_${articleId || 'new'}_${Date.now()}`;
+             localStorage.setItem(previewKey, JSON.stringify(previewData));
+             // Open the preview page in a new tab, passing the key as a query parameter
+             window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
          } catch (error) {
              console.error("Error saving preview data to localStorage:", error);
              toast({
@@ -306,6 +359,7 @@ export default function EditArticlePage() {
              });
          }
      };
+
 
       // --- Block Selection Handler ---
      const handleBlockSelect = (id: string | null) => {
@@ -318,8 +372,9 @@ export default function EditArticlePage() {
         // Set status state to 'Taslak' immediately for visual feedback
         setStatus('Taslak');
         // Trigger save with publish=false to update the backend/mock
-        handleSave(false);
+        handleSave(false); // Pass false to indicate saving as draft
      };
+
 
      // --- Rendering ---
 
@@ -556,7 +611,7 @@ export default function EditArticlePage() {
                                <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving}> {/* Pass false explicitly */}
+                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving}> {/* Save as draft/current status */}
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 Kaydet
                              </Button>

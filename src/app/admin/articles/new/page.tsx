@@ -1,8 +1,44 @@
+
+"use client"; // Essential for hooks like useState, useEffect, useRouter
+
+import * as React from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
+import Link from 'next/link';
+import Image from 'next/image';
+import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-// Removed useDebouncedCallback import
+// import { useDebouncedCallback } from 'use-debounce'; // Removed unused import
 import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Eye, Loader2, Save, Upload, Star } from "lucide-react";
 
 // --- Main Page Component ---
 
@@ -190,7 +226,7 @@ export default function NewArticlePage() {
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
         }));
         // Clear existing blocks before applying the new template
-        setBlocks([]); 
+        setBlocks([]);
         setBlocks(newBlocks);
         setIsTemplateSelectorOpen(false);
         toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
@@ -204,18 +240,22 @@ export default function NewArticlePage() {
          const previewData = {
              id: 'preview',
              title: title || 'Başlıksız Makale',
-             description: excerpt || '',
+             excerpt: excerpt || '', // Use excerpt for description
              category: category,
-             imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
+             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
              blocks,
               // Include other relevant fields for preview if necessary
              isFeatured: isFeatured,
              isHero: isHero,
              status: status,
+             authorId: 'mock-admin', // Example author
+             createdAt: new Date().toISOString(), // Example date
          };
          try {
-             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
-             window.open('/admin/preview', '_blank');
+             // Unique key for preview data
+             const previewKey = `articlePreviewData_new_${Date.now()}`;
+             localStorage.setItem(previewKey, JSON.stringify(previewData));
+             window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
          } catch (error) {
              console.error("Error saving preview data:", error);
              toast({
