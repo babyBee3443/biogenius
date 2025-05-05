@@ -2,7 +2,7 @@
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation'; // Ensure useRouter is imported
+import { useRouter } from 'next/navigation'; // Import useRouter
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -265,6 +265,8 @@ export default function NewArticlePage() {
              seoTitle: seoTitle || title,
              seoDescription: seoDescription || excerpt.substring(0, 160) || "",
              slug: slug || generateSlug(title),
+             keywords: keywords || [], // Added keywords
+             canonicalUrl: canonicalUrl || "", // Added canonicalUrl
          };
 
           // --- Debugging & Fixed Key ---
@@ -278,6 +280,7 @@ export default function NewArticlePage() {
                  console.log(`[NewArticlePage/handlePreview] Data saved to localStorage.`);
                  window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
               } else {
+                   console.error("[NewArticlePage/handlePreview] localStorage is not available.");
                   throw new Error("localStorage is not available.");
               }
          } catch (error) {

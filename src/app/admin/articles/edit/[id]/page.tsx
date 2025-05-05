@@ -395,6 +395,7 @@ export default function EditArticlePage() {
                  console.log(`[EditArticlePage/handlePreview] Data saved to localStorage.`);
                  window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
              } else {
+                  console.error("[EditArticlePage/handlePreview] localStorage is not available.");
                  throw new Error("localStorage is not available.");
              }
          } catch (error) {
