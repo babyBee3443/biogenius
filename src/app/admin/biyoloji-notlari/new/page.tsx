@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -308,8 +307,8 @@ export default function NewBiyolojiNotuPage() {
                                              <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loadingCategories}>
                                                 <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                                 <SelectContent>
-                                                    {loadingCategories && <SelectItem value="" disabled>Yükleniyor...</SelectItem>}
-                                                     {!loadingCategories && categories.length === 0 && <SelectItem value="" disabled>Önce kategori ekleyin</SelectItem>}
+                                                    {loadingCategories && <SelectItem value="loading" disabled>Yükleniyor...</SelectItem>}
+                                                     {!loadingCategories && categories.length === 0 && <SelectItem value="no-categories" disabled>Önce kategori ekleyin</SelectItem>}
                                                      {!loadingCategories && categories.map(cat => (
                                                         <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                                      ))}
