@@ -43,6 +43,7 @@ import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Lay
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 
 // --- Main Page Component ---
 
@@ -66,7 +67,7 @@ export default function EditArticlePage() {
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
-    const [blocks, setBlocks] = React.useState<Block[]>(() => [createDefaultBlock()]); // Initialize with default block
+    const [blocks, setBlocks] = React.useState<Block[]>(() => []); // Initialize empty, create default in effect if needed
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
@@ -127,6 +128,7 @@ export default function EditArticlePage() {
         } else {
             setError("Geçersiz makale ID.");
             setLoading(false);
+            setBlocks([createDefaultBlock()]); // Ensure default block if no ID
         }
         return () => { isMounted = false }; // Cleanup function
     }, [articleId]); // Only run when articleId changes
@@ -384,41 +386,38 @@ export default function EditArticlePage() {
             canonicalUrl: canonicalUrl || "",
         };
 
-        const previewKey = `preview_${articleId || 'edit'}_${Date.now()}`;
-        console.log(`[EditArticlePage/handlePreview] Generating preview key: ${previewKey}`);
+        console.log(`[EditArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[EditArticlePage/handlePreview] Preview Data:`, previewData); // Log the data being saved
 
         try {
-            console.log(`[EditArticlePage/handlePreview] Preparing to save preview data to localStorage with key: ${previewKey}`);
-            console.log(`[EditArticlePage/handlePreview] Preview Data:`, previewData); // Log the data being saved
-
             const stringifiedData = JSON.stringify(previewData);
             console.log(`[EditArticlePage/handlePreview] Stringified data length: ${stringifiedData.length}`);
 
-            localStorage.setItem(previewKey, stringifiedData);
-            console.log(`[EditArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${previewKey}`);
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            console.log(`[EditArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
 
-            // Verification Step 1: Immediate Retrieval
-            const storedData = localStorage.getItem(previewKey);
+            // --- Verification Steps ---
+            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             if (storedData) {
-                console.log(`[EditArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage immediately after setting. Length: ${storedData.length}`);
-                // Verification Step 2: Parsing
+                console.log(`[EditArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage. Length: ${storedData.length}`);
                 try {
                     const parsed = JSON.parse(storedData);
                     console.log(`[EditArticlePage/handlePreview] Verification 2 SUCCESS: Data parsed successfully. Title: ${parsed.title}`);
                 } catch (parseError: any) {
                      console.error(`[EditArticlePage/handlePreview] Verification 2 FAILED: Could not parse stored JSON.`, parseError);
-                     throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
+                     throw new Error(`Verification failed: Data for key ${PREVIEW_STORAGE_KEY} is not valid JSON: ${parseError.message}`);
                 }
             } else {
-                console.error(`[EditArticlePage/handlePreview] Verification 1 FAILED: No data found for key ${previewKey} immediately after setting.`);
-                throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+                console.error(`[EditArticlePage/handlePreview] Verification 1 FAILED: No data found for key ${PREVIEW_STORAGE_KEY}.`);
+                throw new Error(`Verification failed: No data found for key ${PREVIEW_STORAGE_KEY}.`);
             }
+            // --- End Verification Steps ---
 
-
-            const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
+            // Simplified URL - Preview page will read from the fixed key
+            const previewUrl = `/admin/preview`;
             console.log(`[EditArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
-            // Add a small delay before opening the window
+            // Add a small delay before opening the window - helps ensure localStorage is written
             setTimeout(() => {
                  const newWindow = window.open(previewUrl, '_blank');
                  if (!newWindow) {
@@ -434,9 +433,8 @@ export default function EditArticlePage() {
                  }
             }, 150); // 150ms delay
 
-
         } catch (error: any) {
-            console.error("[EditArticlePage/handlePreview] Error during preview process (setItem or verification):", error);
+            console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",

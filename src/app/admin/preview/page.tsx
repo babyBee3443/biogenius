@@ -1,8 +1,7 @@
-
 "use client";
 
 import * as React from "react";
-import { notFound, useSearchParams } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation'; // Keep useSearchParams for potential future use or debugging
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -101,11 +100,12 @@ const renderBlock = (block: Block) => {
     }
 };
 
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Define the fixed key
+
 export default function ArticlePreviewPage() {
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const searchParams = useSearchParams();
 
   React.useEffect(() => {
     let isMounted = true;
@@ -121,92 +121,76 @@ export default function ArticlePreviewPage() {
     const loadPreview = () => {
         if (!isMounted) return;
 
-        const previewKey = searchParams ? searchParams.get('key') : null; // Get 'key' from query params
-        console.log(`[ArticlePreviewPage] Retrieved previewKey from URL: ${previewKey}`);
-
-        if (!previewKey) {
-            console.warn("[ArticlePreviewPage] No 'key' provided in URL query parameters.");
-            setError("Önizleme verisi anahtarı (key) belirtilmemiş.");
-            setIsLoading(false);
-            return;
-        }
-
-        console.log(`[ArticlePreviewPage] Attempting to load data from localStorage with key: ${previewKey}`);
+        console.log(`[ArticlePreviewPage] Attempting to load data from localStorage with key: ${PREVIEW_STORAGE_KEY}`);
         try {
-            const storedData = localStorage.getItem(previewKey);
+            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
 
             if (storedData) {
-                console.log(`[ArticlePreviewPage] Found data in localStorage for key ${previewKey}. Raw data length: ${storedData.length}.`);
-                console.log(`[ArticlePreviewPage] Raw data:`, storedData.substring(0, 200) + '...'); // Log beginning of raw data
+                console.log(`[ArticlePreviewPage] Found data in localStorage for key ${PREVIEW_STORAGE_KEY}. Length: ${storedData.length}.`);
+                // console.log(`[ArticlePreviewPage] Raw data:`, storedData.substring(0, 500) + '...'); // Log beginning of raw data
+
                 let parsedData;
                 try {
                     parsedData = JSON.parse(storedData);
-                    console.log("[ArticlePreviewPage] Parsed data:", parsedData);
+                    console.log("[ArticlePreviewPage] Parsed data successfully.");
+                    // console.log("[ArticlePreviewPage] Parsed data content:", parsedData); // More detailed log
+
                     if (!parsedData || typeof parsedData !== 'object' || Object.keys(parsedData).length === 0) {
-                         const errorMsg = `Invalid preview data structure after parsing: ${JSON.stringify(parsedData)}`;
-                         console.error("[ArticlePreviewPage]", errorMsg);
-                         throw new Error(errorMsg); // Throw error if data is empty or not an object
+                         const errorMsg = `Geçersiz veya boş önizleme verisi yapısı.`;
+                         console.error("[ArticlePreviewPage]", errorMsg, parsedData);
+                         if (isMounted) setError(errorMsg);
+                         return; // Stop execution if data is invalid
                     }
                 } catch (parseError: any) {
-                    console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
-                    console.error("[ArticlePreviewPage] Raw data was:", storedData);
-                    if (isMounted) setError(`Önizleme verisi bozuk veya okunamadı: ${parseError.message}. Raw Data: ${storedData.substring(0,100)}...`);
-                    return;
+                    console.error("[ArticlePreviewPage] JSON parse error:", parseError);
+                    // console.error("[ArticlePreviewPage] Raw data causing parse error:", storedData);
+                    if (isMounted) setError(`Önizleme verisi okunamadı (JSON Parse Hatası): ${parseError.message}.`);
+                    return; // Stop execution on parse error
                 }
 
-                // Basic validation and normalization
+                // Basic validation and normalization (Ensure required fields exist)
                 if (typeof parsedData.title === 'string' && parsedData.title && Array.isArray(parsedData.blocks)) {
                     const normalizedData: Partial<ArticleData> = {
                         ...parsedData,
-                        excerpt: parsedData.excerpt ?? parsedData.description,
-                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
+                        excerpt: parsedData.excerpt ?? parsedData.description, // Normalize excerpt/description
+                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl, // Normalize image URL
                     };
-                    console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
+                    console.log("[ArticlePreviewPage] Data validated and normalized.");
+                    // console.log("[ArticlePreviewPage] Normalized data:", normalizedData);
                     if (isMounted) {
                          setPreviewData(normalizedData);
                          setError(null);
-                          // Optionally remove the item after successful load if it's single-use
-                          // localStorage.removeItem(previewKey);
-                          // console.log(`[ArticlePreviewPage] Item ${previewKey} removed from localStorage.`);
                     }
                 } else {
                     const missingFields = [];
-                    if (!parsedData.title) missingFields.push("title");
+                    if (typeof parsedData.title !== 'string' || !parsedData.title) missingFields.push("title");
                     if (!Array.isArray(parsedData.blocks)) missingFields.push("blocks");
-                    const errorMsg = `Önizleme verisi geçersiz veya eksik alanlar içeriyor: ${missingFields.join(', ')}.`;
+                    const errorMsg = `Önizleme verisi eksik alanlar içeriyor: ${missingFields.join(', ')}.`;
                     console.error("[ArticlePreviewPage]", errorMsg, parsedData);
                     if (isMounted) setError(errorMsg);
                 }
             } else {
-                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
+                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${PREVIEW_STORAGE_KEY}). Lütfen makaleyi veya şablonu kaydedip tekrar deneyin.`;
                 console.error("[ArticlePreviewPage]", errorMsg);
                 if (isMounted) setError(errorMsg);
             }
         } catch (e: any) {
-            console.error("[ArticlePreviewPage] Error accessing localStorage or loading data:", e);
+            console.error("[ArticlePreviewPage] LocalStorage erişim hatası:", e);
             if (isMounted) setError(`Önizleme verisi yüklenirken bir hata oluştu: ${e.message}`);
         } finally {
              if (isMounted) setIsLoading(false);
         }
     };
 
-    // Wait for searchParams to be available
-     if (searchParams) {
-        loadPreview();
-    } else {
-        // If searchParams are not immediately available (should be rare with App Router client components), handle it
-         console.warn("[ArticlePreviewPage] searchParams not immediately available.");
-         setError("URL parametreleri bekleniyor..."); // Provide feedback
-         setIsLoading(false); // Stop loading as we can't proceed
-    }
-
+    // Load preview data immediately on mount
+    loadPreview();
 
     return () => {
       isMounted = false;
       console.log("[ArticlePreviewPage] Component unmounted.");
     };
 
-  }, [searchParams]); // Depend on searchParams
+  }, []); // Empty dependency array - runs only once on mount
 
    if (isLoading) {
      console.log("[ArticlePreviewPage] Rendering loading state.");
@@ -232,20 +216,20 @@ export default function ArticlePreviewPage() {
 
    // Assert previewData is not null here because error/loading states handle it
    if (!previewData) {
-     console.error("[ArticlePreviewPage] Rendering error state: previewData is null or undefined after loading and error checks.");
+     console.error("[ArticlePreviewPage] Rendering error state: previewData is null/undefined after checks.");
      return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-destructive mb-4">Önizleme Hatası</h1>
-            <p className="text-muted-foreground mb-6">Önizleme verisi yüklenemedi (null).</p>
+            <p className="text-muted-foreground mb-6">Önizleme verisi yüklenemedi (veri null).</p>
             <Button onClick={() => window.close()} variant="outline">Sekmeyi Kapat</Button>
         </div>
      );
    }
 
-   // Further check if previewData is an empty object (though validated earlier)
+   // Final check for empty object (should have been caught earlier)
    if (Object.keys(previewData).length === 0) {
-        console.error("[ArticlePreviewPage] Rendering error state: previewData is an empty object.");
+        console.error("[ArticlePreviewPage] Rendering error state: previewData is empty object.");
         return (
              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
                  <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />

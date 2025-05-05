@@ -1,7 +1,7 @@
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
-import { useRouter, useParams, notFound } from 'next/navigation'; // Import hooks
+import { useRouter } from 'next/navigation'; // Import hooks
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -43,6 +43,8 @@ import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-reac
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
+
 // --- Main Page Component ---
 
 export default function NewArticlePage() {
@@ -61,7 +63,7 @@ export default function NewArticlePage() {
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
     // Block Editor State - Initialize with default block client-side
-    const [blocks, setBlocks] = React.useState<Block[]>(() => [createDefaultBlock()]); // Initialize with default block
+    const [blocks, setBlocks] = React.useState<Block[]>(() => []); // Initialize empty
 
     // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -74,6 +76,12 @@ export default function NewArticlePage() {
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
 
+     // Effect to set default block only on client side after mount
+     React.useEffect(() => {
+        if (blocks.length === 0) {
+            setBlocks([createDefaultBlock()]);
+        }
+     }, []); // Empty dependency array ensures this runs only once on mount
 
     // --- Handlers ---
 
@@ -267,38 +275,36 @@ export default function NewArticlePage() {
             canonicalUrl: canonicalUrl || "",
         };
 
-        const previewKey = `preview_new_${Date.now()}`; // Ensure unique key
-        console.log(`[NewArticlePage/handlePreview] Generating preview key: ${previewKey}`);
+        console.log(`[NewArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[NewArticlePage/handlePreview] Preview Data:`, previewData); // Log the data being saved
 
         try {
-            console.log(`[NewArticlePage/handlePreview] Preparing to save preview data to localStorage with key: ${previewKey}`);
-            console.log(`[NewArticlePage/handlePreview] Preview Data:`, previewData); // Log the data being saved
-
             const stringifiedData = JSON.stringify(previewData);
             console.log(`[NewArticlePage/handlePreview] Stringified data length: ${stringifiedData.length}`);
 
-            localStorage.setItem(previewKey, stringifiedData);
-            console.log(`[NewArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${previewKey}`);
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            console.log(`[NewArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
 
-            // Verification Step 1: Immediate Retrieval
-            const storedData = localStorage.getItem(previewKey);
-            if (storedData) {
-                console.log(`[NewArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage immediately after setting. Length: ${storedData.length}`);
-                 // Verification Step 2: Parsing
-                try {
+             // --- Verification Steps ---
+            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+             if (storedData) {
+                 console.log(`[NewArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage. Length: ${storedData.length}`);
+                 try {
                     const parsed = JSON.parse(storedData);
                     console.log(`[NewArticlePage/handlePreview] Verification 2 SUCCESS: Data parsed successfully. Title: ${parsed.title}`);
-                } catch (parseError: any) {
-                     console.error(`[NewArticlePage/handlePreview] Verification 2 FAILED: Could not parse stored JSON.`, parseError);
-                     throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
-                }
-            } else {
-                 console.error(`[NewArticlePage/handlePreview] Verification 1 FAILED: No data found for key ${previewKey} immediately after setting.`);
-                 throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
-            }
+                 } catch (parseError: any) {
+                      console.error(`[NewArticlePage/handlePreview] Verification 2 FAILED: Could not parse stored JSON.`, parseError);
+                      throw new Error(`Verification failed: Data for key ${PREVIEW_STORAGE_KEY} is not valid JSON: ${parseError.message}`);
+                 }
+             } else {
+                  console.error(`[NewArticlePage/handlePreview] Verification 1 FAILED: No data found for key ${PREVIEW_STORAGE_KEY}.`);
+                  throw new Error(`Verification failed: No data found for key ${PREVIEW_STORAGE_KEY}.`);
+             }
+             // --- End Verification Steps ---
 
-            const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
-             console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
+            // Simplified URL - Preview page will read from the fixed key
+            const previewUrl = `/admin/preview`;
+            console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
              // Add a small delay before opening the window
             setTimeout(() => {
@@ -317,7 +323,7 @@ export default function NewArticlePage() {
             }, 150); // 150ms delay
 
         } catch (error: any) {
-            console.error("[NewArticlePage/handlePreview] Error during preview process (setItem or verification):", error);
+            console.error("[NewArticlePage/handlePreview] Error during preview process:", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",
