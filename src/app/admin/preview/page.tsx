@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { notFound, useSearchParams } from 'next/navigation'; // Keep useSearchParams for potential future use or debugging
+import { useSearchParams } from 'next/navigation'; // Keep useSearchParams
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -100,12 +100,13 @@ const renderBlock = (block: Block) => {
     }
 };
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Define the fixed key
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Use the fixed key
 
 export default function ArticlePreviewPage() {
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const searchParams = useSearchParams(); // Use useSearchParams hook
 
   React.useEffect(() => {
     let isMounted = true;

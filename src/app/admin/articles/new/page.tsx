@@ -8,8 +8,9 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+
 
 import {
   Tabs,

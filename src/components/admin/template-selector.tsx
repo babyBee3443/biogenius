@@ -267,6 +267,7 @@ const templates: Template[] = [
 // --- Helper Functions ---
 const PREVIEW_STORAGE_KEY = 'preview_data'; // Use a fixed key
 
+
 // Function to convert block structure to HTML (basic implementation for backward compatibility)
 // NOTE: This function is deprecated and might not fully represent complex block types.
 const blocksToHtml = (blocks: Block[]): string => {
@@ -382,12 +383,12 @@ export function TemplateSelector({
         if (typeof window === 'undefined') return; // Guard against server-side execution
 
         const previewData: Partial<ArticleData> = {
-            id: `preview-${template.id}`,
+            id: `preview-${template.id}`, // Use a unique ID for template previews
             title: template.seoTitle || template.name,
             excerpt: template.excerpt || template.description,
             blocks: template.blocks,
             category: template.category || 'Teknoloji',
-            status: 'Yayınlandı',
+            status: 'Yayınlandı', // Simulate published status for preview
             mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
             seoTitle: template.seoTitle,
             seoDescription: template.seoDescription,
@@ -417,7 +418,7 @@ export function TemplateSelector({
             }
             console.log("[TemplateSelector/handlePreview] Verification SUCCESS: Data found in localStorage.");
 
-            const previewUrl = `/admin/preview`; // Simplified URL
+            const previewUrl = `/admin/preview`; // Use the fixed preview URL
             console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
             // Add a small delay before opening the window
@@ -485,30 +486,26 @@ export function TemplateSelector({
                                                  Önizle
                                              </Button>
                                              {/* Conditional rendering based on blocksCurrentlyExist */}
-                                             {blocksCurrentlyExist ? (
-                                                <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={(open) => { if (!open) setSelectedTemplate(null); setIsConfirmOpen(open); }}>
-                                                    <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                                        <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Düzenleyicide zaten içerik bulunuyor. "{selectedTemplate?.name}" şablonunu uygulamak mevcut içeriği silecektir.
-                                                                Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
-                                                                Evet, Üzerine Yaz
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                             ) : (
-                                                 <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSelectClick(template); }}>Seç</Button>
-                                             )}
+                                             <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={(open) => { if (!open) setSelectedTemplate(null); setIsConfirmOpen(open); }}>
+                                                <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                    <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Düzenleyicide zaten içerik bulunuyor. "{selectedTemplate?.name}" şablonunu uygulamak mevcut içeriği silecektir.
+                                                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
+                                                            Evet, Üzerine Yaz
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </CardContent>
                                 </Card>

@@ -368,7 +368,7 @@ export default function EditArticlePage() {
         }
 
         const previewData: Partial<ArticleData> = {
-            id: articleId || 'preview_edit',
+            id: articleId || 'preview_edit', // Use 'preview_edit' for existing article edits
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
