@@ -42,7 +42,7 @@ import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Lay
 
 // Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-const defaultBlock = { id: generateBlockId(), type: 'text', content: '' };
+const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
 
 // --- Main Page Component ---
@@ -67,7 +67,7 @@ export default function EditArticlePage() {
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
-    const [blocks, setBlocks] = React.useState<Block[]>(() => [defaultBlock]); // Initialize with default
+    const [blocks, setBlocks] = React.useState<Block[]>([]); // Initialize with empty array
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
@@ -98,8 +98,8 @@ export default function EditArticlePage() {
                             setMainImageUrl(data.mainImageUrl || "");
                             setIsFeatured(data.isFeatured);
                             setIsHero(data.isHero); // Sync isHero state
-                            // Generate default blocks client-side if blocks are empty/null
-                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : [defaultBlock]);
+                            // Set blocks from data, or create default block client-side if empty
+                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : [createDefaultBlock()]);
                             setSeoTitle(data.seoTitle || '');
                             setSeoDescription(data.seoDescription || '');
                             setSlug(data.slug);
@@ -262,7 +262,7 @@ export default function EditArticlePage() {
             slug: slug, // Use state slug directly
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
-            blocks: blocks.length > 0 ? blocks : [defaultBlock], // Use default if empty
+            blocks: blocks.length > 0 ? blocks : [createDefaultBlock()], // Use default if empty
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
             // 'updatedAt' will be handled by the updateArticle function on the backend/mock
@@ -286,7 +286,7 @@ export default function EditArticlePage() {
                  setIsFeatured(updatedArticle.isFeatured);
                  setIsHero(updatedArticle.isHero); // Sync isHero after save
                  // Use default block if blocks are empty after save
-                 setBlocks(updatedArticle.blocks && updatedArticle.blocks.length > 0 ? updatedArticle.blocks : [defaultBlock]);
+                 setBlocks(updatedArticle.blocks && updatedArticle.blocks.length > 0 ? updatedArticle.blocks : [createDefaultBlock()]);
                  setSeoTitle(updatedArticle.seoTitle || '');
                  setSeoDescription(updatedArticle.seoDescription || '');
                  setSlug(updatedArticle.slug);
@@ -349,7 +349,7 @@ export default function EditArticlePage() {
 
      const handleRemoveTemplate = () => {
          if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
-            setBlocks([defaultBlock]); // Reset to default block
+            setBlocks([createDefaultBlock()]); // Reset to default block
             setTemplateApplied(false); // Mark template as removed
             setSelectedBlockId(null); // Deselect any selected block
             toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
@@ -717,7 +717,7 @@ export default function EditArticlePage() {
                   isOpen={isTemplateSelectorOpen}
                   onClose={() => setIsTemplateSelectorOpen(false)}
                   onSelectTemplateBlocks={handleTemplateSelect}
-                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && blocks[0]?.content !== '')} // Check if blocks have actual content
+                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))} // Check if blocks have actual content
               />
          </div>
     );

@@ -42,8 +42,7 @@ import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-reac
 
 // Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-// Initialize blocks state as empty array
-const defaultBlock = { id: generateBlockId(), type: 'text', content: '' };
+const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
 // --- Main Page Component ---
 
@@ -62,8 +61,8 @@ export default function NewArticlePage() {
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
-    // Block Editor State - Initialize with a default block client-side
-    const [blocks, setBlocks] = React.useState<Block[]>(() => [defaultBlock]); // Initialize with default
+    // Block Editor State - Initialize with empty array, add default block client-side
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
 
     // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -75,6 +74,11 @@ export default function NewArticlePage() {
     // Other States
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
+
+     // Add default block only on the client after mount
+    React.useEffect(() => {
+        setBlocks([createDefaultBlock()]);
+    }, []);
 
     // --- Handlers ---
 
@@ -185,7 +189,7 @@ export default function NewArticlePage() {
              slug: slug || generateSlug(title),
              keywords: keywords || [],
              canonicalUrl: canonicalUrl || "",
-             blocks: blocks.length > 0 ? blocks : [{ id: generateBlockId(), type: 'text', content: '' }], // Use default if empty
+             blocks: blocks.length > 0 ? blocks : [createDefaultBlock()], // Use default if empty
              seoTitle: seoTitle || title,
              seoDescription: seoDescription || excerpt.substring(0, 160) || "",
              authorId: 'mock-admin', // Assign a default author ID
@@ -229,7 +233,7 @@ export default function NewArticlePage() {
 
      const handleRemoveTemplate = () => {
          if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
-             setBlocks([defaultBlock]); // Reset to default block
+             setBlocks([createDefaultBlock()]); // Reset to default block
              setTemplateApplied(false); // Mark template as removed
              setSelectedBlockId(null); // Deselect any selected block
              toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
@@ -536,7 +540,7 @@ export default function NewArticlePage() {
                  isOpen={isTemplateSelectorOpen}
                  onClose={() => setIsTemplateSelectorOpen(false)}
                  onSelectTemplateBlocks={handleTemplateSelect}
-                 blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && blocks[0]?.content !== '')} // Check if blocks have actual content
+                 blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))} // Check if blocks have actual content
              />
         </div>
     );
