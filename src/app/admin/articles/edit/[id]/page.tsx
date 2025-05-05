@@ -42,6 +42,7 @@ import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Lay
 
 // Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+const defaultBlock = { id: generateBlockId(), type: 'text', content: '' };
 
 
 // --- Main Page Component ---
@@ -66,7 +67,7 @@ export default function EditArticlePage() {
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
-    const [blocks, setBlocks] = React.useState<Block[]>([]); // Initialize as empty array
+    const [blocks, setBlocks] = React.useState<Block[]>(() => [defaultBlock]); // Initialize with default
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
@@ -98,7 +99,7 @@ export default function EditArticlePage() {
                             setIsFeatured(data.isFeatured);
                             setIsHero(data.isHero); // Sync isHero state
                             // Generate default blocks client-side if blocks are empty/null
-                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : [{ id: generateBlockId(), type: 'text', content: '' }]);
+                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : [defaultBlock]);
                             setSeoTitle(data.seoTitle || '');
                             setSeoDescription(data.seoDescription || '');
                             setSlug(data.slug);
@@ -261,7 +262,7 @@ export default function EditArticlePage() {
             slug: slug, // Use state slug directly
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
-            blocks: blocks.length > 0 ? blocks : [{ id: generateBlockId(), type: 'text', content: '' }], // Use default if empty
+            blocks: blocks.length > 0 ? blocks : [defaultBlock], // Use default if empty
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
             // 'updatedAt' will be handled by the updateArticle function on the backend/mock
@@ -285,7 +286,7 @@ export default function EditArticlePage() {
                  setIsFeatured(updatedArticle.isFeatured);
                  setIsHero(updatedArticle.isHero); // Sync isHero after save
                  // Use default block if blocks are empty after save
-                 setBlocks(updatedArticle.blocks && updatedArticle.blocks.length > 0 ? updatedArticle.blocks : [{ id: generateBlockId(), type: 'text', content: '' }]);
+                 setBlocks(updatedArticle.blocks && updatedArticle.blocks.length > 0 ? updatedArticle.blocks : [defaultBlock]);
                  setSeoTitle(updatedArticle.seoTitle || '');
                  setSeoDescription(updatedArticle.seoDescription || '');
                  setSlug(updatedArticle.slug);
@@ -348,8 +349,7 @@ export default function EditArticlePage() {
 
      const handleRemoveTemplate = () => {
          if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
-            // Generate a new default block ID client-side
-            setBlocks([{ id: generateBlockId(), type: 'text', content: '' }]);
+            setBlocks([defaultBlock]); // Reset to default block
             setTemplateApplied(false); // Mark template as removed
             setSelectedBlockId(null); // Deselect any selected block
             toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
@@ -392,8 +392,16 @@ export default function EditArticlePage() {
              if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
                  console.log(`[EditArticlePage/handlePreview] Saving data to localStorage with key: ${previewKey}`);
                  localStorage.setItem(previewKey, JSON.stringify(previewData));
-                 console.log(`[EditArticlePage/handlePreview] Data saved to localStorage.`);
+                 console.log(`[EditArticlePage/handlePreview] Data saved to localStorage. Verifying...`);
+                  // Verification step
+                 const storedData = localStorage.getItem(previewKey);
+                 if (storedData) {
+                     console.log(`[EditArticlePage/handlePreview] Verification successful: Data found for key ${previewKey}. Length: ${storedData.length}`);
+                 } else {
+                     console.error(`[EditArticlePage/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
+                 }
                  window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
+                 console.log(`[EditArticlePage/handlePreview] Opened preview window.`);
              } else {
                   console.error("[EditArticlePage/handlePreview] localStorage is not available.");
                  throw new Error("localStorage is not available.");

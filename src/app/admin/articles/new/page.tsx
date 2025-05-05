@@ -62,14 +62,8 @@ export default function NewArticlePage() {
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
-    // Block Editor State - Initialize as empty array
-    const [blocks, setBlocks] = React.useState<Block[]>([]);
-
-    // Set default block after hydration
-    React.useEffect(() => {
-      setBlocks([{ id: generateBlockId(), type: 'text', content: '' }]);
-    }, []); // Empty dependency array ensures this runs only once on the client
-
+    // Block Editor State - Initialize with a default block client-side
+    const [blocks, setBlocks] = React.useState<Block[]>(() => [defaultBlock]); // Initialize with default
 
     // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -235,7 +229,7 @@ export default function NewArticlePage() {
 
      const handleRemoveTemplate = () => {
          if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
-             setBlocks([{ id: generateBlockId(), type: 'text', content: '' }]); // Reset to default
+             setBlocks([defaultBlock]); // Reset to default block
              setTemplateApplied(false); // Mark template as removed
              setSelectedBlockId(null); // Deselect any selected block
              toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
@@ -277,8 +271,16 @@ export default function NewArticlePage() {
               if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
                  console.log(`[NewArticlePage/handlePreview] Saving data to localStorage with key: ${previewKey}`);
                  localStorage.setItem(previewKey, JSON.stringify(previewData));
-                 console.log(`[NewArticlePage/handlePreview] Data saved to localStorage.`);
+                 console.log(`[NewArticlePage/handlePreview] Data saved to localStorage. Verifying...`);
+                 // Verification step
+                 const storedData = localStorage.getItem(previewKey);
+                 if (storedData) {
+                     console.log(`[NewArticlePage/handlePreview] Verification successful: Data found for key ${previewKey}. Length: ${storedData.length}`);
+                 } else {
+                     console.error(`[NewArticlePage/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
+                 }
                  window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
+                 console.log(`[NewArticlePage/handlePreview] Opened preview window.`);
               } else {
                    console.error("[NewArticlePage/handlePreview] localStorage is not available.");
                   throw new Error("localStorage is not available.");
