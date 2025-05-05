@@ -1,10 +1,9 @@
-
 "use client"; // Add "use client" for useState and useEffect
 
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X } from 'lucide-react'; // Removed BookOpenText, Atom
+import { Menu, Search, X, BookCopy } from 'lucide-react'; // Added BookCopy icon
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet components
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Import Popover
 import { Input } from '@/components/ui/input'; // Import Input
@@ -85,11 +84,12 @@ const Header = () => {
 
 
   const navItems = [
-    { href: "/", label: "Anasayfa" }, // Added Anasayfa
+    { href: "/", label: "Anasayfa" },
     { href: "/categories/teknoloji", label: "Teknoloji" },
     { href: "/categories/biyoloji", label: "Biyoloji" },
-    { href: "/hakkimizda", label: "Hakkımızda" }, // Added Hakkımızda
-    { href: "/iletisim", label: "İletişim" }, // Added İletişim
+    { href: "/biyoloji-notlari", label: "Biyoloji Notları" }, // Added Biyoloji Notları link
+    { href: "/hakkimizda", label: "Hakkımızda" },
+    { href: "/iletisim", label: "İletişim" },
   ];
 
   const getCategoryClass = (category: string): string => {
@@ -230,6 +230,8 @@ const Header = () => {
                             className="justify-start flex items-center gap-2 text-base w-full"
                              as="a"
                          >
+                            {/* Add icon for Biyoloji Notları */}
+                            {item.href === '/biyoloji-notlari' && <BookCopy className="h-4 w-4" />}
                            <span className="capitalize">{item.label}</span>
                          </Button>
                      </Link>

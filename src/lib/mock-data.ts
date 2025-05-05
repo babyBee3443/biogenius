@@ -1,4 +1,3 @@
-
 import type { Block } from "@/components/admin/template-selector";
 
 // --- Article Data Structure ---
@@ -14,7 +13,7 @@ export interface ArticleData {
     seoDescription?: string;
     slug: string;
     isFeatured: boolean;
-    isHero: boolean; // Added field for Hero section
+    isHero: boolean;
     keywords?: string[];
     canonicalUrl?: string;
     authorId: string;
@@ -22,11 +21,28 @@ export interface ArticleData {
     updatedAt: string; // ISO Date string
 }
 
+// --- Biology Note Data Structure ---
+export interface NoteData {
+    id: string;
+    title: string;
+    slug: string;
+    category: string; // e.g., "Hücre Biyolojisi", "Genetik"
+    level: 'Lise 9' | 'Lise 10' | 'Lise 11' | 'Lise 12' | 'Genel'; // Example levels
+    tags: string[]; // e.g., ["hücre zarı", "organeller", "mitoz"]
+    summary: string; // Short summary of the note
+    contentBlocks: Block[]; // Use the same Block type for content
+    relatedNotes?: string[]; // IDs of related notes
+    imageUrl?: string | null; // Optional image for the note card
+    createdAt: string;
+    updatedAt: string;
+}
+
 
 // --- localStorage Setup ---
-const LOCAL_STORAGE_KEY = 'teknobiyo_mock_articles';
+const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles';
+const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes'; // New key for notes
 
-// --- Initial Mock Data (Defaults if localStorage is empty) ---
+// --- Initial Mock Data (Articles) ---
 let defaultMockArticles: ArticleData[] = [
      {
         id: '1',
@@ -46,7 +62,7 @@ let defaultMockArticles: ArticleData[] = [
         seoDescription: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
         slug: 'yapay-zeka-devrimi',
         isFeatured: true,
-        isHero: true, // Example: Also in Hero
+        isHero: true,
         keywords: ['ai', 'makine öğrenimi', 'yapay zeka'],
         canonicalUrl: '',
         authorId: 'mock-admin',
@@ -87,18 +103,18 @@ let defaultMockArticles: ArticleData[] = [
             { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
         ],
         category: 'Biyoloji',
-        status: 'Yayınlandı', // Changed to Yayınlandı for testing
+        status: 'Yayınlandı',
         mainImageUrl: 'https://picsum.photos/seed/microbiome/600/400',
         seoTitle: 'Mikrobiyom: İçimizdeki Dünya | TeknoBiyo',
         seoDescription: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri ve mikrobiyom dengesinin önemi.',
         slug: 'mikrobiyom-icimizdeki-dunya',
         isFeatured: false,
-        isHero: true, // Example: In Hero but not Featured
+        isHero: true,
         keywords: ['mikrobiyom', 'bağırsak', 'sağlık', 'bakteri', 'probiyotik'],
         canonicalUrl: '',
         authorId: 'mock-editor',
         createdAt: '2024-07-21T08:00:00Z',
-        updatedAt: '2024-07-26T10:00:00Z', // Updated timestamp
+        updatedAt: '2024-07-26T10:00:00Z',
     },
      {
         id: '5',
@@ -188,12 +204,33 @@ let defaultMockArticles: ArticleData[] = [
         seoDescription: 'Vücudun kendi bağışıklık sistemini kanser hücreleriyle savaşmak için güçlendiren tedavi yöntemleri.',
         slug: 'kanser-immünoterapisi',
         isFeatured: true,
-        isHero: true, // Example: Both Featured and Hero
+        isHero: true,
         keywords: ['kanser', 'immünoterapi', 'bağışıklık sistemi', 'tedavi'],
         canonicalUrl: '',
         authorId: 'mock-editor',
         createdAt: '2024-07-16T10:00:00Z',
         updatedAt: '2024-07-26T09:30:00Z',
+    },
+    {
+        id: '9',
+        title: 'ASDASDASDSAD',
+        excerpt: 'sadsadsad',
+        blocks: [
+            { id: 'block-1746446915238-87j9n5', type: 'text', content: 'sadsadsadasd' }
+        ],
+        category: 'Biyoloji',
+        status: 'Taslak',
+        mainImageUrl: '',
+        seoTitle: 'ASDASDASDSAD',
+        seoDescription: 'sadsadsad',
+        slug: 'asdasdasdsad',
+        isFeatured: false,
+        isHero: false,
+        keywords: [],
+        canonicalUrl: '',
+        authorId: 'mock-admin',
+        createdAt: '2025-05-04T20:48:22.265Z',
+        updatedAt: '2025-05-04T20:48:22.265Z'
     },
 
 ];
@@ -204,38 +241,114 @@ defaultMockArticles = defaultMockArticles.map(article => ({
     isHero: article.isHero ?? false, // Add default if missing
 }));
 
+// --- Initial Mock Data (Biology Notes) ---
+let defaultMockNotes: NoteData[] = [
+    {
+        id: 'note-hucre-zari',
+        title: 'Hücre Zarının Yapısı ve Görevleri',
+        slug: 'hucre-zarinin-yapisi-ve-gorevleri',
+        category: 'Hücre Biyolojisi',
+        level: 'Lise 9',
+        tags: ['hücre zarı', 'fosfolipit', 'protein', 'madde geçişi', 'akıcı mozaik model'],
+        summary: 'Hücre zarının yapısını (fosfolipit tabaka, proteinler, karbonhidratlar) ve temel görevlerini (madde alışverişi, hücre tanıma, iletişim) açıklar.',
+        contentBlocks: [
+            { id: 'nb1', type: 'heading', level: 2, content: 'Akıcı Mozaik Zar Modeli' },
+            { id: 'nb2', type: 'text', content: 'Hücre zarı, **akıcı mozaik zar modeli** ile açıklanır. Bu modele göre zar, çift katlı **fosfolipit** tabakasından oluşur ve bu tabaka içinde hareket edebilen **proteinler** bulunur. Ayrıca zara bağlı **karbonhidratlar** (glikolipit, glikoprotein) da bulunur.' },
+            { id: 'nb3', type: 'image', url: 'https://picsum.photos/seed/cell-membrane/600/300', alt: 'Hücre Zarı Modeli', caption: 'Akıcı Mozaik Zar Modeli şematik gösterimi.' },
+            { id: 'nb4', type: 'heading', level: 2, content: 'Temel Görevleri' },
+            { id: 'nb5', type: 'text', content: '- **Madde Alışverişi:** Hücrenin ihtiyaç duyduğu maddelerin alınmasını ve atıkların uzaklaştırılmasını sağlar (pasif taşıma, aktif taşıma, endositoz, ekzositoz).\n- **Hücreyi Koruma ve Şekil Verme:** Hücreyi dış ortamdan ayırır ve desteklik sağlar.\n- **Hücre Tanıma:** Zar yüzeyindeki glikoproteinler ve glikolipitler, hücrelerin birbirini tanımasında rol oynar.\n- **Sinyal İletimi:** Hücreler arası iletişimde görev alır.' },
+        ],
+        imageUrl: 'https://picsum.photos/seed/note-membrane/400/250',
+        createdAt: '2024-07-28T10:00:00Z',
+        updatedAt: '2024-07-28T11:00:00Z',
+    },
+    {
+        id: 'note-mitokondri',
+        title: 'Mitokondri: Hücrenin Enerji Santrali',
+        slug: 'mitokondri-hucrenin-enerji-santrali',
+        category: 'Hücre Biyolojisi',
+        level: 'Lise 9',
+        tags: ['mitokondri', 'oksijenli solunum', 'ATP', 'enerji', 'organel'],
+        summary: 'Mitokondrinin yapısını, oksijenli solunumdaki rolünü ve ATP üretim sürecini özetler.',
+        contentBlocks: [
+            { id: 'nm1', type: 'heading', level: 2, content: 'Mitokondrinin Yapısı' },
+            { id: 'nm2', type: 'text', content: 'Mitokondri, çift katlı zara sahip bir organeldir. Dış zar düz, iç zar ise **krista** adı verilen kıvrımlara sahiptir. İçini dolduran sıvıya **matriks** denir. Kendine ait DNA, RNA ve ribozomları bulunur.' },
+            { id: 'nm3', type: 'image', url: 'https://picsum.photos/seed/mitochondria-structure/600/350', alt: 'Mitokondri Yapısı', caption: 'Mitokondri iç ve dış zarı, krista ve matriks.' },
+            { id: 'nm4', type: 'heading', level: 2, content: 'Oksijenli Solunum ve ATP Üretimi' },
+            { id: 'nm5', type: 'text', content: 'Mitokondri, **oksijenli solunumun** gerçekleştiği yerdir. Besin molekülleri (glikoz gibi) oksijen kullanılarak parçalanır ve bu süreçte açığa çıkan enerji, hücrenin kullanabileceği enerji formu olan **ATP**\'ye (Adenozin Trifosfat) dönüştürülür. Bu nedenle mitokondriye "hücrenin enerji santrali" denir.' },
+        ],
+        imageUrl: 'https://picsum.photos/seed/note-mitochondria/400/250',
+        createdAt: '2024-07-27T14:00:00Z',
+        updatedAt: '2024-07-27T15:30:00Z',
+    },
+        {
+        id: 'note-dna-replikasyonu',
+        title: 'DNA Replikasyonu (Eşlenmesi)',
+        slug: 'dna-replikasyonu-eslenmesi',
+        category: 'Genetik',
+        level: 'Lise 12', // Example: More advanced topic
+        tags: ['DNA', 'replikasyon', 'eşlenme', 'helikaz', 'DNA polimeraz', 'yarı korunumlu'],
+        summary: 'DNA\'nın kendini yarı korunumlu olarak nasıl eşlediğini, görev alan enzimleri ve süreci açıklar.',
+        contentBlocks: [
+            { id: 'ndr1', type: 'heading', level: 2, content: 'Yarı Korunumlu Eşlenme Modeli' },
+            { id: 'ndr2', type: 'text', content: 'DNA replikasyonu, **yarı korunumlu** olarak gerçekleşir. Bu, her yeni DNA molekülünün bir eski (kalıp) ve bir yeni zincirden oluştuğu anlamına gelir.' },
+            { id: 'ndr3', type: 'heading', level: 2, content: 'Replikasyon Süreci ve Enzimler' },
+             { id: 'ndr4', type: 'image', url: 'https://picsum.photos/seed/dna-replication-process/600/300', alt: 'DNA Replikasyon Süreci Şeması', caption: 'Helikaz, DNA polimeraz ve ligaz enzimleri görev alır.' },
+            { id: 'ndr5', type: 'text', content: '1. **Helikaz:** DNA çift sarmalını açar.\n2. **DNA Polimeraz:** Açılan kalıp zincirlerin karşısına uygun nükleotitleri getirerek yeni zincirleri sentezler.\n3. **DNA Ligaz:** Oluşan DNA parçalarını (Okazaki parçacıkları) birleştirir.' },
+            { id: 'ndr6', type: 'text', content: 'Replikasyon, hücre bölünmesi öncesinde gerçekleşir ve genetik bilginin yeni hücrelere aktarılmasını sağlar.' },
+        ],
+        imageUrl: 'https://picsum.photos/seed/note-dna/400/250',
+        createdAt: '2024-07-29T09:00:00Z',
+        updatedAt: '2024-07-29T09:30:00Z',
+    },
+];
 
-// --- In-Memory Data Store with localStorage Persistence ---
+
+// --- In-Memory Data Stores with localStorage Persistence ---
 let mockArticles: ArticleData[] = [];
+let mockNotes: NoteData[] = []; // New store for notes
 
 // Function to load data from localStorage or use defaults
 const loadData = () => {
-    // Check if running in a browser environment
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (storedData) {
+        // Load Articles
+        const storedArticles = localStorage.getItem(ARTICLE_STORAGE_KEY);
+        if (storedArticles) {
             try {
-                const parsedData: ArticleData[] = JSON.parse(storedData);
-                 // Ensure all loaded articles have the isHero field
+                const parsedData: ArticleData[] = JSON.parse(storedArticles);
                 mockArticles = parsedData.map(article => ({
                     ...article,
-                    isHero: article.isHero ?? false, // Add default if missing
+                    isHero: article.isHero ?? false,
                 }));
-                // console.log("Loaded articles from localStorage.");
             } catch (error) {
-                console.error("Error parsing localStorage data, using defaults:", error);
+                console.error("Error parsing article localStorage data, using defaults:", error);
                 mockArticles = defaultMockArticles;
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
+                localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
             }
         } else {
-            // console.log("No data in localStorage, using defaults.");
             mockArticles = defaultMockArticles;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
+            localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
         }
+
+        // Load Notes
+        const storedNotes = localStorage.getItem(NOTE_STORAGE_KEY);
+        if (storedNotes) {
+             try {
+                mockNotes = JSON.parse(storedNotes);
+             } catch (error) {
+                 console.error("Error parsing note localStorage data, using defaults:", error);
+                 mockNotes = defaultMockNotes;
+                 localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
+             }
+        } else {
+             mockNotes = defaultMockNotes;
+             localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
+        }
+
     } else {
-        // Fallback for non-browser environments (e.g., server-side rendering build time)
-        // console.log("localStorage not available, using default data in memory.");
+        // Fallback for non-browser environments
         mockArticles = defaultMockArticles;
+        mockNotes = defaultMockNotes;
     }
 };
 
@@ -243,8 +356,8 @@ const loadData = () => {
 const saveData = () => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mockArticles));
-            // console.log("Saved articles to localStorage."); // Keep console less noisy
+            localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
+            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes)); // Save notes
         } catch (error) {
             console.error("Error saving data to localStorage:", error);
         }
@@ -255,106 +368,141 @@ const saveData = () => {
 loadData();
 
 
-// --- CRUD Functions (Modified for localStorage) ---
-
-// Simulate API delay
+// --- CRUD Functions (Articles) ---
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-/**
- * Fetches all articles from the in-memory store.
- * @returns A promise that resolves to an array of ArticleData.
- */
 export const getArticles = async (): Promise<ArticleData[]> => {
-    await delay(10); // Shorter delay for reads
-    // Load data again in case it was modified externally (though unlikely in this setup)
+    await delay(10);
     loadData();
-    // Return a deep copy to prevent direct modification
     return JSON.parse(JSON.stringify(mockArticles));
 };
 
-/**
- * Fetches a single article by its ID from the in-memory store.
- * @param id - The ID of the article to fetch.
- * @returns A promise that resolves to the ArticleData or null if not found.
- */
 export const getArticleById = async (id: string): Promise<ArticleData | null> => {
     await delay(10);
-    loadData(); // Ensure latest data
+    loadData();
     const article = mockArticles.find(article => article.id === id);
-    // Return a deep copy
     return article ? JSON.parse(JSON.stringify(article)) : null;
 };
 
-/**
- * Creates a new article and saves it to the in-memory store and localStorage.
- * @param data - The data for the new article (without id, createdAt, updatedAt).
- * @returns A promise that resolves to the newly created ArticleData.
- */
 export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'>): Promise<ArticleData> => {
-    await delay(50); // Slightly longer delay for writes
-    loadData(); // Ensure we're adding to the current list
+    await delay(50);
+    loadData();
     const newArticle: ArticleData = {
         ...data,
-        isHero: data.isHero ?? false, // Ensure isHero has a default value
+        isHero: data.isHero ?? false,
         id: `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
     mockArticles.push(newArticle);
-    saveData(); // Save to localStorage
-    // console.log("Article created:", JSON.parse(JSON.stringify(newArticle)));
+    saveData();
     return JSON.parse(JSON.stringify(newArticle));
 };
 
-/**
- * Updates an existing article in the in-memory store and localStorage.
- * @param id - The ID of the article to update.
- * @param data - The partial data to update the article with.
- * @returns A promise that resolves to the updated ArticleData or null if not found.
- */
 export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 'id' | 'createdAt'>>): Promise<ArticleData | null> => {
     await delay(50);
-    loadData(); // Load latest data before updating
+    loadData();
     const articleIndex = mockArticles.findIndex(article => article.id === id);
     if (articleIndex === -1) {
-        console.error("Article not found for update:", id);
         return null;
     }
-
-    // Update the article in the in-memory array
     const updatedArticle = {
         ...mockArticles[articleIndex],
         ...data,
         updatedAt: new Date().toISOString(),
     };
     mockArticles[articleIndex] = updatedArticle;
-
-    saveData(); // Save the entire updated array to localStorage
-    // console.log("Article updated:", JSON.parse(JSON.stringify(updatedArticle)));
+    saveData();
     return JSON.parse(JSON.stringify(updatedArticle));
 };
 
-/**
- * Deletes an article by its ID from the in-memory store and localStorage.
- * @param id - The ID of the article to delete.
- * @returns A promise that resolves to true if deletion was successful, false otherwise.
- */
 export const deleteArticle = async (id: string): Promise<boolean> => {
     await delay(80);
-    loadData(); // Load latest data
+    loadData();
     const initialLength = mockArticles.length;
     mockArticles = mockArticles.filter(article => article.id !== id);
     const success = mockArticles.length < initialLength;
     if (success) {
-        saveData(); // Save to localStorage
-        // console.log("Article deleted:", id);
-    } else {
-        console.error("Article not found for deletion:", id);
+        saveData();
     }
     return success;
 };
 
-// Function to generate slugs (remains the same)
+// --- CRUD Functions (Notes) ---
+
+/**
+ * Fetches all biology notes.
+ */
+export const getNotes = async (): Promise<NoteData[]> => {
+    await delay(10);
+    loadData();
+    return JSON.parse(JSON.stringify(mockNotes));
+};
+
+/**
+ * Fetches a single biology note by its ID.
+ */
+export const getNoteById = async (id: string): Promise<NoteData | null> => {
+    await delay(10);
+    loadData();
+    const note = mockNotes.find(note => note.id === id);
+    return note ? JSON.parse(JSON.stringify(note)) : null;
+};
+
+/**
+ * Creates a new biology note.
+ */
+export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt'>): Promise<NoteData> => {
+    await delay(50);
+    loadData();
+    const newNote: NoteData = {
+        ...data,
+        id: `note-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    };
+    mockNotes.push(newNote);
+    saveData();
+    return JSON.parse(JSON.stringify(newNote));
+};
+
+/**
+ * Updates an existing biology note.
+ */
+export const updateNote = async (id: string, data: Partial<Omit<NoteData, 'id' | 'createdAt'>>): Promise<NoteData | null> => {
+    await delay(50);
+    loadData();
+    const noteIndex = mockNotes.findIndex(note => note.id === id);
+    if (noteIndex === -1) {
+        return null;
+    }
+    const updatedNote = {
+        ...mockNotes[noteIndex],
+        ...data,
+        updatedAt: new Date().toISOString(),
+    };
+    mockNotes[noteIndex] = updatedNote;
+    saveData();
+    return JSON.parse(JSON.stringify(updatedNote));
+};
+
+/**
+ * Deletes a biology note by its ID.
+ */
+export const deleteNote = async (id: string): Promise<boolean> => {
+    await delay(80);
+    loadData();
+    const initialLength = mockNotes.length;
+    mockNotes = mockNotes.filter(note => note.id !== id);
+    const success = mockNotes.length < initialLength;
+    if (success) {
+        saveData();
+    }
+    return success;
+};
+
+
+// Function to generate slugs
 export const generateSlug = (text: string) => {
     return text
         .toLowerCase()
@@ -363,5 +511,4 @@ export const generateSlug = (text: string) => {
         .replace(/\s+/g, '-').replace(/-+/g, '-');
 };
 
-// Export the loadData function if manual reloading is needed elsewhere (optional)
 export { loadData as reloadMockData };
