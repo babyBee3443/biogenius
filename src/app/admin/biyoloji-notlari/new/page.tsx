@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { BlockEditor } from "@/components/admin/block-editor";
 import { TemplateSelector, type Block } from "@/components/admin/template-selector"; // Import TemplateSelector
 import { useDebouncedCallback } from 'use-debounce';
-import { createNote, type NoteData, generateSlug } from '@/lib/mock-data';
+import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data'; // Import getCategories
 
 import {
   Card,
@@ -51,22 +51,34 @@ export default function NewBiyolojiNotuPage() {
     const [saving, setSaving] = React.useState(false);
     const [templateApplied, setTemplateApplied] = React.useState(false); // Track if template is applied
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false); // State for modal
+    const [categories, setCategories] = React.useState<Category[]>([]); // State for categories
+    const [loadingCategories, setLoadingCategories] = React.useState(true); // Loading state for categories
 
     const [title, setTitle] = React.useState("");
     const [summary, setSummary] = React.useState("");
-    const [category, setCategory] = React.useState(""); // Example: "Hücre Biyolojisi"
+    const [category, setCategory] = React.useState(""); // Category is now a string
     const [level, setLevel] = React.useState<NoteData['level'] | "">(""); // Example: "Lise 9"
     const [tags, setTags] = React.useState<string[]>([]);
     const [imageUrl, setImageUrl] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [blocks, setBlocks] = React.useState<Block[]>(() => []); // Start empty, add default in effect
+    const [blocks, setBlocks] = React.useState<Block[]>([]); // Start empty, add default in effect
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
 
-    // Default block effect
+    // Default block effect and category loading
     React.useEffect(() => {
         if (blocks.length === 0) {
             setBlocks([createDefaultBlock()]);
         }
+
+         setLoadingCategories(true);
+         getCategories()
+             .then(data => setCategories(data))
+             .catch(err => {
+                 console.error("Error fetching categories:", err);
+                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
+             })
+             .finally(() => setLoadingCategories(false));
+
     }, []); // Empty dependency array ensures this runs only once on mount
 
     // --- Handlers ---
@@ -98,13 +110,13 @@ export default function NewBiyolojiNotuPage() {
             ...(type === 'divider' && {}),
             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
-        setBlocks([...blocks, newBlock]);
+        setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
         setSelectedBlockId(newBlock.id);
         setTemplateApplied(false); // Adding manually modifies template
     };
 
     const handleDeleteBlock = (id: string) => {
-        setBlocks(blocks.filter(block => block.id !== id));
+        setBlocks((prevBlocks) => prevBlocks.filter(block => block.id !== id));
         if (selectedBlockId === id) setSelectedBlockId(null);
         setTemplateApplied(false); // Deleting modifies template
     };
@@ -138,7 +150,7 @@ export default function NewBiyolojiNotuPage() {
          const newNoteData: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt'> = {
              title,
              slug,
-             category,
+             category, // Category is string
              level,
              tags,
              summary,
@@ -204,11 +216,11 @@ export default function NewBiyolojiNotuPage() {
             id: 'preview_new_note',
             title: title || 'Başlıksız Not',
             slug: slug || generateSlug(title),
-            category: category,
+            category: category, // Category is string
             level: level,
             tags: tags,
             summary: summary || '',
-            contentBlocks: blocks,
+            contentBlocks: blocks, // Use contentBlocks for notes
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -293,7 +305,20 @@ export default function NewBiyolojiNotuPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
-                                            <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Örn: Genetik, Ekoloji" required />
+                                             <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loadingCategories}>
+                                                <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
+                                                <SelectContent>
+                                                    {loadingCategories ? (
+                                                        <SelectItem value="" disabled>Yükleniyor...</SelectItem>
+                                                     ) : (
+                                                        categories.map(cat => (
+                                                           <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                                        ))
+                                                     )}
+                                                      <Separator />
+                                                      <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="level">Seviye <span className="text-destructive">*</span></Label>

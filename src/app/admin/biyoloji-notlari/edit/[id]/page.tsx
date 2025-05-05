@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { BlockEditor } from "@/components/admin/block-editor";
 import type { Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
-import { getNoteById, updateNote, deleteNote, type NoteData, generateSlug } from '@/lib/mock-data';
+import { getNoteById, updateNote, deleteNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data'; // Import getCategories
 
 import {
   Card,
@@ -48,61 +48,76 @@ export default function EditBiyolojiNotuPage() {
     const [loading, setLoading] = React.useState(true);
     const [saving, setSaving] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [categories, setCategories] = React.useState<Category[]>([]); // State for categories
 
     // Form Field States
     const [title, setTitle] = React.useState("");
     const [summary, setSummary] = React.useState("");
-    const [category, setCategory] = React.useState("");
+    const [category, setCategory] = React.useState(""); // Category is now a string
     const [level, setLevel] = React.useState<NoteData['level'] | "">("");
     const [tags, setTags] = React.useState<string[]>([]);
     const [imageUrl, setImageUrl] = React.useState<string | null>(null);
     const [slug, setSlug] = React.useState("");
-    const [blocks, setBlocks] = React.useState<Block[]>(() => []);
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
 
     // --- Data Fetching ---
     React.useEffect(() => {
         let isMounted = true;
-        if (noteId) {
-            setLoading(true);
-            setError(null);
 
-            getNoteById(noteId)
-                .then(data => {
-                    if (isMounted) {
-                        if (data) {
-                            setNoteData(data);
-                            // Sync form state with fetched data
-                            setTitle(data.title);
-                            setSummary(data.summary || '');
-                            setCategory(data.category);
-                            setLevel(data.level);
-                            setTags(data.tags || []);
-                            setImageUrl(data.imageUrl || null);
-                            setSlug(data.slug);
-                            setBlocks(data.contentBlocks && data.contentBlocks.length > 0 ? data.contentBlocks : [createDefaultBlock()]);
-                        } else {
-                            setError("Not bulunamadı.");
-                        }
-                    }
-                })
-                .catch(err => {
-                    if (isMounted) {
-                        console.error("Error fetching note:", err);
-                        setError("Not yüklenirken bir sorun oluştu.");
-                        toast({ variant: "destructive", title: "Hata", description: "Not yüklenirken bir sorun oluştu." });
-                    }
-                })
-                .finally(() => {
-                    if (isMounted) {
-                        setLoading(false);
-                    }
-                });
-        } else {
-            setError("Geçersiz not ID.");
-            setLoading(false);
-            setBlocks([createDefaultBlock()]); // Ensure default block if no ID
-        }
+        const fetchData = async () => {
+            if (!noteId) {
+                if (isMounted) {
+                     setError("Geçersiz not ID.");
+                     setLoading(false);
+                     setBlocks([createDefaultBlock()]);
+                }
+                return;
+            }
+
+             if (isMounted) {
+                setLoading(true);
+                setError(null);
+             }
+
+             try {
+                 const [noteResult, categoriesResult] = await Promise.all([
+                    getNoteById(noteId),
+                    getCategories() // Fetch categories
+                 ]);
+
+                 if (isMounted) {
+                     setCategories(categoriesResult); // Set categories state
+
+                     if (noteResult) {
+                         setNoteData(noteResult);
+                         setTitle(noteResult.title);
+                         setSummary(noteResult.summary || '');
+                         setCategory(noteResult.category); // Set string category
+                         setLevel(noteResult.level);
+                         setTags(noteResult.tags || []);
+                         setImageUrl(noteResult.imageUrl || null);
+                         setSlug(noteResult.slug);
+                         setBlocks(noteResult.contentBlocks && noteResult.contentBlocks.length > 0 ? noteResult.contentBlocks : [createDefaultBlock()]);
+                     } else {
+                         setError("Not bulunamadı.");
+                     }
+                 }
+             } catch (err) {
+                if (isMounted) {
+                     console.error("Error fetching data:", err);
+                     setError("Veri yüklenirken bir sorun oluştu.");
+                     toast({ variant: "destructive", title: "Hata", description: "Not veya kategori bilgileri yüklenemedi." });
+                }
+             } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+             }
+        };
+
+        fetchData();
+
         return () => { isMounted = false };
     }, [noteId]);
 
@@ -140,12 +155,12 @@ export default function EditBiyolojiNotuPage() {
             ...(type === 'divider' && {}),
             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
-        setBlocks([...blocks, newBlock]);
+        setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
         setSelectedBlockId(newBlock.id);
     };
 
     const handleDeleteBlock = (id: string) => {
-        setBlocks(blocks.filter(block => block.id !== id));
+        setBlocks((prevBlocks) => prevBlocks.filter(block => block.id !== id));
         if (selectedBlockId === id) setSelectedBlockId(null);
     };
 
@@ -177,7 +192,7 @@ export default function EditBiyolojiNotuPage() {
          const updateData: Partial<Omit<NoteData, 'id' | 'createdAt'>> = {
              title,
              slug,
-             category,
+             category, // Category is string
              level,
              tags,
              summary,
@@ -196,7 +211,7 @@ export default function EditBiyolojiNotuPage() {
                  // Re-sync form fields with the response
                  setTitle(updatedNote.title);
                  setSummary(updatedNote.summary || '');
-                 setCategory(updatedNote.category);
+                 setCategory(updatedNote.category); // Update category string
                  setLevel(updatedNote.level);
                  setTags(updatedNote.tags || []);
                  setImageUrl(updatedNote.imageUrl || null);
@@ -259,11 +274,11 @@ export default function EditBiyolojiNotuPage() {
             id: noteId || 'preview_edit_note',
             title: title || 'Başlıksız Not',
             slug: slug || generateSlug(title),
-            category: category,
+            category: category, // Category is string
             level: level,
             tags: tags,
             summary: summary || '',
-            contentBlocks: blocks,
+            contentBlocks: blocks, // Use contentBlocks for notes
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: noteData?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -370,7 +385,18 @@ export default function EditBiyolojiNotuPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
-                                    <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} required />
+                                    {/* Use Select for category */}
+                                    <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loading}>
+                                        <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
+                                        <SelectContent>
+                                            {categories.length === 0 && <SelectItem value="" disabled>Yükleniyor...</SelectItem>}
+                                            {categories.map(cat => (
+                                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                            ))}
+                                             <Separator />
+                                             <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="level">Seviye <span className="text-destructive">*</span></Label>

@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -9,7 +10,7 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
-import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+import { createArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including getCategories
 
 
 import {
@@ -54,17 +55,19 @@ export default function NewArticlePage() {
     // --- State ---
     const [saving, setSaving] = React.useState(false); // Added saving state
     const [templateApplied, setTemplateApplied] = React.useState(false); // Track if template is applied
+    const [categories, setCategories] = React.useState<Category[]>([]); // State for categories
+    const [loadingCategories, setLoadingCategories] = React.useState(true); // Loading state for categories
 
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
-    const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
+    const [category, setCategory] = React.useState<ArticleData['category'] | "">(""); // Category is a string
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
     // Block Editor State - Initialize with default block client-side
-    const [blocks, setBlocks] = React.useState<Block[]>(() => []); // Initialize empty
+    const [blocks, setBlocks] = React.useState<Block[]>([]); // Initialize empty
 
     // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -77,17 +80,28 @@ export default function NewArticlePage() {
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
 
-     // Effect to set default block only on client side after mount
+     // Effect to set default block and load categories only on client side after mount
      React.useEffect(() => {
         if (blocks.length === 0) {
             setBlocks([createDefaultBlock()]);
         }
+
+        setLoadingCategories(true);
+        getCategories()
+            .then(data => setCategories(data))
+            .catch(err => {
+                console.error("Error fetching categories:", err);
+                toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
+            })
+            .finally(() => setLoadingCategories(false));
+
      }, []); // Empty dependency array ensures this runs only once on mount
 
     // --- Handlers ---
 
     // Basic slug generation
     const generateSlug = (text: string) => {
+        if (!text) return '';
         return text
             .toLowerCase()
             .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
@@ -137,13 +151,13 @@ export default function NewArticlePage() {
              ...(type === 'divider' && {}),
              ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
-        setBlocks([...blocks, newBlock]);
+        setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
         setSelectedBlockId(newBlock.id); // Select the newly added block
         setTemplateApplied(false); // Adding manually modifies template
     };
 
     const handleDeleteBlock = (id: string) => {
-        setBlocks(blocks.filter(block => block.id !== id));
+        setBlocks((prevBlocks) => prevBlocks.filter(block => block.id !== id));
          if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
          setTemplateApplied(false); // Deleting modifies template
     };
@@ -189,7 +203,7 @@ export default function NewArticlePage() {
          const newArticleData: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'> = {
              title,
              excerpt: excerpt || "",
-             category,
+             category, // Category is a string
              status: finalStatus,
              mainImageUrl: mainImageUrl || null,
              isFeatured,
@@ -261,7 +275,7 @@ export default function NewArticlePage() {
             id: 'preview_new', // Use a distinct ID for new article preview
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
-            category: category,
+            category: category, // Category is a string
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
             isFeatured: isFeatured,
@@ -366,14 +380,21 @@ export default function NewArticlePage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
-                                    <Select value={category} onValueChange={(value) => setCategory(value as ArticleData['category'])} required>
+                                    <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loadingCategories}>
                                         <SelectTrigger id="category">
                                             <SelectValue placeholder="Kategori seçin" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Teknoloji">Teknoloji</SelectItem>
-                                            <SelectItem value="Biyoloji">Biyoloji</SelectItem>
-                                            {/* Add more categories fetched dynamically */}
+                                             {loadingCategories ? (
+                                                <SelectItem value="" disabled>Yükleniyor...</SelectItem>
+                                             ) : (
+                                                categories.map(cat => (
+                                                   <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                                ))
+                                             )}
+                                             {/* TODO: Add link/button to manage categories */}
+                                             <Separator />
+                                             <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -516,7 +537,7 @@ export default function NewArticlePage() {
                                               title={seoTitle || title}
                                               description={seoDescription || excerpt}
                                               slug={slug}
-                                              category={category || "kategori"}
+                                              category={category || "kategori"} // Use string category
                                           />
                                       </div>
                                  </CardContent>

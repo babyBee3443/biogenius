@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy } from 'lucide-react'; // Added BookCopy icon
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag } from 'lucide-react'; // Added BookCopy, Tag icons
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -107,6 +107,14 @@ export default function AdminLayout({
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Kategoriler">
+                            <Link href="/admin/categories">
+                            <Tag /> {/* Added Category Icon */}
+                            <span>Kategoriler</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Sayfa Yönetimi">
                             <Link href="/admin/pages">
                             <Layers />
@@ -114,7 +122,7 @@ export default function AdminLayout({
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                    {/* Add Categories, Tags, Media links here later */}
+                    {/* Add Tags, Media links here later */}
                 </SidebarMenu>
              </SidebarGroupContent>
             </SidebarGroup>

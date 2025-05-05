@@ -1,4 +1,11 @@
+
 import type { Block } from "@/components/admin/template-selector";
+
+// --- Category Data Structure ---
+export interface Category {
+    id: string;
+    name: string;
+}
 
 // --- Article Data Structure ---
 export interface ArticleData {
@@ -6,7 +13,7 @@ export interface ArticleData {
     title: string;
     excerpt?: string;
     blocks: Block[];
-    category: 'Teknoloji' | 'Biyoloji';
+    category: string; // Changed to string to accommodate dynamic categories
     status: 'Taslak' | 'İncelemede' | 'Yayınlandı' | 'Arşivlendi';
     mainImageUrl: string | null;
     seoTitle?: string;
@@ -26,7 +33,7 @@ export interface NoteData {
     id: string;
     title: string;
     slug: string;
-    category: string; // e.g., "Hücre Biyolojisi", "Genetik"
+    category: string; // Changed to string
     level: 'Lise 9' | 'Lise 10' | 'Lise 11' | 'Lise 12' | 'Genel'; // Example levels
     tags: string[]; // e.g., ["hücre zarı", "organeller", "mitoz"]
     summary: string; // Short summary of the note
@@ -40,9 +47,17 @@ export interface NoteData {
 
 // --- localStorage Setup ---
 const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles';
-const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes'; // New key for notes
+const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes';
+const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories'; // New key for categories
 
-// --- Initial Mock Data (Articles) ---
+// --- Initial Mock Data ---
+let defaultMockCategories: Category[] = [
+    { id: 'teknoloji', name: 'Teknoloji' },
+    { id: 'biyoloji', name: 'Biyoloji' },
+    { id: 'hücre-biyolojisi', name: 'Hücre Biyolojisi' },
+    { id: 'genetik', name: 'Genetik' },
+];
+
 let defaultMockArticles: ArticleData[] = [
      {
         id: '1',
@@ -55,7 +70,7 @@ let defaultMockArticles: ArticleData[] = [
             { id: 'b4', type: 'text', content: 'Sağlık hizmetlerinde AI, hastalıkların daha erken teşhis edilmesine yardımcı olmaktadır...' },
             { id: 'b5', type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
         ],
-        category: 'Teknoloji',
+        category: 'Teknoloji', // Use name
         status: 'Yayınlandı',
         mainImageUrl: 'https://picsum.photos/seed/ai/600/400',
         seoTitle: 'Yapay Zeka Devrimi | TeknoBiyo',
@@ -78,7 +93,7 @@ let defaultMockArticles: ArticleData[] = [
              { id: 'g2', type: 'heading', level: 2, content: 'CRISPR-Cas9 Sistemi' },
              { id: 'g3', type: 'text', content: 'Bu sistem, bakterilerin doğal savunma mekanizmasından esinlenilmiştir...' },
         ],
-        category: 'Biyoloji',
+        category: 'Biyoloji', // Use name
         status: 'Yayınlandı',
         mainImageUrl: 'https://picsum.photos/seed/crispr/600/400',
         seoTitle: 'Gen Düzenleme Teknolojileri | TeknoBiyo',
@@ -102,7 +117,7 @@ let defaultMockArticles: ArticleData[] = [
             { id: 'm3', type: 'text', content: 'Bağırsak mikrobiyomu, sindirime yardımcı olmaktan bağışıklık sistemini eğitmeye kadar birçok önemli işlevi yerine getirir.' },
             { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
         ],
-        category: 'Biyoloji',
+        category: 'Biyoloji', // Use name
         status: 'Yayınlandı',
         mainImageUrl: 'https://picsum.photos/seed/microbiome/600/400',
         seoTitle: 'Mikrobiyom: İçimizdeki Dünya | TeknoBiyo',
@@ -121,7 +136,7 @@ let defaultMockArticles: ArticleData[] = [
         title: 'Blockchain Teknolojisi',
         excerpt: 'Kripto paraların ötesinde, dağıtık defter teknolojisinin potansiyel uygulama alanları.',
         blocks: [],
-        category: 'Teknoloji',
+        category: 'Teknoloji', // Use name
         status: 'Arşivlendi',
         mainImageUrl: 'https://picsum.photos/seed/blockchain-archived/600/400',
         seoTitle: 'Blockchain Teknolojisi | TeknoBiyo',
@@ -140,7 +155,7 @@ let defaultMockArticles: ArticleData[] = [
         title: 'Kuantum Bilgisayarlar',
         excerpt: 'Hesaplamanın geleceği...',
         blocks: [],
-        category: 'Teknoloji',
+        category: 'Teknoloji', // Use name
         status: 'Taslak',
         mainImageUrl: 'https://picsum.photos/seed/quantum/600/400',
         seoTitle: 'Kuantum Bilgisayarlar | TeknoBiyo',
@@ -159,7 +174,7 @@ let defaultMockArticles: ArticleData[] = [
         title: 'Sentetik Biyoloji',
         excerpt: 'Yaşamı yeniden tasarlamak...',
         blocks: [],
-        category: 'Biyoloji',
+        category: 'Biyoloji', // Use name
         status: 'Yayınlandı',
         mainImageUrl: 'https://picsum.photos/seed/syntheticbio/600/400',
         seoTitle: 'Sentetik Biyoloji | TeknoBiyo',
@@ -178,7 +193,7 @@ let defaultMockArticles: ArticleData[] = [
         title: 'Nöral Ağlar ve Derin Öğrenme',
         excerpt: 'Yapay zekanın temel taşları...',
         blocks: [],
-        category: 'Teknoloji',
+        category: 'Teknoloji', // Use name
         status: 'Taslak',
         mainImageUrl: 'https://picsum.photos/seed/neural/600/400',
         seoTitle: 'Nöral Ağlar ve Derin Öğrenme | TeknoBiyo',
@@ -197,7 +212,7 @@ let defaultMockArticles: ArticleData[] = [
         title: 'Kanser İmmünoterapisi',
         excerpt: 'Bağışıklık sistemini kansere karşı kullanma.',
         blocks: [],
-        category: 'Biyoloji',
+        category: 'Biyoloji', // Use name
         status: 'Yayınlandı',
         mainImageUrl: 'https://picsum.photos/seed/immunotherapy/600/400',
         seoTitle: 'Kanser İmmünoterapisi | TeknoBiyo',
@@ -218,7 +233,7 @@ let defaultMockArticles: ArticleData[] = [
         blocks: [
             { id: 'block-1746446915238-87j9n5', type: 'text', content: 'sadsadsadasd' }
         ],
-        category: 'Biyoloji',
+        category: 'Biyoloji', // Use name
         status: 'Taslak',
         mainImageUrl: '',
         seoTitle: 'ASDASDASDSAD',
@@ -247,7 +262,7 @@ let defaultMockNotes: NoteData[] = [
         id: 'note-hucre-zari',
         title: 'Hücre Zarının Yapısı ve Görevleri',
         slug: 'hucre-zarinin-yapisi-ve-gorevleri',
-        category: 'Hücre Biyolojisi',
+        category: 'Hücre Biyolojisi', // Use name
         level: 'Lise 9',
         tags: ['hücre zarı', 'fosfolipit', 'protein', 'madde geçişi', 'akıcı mozaik model'],
         summary: 'Hücre zarının yapısını (fosfolipit tabaka, proteinler, karbonhidratlar) ve temel görevlerini (madde alışverişi, hücre tanıma, iletişim) açıklar.',
@@ -266,7 +281,7 @@ let defaultMockNotes: NoteData[] = [
         id: 'note-mitokondri',
         title: 'Mitokondri: Hücrenin Enerji Santrali',
         slug: 'mitokondri-hucrenin-enerji-santrali',
-        category: 'Hücre Biyolojisi',
+        category: 'Hücre Biyolojisi', // Use name
         level: 'Lise 9',
         tags: ['mitokondri', 'oksijenli solunum', 'ATP', 'enerji', 'organel'],
         summary: 'Mitokondrinin yapısını, oksijenli solunumdaki rolünü ve ATP üretim sürecini özetler.',
@@ -285,7 +300,7 @@ let defaultMockNotes: NoteData[] = [
         id: 'note-dna-replikasyonu',
         title: 'DNA Replikasyonu (Eşlenmesi)',
         slug: 'dna-replikasyonu-eslenmesi',
-        category: 'Genetik',
+        category: 'Genetik', // Use name
         level: 'Lise 12', // Example: More advanced topic
         tags: ['DNA', 'replikasyon', 'eşlenme', 'helikaz', 'DNA polimeraz', 'yarı korunumlu'],
         summary: 'DNA\'nın kendini yarı korunumlu olarak nasıl eşlediğini, görev alan enzimleri ve süreci açıklar.',
@@ -306,11 +321,27 @@ let defaultMockNotes: NoteData[] = [
 
 // --- In-Memory Data Stores with localStorage Persistence ---
 let mockArticles: ArticleData[] = [];
-let mockNotes: NoteData[] = []; // New store for notes
+let mockNotes: NoteData[] = [];
+let mockCategories: Category[] = []; // New store for categories
 
 // Function to load data from localStorage or use defaults
 const loadData = () => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        // Load Categories
+        const storedCategories = localStorage.getItem(CATEGORY_STORAGE_KEY);
+        if (storedCategories) {
+             try {
+                 mockCategories = JSON.parse(storedCategories);
+             } catch (error) {
+                 console.error("Error parsing category localStorage data, using defaults:", error);
+                 mockCategories = defaultMockCategories;
+                 localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
+             }
+        } else {
+            mockCategories = defaultMockCategories;
+            localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
+        }
+
         // Load Articles
         const storedArticles = localStorage.getItem(ARTICLE_STORAGE_KEY);
         if (storedArticles) {
@@ -347,6 +378,7 @@ const loadData = () => {
 
     } else {
         // Fallback for non-browser environments
+        mockCategories = defaultMockCategories;
         mockArticles = defaultMockArticles;
         mockNotes = defaultMockNotes;
     }
@@ -357,7 +389,8 @@ const saveData = () => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
             localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
-            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes)); // Save notes
+            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
+            localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories)); // Save categories
         } catch (error) {
             console.error("Error saving data to localStorage:", error);
         }
@@ -368,8 +401,86 @@ const saveData = () => {
 loadData();
 
 
-// --- CRUD Functions (Articles) ---
+// --- Utility Functions ---
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Function to generate slugs (reusable)
+export const generateSlug = (text: string) => {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-').replace(/-+/g, '-');
+};
+
+
+// --- CRUD Functions (Categories) ---
+
+export const getCategories = async (): Promise<Category[]> => {
+    await delay(5);
+    loadData();
+    return JSON.parse(JSON.stringify(mockCategories));
+};
+
+export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category> => {
+    await delay(30);
+    loadData();
+    const newCategory: Category = {
+        ...data,
+        id: generateSlug(data.name) + '-' + Date.now().toString(36), // Generate ID based on name + timestamp
+    };
+    // Check if category with the same name already exists
+    if (mockCategories.some(cat => cat.name.toLowerCase() === newCategory.name.toLowerCase())) {
+        throw new Error(`"${newCategory.name}" adında bir kategori zaten mevcut.`);
+    }
+    mockCategories.push(newCategory);
+    saveData();
+    return JSON.parse(JSON.stringify(newCategory));
+};
+
+export const updateCategory = async (id: string, data: Partial<Omit<Category, 'id'>>): Promise<Category | null> => {
+    await delay(30);
+    loadData();
+    const categoryIndex = mockCategories.findIndex(cat => cat.id === id);
+    if (categoryIndex === -1) {
+        return null;
+    }
+    // Check if new name conflicts with another existing category
+    if (data.name && mockCategories.some(cat => cat.id !== id && cat.name.toLowerCase() === data.name!.toLowerCase())) {
+         throw new Error(`"${data.name}" adında başka bir kategori zaten mevcut.`);
+    }
+    const updatedCategory = {
+        ...mockCategories[categoryIndex],
+        ...data,
+    };
+    mockCategories[categoryIndex] = updatedCategory;
+    saveData();
+    return JSON.parse(JSON.stringify(updatedCategory));
+};
+
+export const deleteCategory = async (id: string): Promise<boolean> => {
+    await delay(50);
+    loadData();
+    const initialLength = mockCategories.length;
+    // TODO: Consider how to handle articles/notes that use this category.
+    // Option 1: Prevent deletion if used.
+    // Option 2: Set category to null/empty for associated content.
+    // Option 3: Allow deletion (current implementation).
+    mockCategories = mockCategories.filter(cat => cat.id !== id);
+    const success = mockCategories.length < initialLength;
+    if (success) {
+        // Update articles and notes using this category (set to empty or default)
+        mockArticles = mockArticles.map(article => article.category === mockCategories.find(c => c.id === id)?.name ? { ...article, category: '' } : article);
+        mockNotes = mockNotes.map(note => note.category === mockCategories.find(c => c.id === id)?.name ? { ...note, category: '' } : note);
+        saveData();
+    }
+    return success;
+};
+
+
+
+// --- CRUD Functions (Articles) ---
 
 export const getArticles = async (): Promise<ArticleData[]> => {
     await delay(10);
@@ -501,14 +612,5 @@ export const deleteNote = async (id: string): Promise<boolean> => {
     return success;
 };
 
-
-// Function to generate slugs
-export const generateSlug = (text: string) => {
-    return text
-        .toLowerCase()
-        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .replace(/[^a-z0-9 -]/g, '')
-        .replace(/\s+/g, '-').replace(/-+/g, '-');
-};
 
 export { loadData as reloadMockData };

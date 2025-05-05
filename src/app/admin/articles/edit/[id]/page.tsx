@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -8,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { getArticleById, updateArticle, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including getCategories
 import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
 
 import {
@@ -50,7 +51,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = params.id as string;
+    const articleId = React.use(params.id) as string; // Use React.use for simpler param access
 
     // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
@@ -58,6 +59,7 @@ export default function EditArticlePage() {
     const [saving, setSaving] = React.useState(false); // Added saving state
     const [error, setError] = React.useState<string | null>(null); // Added error state
     const [templateApplied, setTemplateApplied] = React.useState(false); // Track if a template has been applied
+    const [categories, setCategories] = React.useState<Category[]>([]); // State for categories
 
     // Form Field States (Sync with articleData on load and save)
     const [title, setTitle] = React.useState("");
@@ -67,7 +69,7 @@ export default function EditArticlePage() {
     const [isFeatured, setIsFeatured] = React.useState(false);
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
-    const [blocks, setBlocks] = React.useState<Block[]>(() => []); // Initialize empty, create default in effect if needed
+    const [blocks, setBlocks] = React.useState<Block[]>([]); // Initialize empty, create default in effect if needed
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
@@ -80,56 +82,66 @@ export default function EditArticlePage() {
     // --- Data Fetching - Delayed until client-side hydration ---
     React.useEffect(() => {
         let isMounted = true;
-        if (articleId) {
-            setLoading(true);
-            setError(null); // Reset error on new fetch
 
-            // Fetch data after initial mount to avoid hydration issues
-            getArticleById(articleId)
-                .then(data => {
-                    if (isMounted) {
-                        if (data) {
-                            setArticleData(data); // Store fetched data
-                            // Sync form state with fetched data
-                            setTitle(data.title);
-                            setExcerpt(data.excerpt || '');
-                            setCategory(data.category);
-                            setStatus(data.status);
-                            setMainImageUrl(data.mainImageUrl || "");
-                            setIsFeatured(data.isFeatured);
-                            setIsHero(data.isHero); // Sync isHero state
-                            // Set blocks from data, or create default block client-side if empty
-                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : [createDefaultBlock()]);
-                            setSeoTitle(data.seoTitle || '');
-                            setSeoDescription(data.seoDescription || '');
-                            setSlug(data.slug);
-                            setKeywords(data.keywords || []);
-                            setCanonicalUrl(data.canonicalUrl || "");
-                            setTemplateApplied(false); // Reset template applied state on load
-                        } else {
-                            setError("Makale bulunamadı.");
-                            // Consider using notFound() here, but might cause issues if API call fails temporarily
-                            // notFound();
-                        }
-                    }
-                })
-                .catch(err => {
-                    if (isMounted) {
-                        console.error("Error fetching article:", err);
-                        setError("Makale yüklenirken bir sorun oluştu.");
-                        toast({ variant: "destructive", title: "Hata", description: "Makale yüklenirken bir sorun oluştu." });
-                    }
-                })
-                .finally(() => {
-                    if (isMounted) {
-                        setLoading(false);
-                    }
-                });
-        } else {
-            setError("Geçersiz makale ID.");
-            setLoading(false);
-            setBlocks([createDefaultBlock()]); // Ensure default block if no ID
-        }
+        const fetchData = async () => {
+            if (!articleId) {
+                if (isMounted) {
+                    setError("Geçersiz makale ID.");
+                    setLoading(false);
+                    setBlocks([createDefaultBlock()]);
+                }
+                return;
+            }
+
+             if (isMounted) {
+                setLoading(true);
+                setError(null);
+             }
+
+             try {
+                 const [articleResult, categoriesResult] = await Promise.all([
+                     getArticleById(articleId),
+                     getCategories() // Fetch categories
+                 ]);
+
+                 if (isMounted) {
+                     setCategories(categoriesResult); // Set categories state
+
+                     if (articleResult) {
+                         setArticleData(articleResult);
+                         setTitle(articleResult.title);
+                         setExcerpt(articleResult.excerpt || '');
+                         setCategory(articleResult.category); // Now a string
+                         setStatus(articleResult.status);
+                         setMainImageUrl(articleResult.mainImageUrl || "");
+                         setIsFeatured(articleResult.isFeatured);
+                         setIsHero(articleResult.isHero);
+                         setBlocks(articleResult.blocks && articleResult.blocks.length > 0 ? articleResult.blocks : [createDefaultBlock()]);
+                         setSeoTitle(articleResult.seoTitle || '');
+                         setSeoDescription(articleResult.seoDescription || '');
+                         setSlug(articleResult.slug);
+                         setKeywords(articleResult.keywords || []);
+                         setCanonicalUrl(articleResult.canonicalUrl || "");
+                         setTemplateApplied(false);
+                     } else {
+                         setError("Makale bulunamadı.");
+                     }
+                 }
+             } catch (err) {
+                 if (isMounted) {
+                     console.error("Error fetching data:", err);
+                     setError("Veri yüklenirken bir sorun oluştu.");
+                     toast({ variant: "destructive", title: "Hata", description: "Makale veya kategori verileri yüklenemedi." });
+                 }
+             } finally {
+                 if (isMounted) {
+                     setLoading(false);
+                 }
+             }
+        };
+
+        fetchData();
+
         return () => { isMounted = false }; // Cleanup function
     }, [articleId]); // Only run when articleId changes
 
@@ -193,13 +205,13 @@ export default function EditArticlePage() {
             ...(type === 'divider' && {}),
             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
-        setBlocks([...blocks, newBlock]);
+        setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
         setSelectedBlockId(newBlock.id); // Select the newly added block
         setTemplateApplied(false); // Adding a block manually means template is no longer strictly applied
     };
 
     const handleDeleteBlock = (id: string) => {
-        setBlocks(blocks.filter(block => block.id !== id));
+        setBlocks((prevBlocks) => prevBlocks.filter(block => block.id !== id));
         if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
         setTemplateApplied(false); // Removing a block means template is modified
     };
@@ -255,7 +267,7 @@ export default function EditArticlePage() {
          const currentData: Partial<ArticleData> = { // Use Partial for update data
             title,
             excerpt: excerpt || "",
-            category,
+            category, // Category is now a string
             status: finalStatus, // Use the determined final status
             mainImageUrl: mainImageUrl || null,
             isFeatured,
@@ -281,7 +293,7 @@ export default function EditArticlePage() {
                   // Re-sync individual form fields with the *response* to ensure consistency
                  setTitle(updatedArticle.title);
                  setExcerpt(updatedArticle.excerpt || '');
-                 setCategory(updatedArticle.category);
+                 setCategory(updatedArticle.category); // Ensure category string is updated
                  setStatus(updatedArticle.status); // Ensure status updates visually based on saved data
                  setMainImageUrl(updatedArticle.mainImageUrl || "");
                  setIsFeatured(updatedArticle.isFeatured);
@@ -371,7 +383,7 @@ export default function EditArticlePage() {
             id: articleId || 'preview_edit', // Use 'preview_edit' for existing article edits
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
-            category: category,
+            category: category, // Category is a string
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
             status: status,
@@ -521,13 +533,16 @@ export default function EditArticlePage() {
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
-                                     <Select value={category} onValueChange={(value) => setCategory(value as ArticleData['category'])} required>
+                                     <Select value={category} onValueChange={(value) => setCategory(value)} required> {/* Set string value */}
                                          <SelectTrigger id="category">
                                              <SelectValue placeholder="Kategori seçin" />
                                          </SelectTrigger>
                                          <SelectContent>
-                                             <SelectItem value="Teknoloji">Teknoloji</SelectItem>
-                                             <SelectItem value="Biyoloji">Biyoloji</SelectItem>
+                                             {categories.length === 0 && <SelectItem value="" disabled>Yükleniyor...</SelectItem>}
+                                             {categories.map(cat => (
+                                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                             ))}
+                                             {/* Option to add new category? Maybe link to categories page */}
                                          </SelectContent>
                                      </Select>
                                  </div>
@@ -667,7 +682,7 @@ export default function EditArticlePage() {
                                               title={seoTitle || title}
                                               description={seoDescription || excerpt}
                                               slug={slug}
-                                              category={category || "kategori"}
+                                              category={category || "kategori"} // Use string category
                                           />
                                       </div>
                                  </CardContent>

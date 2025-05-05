@@ -1,3 +1,4 @@
+
 "use client"; // Indicate this is a Client Component
 
 import * as React from "react";
@@ -25,7 +26,7 @@ import {
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from "@/components/ui/pagination";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast"; // Import toast
-import { getArticles, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+import { getArticles, deleteArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including categories
 import { cn } from "@/lib/utils"; // Import cn utility
 
 const getStatusVariant = (status: ArticleData['status']): "default" | "secondary" | "outline" | "destructive" => {
@@ -38,56 +39,72 @@ const getStatusVariant = (status: ArticleData['status']): "default" | "secondary
     }
 }
 
-const getCategoryClass = (category: ArticleData['category']): string => {
-     switch (category) {
-        case 'Teknoloji': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-        case 'Biyoloji': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-        default: return 'bg-muted text-muted-foreground';
-    }
+// Basic category styling based on common examples - refine as needed
+const getCategoryClass = (categoryName: string): string => {
+     const lowerCaseName = categoryName.toLowerCase();
+     if (lowerCaseName.includes('teknoloji')) {
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+     } else if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+     }
+     // Add more specific checks or a default
+     return 'bg-muted text-muted-foreground';
 }
 
 
 export default function AdminArticlesPage() {
   const [articles, setArticles] = React.useState<ArticleData[]>([]);
+  const [allCategories, setAllCategories] = React.useState<Category[]>([]); // State for all categories
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null); // Track deleting state
 
-  // TODO: Implement state for filtering, sorting, search, and pagination
-  const currentPage = 1; // Example
-  const totalPages = 1; // Example (Calculate based on total articles and items per page)
-  const [searchTerm, setSearchTerm] = React.useState(""); // Add search state
-  // Add states for filters (status, category) and sorting
+  // Filters
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [selectedStatuses, setSelectedStatuses] = React.useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]); // Filter by category name
 
-  const fetchArticles = React.useCallback(async () => {
+  // TODO: Implement state for sorting and pagination
+  const currentPage = 1; // Example
+  const totalPages = 1; // Example
+
+
+  const fetchArticlesAndCategories = React.useCallback(async () => {
     setLoading(true);
     setError(null);
-    console.log("[fetchArticles] Fetching articles...");
+    console.log("[fetchArticlesAndCategories] Fetching data...");
     try {
-      const data = await getArticles(); // Fetch from mock data source
-      console.log("[fetchArticles] Raw data fetched:", data.length, "articles");
-       // Apply filtering and sorting here based on state
-       const filteredData = data.filter(article =>
-          article.title.toLowerCase().includes(searchTerm.toLowerCase())
-          // Add more filters here (status, category)
-       );
-       // Add sorting logic here
+      const [articleData, categoryData] = await Promise.all([
+        getArticles(),
+        getCategories()
+      ]);
+      console.log("[fetchArticlesAndCategories] Raw data fetched:", articleData.length, "articles,", categoryData.length, "categories");
+
+      setAllCategories(categoryData); // Store all categories for filter dropdown
+
+      // Apply filtering
+      const filteredData = articleData.filter(article =>
+          (article.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
+          (selectedStatuses.length === 0 || selectedStatuses.includes(article.status)) &&
+          (selectedCategories.length === 0 || selectedCategories.includes(article.category))
+      );
+      // TODO: Add sorting logic here
 
       setArticles(filteredData);
-      console.log("[fetchArticles] Filtered data set to state:", filteredData.length, "articles");
+      console.log("[fetchArticlesAndCategories] Filtered data set to state:", filteredData.length, "articles");
     } catch (err) {
-      console.error("[fetchArticles] Error fetching articles:", err);
-      setError("Makaleler yüklenirken bir hata oluştu.");
-      toast({ variant: "destructive", title: "Hata", description: "Makaleler yüklenemedi." });
+      console.error("[fetchArticlesAndCategories] Error fetching data:", err);
+      setError("Makaleler veya kategoriler yüklenirken bir hata oluştu.");
+      toast({ variant: "destructive", title: "Hata", description: "Veriler yüklenemedi." });
     } finally {
       setLoading(false);
-      console.log("[fetchArticles] Fetching complete, loading set to false.");
+      console.log("[fetchArticlesAndCategories] Fetching complete, loading set to false.");
     }
-  }, [searchTerm]); // Add dependencies for filters and sorting
+  }, [searchTerm, selectedStatuses, selectedCategories]); // Add filter dependencies
 
   React.useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]); // Fetch articles on component mount and when fetchArticles changes
+    fetchArticlesAndCategories();
+  }, [fetchArticlesAndCategories]); // Fetch data on mount and when dependencies change
 
    const handleDelete = async (id: string, title: string) => {
      console.log(`[handleDelete] Attempting to delete article: ${id} (${title})`);
@@ -106,23 +123,41 @@ export default function AdminArticlesPage() {
                  });
                  console.log(`[handleDelete] Deletion successful for ${id}. Refetching articles...`);
                  // Refetch articles after successful deletion to update the list
-                 await fetchArticles(); // Use await to ensure fetch completes before resetting deletingId
+                 await fetchArticlesAndCategories(); // Use await to ensure fetch completes before resetting deletingId
                  console.log(`[handleDelete] Article list refetched after deleting ${id}.`);
              } else {
                  console.error(`[handleDelete] deleteArticle(${id}) failed.`);
                  toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinemedi." });
+                 setDeletingId(null); // Reset on failure as well
              }
          } catch (error) {
              console.error(`[handleDelete] Error during deletion of ${id}:`, error);
              toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinirken bir hata oluştu." });
-         } finally {
-             console.log(`[handleDelete] Resetting deletingId for ${id}.`);
-             setDeletingId(null); // Reset deleting state regardless of success or failure
+             setDeletingId(null); // Reset on error
          }
+         // Removed finally block for deletingId reset - handled within try/catch now
      } else {
         console.log(`[handleDelete] User cancelled deletion for: ${id}`);
      }
    };
+
+    // Filter Handlers
+   const handleStatusFilterChange = (status: string) => {
+       setSelectedStatuses(prev =>
+           prev.includes(status)
+           ? prev.filter(s => s !== status)
+           : [...prev, status]
+       );
+   };
+
+   const handleCategoryFilterChange = (categoryName: string) => {
+       setSelectedCategories(prev =>
+           prev.includes(categoryName)
+           ? prev.filter(c => c !== categoryName)
+           : [...prev, categoryName]
+       );
+   };
+
 
   return (
     <div className="space-y-6">
@@ -132,7 +167,7 @@ export default function AdminArticlesPage() {
             <p className="text-muted-foreground">Mevcut makaleleri görüntüleyin, düzenleyin veya silin.</p>
         </div>
         <div className="flex gap-2">
-             <Button variant="outline" onClick={fetchArticles} disabled={loading}>
+             <Button variant="outline" onClick={fetchArticlesAndCategories} disabled={loading}>
                  <RefreshCw className={cn("mr-2 h-4 w-4", loading && 'animate-spin')} />
                  Yenile
              </Button>
@@ -157,54 +192,64 @@ export default function AdminArticlesPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                  />
                  <div className="flex gap-2">
-                    {/* Status Filter Dropdown (Placeholder) */}
+                    {/* Status Filter Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="outline">
-                            <Filter className="mr-2 h-4 w-4" /> Durum
+                            <Filter className="mr-2 h-4 w-4" /> Durum ({selectedStatuses.length > 0 ? selectedStatuses.length : 'Tümü'})
                         </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            {/* ... Status filter items ... */}
                              <DropdownMenuLabel>Duruma Göre Filtrele</DropdownMenuLabel>
                              <DropdownMenuSeparator />
-                             {/* Add Checkbox items for filtering logic */}
-                             <DropdownMenuCheckboxItem>Yayınlandı</DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem>Taslak</DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem>İncelemede</DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem>Arşivlendi</DropdownMenuCheckboxItem>
+                             {['Yayınlandı', 'Taslak', 'İncelemede', 'Arşivlendi'].map(status => (
+                                 <DropdownMenuCheckboxItem
+                                     key={status}
+                                     checked={selectedStatuses.includes(status)}
+                                     onCheckedChange={() => handleStatusFilterChange(status)}
+                                 >
+                                     {status}
+                                 </DropdownMenuCheckboxItem>
+                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    {/* Category Filter Dropdown (Placeholder) */}
+                    {/* Category Filter Dropdown */}
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="outline">
-                            <Filter className="mr-2 h-4 w-4" /> Kategori
+                            <Filter className="mr-2 h-4 w-4" /> Kategori ({selectedCategories.length > 0 ? selectedCategories.length : 'Tümü'})
                         </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                           {/* ... Category filter items ... */}
                             <DropdownMenuLabel>Kategoriye Göre Filtrele</DropdownMenuLabel>
                              <DropdownMenuSeparator />
-                             <DropdownMenuCheckboxItem>Teknoloji</DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem>Biyoloji</DropdownMenuCheckboxItem>
+                             {allCategories.map(cat => (
+                                 <DropdownMenuCheckboxItem
+                                     key={cat.id}
+                                     checked={selectedCategories.includes(cat.name)}
+                                     onCheckedChange={() => handleCategoryFilterChange(cat.name)}
+                                 >
+                                     {cat.name}
+                                 </DropdownMenuCheckboxItem>
+                             ))}
+                              <DropdownMenuSeparator />
+                              <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     {/* Sort Dropdown (Placeholder) */}
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
+                            <Button variant="outline" disabled> {/* Disabled until implemented */}
                                 <ArrowUpDown className="mr-2 h-4 w-4" /> Sırala
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            {/* ... Sort options ... */}
                             <DropdownMenuLabel>Sırala</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             {/* Add Radio items for sorting logic */}
-                             <DropdownMenuCheckboxItem>Başlık (A-Z)</DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem>Tarih (En Yeni)</DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem>Tarih (En Eski)</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem disabled>Başlık (A-Z)</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem disabled>Tarih (En Yeni)</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem disabled>Tarih (En Eski)</DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                  </div>
@@ -223,7 +268,9 @@ export default function AdminArticlesPage() {
              <div className="text-center py-10 text-destructive">{error}</div>
           ) : articles.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground">
-                  {searchTerm ? `"${searchTerm}" için sonuç bulunamadı.` : "Henüz makale oluşturulmamış."}
+                  {searchTerm || selectedStatuses.length > 0 || selectedCategories.length > 0
+                    ? `Arama kriterlerine uygun makale bulunamadı.`
+                    : "Henüz makale oluşturulmamış."}
               </div>
           ) : (
             <Table>
@@ -246,9 +293,13 @@ export default function AdminArticlesPage() {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className={cn(getCategoryClass(article.category), "font-normal")}>
-                        {article.category}
-                      </Badge>
+                      {article.category ? (
+                          <Badge variant="secondary" className={cn(getCategoryClass(article.category), "font-normal")}>
+                             {article.category}
+                           </Badge>
+                       ) : (
+                           <span className="text-xs text-muted-foreground italic">Kategorisiz</span>
+                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{article.authorId || 'Bilinmiyor'}</TableCell>
                     <TableCell>
