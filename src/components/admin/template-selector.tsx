@@ -13,9 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image"; // Using next/image for placeholders
-import { Eye } from 'lucide-react'; // Import Eye icon for preview
-import { toast } from "@/hooks/use-toast"; // Import toast for error feedback
+import Image from "next/image";
+import { Eye } from 'lucide-react';
+import { toast } from "@/hooks/use-toast";
+import type { ArticleData } from '@/lib/mock-data'; // Import ArticleData
 
 // --- Block Types (Should match the editor's block types) ---
 export type Block =
@@ -34,24 +35,26 @@ interface Template {
   id: string;
   name: string;
   description: string;
-  previewImageUrl: string; // URL for the small preview image in the selector dialog
-  blocks: Block[]; // Content as an array of blocks, including placeholder images for the actual article content
-  category?: 'Teknoloji' | 'Biyoloji'; // Optional: category hint for preview styling
+  previewImageUrl: string;
+  blocks: Block[];
+  category?: 'Teknoloji' | 'Biyoloji';
+  // Add other ArticleData fields that are relevant for a template
+  seoTitle?: string;
+  seoDescription?: string;
+  keywords?: string[];
+  excerpt?: string;
 }
 
 interface TemplateSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   /** @deprecated Use onSelectTemplateBlocks instead */
-  onSelectTemplate?: (content: string) => void; // Keep for potential backward compatibility, but prefer blocks
-  onSelectTemplateBlocks: (blocks: Block[]) => void; // New prop for passing blocks directly
+  onSelectTemplate?: (content: string) => void;
+  onSelectTemplateBlocks: (blocks: Block[]) => void;
 }
 
 
 // --- Mock Templates (Using Block Structure) ---
-// Note: The images defined within the 'blocks' array below use picsum.photos URLs.
-// These are placeholder images that will be part of the template content when selected.
-// They will appear in the editor and subsequently in the preview if the template is applied.
 const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
 const templates: Template[] = [
@@ -59,8 +62,11 @@ const templates: Template[] = [
     id: 'standard-article',
     name: 'Standart Makale',
     description: 'Başlık, ana görsel ve metin içeriği için temel düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template-std/300/200', // Preview image for selector dialog
-    category: 'Teknoloji', // Category hint
+    previewImageUrl: 'https://picsum.photos/seed/template-std/300/200',
+    category: 'Teknoloji',
+    excerpt: 'Bu şablon, genel konuları ele alan standart bir makale yapısı sunar.',
+    seoTitle: 'Standart Makale Başlığı',
+    seoDescription: 'Standart makale şablonu önizlemesi - temel yapı.',
     blocks: [
       { id: generateId(), type: 'heading', level: 1, content: 'Standart Makale Başlığı: Konuya Giriş' },
       { id: generateId(), type: 'text', content: 'Bu makale, **[Önemli Konu]** hakkında genel bir bakış sunmaktadır. Günümüzdeki etkilerini ve gelecekteki potansiyelini ele alacağız. Giriş paragrafında konunun önemi ve makalenin kapsamı belirtilir.' },
@@ -69,7 +75,7 @@ const templates: Template[] = [
       { id: generateId(), type: 'heading', level: 2, content: 'Konunun Derinlemesine İncelenmesi' },
       { id: generateId(), type: 'text', content: '**[Alt Konu 2]**\'nin daha detaylı incelendiği bölüm. Alt başlıklar kullanarak okunabilirliği artırın. İstatistikler, örnekler veya alıntılarla içeriği zenginleştirin. Örneğin, yapılan bir araştırmaya göre...' },
       { id: generateId(), type: 'heading', level: 2, content: 'Farklı Bir Perspektif ve Video İçerik' },
-      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', youtubeId: 'dQw4w9WgXcQ' }, // Example video (Rick Astley)
+      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' }, // Changed video
       { id: generateId(), type: 'text', content: 'Konuyla ilgili farklı görüşler veya alternatif yaklaşımlar bu bölümde ele alınabilir. Tartışmalı konular için dengeli bir sunum önemlidir. Videoda ise konunun [Video İçeriği Açıklaması] gösterilmektedir.' },
       { id: generateId(), type: 'quote', content: 'Bilgi güçtür, ancak paylaşıldığında daha da güçlenir.', citation: 'Francis Bacon (Uyarlanmış)' },
       { id: generateId(), type: 'text', content: 'Sonuç paragrafı, makalede ele alınan ana noktaları özetler (**[Alt Konu 1]** ve **[Alt Konu 2]** gibi) ve okuyucuya bir çıkarım veya geleceğe yönelik bir mesaj sunar.' },
@@ -79,8 +85,11 @@ const templates: Template[] = [
     id: 'listicle',
     name: 'Listeleme Makalesi',
     description: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.',
-    previewImageUrl: 'https://picsum.photos/seed/template-list-preview/300/200', // Preview image for selector dialog
-    category: 'Teknoloji', // Category hint
+    previewImageUrl: 'https://picsum.photos/seed/template-list-preview/300/200',
+    category: 'Teknoloji',
+    excerpt: 'Bu şablon, belirli sayıda maddeyi listeleyen makaleler oluşturmak için idealdir.',
+    seoTitle: 'Liste Makalesi Başlığı',
+    seoDescription: 'Listeleme makalesi şablonu önizlemesi - numaralı öğeler.',
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Verimliliğinizi Artıracak 5 Basit Yöntem' },
         { id: generateId(), type: 'text', content: 'Günlük hayatınızda veya işinizde daha verimli olmak mı istiyorsunuz? İşte size yardımcı olabilecek, uygulaması kolay 5 yöntem!' },
@@ -90,12 +99,14 @@ const templates: Template[] = [
         { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: '2. Önceliklendirme Yapın (Eisenhower Matrisi)' },
         { id: generateId(), type: 'text', content: 'Görevlerinizi aciliyet ve önem derecelerine göre sınıflandırın. Eisenhower Matrisi (Acil/Önemli Matrisi) bu konuda size yol gösterebilir. Önemli ama acil olmayan işlere odaklanmak uzun vadede daha verimli olmanızı sağlar.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-matrix/600/300', alt: 'Eisenhower Matrisi', caption: 'Görevleri sınıflandırın.' }, // Added specific image
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: '3. Mola Vermeyi Unutmayın' },
         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-break/600/300', alt: 'Mola Veren Kişi' },
         { id: generateId(), type: 'text', content: 'Sürekli çalışmak yerine düzenli aralıklarla kısa molalar vermek, zihinsel yorgunluğu azaltır ve odaklanmayı artırır. Kalkıp biraz hareket etmek veya farklı bir aktivite yapmak iyi gelecektir.' },
          { id: generateId(), type: 'divider'},
          { id: generateId(), type: 'heading', level: 2, content: '4. Dikkat Dağıtıcıları Azaltın' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-focus/600/300', alt: 'Odaklanmış Çalışma Ortamı' }, // Added specific image
          { id: generateId(), type: 'text', content: 'Çalışma ortamınızdaki dikkat dağıtıcı unsurları (sosyal medya bildirimleri, gereksiz sekmeler vb.) minimuma indirin. Odaklanmış çalışma süreleri belirleyin.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: `5. "Hayır" Demeyi Öğrenin` },
@@ -107,8 +118,11 @@ const templates: Template[] = [
     id: 'image-gallery',
     name: 'Görsel Galerisi',
     description: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template-gallery-show/300/200', // Preview image for selector dialog
-    category: 'Biyoloji', // Category hint
+    previewImageUrl: 'https://picsum.photos/seed/template-gallery-show/300/200',
+    category: 'Biyoloji',
+    excerpt: 'Birden çok görseli açıklamalarıyla birlikte sergilemek için ideal bir yapı.',
+    seoTitle: 'Görsel Galerisi Başlığı',
+    seoDescription: 'Görsel galerisi şablonu önizlemesi - açıklayıcı resimler.',
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Doğanın Muhteşem Manzaraları Galerisi' },
         { id: generateId(), type: 'text', content: 'Dünyanın dört bir yanından nefes kesici doğa manzaralarını bir araya getirdik. Bu görsel şölende kaybolmaya hazır olun.' },
@@ -126,8 +140,11 @@ const templates: Template[] = [
     id: 'faq-article',
     name: 'SSS Makalesi',
     description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template-faq-ask/300/200', // Preview image for selector dialog
-    category: 'Teknoloji', // Category hint
+    previewImageUrl: 'https://picsum.photos/seed/template-faq-ask/300/200',
+    category: 'Teknoloji',
+    excerpt: 'Belirli bir konu hakkındaki sıkça sorulan soruları yanıtlamak için kullanılır.',
+    seoTitle: 'SSS Makalesi Başlığı',
+    seoDescription: 'SSS makalesi şablonu önizlemesi - soru cevap formatı.',
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Uzaktan Çalışma Hakkında Sıkça Sorulan Sorular' },
         { id: generateId(), type: 'text', content: 'Uzaktan çalışma modeline geçiş yapanlar veya bu modeli merak edenler için en sık sorulan soruları ve yanıtlarını derledik.' },
@@ -150,8 +167,11 @@ const templates: Template[] = [
     id: 'how-to-guide',
     name: 'Nasıl Yapılır Rehberi',
     description: 'Adım adım talimatlar içeren öğretici makaleler için.',
-    previewImageUrl: 'https://picsum.photos/seed/template-howto-steps/300/200', // Preview image for selector dialog
-    category: 'Teknoloji', // Category hint
+    previewImageUrl: 'https://picsum.photos/seed/template-howto-steps/300/200',
+    category: 'Teknoloji',
+    excerpt: 'Bir işlemi veya görevi adım adım açıklayan rehberler oluşturmak için kullanılır.',
+    seoTitle: 'Nasıl Yapılır Rehberi Başlığı',
+    seoDescription: 'Nasıl yapılır rehberi şablonu önizlemesi - adım adım talimatlar.',
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Basit Bir Web Sitesi Nasıl Yayınlanır?' },
         { id: generateId(), type: 'text', content: 'Kendi web sitenizi oluşturmak ve yayınlamak düşündüğünüzden daha kolay olabilir! Bu rehberde, temel adımları takip ederek basit bir web sitesini nasıl çevrimiçi hale getirebileceğinizi göstereceğiz.' },
@@ -163,6 +183,7 @@ const templates: Template[] = [
         { id: generateId(), type: 'text', content: 'İlk olarak, siteniz için uygun bir alan adı seçin ve bir hosting sağlayıcısından hesap alın. GoDaddy, Namecheap, Bluehost gibi popüler seçenekler mevcuttur.' },
          { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: Hosting Hesabınıza Dosyaları Yükleme' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-ftp/600/350', alt: 'FTP İstemcisi Dosya Yükleme', caption:'Dosyaları public_html klasörüne sürükleyin.' }, // Specific image
         { id: generateId(), type: 'text', content: 'Hosting sağlayıcınızın kontrol paneli (cPanel, Plesk vb.) veya bir FTP istemcisi (FileZilla gibi) kullanarak web sitesi dosyalarınızı hosting hesabınızdaki genellikle `public_html` veya `www` adlı klasöre yükleyin.' },
          { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: Alan Adını Hosting Hesabına Yönlendirme' },
@@ -170,6 +191,7 @@ const templates: Template[] = [
         { id: generateId(), type: 'text', content: 'Alan adınızı satın aldığınız yerdeki DNS (Domain Name System) ayarlarını, hosting sağlayıcınızın size verdiği nameserver adresleriyle güncelleyin. Bu işlem, alan adınızın sitenizin dosyalarının bulunduğu sunucuya işaret etmesini sağlar. (Bu işlemin tamamlanması birkaç saat sürebilir).' },
          { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 4: Sitenizi Test Etme' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-browser/600/350', alt: 'Tarayıcıda Web Sitesi Görüntüsü', caption:'Sitenizin yüklendiğini kontrol edin.' }, // Specific image
         { id: generateId(), type: 'text', content: 'DNS yönlendirmesi tamamlandıktan sonra, tarayıcınıza alan adınızı yazarak sitenizin doğru bir şekilde yüklenip yüklenmediğini kontrol edin.' },
         { id: generateId(), type: 'heading', level: 2, content: 'İpuçları' },
         { id: generateId(), type: 'text', content: '- Başlangıç için statik HTML siteleri veya WordPress gibi içerik yönetim sistemleri kullanabilirsiniz.\n- Güvenlik için SSL sertifikası (HTTPS) kurmayı unutmayın.' },
@@ -179,11 +201,14 @@ const templates: Template[] = [
     id: 'interview-article',
     name: 'Röportaj Makalesi',
     description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/template-interview-qa/300/200', // Preview image for selector dialog
-    category: 'Biyoloji', // Category hint
+    previewImageUrl: 'https://picsum.photos/seed/template-interview-qa/300/200',
+    category: 'Biyoloji',
+    excerpt: 'Uzmanlarla veya ilginç kişilerle yapılan röportajları sunmak için kullanılır.',
+    seoTitle: 'Röportaj: [Kişinin Adı]',
+    seoDescription: 'Röportaj makalesi şablonu önizlemesi - soru cevap formatı.',
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Dr. Elif Aydın ile Biyoteknolojinin Geleceği Üzerine Söyleşi' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Biyoteknoloji Uzmanı' }, // Placeholder content image (profile picture)
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Biyoteknoloji Uzmanı' },
         { id: generateId(), type: 'text', content: 'Biyoteknoloji alanında yaptığı çalışmalarla tanınan Dr. Elif Aydın ile gen düzenleme, sentetik biyoloji ve bu teknolojilerin gelecekteki potansiyeli üzerine konuştuk.' },
         { id: generateId(), type: 'heading', level: 2, content: 'Biyoteknoloji Alanına Giriş' },
         { id: generateId(), type: 'text', content: '**Soru:** Biyoteknolojiye olan ilginiz nasıl başladı ve bu alanda uzmanlaşmaya nasıl karar verdiniz?' },
@@ -214,10 +239,9 @@ const blocksToHtml = (blocks: Block[]): string => {
                 html += `<h${block.level}>${block.content}</h${block.level}>\n`;
                 break;
             case 'text':
-                // Basic markdown-like handling for bold/italic if needed, or rely on editor
                 const processedContent = block.content
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Basic bold
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Basic italic
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
                 html += `<p>${processedContent}</p>\n`;
                 break;
             case 'image':
@@ -248,17 +272,14 @@ const blocksToHtml = (blocks: Block[]): string => {
                  html += `</div>\n`;
                  break;
              case 'video':
-                 // Use youtubeId if available, otherwise try to extract from URL
                  const videoId = block.youtubeId || block.url.split('v=')[1]?.split('&')[0] || block.url.split('/').pop();
-                 if (videoId && videoId.length === 11) { // Basic check for YouTube ID length
+                 if (videoId && videoId.length === 11) {
                      html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
                  } else if (block.url) {
-                     html += `<p><a href="${block.url}" target="_blank" rel="noopener noreferrer">Video izle: ${block.url}</a></p>\n`; // Fallback link
+                     html += `<p><a href="${block.url}" target="_blank" rel="noopener noreferrer">Video izle: ${block.url}</a></p>\n`;
                  }
                  break;
              case 'section':
-                 // Sections might not have a direct HTML representation here,
-                 // or you could add a placeholder comment.
                  html += `<!-- Section: ${block.sectionType} -->\n`;
                  break;
         }
@@ -270,32 +291,37 @@ const blocksToHtml = (blocks: Block[]): string => {
 export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTemplateBlocks }: TemplateSelectorProps) {
 
     const handleSelect = (blocks: Block[]) => {
-        // Call the new prop with the blocks array
         onSelectTemplateBlocks(blocks);
-
-        // Call the old prop with converted HTML if it exists
         if (onSelectTemplate) {
              console.warn("TemplateSelector: onSelectTemplate is deprecated. Use onSelectTemplateBlocks instead.");
              const htmlContent = blocksToHtml(blocks);
              onSelectTemplate(htmlContent);
         }
-
-        onClose(); // Close the dialog after selection
+        onClose();
     };
 
      // Handle template preview - pass the specific template's data
      const handlePreview = (template: Template) => {
-         const previewData = {
-             id: `template-preview-${template.id}`,
-             title: `${template.name} Şablon Önizlemesi`,
-             description: template.description,
+         // Construct the full ArticleData object for preview
+         const previewData: ArticleData = {
+             id: `template-preview-${template.id}`, // Unique ID for preview
+             title: template.name, // Use template name as title for preview list
+             excerpt: template.excerpt || template.description,
+             blocks: template.blocks,
              category: template.category || 'Teknoloji', // Use template category or default
-             imageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl,
-             blocks: template.blocks, // Pass the actual blocks of the selected template
-             status: 'Yayınlandı', // Set a default status for preview
-             isFeatured: false, // Default values for preview
-             isHero: false,
-             // Add other necessary fields for the preview page to render correctly
+             status: 'Yayınlandı', // Assume published for preview
+             // Use first image block URL or template preview as mainImageUrl
+             mainImageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl,
+             seoTitle: template.seoTitle || template.name,
+             seoDescription: template.seoDescription || template.description,
+             slug: template.id, // Use template ID as slug for preview link uniqueness
+             isFeatured: false, // Default for preview
+             isHero: false, // Default for preview
+             keywords: template.keywords || [],
+             canonicalUrl: '',
+             authorId: 'template-author', // Placeholder author
+             createdAt: new Date().toISOString(), // Current time for preview
+             updatedAt: new Date().toISOString(),
          };
          try {
              localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
@@ -312,7 +338,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}> {/* Ensure close on background click */}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Makale Şablonu Seç</DialogTitle>
@@ -324,30 +350,28 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
                 {templates.map((template) => (
                     <Card key={template.id} className="flex flex-col overflow-hidden group border hover:shadow-lg transition-shadow">
-                        <CardHeader className="p-0 relative h-32 overflow-hidden cursor-pointer" onClick={() => handlePreview(template)}> {/* Changed header click to Preview */}
+                        <CardHeader className="p-0 relative h-32 overflow-hidden cursor-pointer" onClick={() => handlePreview(template)}>
                              <Image
-                                src={template.previewImageUrl} // This is the small image shown in the dialog
+                                src={template.previewImageUrl}
                                 alt={`${template.name} önizlemesi`}
                                 width={300}
                                 height={200}
                                 className="w-full h-full object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
                                 data-ai-hint="template preview abstract design"
                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div> {/* Gradient overlay */}
-                              <CardTitle className="absolute bottom-2 left-3 text-sm font-semibold text-white p-1 bg-black/50 rounded text-shadow-sm">{template.name}</CardTitle> {/* Title on image */}
-                               {/* Added Preview Icon Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                              <CardTitle className="absolute bottom-2 left-3 text-sm font-semibold text-white p-1 bg-black/50 rounded text-shadow-sm">{template.name}</CardTitle>
                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                    <Eye className="h-8 w-8 text-white/80" />
                                </div>
                          </CardHeader>
-                         <CardContent className="p-3 flex flex-col flex-grow"> {/* Reduced padding */}
+                         <CardContent className="p-3 flex flex-col flex-grow">
                              <p className="text-xs text-muted-foreground flex-grow mb-3">{template.description}</p>
-                             {/* Changed buttons */}
                              <div className="flex gap-2 mt-auto">
                                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handlePreview(template)}>
                                     <Eye className="mr-1 h-3.5 w-3.5"/> Önizle
                                 </Button>
-                                <Button size="sm" className="flex-1" onClick={() => handleSelect(template.blocks)}>Seç</Button> {/* Select button now directly selects */}
+                                <Button size="sm" className="flex-1" onClick={() => handleSelect(template.blocks)}>Seç</Button>
                              </div>
                          </CardContent>
                     </Card>

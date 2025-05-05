@@ -6,41 +6,68 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Eye } from 'lucide-react'; // Added Eye icon
-import type { Block } from '@/components/admin/template-selector'; // Import Block type
+import { ArrowLeft, Twitter, Facebook, Linkedin, Eye } from 'lucide-react';
+import type { Block } from '@/components/admin/template-selector';
+import type { ArticleData } from '@/lib/mock-data'; // Import the standard ArticleData interface
 
-interface ArticlePreviewData {
-  id: string;
-  title: string;
-  description: string;
-  category: 'Teknoloji' | 'Biyoloji';
-  imageUrl: string;
-  blocks: Block[];
-}
-
-// --- Block Rendering Components ---
-// TODO: Implement proper rendering for all block types (matching the final article page)
+// --- Block Rendering Components (reuse from article page if possible, or keep simple previews) ---
 
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
-  <p>{block.content}</p>
+  // Simple rendering, ensuring HTML is handled safely if needed.
+  // Using dangerouslySetInnerHTML is risky without sanitization.
+  // For preview, rendering plain text might be safer or use a basic markdown parser.
+  <p>{block.content || '[Boş Metin Bloğu]'}</p>
 );
 
 const HeadingBlockRenderer: React.FC<{ block: Extract<Block, { type: 'heading' }> }> = ({ block }) => {
   const Tag = `h${block.level}` as keyof JSX.IntrinsicElements;
-  return <Tag>{block.content}</Tag>;
+  return <Tag>{block.content || '[Boş Başlık]'}</Tag>;
 };
 
 const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }> = ({ block }) => (
     <figure className="my-6">
-        <Image src={block.url} alt={block.alt} width={800} height={400} className="rounded-lg shadow-md mx-auto" />
+        {block.url ? (
+            <Image src={block.url} alt={block.alt || 'Makale Görseli'} width={800} height={400} className="rounded-lg shadow-md mx-auto max-w-full h-auto" data-ai-hint="article content placeholder" />
+        ) : (
+            <div className="bg-muted rounded-lg aspect-video flex items-center justify-center text-muted-foreground italic">
+                [Görsel Alanı]
+            </div>
+        )}
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
 );
 
+const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }> = ({ block }) => {
+    const getYouTubeId = (url: string): string | null => {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+    const videoId = block.youtubeId || getYouTubeId(block.url);
+
+    if (videoId) {
+        return (
+            <div className="aspect-video my-6 shadow-md rounded-lg overflow-hidden">
+                <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                ></iframe>
+            </div>
+        );
+    }
+     return <PlaceholderBlockRenderer type="video" />;
+};
+
 const QuoteBlockRenderer: React.FC<{ block: Extract<Block, { type: 'quote' }> }> = ({ block }) => (
     <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-6">
-        <p>{block.content}</p>
-        {block.citation && <footer className="mt-2 text-sm">— {block.citation}</footer>}
+        <p>{block.content || '[Boş Alıntı]'}</p>
+        {block.citation && <footer className="mt-2 text-sm not-italic">— {block.citation}</footer>}
     </blockquote>
 );
 
@@ -66,19 +93,22 @@ const renderBlock = (block: Block) => {
             return <ImageBlockRenderer key={block.id} block={block} />;
         case 'quote':
             return <QuoteBlockRenderer key={block.id} block={block} />;
+         case 'video':
+             return <VideoBlockRenderer key={block.id} block={block} />;
         case 'divider':
             return <DividerBlockRenderer key={block.id} block={block} />;
         // Add cases for other block types
         case 'gallery':
-        case 'video':
         case 'code':
+        case 'section': // Sections might not be directly rendered here
         default:
             return <PlaceholderBlockRenderer key={block.id} type={block.type} />;
     }
 };
 
 export default function ArticlePreviewPage() {
-  const [articleData, setArticleData] = React.useState<ArticlePreviewData | null>(null);
+  // Use ArticleData type here
+  const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -87,9 +117,9 @@ export default function ArticlePreviewPage() {
         const storedData = localStorage.getItem('articlePreviewData');
         if (storedData) {
             const parsedData = JSON.parse(storedData);
-            // Basic validation
-            if (parsedData && parsedData.title && parsedData.blocks) {
-                 setArticleData(parsedData);
+            // Basic validation - check for essential fields
+            if (parsedData && parsedData.title && parsedData.blocks && parsedData.category && parsedData.slug) {
+                 setArticleData(parsedData as ArticleData); // Cast to ArticleData
             } else {
                  setError("Önizleme verisi geçersiz veya eksik.");
             }
@@ -128,7 +158,8 @@ export default function ArticlePreviewPage() {
      notFound();
    }
 
-    const { title, description, category, imageUrl, blocks } = articleData;
+    // Destructure using standard ArticleData fields
+    const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = articleData;
 
   const categoryLinkClass = category === 'Teknoloji'
     ? 'text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'
@@ -147,22 +178,32 @@ export default function ArticlePreviewPage() {
         {/* Render article content based on the structure of articles/[id]/page.tsx */}
         <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12"> {/* Added padding top */}
           <header className="mb-10">
+             {/* Use Link for category if applicable, otherwise just span */}
              <span className={`text-sm font-medium mb-3 inline-block tracking-wide uppercase ${categoryLinkClass}`}>
                {category}
              </span>
             <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{title || "Başlık Yok"}</h1>
-            <p className="text-lg md:text-xl text-muted-foreground">{description || "Açıklama Yok"}</p>
+             {excerpt && <p className="text-lg md:text-xl text-muted-foreground">{excerpt}</p>}
+             {/* Display author and date if available in preview data */}
+             {(authorId || createdAt) && (
+                 <p className="text-sm text-muted-foreground mt-3">
+                    {authorId && `Yazar: ${authorId}`}
+                    {authorId && createdAt && ' | '}
+                    {createdAt && `Yayınlanma: ${new Date(createdAt).toLocaleDateString('tr-TR')}`}
+                 </p>
+             )}
           </header>
 
-          {imageUrl && (
+          {mainImageUrl && (
             <div className="mb-10 shadow-xl rounded-lg overflow-hidden">
               <Image
-                src={imageUrl}
+                src={mainImageUrl}
                 alt={title || "Ana Görsel"}
                 width={1200}
                 height={600}
                 className="w-full h-auto object-cover"
                 priority
+                data-ai-hint="preview main image"
               />
             </div>
           )}
@@ -199,4 +240,3 @@ export default function ArticlePreviewPage() {
     </div>
   );
 }
-
