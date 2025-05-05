@@ -2,20 +2,17 @@
 "use client";
 
 import * as React from "react";
-import { notFound, useSearchParams } from 'next/navigation'; // Import useSearchParams
+import { notFound, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2, AlertTriangle } from 'lucide-react'; // Added Eye, VideoIcon, Loader2, AlertTriangle
+import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2, AlertTriangle } from 'lucide-react';
 import type { Block } from '@/components/admin/template-selector';
-import type { ArticleData } from '@/lib/mock-data'; // Import the standard ArticleData interface
+import type { ArticleData } from '@/lib/mock-data';
 
-// --- Block Rendering Components (reuse from article page if possible, or keep simple previews) ---
+// --- Block Rendering Components (Simplified versions for preview) ---
 
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
-  // Simple rendering, ensuring HTML is handled safely if needed.
-  // Using dangerouslySetInnerHTML is risky without sanitization.
-  // For preview, rendering plain text might be safer or use a basic markdown parser.
   <div dangerouslySetInnerHTML={{ __html: block.content?.replace(/\n/g, '<br />') || '<p class="italic text-muted-foreground">[Boş Metin Bloğu]</p>' }} />
 );
 
@@ -75,7 +72,6 @@ const DividerBlockRenderer: React.FC<{ block: Extract<Block, { type: 'divider' }
     <hr className="my-8" />
 );
 
-// Add renderers for other block types (Gallery, Video, Code) as needed
 const PlaceholderBlockRenderer: React.FC<{ type: string }> = ({ type }) => (
   <div className="bg-muted p-4 rounded my-4 text-center text-muted-foreground italic">
     [{type} Bloku Önizlemesi]
@@ -97,31 +93,23 @@ const renderBlock = (block: Block) => {
              return <VideoBlockRenderer key={block.id} block={block} />;
         case 'divider':
             return <DividerBlockRenderer key={block.id} block={block} />;
-        // Add cases for other block types
         case 'gallery':
         case 'code':
-        case 'section': // Sections might not be directly rendered here
+        case 'section':
         default:
             return <PlaceholderBlockRenderer key={block.id} type={block.type} />;
     }
 };
 
-const POLLING_INTERVAL = 200; // Check every 200ms
-const POLLING_TIMEOUT = 3000; // Wait max 3 seconds
+const FIXED_LOCAL_STORAGE_KEY = "articlePreviewData"; // Use a fixed key
 
 export default function ArticlePreviewPage() {
-  const searchParams = useSearchParams();
-  const previewKey = searchParams?.get('key');
-
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
-    let pollingIntervalId: NodeJS.Timeout | null = null;
-    let pollingTimeoutId: NodeJS.Timeout | null = null;
-
     console.log("[ArticlePreviewPage] useEffect triggered.");
 
     if (typeof window === 'undefined') {
@@ -131,44 +119,23 @@ export default function ArticlePreviewPage() {
     }
     console.log("[ArticlePreviewPage] Running on client.");
 
-    if (!previewKey) {
-      const msg = "Önizleme anahtarı bulunamadı. Lütfen URL'yi kontrol edin.";
-      console.error("[ArticlePreviewPage]", msg);
-      if (isMounted) {
-        setError(msg);
-        setIsLoading(false);
-      }
-      return;
-    }
-
-    console.log("[ArticlePreviewPage] Attempting to load preview data for key:", previewKey);
-
-    const pollForData = () => {
-        if (!isMounted) return; // Stop if unmounted
-
+    const loadPreview = () => {
+        if (!isMounted) return;
+        console.log(`[ArticlePreviewPage] Attempting to load data from fixed key: ${FIXED_LOCAL_STORAGE_KEY}`);
         try {
-            console.log(`[ArticlePreviewPage] Polling localStorage for key: ${previewKey}`);
-            const storedData = localStorage.getItem(previewKey);
+            const storedData = localStorage.getItem(FIXED_LOCAL_STORAGE_KEY);
 
             if (storedData) {
-                console.log(`[ArticlePreviewPage] Found data in localStorage during poll for key ${previewKey}. Length: ${storedData.length}.`);
-
-                // Clear timers immediately upon finding data
-                if (pollingIntervalId) clearInterval(pollingIntervalId);
-                if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
-
+                console.log(`[ArticlePreviewPage] Found data in localStorage. Length: ${storedData.length}.`);
                 let parsedData;
                 try {
                     parsedData = JSON.parse(storedData);
                     console.log("[ArticlePreviewPage] Parsed data:", parsedData);
                 } catch (parseError) {
                     console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
-                    console.error("[ArticlePreviewPage] Raw data from localStorage:", storedData);
-                    if (isMounted) {
-                        setError("Önizleme verisi bozuk. Lütfen tekrar deneyin.");
-                        setIsLoading(false);
-                    }
-                    return; // Stop execution
+                    console.error("[ArticlePreviewPage] Raw data:", storedData);
+                    if (isMounted) setError("Önizleme verisi bozuk.");
+                    return;
                 }
 
                 if (
@@ -185,80 +152,47 @@ export default function ArticlePreviewPage() {
                     };
                     console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
                     if (isMounted) {
-                        setPreviewData(normalizedData);
-                        setError(null);
-                        setIsLoading(false);
-                    }
-                     // Clean up the localStorage item after successful load
-                    try {
-                        localStorage.removeItem(previewKey);
-                        console.log(`[ArticlePreviewPage] Successfully removed localStorage item ${previewKey} after loading.`);
-                    } catch (removeError) {
-                         console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey} after loading:`, removeError);
+                         setPreviewData(normalizedData);
+                         setError(null);
+                         // Optionally remove the item after loading to prevent stale previews
+                         // localStorage.removeItem(FIXED_LOCAL_STORAGE_KEY);
+                         // console.log(`[ArticlePreviewPage] Removed localStorage item ${FIXED_LOCAL_STORAGE_KEY} after loading.`);
                     }
                 } else {
-                    const errorMsg = "Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.";
-                    console.error("[ArticlePreviewPage]", errorMsg);
-                    console.error("[ArticlePreviewPage] Invalid preview data structure:", parsedData);
-                    if (isMounted) {
-                        setError(errorMsg);
-                        setIsLoading(false);
-                    }
+                    const errorMsg = "Önizleme verisi geçersiz veya eksik.";
+                    console.error("[ArticlePreviewPage]", errorMsg, parsedData);
+                    if (isMounted) setError(errorMsg);
                 }
             } else {
-                // Data not found yet, will poll again if timeout not reached
-                console.log(`[ArticlePreviewPage] Data not found for key ${previewKey}, polling again...`);
+                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${FIXED_LOCAL_STORAGE_KEY}).`;
+                console.error("[ArticlePreviewPage]", errorMsg);
+                if (isMounted) setError(errorMsg);
             }
         } catch (e) {
-            console.error("[ArticlePreviewPage] Error accessing or processing preview data during poll:", e);
-            if (pollingIntervalId) clearInterval(pollingIntervalId);
-            if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
-            if (isMounted) {
-                setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
-                setIsLoading(false);
-            }
+            console.error("[ArticlePreviewPage] Error accessing localStorage:", e);
+            if (isMounted) setError("Önizleme verisi yüklenirken bir hata oluştu.");
+        } finally {
+             if (isMounted) setIsLoading(false);
         }
     };
 
-    // Start polling
-    pollingIntervalId = setInterval(pollForData, POLLING_INTERVAL);
-
-    // Set timeout for polling
-    pollingTimeoutId = setTimeout(() => {
-        if (!isMounted || previewData) return; // Stop if unmounted or data already found
-
-        console.error(`[ArticlePreviewPage] Polling timed out after ${POLLING_TIMEOUT}ms for key: ${previewKey}`);
-        if (pollingIntervalId) clearInterval(pollingIntervalId); // Stop polling
-
-        const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
-        console.error("[ArticlePreviewPage]", errorMsg);
-        if (isMounted) {
-            setError(errorMsg);
-            setIsLoading(false);
-        }
-    }, POLLING_TIMEOUT);
-
-    // Initial check (optional, might find it immediately)
-    pollForData();
+    // Load immediately
+    loadPreview();
 
     // Cleanup function
     return () => {
       isMounted = false;
-      if (pollingIntervalId) clearInterval(pollingIntervalId);
-      if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
-      console.log("[ArticlePreviewPage] Component unmounted or previewKey changed.");
-       // Attempt cleanup if the component unmounts before data is found/processed
-       // try { localStorage.removeItem(previewKey); } catch (e) { console.warn(`Cleanup failed for ${previewKey}`); }
+      console.log("[ArticlePreviewPage] Component unmounted.");
     };
 
-  }, [previewKey]); // Re-run effect only if previewKey changes
+  }, []); // Empty dependency array, runs only once on mount
 
    if (isLoading) {
      console.log("[ArticlePreviewPage] Rendering loading state.");
      return (
         <div className="flex justify-center items-center h-screen text-lg">
             <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-            Önizleme verisi bekleniyor...
+            Önizleme verisi yükleniyor...
         </div>
      );
    }
@@ -275,16 +209,14 @@ export default function ArticlePreviewPage() {
         );
     }
 
-   // Cast to full ArticleData *after* validation and normalization, acknowledging some fields might be missing
    const articleData = previewData as ArticleData | null;
 
-   if (!articleData || Object.keys(articleData).length === 0) { // Added check for empty object too
+   if (!articleData || Object.keys(articleData).length === 0) {
      console.log("[ArticlePreviewPage] Rendering notFound state (articleData is null or empty).");
      notFound();
    }
 
     console.log("[ArticlePreviewPage] Rendering article preview for:", articleData.title);
-    // Destructure using standard ArticleData fields (handle potential undefined)
     const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = articleData;
 
   const categoryLinkClass = category === 'Teknoloji'
@@ -292,8 +224,7 @@ export default function ArticlePreviewPage() {
     : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300';
 
   return (
-    <div className="bg-background min-h-screen"> {/* Ensure background covers */}
-        {/* Preview Banner */}
+    <div className="bg-background min-h-screen">
         <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 text-center text-sm font-medium sticky top-0 z-50 border-b border-yellow-300 dark:border-yellow-700 flex items-center justify-center gap-4">
             <Eye className="h-4 w-4 flex-shrink-0" />
             <span>Bu bir önizlemedir. Değişiklikler henüz kaydedilmedi.</span>
@@ -302,16 +233,13 @@ export default function ArticlePreviewPage() {
             </Button>
         </div>
 
-        {/* Render article content based on the structure of articles/[id]/page.tsx */}
-        <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12"> {/* Added padding top */}
+        <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
           <header className="mb-10">
-             {/* Use Link for category if applicable, otherwise just span */}
              <span className={`text-sm font-medium mb-3 inline-block tracking-wide uppercase ${categoryLinkClass}`}>
                {category || '[Kategori Yok]'}
              </span>
             <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{title || "[Başlık Yok]"}</h1>
              {excerpt && <p className="text-lg md:text-xl text-muted-foreground">{excerpt}</p>}
-             {/* Display author and date if available in preview data */}
              {(authorId || createdAt) && (
                  <p className="text-sm text-muted-foreground mt-3">
                     {authorId && `Yazar: ${authorId}`}
@@ -335,16 +263,14 @@ export default function ArticlePreviewPage() {
             </div>
           )}
 
-          {/* Render Blocks */}
           <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
-            {blocks && blocks.length > 0 ? ( // Added check for blocks existence
+            {blocks && blocks.length > 0 ? (
                  blocks.map(renderBlock)
              ) : (
                  <p className="text-muted-foreground italic">(İçerik Bölümü Yok)</p>
              )}
           </div>
 
-           {/* Static placeholders for Related, Share, Comments sections in preview */}
            <div className="mt-16 border-t border-border/50 pt-10 space-y-10">
                 <div>
                     <h2 className="text-2xl font-semibold mb-4">İlgili Makaleler (Placeholder)</h2>

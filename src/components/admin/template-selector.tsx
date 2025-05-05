@@ -301,94 +301,76 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
     };
 
      // Handle template preview - pass the specific template's data
-     const handlePreview = async (template: Template) => { // Make async
-        console.log(`[TemplateSelector] handlePreview called for template: ${template.id}`);
+     const handlePreview = async (template: Template) => {
+        console.log(`[TemplateSelector] Previewing template: ${template.id}`);
          // Construct the full ArticleData object for preview
-         const previewData: Partial<ArticleData> = { // Use Partial as not all fields might be needed/defined in template
-             id: `template-preview-${template.id}`, // Unique ID for preview
-             title: template.name, // Use template name as title for preview list
+         const previewData: Partial<ArticleData> = {
+             id: `preview-${template.id}`, // Use a distinct preview ID
+             title: template.name,
              excerpt: template.excerpt || template.description,
              blocks: template.blocks,
-             category: template.category || 'Teknoloji', // Use template category or default
-             status: 'Yayınlandı', // Assume published for preview
-             // Use first image block URL or template preview as mainImageUrl
+             category: template.category || 'Teknoloji',
+             status: 'Yayınlandı',
              mainImageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl,
              seoTitle: template.seoTitle || template.name,
              seoDescription: template.seoDescription || template.description,
-             slug: template.id, // Use template ID as slug for preview link uniqueness
-             isFeatured: false, // Default for preview
-             isHero: false, // Default for preview
+             slug: template.id,
+             isFeatured: false,
+             isHero: false,
              keywords: template.keywords || [],
              canonicalUrl: '',
-             authorId: 'template-author', // Placeholder author
-             createdAt: new Date().toISOString(), // Current time for preview
+             authorId: 'template-preview',
+             createdAt: new Date().toISOString(),
              updatedAt: new Date().toISOString(),
          };
-          console.log(`[TemplateSelector] Generated previewData for ${template.id}:`, JSON.stringify(previewData, null, 2).substring(0, 500) + "..."); // Log truncated preview data
 
          try {
-              // Generate a unique key for localStorage for each template preview
-             const localStorageKey = `articlePreviewData_${template.id}_${Date.now()}`;
-             console.log(`[TemplateSelector] Generated localStorageKey for ${template.id}: ${localStorageKey}`);
-
+             // Use a fixed key for simplicity in testing, overwrite existing preview data
+             const localStorageKey = "articlePreviewData";
+             console.log(`[TemplateSelector] Preparing to save data to localStorage with key: ${localStorageKey}`);
              const dataString = JSON.stringify(previewData);
-             // Add a check for data size if localStorage has limits (though unlikely for this amount of data)
-             if (dataString.length > 4 * 1024 * 1024) { // Example limit: 4MB
-                console.warn(`[TemplateSelector] Preview data for ${template.id} might be too large for localStorage (${dataString.length} bytes).`);
-             }
+             console.log(`[TemplateSelector] Data to save (first 500 chars): ${dataString.substring(0, 500)}...`);
 
-             console.log(`[TemplateSelector] Attempting to save data to localStorage for key ${localStorageKey}. Data length: ${dataString.length}`);
+              // Remove old data first to ensure clean state
+             localStorage.removeItem(localStorageKey);
+             console.log(`[TemplateSelector] Removed old data for key: ${localStorageKey}`);
+
+             // Save the new data
              localStorage.setItem(localStorageKey, dataString);
-             console.log(`[TemplateSelector] Finished attempting to save data for key ${localStorageKey}.`);
+             console.log(`[TemplateSelector] Saved new data to localStorage for key: ${localStorageKey}. Length: ${dataString.length}`);
 
-             // **ADD DELAY HERE** before opening the window
-             await new Promise(resolve => setTimeout(resolve, 150)); // 150ms delay
-
-              // Verify data was saved correctly *immediately* after setting
+             // Verify immediately
              const savedData = localStorage.getItem(localStorageKey);
-             if (savedData) {
-                  console.log(`[TemplateSelector] Successfully retrieved data after delay for key ${localStorageKey}. Length: ${savedData.length}.`);
-             } else {
-                 console.error(`[TemplateSelector] Verification failed! Could not retrieve data after delay for key ${localStorageKey}. LocalStorage might be disabled or full.`);
-                  toast({
-                     variant: "destructive",
-                     title: "Önizleme Hatası",
-                     description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu veya devre dışı olabilir.",
-                 });
-                 return; // Stop if saving failed
+             if (!savedData || savedData !== dataString) {
+                console.error(`[TemplateSelector] Verification failed! Data mismatch after saving for key: ${localStorageKey}.`);
+                toast({ variant: "destructive", title: "Önizleme Hatası", description: "Veri kaydedilemedi." });
+                return;
              }
+              console.log(`[TemplateSelector] Data verified successfully for key: ${localStorageKey}`);
 
-
-             // Open the preview page with the unique key as a query parameter
-             const previewUrl = `/admin/preview?key=${localStorageKey}`;
-             console.log(`[TemplateSelector] Opening preview window with URL: ${previewUrl}`);
+             // Open the preview page without a dynamic key, relying on the fixed key
+             const previewUrl = '/admin/preview';
+             console.log(`[TemplateSelector] Opening preview window: ${previewUrl}`);
              const previewWindow = window.open(previewUrl, '_blank');
 
              if (!previewWindow) {
                  console.error("[TemplateSelector] Failed to open preview window. Pop-up blocker likely active.");
-                 toast({
-                     variant: "destructive",
-                     title: "Önizleme Açılamadı",
-                     description: "Lütfen tarayıcınızda açılır pencerelere izin verin.",
-                 });
+                 toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Lütfen tarayıcınızda açılır pencerelere izin verin." });
              } else {
-                 console.log("[TemplateSelector] Preview window opened successfully.");
+                 console.log("[TemplateSelector] Preview window opened.");
              }
+
          } catch (error) {
              console.error("[TemplateSelector] Error during handlePreview:", error);
              let errorMessage = "Şablon önizleme verisi işlenirken bir hata oluştu.";
              if (error instanceof Error) {
-                if (error.name === 'QuotaExceededError') {
-                    errorMessage = "Tarayıcı depolama alanı dolu. Lütfen eski verileri temizleyin veya tarayıcı ayarlarınızı kontrol edin.";
-                } else {
-                    errorMessage = `Bir hata oluştu: ${error.message}`;
-                }
+                 if (error.name === 'QuotaExceededError') {
+                     errorMessage = "Tarayıcı depolama alanı dolu.";
+                 } else {
+                     errorMessage = `Bir hata oluştu: ${error.message}`;
+                 }
              }
-              toast({
-                 variant: "destructive",
-                 title: "Önizleme Hatası",
-                 description: errorMessage,
-             });
+             toast({ variant: "destructive", title: "Önizleme Hatası", description: errorMessage });
          }
      };
 
