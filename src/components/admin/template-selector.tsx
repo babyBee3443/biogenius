@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -54,176 +55,200 @@ interface TemplateSelectorProps {
 
 
 // --- Mock Templates (Using Block Structure) ---
+// Ensure each template has unique content, topics, images, etc.
 const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
 const templates: Template[] = [
   {
     id: 'standard-article',
     name: 'Standart Makale',
-    description: 'Başlık, ana görsel ve metin içeriği için temel düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template-std-v2/300/200', // New preview seed
+    description: 'Giriş, ana görsel, alt başlıklar ve sonuç bölümü içeren temel makale düzeni.',
+    previewImageUrl: 'https://picsum.photos/seed/template-std-v3/300/200',
     category: 'Teknoloji',
-    excerpt: 'Kuantum bilgisayarların potansiyelini ele alan temel bir makale yapısı.', // Updated excerpt
-    seoTitle: 'Kuantum Bilgisayarların Temelleri', // Updated SEO Title
-    seoDescription: 'Standart makale şablonu kullanılarak kuantum bilgisayarların temelleri.', // Updated SEO Desc
+    excerpt: 'Yapay zeka etiği ve toplumsal etkileri üzerine odaklanan standart bir makale yapısı.',
+    seoTitle: 'Yapay Zeka Etiği ve Toplumsal Sorumluluklar',
+    seoDescription: 'Standart makale şablonu ile yapay zeka etiği, önyargılar ve gelecek perspektifleri.',
+    keywords: ['yapay zeka', 'etik', 'toplum', 'sorumluluk', 'önyargı'],
     blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'Kuantum Bilgisayarlar: Yeni Bir Hesaplama Çağı' }, // Updated content
-      { id: generateId(), type: 'text', content: 'Kuantum bilgisayarlar, klasik bilgisayarların çözemediği problemleri çözme potansiyeli taşıyan devrim niteliğinde makinelerdir. Bu makalede, kuantum hesaplamanın temellerine ve olası uygulama alanlarına göz atacağız.' }, // Updated content
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-quantum-main/800/400', alt: 'Kuantum Bilgisayar Konsepti', caption: 'Kübitler ve süperpozisyon.' }, // Updated image & caption
-      { id: generateId(), type: 'text', content: 'Klasik bilgisayarlar bitleri (0 veya 1) kullanırken, kuantum bilgisayarlar **kübitleri** kullanır. Kübitler, süperpozisyon sayesinde aynı anda hem 0 hem de 1 değerini alabilirler. Bu özellik, belirli hesaplamalarda üstel bir hız artışı sağlar.' }, // Updated content
-      { id: generateId(), type: 'heading', level: 2, content: 'Kuantum Üstünlüğü ve Uygulamalar' },
-      { id: generateId(), type: 'text', content: 'Kuantum üstünlüğü, bir kuantum bilgisayarın en gelişmiş klasik bilgisayarın pratik olarak çözemeyeceği bir problemi çözdüğü noktayı ifade eder. İlaç keşfi, malzeme bilimi, finansal modelleme ve kriptografi gibi alanlarda devrim yaratabilir.' }, // Updated content
-      { id: generateId(), type: 'heading', level: 2, content: 'Zorluklar ve Gelecek' },
-      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=WVv5OAR4Nik', youtubeId: 'WVv5OAR4Nik' }, // Different video
-      { id: generateId(), type: 'text', content: 'Kuantum bilgisayarların geliştirilmesi hala birçok teknik zorluk içermektedir. Kübitlerin kararlılığını sağlamak ve hata düzeltme mekanizmalarını geliştirmek önemlidir. Gelecekte, kuantum ve klasik bilgisayarların hibrit sistemlerde birlikte çalışması beklenmektedir.' }, // Updated content
-      { id: generateId(), type: 'quote', content: 'Geleceği tahmin etmenin en iyi yolu, onu icat etmektir.', citation: 'Alan Kay' }, // Updated quote
-      { id: generateId(), type: 'text', content: 'Sonuç olarak, kuantum bilgisayarlar hesaplama paradigmalarını değiştirme potansiyeline sahiptir ve bilim ve teknoloji için heyecan verici yeni kapılar açmaktadır.' }, // Updated content
+      { id: generateId(), type: 'heading', level: 1, content: 'Yapay Zeka Etiği: Teknoloji ve Toplum Dengesi' },
+      { id: generateId(), type: 'text', content: 'Yapay zeka (AI) hayatımızı dönüştürürken, beraberinde önemli etik soruları ve toplumsal sorumlulukları da getiriyor. Bu makalede, AI etiğinin temel ilkelerini ve karşılaşılan zorlukları inceleyeceğiz.' },
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-ai-ethics/800/400', alt: 'Yapay Zeka ve Etik Sembolü', caption: 'AI geliştirirken etik değerleri gözetmek.' },
+      { id: generateId(), type: 'text', content: 'AI sistemlerinin karar alma süreçlerindeki **şeffaflık**, **hesap verebilirlik** ve **adalet** gibi ilkeler, etik tartışmaların merkezinde yer alıyor. Algoritmik önyargılar, veri gizliliği ve otonom sistemlerin sorumluluğu gibi konular acil çözümler gerektiriyor.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Algoritmik Önyargıların Tehlikeleri' },
+      { id: generateId(), type: 'text', content: 'AI modelleri, eğitildikleri verilerdeki mevcut toplumsal önyargıları yansıtabilir ve hatta güçlendirebilir. Bu durum, işe alım süreçlerinden kredi başvurularına kadar birçok alanda ayrımcılığa yol açabilir. Önyargısız veri setleri oluşturmak ve adil algoritmalar geliştirmek kritik önem taşımaktadır.' },
+       { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=ABd2-6hnwAI', youtubeId: 'ABd2-6hnwAI' }, // Relevant video on AI ethics
+      { id: generateId(), type: 'heading', level: 2, content: 'Geleceğe Yönelik Adımlar' },
+      { id: generateId(), type: 'text', content: 'Yapay zeka etiği konusunda küresel standartların oluşturulması, multidisipliner yaklaşımların benimsenmesi ve kamuoyu bilincinin artırılması gerekiyor. Teknoloji geliştiricileri, politika yapıcılar ve toplum olarak birlikte çalışarak AI\'ın insanlık yararına kullanılmasını sağlamalıyız.' },
+      { id: generateId(), type: 'quote', content: 'Etik olmayan bir yapay zeka, insanlığın karşılaştığı en büyük tehditlerden biri olabilir.', citation: 'Stephen Hawking (uyarlanmıştır)' },
+      { id: generateId(), type: 'text', content: 'Sonuç olarak, yapay zeka etiği, teknolojinin geleceğini şekillendirecek en önemli tartışma alanlarından biridir ve sürekli dikkat gerektirir.' },
     ]
   },
    {
     id: 'listicle',
     name: 'Listeleme Makalesi',
-    description: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.',
-    previewImageUrl: 'https://picsum.photos/seed/template-list-bio-v2/300/200', // New preview seed
-    category: 'Biyoloji', // Changed category
-    excerpt: 'Sağlıklı bir yaşam için uygulanabilecek temel adımları listeleyen bir şablon.', // Updated excerpt
-    seoTitle: 'Daha Sağlıklı Bir Yaşam İçin 5 Öneri', // Updated SEO Title
-    seoDescription: 'Listeleme makalesi şablonu ile sağlıklı yaşam önerileri.', // Updated SEO Desc
+    description: 'Belirli bir konuda numaralı veya madde işaretli öneriler/bilgiler sunan format.',
+    previewImageUrl: 'https://picsum.photos/seed/template-list-brain-v3/300/200',
+    category: 'Biyoloji',
+    excerpt: 'Beyin sağlığınızı korumak ve geliştirmek için bilimsel temelli 7 basit yöntemi listeleyen bir şablon.',
+    seoTitle: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem',
+    seoDescription: 'Listeleme makalesi şablonu ile beyin sağlığını destekleyen alışkanlıklar ve ipuçları.',
+    keywords: ['beyin sağlığı', 'hafıza', 'nöroloji', 'bilişsel fonksiyon', 'sağlıklı yaşam'],
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Daha Sağlıklı Bir Yaşam İçin 5 Öneri' }, // Updated content
-        { id: generateId(), type: 'text', content: 'Sağlığınızı iyileştirmek ve daha enerjik hissetmek için hayatınıza katabileceğiniz basit ama etkili 5 öneriyi sizin için derledik.' }, // Updated content
-        { id: generateId(), type: 'heading', level: 2, content: '1. Dengeli Beslenin' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-food-healthy/600/300', alt: 'Sağlıklı Beslenme Tabağı', caption: 'Bol sebze, meyve ve tam tahıl tüketin.' }, // Updated image & caption
-        { id: generateId(), type: 'text', content: 'İşlenmiş gıdalar yerine taze ve doğal besinlere odaklanın. Öğünlerinizde protein, karbonhidrat ve sağlıklı yağ dengesini kurmaya özen gösterin. Yeterli lif alımı sindirim sisteminiz için kritiktir.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 1, content: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem' },
+        { id: generateId(), type: 'text', content: 'Yaş aldıkça bilişsel fonksiyonlarımızı korumak ve beyin sağlığımızı optimize etmek hepimizin hedefi. İşte bilimsel araştırmalarla desteklenen 7 etkili yöntem:' },
+        { id: generateId(), type: 'heading', level: 2, content: '1. Zihinsel Olarak Aktif Kalın' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-puzzle/600/300', alt: 'Yapboz Yapan Kişi', caption: 'Yeni şeyler öğrenmek ve bulmacalar çözmek beyni uyarır.' },
+        { id: generateId(), type: 'text', content: 'Okumak, yazmak, yeni bir dil veya müzik aleti öğrenmek, strateji oyunları oynamak gibi zihinsel aktiviteler, beyin hücreleri arasındaki bağlantıları güçlendirir ve bilişsel rezervinizi artırır.' },
         { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: '2. Düzenli Egzersiz Yapın' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-exercise-out/600/300', alt: 'Doğada Egzersiz Yapan Kişi', caption: 'Haftada en az 150 dakika orta yoğunlukta aktivite.' }, // Updated image & caption
-        { id: generateId(), type: 'text', content: 'Fiziksel aktivite sadece kilo kontrolü için değil, aynı zamanda kalp sağlığı, ruh hali ve genel zindelik için de önemlidir. Sevdiğiniz bir egzersiz türünü bulun ve düzenli olarak yapın.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: '2. Fiziksel Egzersizi İhmal Etmeyin' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-running/600/300', alt: 'Koşan Kişi', caption: 'Aerobik egzersiz beyne giden kan akışını artırır.' },
+        { id: generateId(), type: 'text', content: 'Düzenli fiziksel aktivite, beyne oksijen ve besin taşıyan kan akışını iyileştirir. Hafıza ve öğrenme ile ilişkili beyin bölgelerinde yeni hücrelerin büyümesini teşvik edebilir.' },
          { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: '3. Yeterli Uyku Alın' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-sleep-peace/600/300', alt: 'Huzurlu Uyku Ortamı' }, // Updated image
-        { id: generateId(), type: 'text', content: 'Yetişkinler için genellikle 7-9 saat kaliteli uyku önerilir. Yetersiz uyku, bağışıklık sistemini zayıflatabilir, konsantrasyonu düşürebilir ve kronik hastalıklara yol açabilir.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: '3. Sağlıklı ve Dengeli Beslenin' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-food/600/300', alt: 'Beyin Dostu Besinler (Balık, Yemiş, Sebze)', caption:'Omega-3, antioksidanlar ve vitaminler önemlidir.' },
+        { id: generateId(), type: 'text', content: 'Özellikle Akdeniz diyeti gibi, meyve, sebze, tam tahıllar, balık ve sağlıklı yağlar açısından zengin beslenme düzenleri beyin sağlığı ile ilişkilendirilmiştir.' },
          { id: generateId(), type: 'divider'},
-         { id: generateId(), type: 'heading', level: 2, content: '4. Stresi Yönetin' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-stress-relax/600/300', alt: 'Meditasyon Yapan Kişi' }, // Updated image
-         { id: generateId(), type: 'text', content: 'Kronik stres, sağlığınız üzerinde olumsuz etkilere neden olabilir. Meditasyon, yoga, derin nefes egzersizleri veya hobilerinizle ilgilenmek gibi stres yönetimi tekniklerini deneyin.' }, // Updated content
+         { id: generateId(), type: 'heading', level: 2, content: '4. Kaliteli Uyku Uyuyun' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-sleep/600/300', alt: 'Uyuyan Kişi' },
+         { id: generateId(), type: 'text', content: 'Uyku sırasında beyin, gün içinde öğrenilen bilgileri pekiştirir ve zararlı toksinleri temizler. Her gece 7-8 saat kesintisiz ve kaliteli uyku hedefleyin.' },
          { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: `5. Bol Su İçin` },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-water-glass/600/300', alt: 'Bir Bardak Su' }, // Updated image
-        { id: generateId(), type: 'text', content: 'Vücudumuzun düzgün çalışması için su hayati öneme sahiptir. Gün boyunca yeterli miktarda su içmek, enerji seviyenizi yüksek tutar, cildinizi sağlıklı tutar ve toksinlerin atılmasına yardımcı olur.' }, // Updated content
-        { id: generateId(), type: 'text', content: 'Bu basit adımları hayatınıza entegre ederek genel sağlığınızı ve yaşam kalitenizi önemli ölçüde artırabilirsiniz.'}, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: `5. Sosyal Bağlantıları Koruyun` },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-social/600/300', alt: 'Sohbet Eden Arkadaşlar' },
+        { id: generateId(), type: 'text', content: 'Güçlü sosyal ilişkiler, stresi azaltmaya ve beyin sağlığını korumaya yardımcı olabilir. Aile ve arkadaşlarla zaman geçirmek, sosyal aktivitelere katılmak önemlidir.' },
+         { id: generateId(), type: 'divider'},
+        { id: generateId(), type: 'heading', level: 2, content: `6. Stresi Etkili Yönetin` },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-yoga/600/300', alt: 'Yoga Yapan Kişi' },
+        { id: generateId(), type: 'text', content: 'Kronik stres, beyin hücrelerine zarar verebilir ve hafızayı olumsuz etkileyebilir. Meditasyon, yoga, doğa yürüyüşleri gibi rahatlama teknikleri stresi yönetmenize yardımcı olabilir.' },
+         { id: generateId(), type: 'divider'},
+        { id: generateId(), type: 'heading', level: 2, content: `7. Kronik Hastalıkları Kontrol Altında Tutun` },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-doctor/600/300', alt: 'Doktor ve Hasta' },
+        { id: generateId(), type: 'text', content: 'Yüksek tansiyon, diyabet, yüksek kolesterol gibi kronik sağlık sorunları beyin sağlığını olumsuz etkileyebilir. Bu hastalıkları doktorunuzun önerileri doğrultusunda kontrol altında tutmak önemlidir.' },
+        { id: generateId(), type: 'text', content: 'Bu yöntemleri yaşam tarzınıza entegre ederek beyin sağlığınızı koruyabilir ve bilişsel yeteneklerinizi uzun yıllar boyunca sürdürebilirsiniz.'},
     ]
   },
   {
     id: 'image-gallery',
     name: 'Görsel Galerisi',
-    description: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template-gallery-arch-v2/300/200', // New preview seed
-    category: 'Teknoloji', // Changed category
-    excerpt: 'Modern mimarinin etkileyici örneklerini sergileyen bir görsel galeri.', // Updated excerpt
-    seoTitle: 'Modern Mimari Harikaları Galerisi', // Updated SEO Title
-    seoDescription: 'Görsel galerisi şablonu ile modern mimari örnekleri.', // Updated SEO Desc
+    description: 'Görsellerin ön planda olduğu, açıklamalı ve tematik galeri düzeni.',
+    previewImageUrl: 'https://picsum.photos/seed/template-gallery-space-v3/300/200',
+    category: 'Teknoloji',
+    excerpt: 'James Webb Uzay Teleskobu tarafından çekilen nefes kesici uzay fotoğraflarından oluşan bir galeri.',
+    seoTitle: 'James Webb Teleskobu Harikaları: Uzay Galerisi',
+    seoDescription: 'Görsel galerisi şablonu ile James Webb Uzay Teleskobu\'nun çektiği en iyi fotoğraflar.',
+    keywords: ['james webb', 'uzay', 'teleskop', 'galaksi', 'nebula', 'astronomi'],
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Modern Mimari Harikaları Galerisi' }, // Updated content
-        { id: generateId(), type: 'text', content: 'Dünyanın farklı köşelerinden, yenilikçi tasarımları ve etkileyici yapılarıyla öne çıkan modern mimari örneklerini sizin için derledik.' }, // Updated content
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-futur/800/500', alt: 'Fütüristik Bina Cephesi', caption: 'Görsel 1: Cesur çizgiler ve cam kullanımıyla dikkat çeken fütüristik bir yapı.' }, // Updated image & caption
+        { id: generateId(), type: 'heading', level: 1, content: 'James Webb Uzay Teleskobu ile Evrenin Derinlikleri' },
+        { id: generateId(), type: 'text', content: 'James Webb Uzay Teleskobu (JWST), evrenin şimdiye kadar görülmemiş detaylarını gözler önüne seriyor. İşte bu güçlü teleskop tarafından yakalanan en büyüleyici görüntülerden bazıları:' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-carina/800/500', alt: 'Karina Nebulası', caption: 'Görsel 1: Karina Nebulası\'nın "Kozmik Uçurumları". Yıldız oluşum bölgelerini inanılmaz ayrıntılarla gösteriyor.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-minimal/800/500', alt: 'Minimalist Konut Tasarımı', caption: 'Görsel 2: Doğal malzemeler ve sade formların birleşimiyle minimalist bir estetik.' }, // Updated image & caption
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-stephan/800/500', alt: 'Stephan Beşlisi', caption: 'Görsel 2: Stephan Beşlisi galaksi grubu. Galaksilerin etkileşimini ve birleşmesini gözlemliyoruz.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-bridge/800/500', alt: 'Asma Köprü Detayı', caption: 'Görsel 3: Mühendislik ve estetiği bir araya getiren modern bir köprü tasarımı.' }, // Updated image & caption
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-ring/800/500', alt: 'Güney Halka Nebulası', caption: 'Görsel 3: Güney Halka Nebulası. Ölmekte olan bir yıldızın etrafındaki gaz ve toz bulutları.' },
          { id: generateId(), type: 'divider' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-interior/800/500', alt: 'Modern İç Mekan', caption: 'Görsel 4: Geniş ve aydınlık, fonksiyonel bir modern iç mekan düzenlemesi.' }, // Updated image & caption
-        { id: generateId(), type: 'text', content: 'Modern mimari, sadece estetik değil, aynı zamanda fonksiyonellik ve sürdürülebilirlik gibi konulara da odaklanarak yaşam alanlarımızı şekillendiriyor.' }, // Updated content
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-phantom/800/500', alt: 'Hayalet Galaksi (M74)', caption: 'Görsel 4: Hayalet Galaksi (M74). Galaksinin kızılötesi ışıkta görünen spiral kollarındaki gaz ve toz yapıları.' },
+        { id: generateId(), type: 'text', content: 'JWST, kızılötesi gözlem yetenekleri sayesinde evrenin ilk zamanlarına ışık tutuyor ve yıldızların, galaksilerin oluşumu hakkındaki bilgilerimizi derinleştiriyor.' },
     ]
   },
   {
     id: 'faq-article',
     name: 'SSS Makalesi',
-    description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template-faq-bio-v2/300/200', // New preview seed
-    category: 'Biyoloji', // Changed category
-    excerpt: 'Genetik testler hakkında sıkça sorulan soruları yanıtlayan bir şablon.', // Updated excerpt
-    seoTitle: 'Genetik Testler Hakkında SSS', // Updated SEO Title
-    seoDescription: 'SSS makalesi şablonu ile genetik testler hakkında merak edilenler.', // Updated SEO Desc
+    description: 'Belirli bir konudaki sıkça sorulan sorulara net cevaplar veren format.',
+    previewImageUrl: 'https://picsum.photos/seed/template-faq-solar-v3/300/200',
+    category: 'Teknoloji',
+    excerpt: 'Ev tipi güneş enerjisi sistemleri hakkında merak edilen temel sorular ve yanıtları.',
+    seoTitle: 'Ev Tipi Güneş Enerjisi Sistemleri Hakkında SSS',
+    seoDescription: 'SSS makalesi şablonu ile evler için güneş paneli kurulumu, maliyeti ve faydaları hakkında sıkça sorulan sorular.',
+    keywords: ['güneş enerjisi', 'güneş paneli', 'ev', 'çatı tipi ges', 'yenilenebilir enerji', 'sss'],
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Genetik Testler Hakkında Sıkça Sorulan Sorular' }, // Updated content
-        { id: generateId(), type: 'text', content: 'Genetik testler, sağlık durumunuz, hastalık riskleriniz ve soy ağacınız hakkında bilgi edinmenizi sağlayabilir. Ancak bu testlerle ilgili birçok soru işareti de bulunmaktadır. İşte en yaygın sorular ve cevapları:' }, // Updated content
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: Genetik test nedir ve ne işe yarar?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Genetik testler, DNA\'nızdaki belirli değişiklikleri (varyasyonlar, mutasyonlar) analiz eden tıbbi testlerdir. Hastalık risklerini belirlemek, taşıyıcılık durumunu öğrenmek, ilaçlara verilen yanıtı tahmin etmek veya soy ağacını araştırmak gibi amaçlarla kullanılır.'}, // Updated content
+        { id: generateId(), type: 'heading', level: 1, content: 'Ev Tipi Güneş Enerjisi Sistemleri Hakkında Sıkça Sorulan Sorular' },
+        { id: generateId(), type: 'text', content: 'Evinizin çatısına güneş paneli kurmayı mı düşünüyorsunuz? Bu süreçle ilgili aklınıza takılabilecek yaygın soruları ve cevaplarını sizin için derledik.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: Güneş paneli sistemi kurmak ne kadar maliyetli?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Maliyet, sistemin büyüklüğüne (kurulu güç), kullanılan panel ve invertör markasına, kurulumun yapılacağı çatının özelliklerine ve bulunduğunuz bölgeye göre değişiklik gösterir. Ortalama bir konut için maliyet [ortalama maliyet aralığı] arasında değişebilir, ancak uzun vadede elektrik faturalarından tasarruf sağlayarak kendini amorti edebilir.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: Genetik testlerin türleri nelerdir?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Teşhis testleri, taşıyıcılık testleri, doğum öncesi testler, yenidoğan tarama testleri, farmakogenetik testler ve doğrudan tüketiciye yönelik (DTC) testler gibi çeşitli türleri vardır. Her testin amacı ve sağladığı bilgi farklıdır.'}, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: Sistem ne kadar elektrik üretir ve ihtiyacımı karşılar mı?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Üretilen elektrik miktarı, panel sayısı, güneşlenme süresi, panellerin açısı ve verimliliği gibi faktörlere bağlıdır. Kurulum öncesi yapılan keşif ve analizlerle, evinizin yıllık enerji tüketimine uygun bir sistem tasarlanır. Çoğu durumda, sistem yıllık tüketimin önemli bir kısmını veya tamamını karşılayabilir.' },
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: Genetik testler ne kadar güvenilirdir?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Testin güvenilirliği, testin türüne, yapıldığı laboratuvarın kalitesine ve analiz edilen spesifik genetik değişikliğe bağlıdır. Klinik amaçlı testler genellikle yüksek doğruluk oranına sahiptir, ancak DTC testlerinin sonuçları dikkatli yorumlanmalıdır. Sonuçlar mutlaka bir sağlık uzmanı veya genetik danışman ile değerlendirilmelidir.'}, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: Devlet teşvikleri veya destekleri var mı?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Türkiye\'de ev tipi güneş enerjisi sistemleri için çeşitli devlet teşvikleri, mahsuplaşma (net metering) imkanları ve uygun kredi olanakları bulunmaktadır. Güncel teşvikler için Enerji ve Tabii Kaynaklar Bakanlığı veya ilgili dağıtım şirketinin web sitelerini takip etmek önemlidir.' },
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 4: Genetik bilgilerimin gizliliği nasıl korunur?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Klinik testlerde genetik bilgiler genellikle tıbbi gizlilik yasalarıyla korunur. Ancak DTC testlerde gizlilik politikaları şirketten şirkete değişebilir. Test yaptırmadan önce ilgili şirketin gizlilik politikasını dikkatlice incelemek önemlidir.'}, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 4: Panellerin ömrü ne kadar ve bakımı nasıl yapılır?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Kaliteli güneş panellerinin genellikle 25-30 yıl performans garantisi bulunur. Bakımları oldukça basittir; genellikle yılda birkaç kez yüzeylerinin temizlenmesi yeterlidir. İnvertör gibi diğer bileşenlerin ömrü daha kısa olabilir ve belirli aralıklarla kontrol veya değişim gerektirebilir.' },
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'text', content: 'Genetik testler hakkında daha fazla bilgi veya kişisel danışmanlık için bir genetik uzmanına başvurmanız önerilir.' }, // Updated content
+         { id: generateId(), type: 'heading', level: 2, content: 'Soru 5: Hava bulutlu veya yağmurlu olduğunda sistem çalışır mı?' },
+         { id: generateId(), type: 'text', content: '**Cevap:** Evet, güneş panelleri doğrudan güneş ışığı olmadan da (düşük seviyede de olsa) elektrik üretebilirler. Ancak üretim miktarı güneşlenme yoğunluğuna bağlı olarak azalır. Şebeke bağlantılı sistemlerde, üretimin yetersiz kaldığı durumlarda elektrik şebekeden çekilir.' },
+         { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'text', content: 'Daha detaylı bilgi ve kişiye özel teklifler için yetkili güneş enerjisi firmaları ile iletişime geçebilirsiniz.' },
     ]
   },
   {
     id: 'how-to-guide',
     name: 'Nasıl Yapılır Rehberi',
-    description: 'Adım adım talimatlar içeren öğretici makaleler için.',
-    previewImageUrl: 'https://picsum.photos/seed/template-howto-photo-v2/300/200', // New preview seed
-    category: 'Teknoloji', // Kept category
-    excerpt: 'Akıllı telefonla daha iyi fotoğraflar çekmek için adım adım ipuçları.', // Updated excerpt
-    seoTitle: 'Telefonunuzla Daha İyi Fotoğraflar Nasıl Çekilir?', // Updated SEO Title
-    seoDescription: 'Nasıl yapılır rehberi şablonu ile mobil fotoğrafçılık ipuçları.', // Updated SEO Desc
+    description: 'Belirli bir işlemi adım adım anlatan, öğretici içerikler için ideal.',
+    previewImageUrl: 'https://picsum.photos/seed/template-howto-plant-v3/300/200',
+    category: 'Biyoloji',
+    excerpt: 'Evde kolayca mikro yeşillik yetiştirmek için adım adım pratik bir rehber.',
+    seoTitle: 'Evde Mikro Yeşillik Nasıl Yetiştirilir? Adım Adım Rehber',
+    seoDescription: 'Nasıl yapılır rehberi şablonu ile evde kendi mikro yeşilliklerinizi yetiştirmenin kolay yolu.',
+    keywords: ['mikro yeşillik', 'evde tarım', 'nasıl yapılır', 'sağlıklı beslenme', 'bahçecilik'],
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Akıllı Telefonunuzla Daha İyi Fotoğraflar Nasıl Çekilir?' }, // Updated content
-        { id: generateId(), type: 'text', content: 'Profesyonel bir makineye ihtiyacınız yok! Akıllı telefonunuzun kamerasını daha etkili kullanarak harika fotoğraflar çekebilirsiniz. İşte size yol gösterecek bazı temel adımlar:' }, // Updated content
-        { id: generateId(), type: 'heading', level: 2, content: 'Temel İpuçları' },
-        { id: generateId(), type: 'text', content: 'Başlamadan önce birkaç temel noktaya dikkat edelim:\n- **Lensinizi Temizleyin:** Parmak izleri ve kir, fotoğraf kalitesini düşürür.\n- **Dijital Zoomdan Kaçının:** Görüntüyü kırparak kaliteyi bozar. Onun yerine konuya yaklaşın.\n- **Işığı Anlayın:** İyi ışıklandırma, fotoğrafın temelidir. Doğal ışığı tercih edin.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 1, content: 'Evde Mikro Yeşillik Nasıl Yetiştirilir? Adım Adım Rehber' },
+        { id: generateId(), type: 'text', content: 'Mikro yeşillikler, genç sebze ve otların filizleridir ve besin değerleri oldukça yüksektir. Evde kolayca yetiştirebilir ve salatalarınıza, sandviçlerinize lezzet katabilirsiniz. İşte basit adımlar:' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Gerekli Malzemeler' },
+        { id: generateId(), type: 'text', content: '- Sığ bir tepsi veya kap (drenaj delikli veya deliksiz olabilir)\n- Yetiştirme ortamı (torf, kokopit veya özel mikro yeşillik toprağı)\n- Mikro yeşillik tohumları (roka, turp, brokoli, ayçiçeği vb.)\n- Sprey şişesi (su püskürtmek için)\n- Makas (hasat için)' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: Kompozisyon Kurallarını Kullanın (Üçler Kuralı)' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-ruleofthirds/600/350', alt: 'Üçler Kuralı Izgarası', caption:'Konuyu kesişim noktalarına yerleştirin.' }, // Updated image & caption
-        { id: generateId(), type: 'text', content: 'Telefonunuzun kamera ayarlarından kılavuz çizgilerini (grid) açın. Önemli öğeleri veya konunuzu bu çizgilerin kesiştiği noktalara yerleştirmek, daha dengeli ve ilgi çekici fotoğraflar oluşturmanıza yardımcı olur.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: Yetiştirme Ortamını Hazırlayın' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-soil/600/350', alt: 'Tepsiye Toprak Yayma', caption:'Toprağı nemlendirin ve düzleştirin.' },
+        { id: generateId(), type: 'text', content: 'Tepsiyi yaklaşık 2-3 cm kalınlığında yetiştirme ortamı ile doldurun. Toprağı hafifçe bastırın ve sprey şişesiyle iyice nemlendirin, ancak çamurlaşmamasına dikkat edin.' },
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: Odak ve Pozlamayı Ayarlayın' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-focus-tap/600/350', alt: 'Ekrana Dokunarak Odaklama', caption:'Netlemek istediğiniz noktaya dokunun.' }, // Updated image & caption
-        { id: generateId(), type: 'text', content: 'Çoğu akıllı telefon, ekrana dokunarak odak noktasını ve pozlamayı (parlaklığı) ayarlamanıza olanak tanır. Net olmasını istediğiniz alana dokunun ve gerekirse parlaklığı kaydırarak ayarlayın.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: Tohumları Ekin' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-seeds/600/350', alt: 'Toprağa Tohum Serpme', caption:'Tohumları yüzeye eşit şekilde serpin.' },
+        { id: generateId(), type: 'text', content: 'Tohumları nemli toprağın yüzeyine eşit bir şekilde serpin. Tohumların birbirine çok yakın olmamasına özen gösterin. Üzerlerini çok ince bir tabaka toprakla kapatabilir veya açık bırakabilirsiniz (tohum türüne bağlı).' },
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: Farklı Açılardan Deneyin' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-angles-low/600/350', alt: 'Alçak Açıdan Fotoğraf Çekimi' }, // Updated image
-        { id: generateId(), type: 'text', content: 'Her zaman göz hizasından çekim yapmak zorunda değilsiniz. Alçaktan, yüksekten veya farklı perspektiflerden çekim yaparak daha dinamik ve yaratıcı kareler yakalayabilirsiniz.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: Çimlenme Süreci' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-cover/600/350', alt: 'Tepsiyi Kapatma', caption:'İlk birkaç gün karanlık ve nemli tutun.' },
+        { id: generateId(), type: 'text', content: 'Tepsiyi başka bir tepsiyle veya karanlık bir bezle kapatarak tohumların çimlenmesini teşvik edin. Bu aşamada ışığa ihtiyaçları yoktur. Toprağın nemli kalması için günde bir veya iki kez kontrol edip su püskürtün. Genellikle 2-4 gün içinde çimlenme başlar.' },
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 4: Düzenleme Araçlarını Kullanın' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-edit-app/600/350', alt: 'Fotoğraf Düzenleme Uygulaması', caption:'Basit düzenlemeler büyük fark yaratabilir.' }, // Updated image & caption
-        { id: generateId(), type: 'text', content: 'Fotoğraf çektikten sonra, telefonunuzdaki veya üçüncü parti uygulamalardaki düzenleme araçlarını kullanarak küçük ayarlamalar yapın. Parlaklık, kontrast, keskinlik ve renk doygunluğu gibi ayarlar fotoğrafınızı daha etkili hale getirebilir.' }, // Updated content
-        { id: generateId(), type: 'heading', level: 2, content: 'Bonus İpucu' },
-        { id: generateId(), type: 'text', content: '- **Portre Modu:** Arka planı bulanıklaştırarak konuyu öne çıkarmak için portre modunu kullanın.\n- **HDR Modu:** Yüksek kontrastlı sahnelerde (parlak gökyüzü, gölgeli alanlar) hem aydınlık hem de karanlık bölgelerdeki detayları korumak için HDR\'yi etkinleştirin.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 4: Işığa Çıkarma ve Büyütme' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-light/600/350', alt: 'Filizleri Işığa Koyma', caption:'Çimlenen filizleri aydınlık bir yere alın.' },
+        { id: generateId(), type: 'text', content: 'Filizler görünmeye başlayınca tepsiyi aydınlık bir yere (doğrudan güneş ışığı almayan) veya bir bitki yetiştirme lambasının altına alın. Toprağı nemli tutmaya devam edin.' },
+         { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 5: Hasat' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-harvest/600/350', alt: 'Mikro Yeşillik Hasadı', caption:'İlk gerçek yapraklar çıktığında hasat edin.' },
+        { id: generateId(), type: 'text', content: 'Mikro yeşillikler genellikle 7-14 gün içinde hasat edilebilir hale gelir. İlk gerçek yaprak çifti tamamen açıldığında, temiz bir makasla toprağın hemen üzerinden kesin. Yıkayıp hemen tüketebilir veya buzdolabında birkaç gün saklayabilirsiniz. Afiyet olsun!' },
     ]
   },
    {
     id: 'interview-article',
     name: 'Röportaj Makalesi',
-    description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/template-interview-tech-v2/300/200', // New preview seed
-    category: 'Teknoloji', // Changed category
-    excerpt: 'Yapay zeka etiği uzmanı ile yapılan bir röportajı içeren şablon.', // Updated excerpt
-    seoTitle: 'Röportaj: Prof. Dr. Can Demir ile Yapay Zeka Etiği', // Updated SEO Title
-    seoDescription: 'Röportaj makalesi şablonu ile yapay zeka etiği üzerine bir söyleşi.', // Updated SEO Desc
+    description: 'Bir uzmanla yapılan söyleşiyi soru-cevap formatında detaylı bir şekilde sunar.',
+    previewImageUrl: 'https://picsum.photos/seed/template-interview-neuro-v3/300/200',
+    category: 'Biyoloji',
+    excerpt: 'Nörobilim uzmanı Dr. Elif Aydın ile beyin plastisitesi ve öğrenme üzerine bir röportaj.',
+    seoTitle: 'Röportaj: Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme',
+    seoDescription: 'Röportaj makalesi şablonu ile nörobilim uzmanı Dr. Elif Aydın\'ın beyin esnekliği ve öğrenme süreçleri hakkındaki görüşleri.',
+    keywords: ['nörobilim', 'plastisite', 'beyin', 'öğrenme', 'hafıza', 'röportaj'],
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Prof. Dr. Can Demir ile Yapay Zeka Etiği Üzerine Söyleşi' }, // Updated content
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-can-demir/400/400', alt: 'Prof. Dr. Can Demir Portresi', caption:'Prof. Dr. Can Demir, Yapay Zeka Etiği Uzmanı' }, // Updated image & caption
-        { id: generateId(), type: 'text', content: 'Yapay zeka (AI) teknolojilerinin hızla geliştiği günümüzde, etik konular giderek daha fazla önem kazanıyor. Bu alandaki çalışmalarıyla tanınan Prof. Dr. Can Demir ile AI etiğinin temel sorunlarını ve geleceğini konuştuk.' }, // Updated content
-        { id: generateId(), type: 'heading', level: 2, content: 'Yapay Zeka Etiğinin Önemi' },
-        { id: generateId(), type: 'text', content: '**Soru:** Yapay zeka etiği neden bu kadar önemli hale geldi?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** AI sistemleri artık hayatımızın birçok alanında karar alma süreçlerine dahil oluyor; sağlıktan finansa, ulaşımdan işe alıma kadar. Bu sistemlerin adil, şeffaf, hesap verebilir ve insan haklarına saygılı bir şekilde tasarlanıp kullanılması gerekiyor. Aksi takdirde, mevcut eşitsizlikleri derinleştirebilir veya yeni etik sorunlar yaratabilirler.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 1, content: 'Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme Üzerine Söyleşi' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif-aydin/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Nörobilim Uzmanı' },
+        { id: generateId(), type: 'text', content: 'Beynimizin yaşam boyu değişme ve adapte olma yeteneği olan nöroplastisite, öğrenme ve hafıza süreçlerimizin temelini oluşturuyor. Bu büyüleyici konuyu, alanın önde gelen isimlerinden Nörobilim Uzmanı Dr. Elif Aydın ile konuştuk.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Nöroplastisite Tam Olarak Nedir?' },
+        { id: generateId(), type: 'text', content: '**Soru:** Hocam, nöroplastisite kavramını basitçe nasıl açıklarsınız?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Nöroplastisite, beynin yapısını ve fonksiyonunu deneyimlere, öğrenmeye ve hatta yaralanmalara yanıt olarak değiştirme yeteneğidir. Yani beynimiz sabit bir yapı değil, sürekli olarak yeniden şekillenebilen dinamik bir organdır. Yeni sinirsel bağlantılar kurabilir, mevcut bağlantıları güçlendirebilir veya zayıflatabilir.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Algoritmik Önyargı ve Adalet' },
-        { id: generateId(), type: 'text', content: '**Soru:** Algoritmik önyargı en çok tartışılan konulardan biri. Bu sorunu nasıl çözebiliriz?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Algoritmik önyargı, genellikle AI sistemlerinin eğitildiği verilerdeki mevcut toplumsal önyargılardan kaynaklanır. Çözüm, sadece teknik değil, aynı zamanda sosyal bir yaklaşım gerektiriyor. Daha çeşitli ve temsili veri setleri kullanmak, algoritmaların adalet metriklerine göre değerlendirilmesi, şeffaflık ve denetlenebilirlik mekanizmaları geliştirmek önemli adımlar.' }, // Updated content
-        { id: generateId(), type: 'quote', content: "Yapay zekayı geliştirirken, insanlığımızı kaybetmemeliyiz.", citation:"Prof. Dr. Can Demir" }, // Updated quote
+        { id: generateId(), type: 'heading', level: 2, content: 'Öğrenme ve Hafıza ile İlişkisi' },
+        { id: generateId(), type: 'text', content: '**Soru:** Öğrenme sürecinde nöroplastisitenin rolü nedir?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Öğrenme, aslında nöroplastisitenin bir sonucudur. Yeni bir bilgi veya beceri öğrendiğimizde, beynimizdeki nöronlar arasındaki bağlantılar (sinapslar) değişir. Tekrar ve pratikle bu bağlantılar güçlenir ve bilgi kalıcı hale gelir. Hafıza da benzer şekilde, bu sinaptik değişikliklerin korunmasıyla oluşur.' },
+        { id: generateId(), type: 'quote', content: "Beyin, kullanıldıkça gelişen bir kas gibidir.", citation:"Dr. Elif Aydın" },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Gelecekteki Zorluklar ve Fırsatlar' },
-        { id: generateId(), type: 'text', content: '**Soru:** Yapay zeka etiği alanında bizi gelecekte neler bekliyor?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Otonom sistemlerin (örneğin sürücüsüz araçlar) karar alma mekanizmalarındaki etik ikilemler, yapay genel zekanın (AGI) potansiyel etkileri ve AI\'ın iş gücü üzerindeki dönüşümü gibi konular daha fazla gündemde olacak. Aynı zamanda, AI\'ı toplumsal fayda için kullanma, örneğin iklim değişikliğiyle mücadele veya sağlık hizmetlerini iyileştirme gibi büyük fırsatlar da var. Önemli olan, bu teknolojiyi etik bir çerçevede geliştirmek ve yönlendirmek.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Plastisiteyi Nasıl Geliştirebiliriz?' },
+        { id: generateId(), type: 'text', content: '**Soru:** Günlük hayatta beyin plastisitesini desteklemek için neler yapabiliriz?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Birkaç önemli faktör var: Sürekli yeni şeyler öğrenmeye açık olmak, zihinsel olarak zorlayıcı aktivitelerle meşgul olmak (bulmaca çözmek, yeni bir dil öğrenmek gibi), düzenli fiziksel egzersiz yapmak, kaliteli uyku uyumak ve sağlıklı beslenmek. Ayrıca, sosyal etkileşim ve stresi yönetmek de beyin sağlığı ve plastisitesi için önemlidir.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'text', content: 'Prof. Dr. Can Demir\'e değerli görüşleri için teşekkür ederiz. Yapay zeka etiği, hepimizin düşünmesi gereken kritik bir konu olmaya devam edecek.' }, // Updated content
+         { id: generateId(), type: 'heading', level: 2, content: 'Yaşlanma ve Plastisite' },
+         { id: generateId(), type: 'text', content: '**Soru:** Yaş ilerledikçe beyin plastisitesi azalır mı?' },
+         { id: generateId(), type: 'text', content: '**Cevap:** Evet, yaşla birlikte plastisite yeteneğinde bir miktar azalma olabilir, ancak beyin hiçbir zaman değişme yeteneğini tamamen kaybetmez. Yaşam boyu öğrenme ve yukarıda saydığım sağlıklı yaşam alışkanlıkları, yaşlılıkta bile bilişsel fonksiyonların korunmasına ve plastisitenin desteklenmesine yardımcı olabilir.' },
+         { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'text', content: 'Dr. Elif Aydın\'a beyin plastisitesi konusundaki değerli bilgileri paylaştığı için teşekkür ediyoruz. Beynimizin bu inanılmaz uyum yeteneği, sürekli gelişim ve öğrenme için bize büyük bir potansiyel sunuyor.' },
     ]
   },
 ];
@@ -335,12 +360,12 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
         };
 
         try {
-            const localStorageKey = "articlePreviewData"; // Use a fixed key
-            console.log(`[TemplateSelector] Setting localStorage key: ${localStorageKey}`);
+            const localStorageKey = "articlePreviewData"; // Use a fixed key for simplicity
+            // console.log(`[TemplateSelector] Setting localStorage key: ${localStorageKey} for template ${template.id}`);
             localStorage.setItem(localStorageKey, JSON.stringify(previewData));
 
             const previewUrl = '/admin/preview';
-            console.log(`[TemplateSelector] Opening preview URL: ${previewUrl}`);
+            // console.log(`[TemplateSelector] Opening preview URL: ${previewUrl}`);
             const previewWindow = window.open(previewUrl, '_blank');
 
             if (!previewWindow) {
