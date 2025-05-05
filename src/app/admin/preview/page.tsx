@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { notFound } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation'; // Import useSearchParams
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -107,14 +107,24 @@ const renderBlock = (block: Block) => {
 };
 
 export default function ArticlePreviewPage() {
+  const searchParams = useSearchParams(); // Get query parameters
+  const previewKey = searchParams?.get('key'); // Get the unique key
+
   // Use a broader type initially, then refine
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (!previewKey) {
+        setError("Önizleme anahtarı bulunamadı.");
+        setIsLoading(false);
+        return;
+    }
+
     try {
-        const storedData = localStorage.getItem('articlePreviewData');
+        // Use the unique key to get the correct data
+        const storedData = localStorage.getItem(previewKey);
         if (storedData) {
             const parsedData = JSON.parse(storedData);
 
@@ -148,13 +158,13 @@ export default function ArticlePreviewPage() {
          setError("Önizleme verisi yüklenirken bir hata oluştu.");
     } finally {
         setIsLoading(false);
+         // Optional: Clean up the specific localStorage item after loading
+         // setTimeout(() => {
+         //   localStorage.removeItem(previewKey);
+         // }, 500); // Small delay before removing
     }
 
-     // Optional: Clean up localStorage after loading
-     // return () => {
-     //   localStorage.removeItem('articlePreviewData');
-     // };
-  }, []);
+  }, [previewKey]); // Depend on the previewKey
 
    if (isLoading) {
      return <div className="flex justify-center items-center h-screen">Önizleme yükleniyor...</div>;

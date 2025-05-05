@@ -322,11 +322,15 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
              authorId: 'template-author', // Placeholder author
              createdAt: new Date().toISOString(), // Current time for preview
              updatedAt: new Date().toISOString(),
+             content: '', // Add missing property
          };
          try {
               console.log("Saving preview data for template:", template.id, previewData); // Debug log
-             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
-             window.open('/admin/preview', '_blank');
+             // Generate a unique key for localStorage for each template preview
+             const localStorageKey = `articlePreviewData_${template.id}_${Date.now()}`;
+             localStorage.setItem(localStorageKey, JSON.stringify(previewData));
+             // Open the preview page with the unique key as a query parameter
+             window.open(`/admin/preview?key=${localStorageKey}`, '_blank');
          } catch (error) {
              console.error("Error saving template preview data:", error);
              toast({
@@ -388,3 +392,5 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
     </Dialog>
   );
 }
+
+    
