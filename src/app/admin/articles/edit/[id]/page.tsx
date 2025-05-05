@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -9,7 +8,6 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-// import { useDebouncedCallback } from 'use-debounce'; // Removed unused import
 import { getArticleById, updateArticle, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 import {
@@ -38,7 +36,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers } from "lucide-react"; // Added Layers icon for Remove Template
+
+// Helper to generate unique block IDs safely on the client
+const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+const defaultBlocks: Block[] = [{ id: generateBlockId(), type: 'text', content: '' }];
+
 
 // --- Main Page Component ---
 
@@ -52,6 +55,7 @@ export default function EditArticlePage() {
     const [loading, setLoading] = React.useState(true);
     const [saving, setSaving] = React.useState(false); // Added saving state
     const [error, setError] = React.useState<string | null>(null); // Added error state
+    const [templateApplied, setTemplateApplied] = React.useState(false); // Track if a template has been applied
 
     // Form Field States (Sync with articleData on load and save)
     const [title, setTitle] = React.useState("");
@@ -92,12 +96,13 @@ export default function EditArticlePage() {
                             setMainImageUrl(data.mainImageUrl || "");
                             setIsFeatured(data.isFeatured);
                             setIsHero(data.isHero); // Sync isHero state
-                            setBlocks(data.blocks || []);
+                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : defaultBlocks); // Use default if empty
                             setSeoTitle(data.seoTitle || '');
                             setSeoDescription(data.seoDescription || '');
                             setSlug(data.slug);
                             setKeywords(data.keywords || []);
                             setCanonicalUrl(data.canonicalUrl || "");
+                            setTemplateApplied(false); // Reset template applied state on load
                         } else {
                             setError("Makale bulunamadı.");
                             // Consider using notFound() here, but might cause issues if API call fails temporarily
@@ -164,7 +169,7 @@ export default function EditArticlePage() {
     const handleAddBlock = (type: Block['type']) => {
         // ID generation happens client-side, safe from hydration issues
         const newBlock: Block = {
-            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            id: generateBlockId(),
             type: type,
             ...(type === 'text' && { content: '' }),
             ...(type === 'heading' && { level: 2, content: '' }),
@@ -178,11 +183,13 @@ export default function EditArticlePage() {
         } as Block;
         setBlocks([...blocks, newBlock]);
         setSelectedBlockId(newBlock.id); // Select the newly added block
+        setTemplateApplied(false); // Adding a block manually means template is no longer strictly applied
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks(blocks.filter(block => block.id !== id));
         if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
+        setTemplateApplied(false); // Removing a block means template is modified
     };
 
       // Update block state (generic, used by BlockEditor)
@@ -192,11 +199,14 @@ export default function EditArticlePage() {
                   block.id === updatedBlock.id ? updatedBlock : block
               )
           );
+          // Note: Updating content doesn't necessarily mean the template structure changed
+          // If order/type changes, templateApplied should be false. Reordering handles this.
       };
 
       // Reorder blocks (generic, used by BlockEditor)
       const handleReorderBlocks = (reorderedBlocks: Block[]) => {
           setBlocks(reorderedBlocks);
+          setTemplateApplied(false); // Reordering breaks the original template structure
       };
 
     const handleSave = async (publish: boolean = false) => {
@@ -260,12 +270,13 @@ export default function EditArticlePage() {
                  setMainImageUrl(updatedArticle.mainImageUrl || "");
                  setIsFeatured(updatedArticle.isFeatured);
                  setIsHero(updatedArticle.isHero); // Sync isHero after save
-                 setBlocks(updatedArticle.blocks || []);
+                 setBlocks(updatedArticle.blocks || defaultBlocks); // Use default if empty
                  setSeoTitle(updatedArticle.seoTitle || '');
                  setSeoDescription(updatedArticle.seoDescription || '');
                  setSlug(updatedArticle.slug);
                  setKeywords(updatedArticle.keywords || []);
                  setCanonicalUrl(updatedArticle.canonicalUrl || "");
+                 // Keep templateApplied state as is after save, only modification actions reset it
 
                  toast({
                      title: "Makale Kaydedildi",
@@ -308,21 +319,27 @@ export default function EditArticlePage() {
     };
 
      const handleTemplateSelect = (templateBlocks: Block[]) => {
-         if (blocks.length > 0 && blocks.some(b => (b.type === 'text' && b.content !== '') || b.type !== 'text')) { // Check if there's actual content
-            if (!window.confirm("Mevcut içerik bölümlerinin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
-                 setIsTemplateSelectorOpen(false);
-                 return;
-            }
-        }
-        // ID generation happens client-side, safe from hydration issues
+        // Confirmation logic is handled inside TemplateSelector's onSelect now
+        // Generate new IDs for template blocks safely on the client
          const newBlocks = templateBlocks.map(block => ({
             ...block,
-            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
+            id: generateBlockId()
         }));
         setBlocks(newBlocks);
+        setTemplateApplied(true); // Mark that a template was applied
         setIsTemplateSelectorOpen(false);
         toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
      };
+
+     const handleRemoveTemplate = () => {
+         if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
+            setBlocks(defaultBlocks); // Reset to default blocks
+            setTemplateApplied(false); // Mark template as removed
+            setSelectedBlockId(null); // Deselect any selected block
+            toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
+         }
+     };
+
 
       const handlePreview = () => {
          if (!category) {
@@ -629,6 +646,12 @@ export default function EditArticlePage() {
                                     Taslağa Geri Al
                                 </Button>
                              )}
+                              {/* Conditionally show Remove Template button */}
+                              {templateApplied && (
+                                <Button variant="outline" className="w-full text-destructive border-destructive/50 hover:bg-destructive/10" onClick={handleRemoveTemplate} disabled={saving}>
+                                    <Layers className="mr-2 h-4 w-4" /> Şablonu Kaldır
+                                </Button>
+                             )}
                          </CardContent>
                       </Card>
 
@@ -650,7 +673,7 @@ export default function EditArticlePage() {
               <TemplateSelector
                   isOpen={isTemplateSelectorOpen}
                   onClose={() => setIsTemplateSelectorOpen(false)}
-                  onSelectTemplateBlocks={handleTemplateSelect}
+                  onSelectTemplateBlocks={handleTemplateSelect} // Changed prop name
               />
          </div>
     );
