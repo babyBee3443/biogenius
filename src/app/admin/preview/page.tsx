@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -138,7 +139,7 @@ export default function ArticlePreviewPage() {
         // Use the unique key to get the correct data
         console.log("[ArticlePreviewPage] Accessing localStorage.getItem with key:", previewKey);
         const storedData = localStorage.getItem(previewKey);
-        console.log(`[ArticlePreviewPage] localStorage.getItem returned: ${storedData ? `Data of length ${storedData.length}` : 'null'}`);
+        console.log(`[ArticlePreviewPage] localStorage.getItem(${previewKey}) returned: ${storedData ? `Data of length ${storedData.length}` : 'null'}`);
 
 
         if (storedData) {
@@ -194,16 +195,18 @@ export default function ArticlePreviewPage() {
          setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
     } finally {
         console.log("[ArticlePreviewPage] Finished loading attempt. isLoading:", false);
+        setIsLoading(false); // Ensure loading is set to false in all cases
+
          // Optional: Clean up the specific localStorage item after loading.
          // It might be safer *not* to remove immediately if the user might refresh.
          // Consider removing it when the component unmounts or the window is closed.
-         // console.log("[ArticlePreviewPage] Attempting to remove localStorage item with key:", previewKey);
-         // try {
-         //     localStorage.removeItem(previewKey);
-         //     console.log(`[ArticlePreviewPage] Removed localStorage item with key: ${previewKey}`);
-         // } catch (removeError) {
-         //     console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey}:`, removeError);
-         // }
+          console.log(`[ArticlePreviewPage] Attempting to remove localStorage item with key: ${previewKey}`);
+          try {
+              localStorage.removeItem(previewKey);
+              console.log(`[ArticlePreviewPage] Successfully removed localStorage item with key: ${previewKey}`);
+          } catch (removeError) {
+              console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey}:`, removeError);
+          }
     }
 
   }, [previewKey]); // Depend ONLY on the previewKey
