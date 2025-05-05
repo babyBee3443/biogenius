@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -19,10 +18,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger, // Keep AlertDialogTrigger
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Ensure ScrollArea is imported
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Eye } from 'lucide-react';
@@ -121,19 +120,19 @@ const templates: Template[] = [
         { id: generateId(), type: 'text', content: 'Özellikle Akdeniz diyeti gibi, meyve, sebze, tam tahıllar, balık ve sağlıklı yağlar açısından zengin beslenme düzenleri beyin sağlığı ile ilişkilendirilmiştir.' },
          { id: generateId(), type: 'divider'},
          { id: generateId(), type: 'heading', level: 2, content: `4. Kaliteli Uyku Uyuyun` },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-sleep-img/600/300', alt: 'Uyuyan Kişi' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-sleep-img/600/300', alt: 'Uyuyan Kişi', caption: 'Uyku, öğrenmeyi pekiştirir ve beyni temizler.' },
          { id: generateId(), type: 'text', content: 'Uyku sırasında beyin, gün içinde öğrenilen bilgileri pekiştirir ve zararlı toksinleri temizler. Her gece 7-8 saat kesintisiz ve kaliteli uyku hedefleyin.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: `5. Sosyal Bağlantıları Koruyun` },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-social-img/600/300', alt: 'Sohbet Eden Arkadaşlar' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-social-img/600/300', alt: 'Sohbet Eden Arkadaşlar', caption: 'Sosyal etkileşim beyin sağlığını destekler.' },
         { id: generateId(), type: 'text', content: 'Güçlü sosyal ilişkiler, stresi azaltmaya ve beyin sağlığını korumaya yardımcı olabilir. Aile ve arkadaşlarla zaman geçirmek, sosyal aktivitelere katılmak önemlidir.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: `6. Stresi Etkili Yönetin` },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-yoga-img/600/300', alt: 'Yoga Yapan Kişi' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-yoga-img/600/300', alt: 'Yoga Yapan Kişi', caption: 'Meditasyon ve rahatlama teknikleri stresi azaltır.' },
         { id: generateId(), type: 'text', content: 'Kronik stres, beyin hücrelerine zarar verebilir ve hafızayı olumsuz etkileyebilir. Meditasyon, yoga, doğa yürüyüşleri gibi rahatlama teknikleri stresi yönetmenize yardımcı olabilir.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: `7. Kronik Hastalıkları Kontrol Altında Tutun` },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-doctor-img/600/300', alt: 'Doktor ve Hasta' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-doctor-img/600/300', alt: 'Doktor ve Hasta', caption: 'Sağlık kontrollerinizi ihmal etmeyin.' },
         { id: generateId(), type: 'text', content: 'Yüksek tansiyon, diyabet, yüksek kolesterol gibi kronik sağlık sorunları beyin sağlığını olumsuz etkileyebilir. Bu hastalıkları doktorunuzun önerileri doğrultusunda kontrol altında tutmak önemlidir.' },
         { id: generateId(), type: 'text', content: 'Bu yöntemleri yaşam tarzınıza entegre ederek beyin sağlığınızı koruyabilir ve bilişsel yeteneklerinizi uzun yıllar boyunca sürdürebilirsiniz.'},
     ]
@@ -278,8 +277,8 @@ const blocksToHtml = (blocks: Block[]): string => {
                 break;
             case 'text':
                 const processedContent = block.content
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
                     .replace(/\n/g, '<br />'); // Basic newline handling
                 html += `<p>${processedContent}</p>\n`;
                 break;
@@ -312,7 +311,7 @@ const blocksToHtml = (blocks: Block[]): string => {
                  break;
              case 'video':
                  // Basic YouTube embed from youtubeId or URL
-                 const videoId = block.youtubeId || block.url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.pop();
+                 const videoId = block.youtubeId || block.url?.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.pop();
                  if (videoId && videoId.length === 11) {
                      html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
                  } else if (block.url) {
@@ -329,7 +328,8 @@ const blocksToHtml = (blocks: Block[]): string => {
                  break;
             default:
                  // Fallback for unknown block types
-                 html += `<!-- Unsupported block type: ${block.type} -->\n`;
+                //  html += `<!-- Unsupported block type: ${block.type} -->\n`; // Removed logging of unknown types
+                break;
         }
     });
     return html;
@@ -344,15 +344,11 @@ export function TemplateSelector({
   blocksCurrentlyExist
 }: TemplateSelectorProps) {
     const [selectedTemplate, setSelectedTemplate] = React.useState<Template | null>(null);
-    const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
+    // const [isConfirmOpen, setIsConfirmOpen] = React.useState(false); // Managed by AlertDialog now
 
     const handleSelectClick = (template: Template) => {
         setSelectedTemplate(template);
-        if (blocksCurrentlyExist) {
-            setIsConfirmOpen(true); // Show confirmation dialog if blocks exist
-        } else {
-            applyTemplate(template.blocks); // Apply directly if no blocks exist
-        }
+        // Confirmation is now handled by AlertDialogTrigger below
     };
 
     const applyTemplate = (blocks: Block[]) => {
@@ -363,7 +359,7 @@ export function TemplateSelector({
              onSelectTemplate(htmlContent);
         }
         onClose();
-        setIsConfirmOpen(false); // Close confirmation dialog if open
+        // setIsConfirmOpen(false); // No longer needed
         setSelectedTemplate(null); // Reset selected template
     };
 
@@ -390,7 +386,7 @@ export function TemplateSelector({
              isHero: false,
          };
 
-         // Persist the preview data to localStorage using the template ID as part of the key
+         // Persist the preview data to localStorage using a unique key
          try {
              const previewKey = `articlePreviewData_${template.id}_${Date.now()}`; // Unique key per preview
              localStorage.setItem(previewKey, JSON.stringify(previewData));
@@ -435,6 +431,7 @@ export function TemplateSelector({
                                                 layout="fill"
                                                 objectFit="cover"
                                                 className="rounded"
+                                                data-ai-hint={template.category?.toLowerCase() || 'abstract'} // Add hint
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground flex-grow">{template.description}</p>
@@ -443,9 +440,9 @@ export function TemplateSelector({
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                             {/* Trigger the AlertDialog when "Seç" is clicked */}
+                                             {/* Use AlertDialogTrigger for confirmation */}
                                              <AlertDialogTrigger asChild>
-                                                 <Button size="sm" onClick={() => setSelectedTemplate(template)}> {/* Only set selected template here */}
+                                                 <Button size="sm" onClick={() => handleSelectClick(template)}> {/* Only set selected template here */}
                                                      Seç
                                                  </Button>
                                              </AlertDialogTrigger>
@@ -483,5 +480,3 @@ export function TemplateSelector({
         </AlertDialog>
     );
 }
-
-    
