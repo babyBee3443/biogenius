@@ -106,7 +106,7 @@ export default function ArticlePreviewPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   const searchParams = useSearchParams();
-  const templateKey = searchParams.get('templateKey');
+  const templateKey = searchParams ? searchParams.get('templateKey') : null; // Get key safely
 
   React.useEffect(() => {
     let isMounted = true;
@@ -163,8 +163,8 @@ export default function ArticlePreviewPage() {
                          setPreviewData(normalizedData);
                          setError(null);
                          // Consider removing the item ONLY if it's meant to be single-use
-                         localStorage.removeItem(templateKey);
-                         console.log(`[ArticlePreviewPage] Removed localStorage item ${templateKey} after loading.`);
+                         // localStorage.removeItem(templateKey); // Commented out for debugging
+                         // console.log(`[ArticlePreviewPage] Item ${templateKey} NOT removed from localStorage (debugging).`);
                     }
                 } else {
                     const missingFields = [];
@@ -187,16 +187,25 @@ export default function ArticlePreviewPage() {
         }
     };
 
-    // Load immediately
-    loadPreview();
+    // Ensure searchParams are ready before loading
+    if (searchParams) { // Check if searchParams object exists
+        loadPreview();
+    } else if (isMounted) {
+        // Handle the case where searchParams might not be ready initially
+        // We could set loading to false here or wait a bit, but let's signal an issue for now.
+        setError("URL parametreleri yüklenemedi veya bekleniyor...");
+        setIsLoading(false);
+    }
 
     // Cleanup function
     return () => {
       isMounted = false;
+      // Consider removing item on unmount if not removed earlier
+      // if (templateKey) localStorage.removeItem(templateKey);
       console.log("[ArticlePreviewPage] Component unmounted.");
     };
 
-  }, [templateKey]); // Depend on templateKey
+  }, [templateKey, searchParams]); // Add searchParams dependency
 
    if (isLoading) {
      console.log("[ArticlePreviewPage] Rendering loading state.");
