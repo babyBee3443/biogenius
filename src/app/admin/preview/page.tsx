@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Eye } from 'lucide-react';
+import { ArrowLeft, Twitter, Facebook, Linkedin, Eye } from 'lucide-react'; // Added Eye
 import type { Block } from '@/components/admin/template-selector';
 import type { ArticleData } from '@/lib/mock-data'; // Import the standard ArticleData interface
 
@@ -27,7 +27,7 @@ const HeadingBlockRenderer: React.FC<{ block: Extract<Block, { type: 'heading' }
 const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }> = ({ block }) => (
     <figure className="my-6">
         {block.url ? (
-            <Image src={block.url} alt={block.alt || 'Makale Görseli'} width={800} height={400} className="rounded-lg shadow-md mx-auto max-w-full h-auto" data-ai-hint="article content placeholder" />
+            <Image src={block.url} alt={block.alt || 'Makale Görseli'} width={800} height={400} className="rounded-lg shadow-md mx-auto max-w-full h-auto" data-ai-hint="article content placeholder"/>
         ) : (
             <div className="bg-muted rounded-lg aspect-video flex items-center justify-center text-muted-foreground italic">
                 [Görsel Alanı]
@@ -117,10 +117,18 @@ export default function ArticlePreviewPage() {
         const storedData = localStorage.getItem('articlePreviewData');
         if (storedData) {
             const parsedData = JSON.parse(storedData);
-            // Basic validation - check for essential fields
-            if (parsedData && parsedData.title && parsedData.blocks && parsedData.category && parsedData.slug) {
+
+            // Refined validation - check for essential fields and types
+            if (
+                parsedData &&
+                typeof parsedData.title === 'string' && parsedData.title &&
+                Array.isArray(parsedData.blocks) && // Check if blocks is an array
+                typeof parsedData.category === 'string' && parsedData.category &&
+                typeof parsedData.slug === 'string' && parsedData.slug
+             ) {
                  setArticleData(parsedData as ArticleData); // Cast to ArticleData
             } else {
+                 console.error("Invalid preview data structure:", parsedData); // Log invalid data
                  setError("Önizleme verisi geçersiz veya eksik.");
             }
         } else {
@@ -210,7 +218,7 @@ export default function ArticlePreviewPage() {
 
           {/* Render Blocks */}
           <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
-            {blocks.length > 0 ? (
+            {blocks && blocks.length > 0 ? ( // Added check for blocks existence
                  blocks.map(renderBlock)
              ) : (
                  <p className="text-muted-foreground italic">(İçerik Bölümü Yok)</p>

@@ -75,7 +75,7 @@ const templates: Template[] = [
       { id: generateId(), type: 'heading', level: 2, content: 'Konunun Derinlemesine İncelenmesi' },
       { id: generateId(), type: 'text', content: '**[Alt Konu 2]**\'nin daha detaylı incelendiği bölüm. Alt başlıklar kullanarak okunabilirliği artırın. İstatistikler, örnekler veya alıntılarla içeriği zenginleştirin. Örneğin, yapılan bir araştırmaya göre...' },
       { id: generateId(), type: 'heading', level: 2, content: 'Farklı Bir Perspektif ve Video İçerik' },
-      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' }, // Changed video
+      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
       { id: generateId(), type: 'text', content: 'Konuyla ilgili farklı görüşler veya alternatif yaklaşımlar bu bölümde ele alınabilir. Tartışmalı konular için dengeli bir sunum önemlidir. Videoda ise konunun [Video İçeriği Açıklaması] gösterilmektedir.' },
       { id: generateId(), type: 'quote', content: 'Bilgi güçtür, ancak paylaşıldığında daha da güçlenir.', citation: 'Francis Bacon (Uyarlanmış)' },
       { id: generateId(), type: 'text', content: 'Sonuç paragrafı, makalede ele alınan ana noktaları özetler (**[Alt Konu 1]** ve **[Alt Konu 2]** gibi) ve okuyucuya bir çıkarım veya geleceğe yönelik bir mesaj sunar.' },
@@ -324,6 +324,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
              updatedAt: new Date().toISOString(),
          };
          try {
+              console.log("Saving preview data for template:", template.id, previewData); // Debug log
              localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
              window.open('/admin/preview', '_blank');
          } catch (error) {
