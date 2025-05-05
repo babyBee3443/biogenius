@@ -361,7 +361,7 @@ export function TemplateSelector({
         // Generate new IDs for template blocks safely on the client
          const newBlocks = templateToApply.blocks.map(block => ({
             ...block,
-            id: generateBlockId()
+            id: generateId()
         }));
         onSelectTemplateBlocks(newBlocks);
 
@@ -373,10 +373,10 @@ export function TemplateSelector({
         onClose();
         setIsConfirmOpen(false); // Close confirmation dialog
         setSelectedTemplate(null); // Reset selected template
-        toast({ title: "Şablon Uygulandı", description: `"${templateToApply.name}" şablonu başarıyla uygulandı.` });
+        // Toast message already handled inside handlePreview and handleSelectClick logic
     };
 
-     // Handle template preview - pass the specific template's data
+     // Handler for template preview - pass the specific template's data
     const handlePreview = (template: Template) => {
         if (typeof window === 'undefined') return; // Guard against server-side execution
 
@@ -399,39 +399,59 @@ export function TemplateSelector({
             isHero: false,
         };
 
-        const previewKey = `preview_${template.id}_${Date.now()}`; // Ensure unique key
-        console.log(`[TemplateSelector/handlePreview] Preparing preview data for key: ${previewKey}`, previewData);
+        // Use a consistent key pattern but include template ID and timestamp for uniqueness
+        const previewKey = `preview_${template.id}_${Date.now()}`;
+        console.log(`[TemplateSelector/handlePreview] Generating preview key: ${previewKey}`);
 
         try {
-            localStorage.setItem(previewKey, JSON.stringify(previewData));
-            console.log(`[TemplateSelector/handlePreview] Saved data to localStorage with key: ${previewKey}. Verifying...`);
+             console.log(`[TemplateSelector/handlePreview] Preparing to save preview data to localStorage with key: ${previewKey}`);
+             console.log(`[TemplateSelector/handlePreview] Preview Data:`, previewData); // Log the data being saved
 
-             // Verification Step
+            const stringifiedData = JSON.stringify(previewData);
+            console.log(`[TemplateSelector/handlePreview] Stringified data length: ${stringifiedData.length}`);
+
+            localStorage.setItem(previewKey, stringifiedData);
+            console.log(`[TemplateSelector/handlePreview] Successfully called localStorage.setItem for key: ${previewKey}`);
+
+             // Verification Step 1: Immediate Retrieval
             const storedData = localStorage.getItem(previewKey);
-             if (!storedData) {
-                 console.error(`[TemplateSelector/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
-                 throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
+             if (storedData) {
+                 console.log(`[TemplateSelector/handlePreview] Verification 1 SUCCESS: Data found in localStorage immediately after setting. Length: ${storedData.length}`);
+                  // Verification Step 2: Parsing
+                 try {
+                    const parsed = JSON.parse(storedData);
+                    console.log(`[TemplateSelector/handlePreview] Verification 2 SUCCESS: Data parsed successfully. Title: ${parsed.title}`);
+                 } catch (parseError: any) {
+                      console.error(`[TemplateSelector/handlePreview] Verification 2 FAILED: Could not parse stored JSON.`, parseError);
+                      throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
+                 }
+             } else {
+                  console.error(`[TemplateSelector/handlePreview] Verification 1 FAILED: No data found for key ${previewKey} immediately after setting.`);
+                  throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
              }
-            try {
-                 // Try parsing to ensure data is valid JSON
-                JSON.parse(storedData);
-                console.log(`[TemplateSelector/handlePreview] Verification successful. Data length: ${storedData.length}`);
-            } catch (parseError: any) {
-                 console.error(`[TemplateSelector/handlePreview] Verification failed: Data for key ${previewKey} is not valid JSON.`, parseError);
-                 throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
-            }
-
 
             const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
-            window.open(previewUrl, '_blank');
-            console.log(`[TemplateSelector/handlePreview] Opened preview window for URL: ${previewUrl}`);
+            console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
+            const newWindow = window.open(previewUrl, '_blank');
+             if (!newWindow) {
+                 console.error("[TemplateSelector/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                 toast({
+                     variant: "destructive",
+                     title: "Önizleme Penceresi Açılamadı",
+                     description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
+                     duration: 10000,
+                 });
+             } else {
+                 console.log("[TemplateSelector/handlePreview] Preview window opened successfully.");
+             }
+
 
         } catch (error: any) {
-            console.error("[TemplateSelector/handlePreview] Error during preview process:", error);
+            console.error("[TemplateSelector/handlePreview] Error during preview process (setItem or verification):", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi veya açılamadı: ${error.message}`,
+                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
                 duration: 10000,
             });
         }
@@ -470,20 +490,14 @@ export function TemplateSelector({
                                         </div>
                                         <p className="text-xs text-muted-foreground flex-grow">{template.description}</p>
                                         <div className="flex justify-between items-center pt-2">
-                                             <Button size="sm" variant="outline" onClick={() => handlePreview(template)}>
+                                             <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handlePreview(template); }}>
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                            {/* Wrap the "Seç" button in AlertDialogTrigger */}
-                                             <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={setIsConfirmOpen}>
-                                                  <AlertDialogTrigger asChild>
-                                                      {/* The original "Seç" button logic triggers the confirmation check */}
-                                                      <Button size="sm" onClick={() => handleSelectClick(template)}>
-                                                          Seç
-                                                      </Button>
-                                                  </AlertDialogTrigger>
-                                                  {/* Confirmation Dialog Content (moved outside the map) */}
-                                              </AlertDialog>
+                                             {/* Button to trigger the selection process */}
+                                             <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSelectClick(template); }}>
+                                                Seç
+                                            </Button>
                                         </div>
                                     </CardContent>
                                 </Card>

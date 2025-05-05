@@ -122,6 +122,7 @@ export default function ArticlePreviewPage() {
         if (!isMounted) return;
 
         const previewKey = searchParams ? searchParams.get('key') : null; // Get 'key' from query params
+        console.log(`[ArticlePreviewPage] Retrieved previewKey from URL: ${previewKey}`);
 
         if (!previewKey) {
             console.warn("[ArticlePreviewPage] No 'key' provided in URL query parameters.");
@@ -130,23 +131,26 @@ export default function ArticlePreviewPage() {
             return;
         }
 
-        console.log(`[ArticlePreviewPage] Attempting to load data with key: ${previewKey}`);
+        console.log(`[ArticlePreviewPage] Attempting to load data from localStorage with key: ${previewKey}`);
         try {
             const storedData = localStorage.getItem(previewKey);
 
             if (storedData) {
-                console.log(`[ArticlePreviewPage] Found data in localStorage. Length: ${storedData.length}.`);
+                console.log(`[ArticlePreviewPage] Found data in localStorage for key ${previewKey}. Raw data length: ${storedData.length}.`);
+                console.log(`[ArticlePreviewPage] Raw data:`, storedData.substring(0, 200) + '...'); // Log beginning of raw data
                 let parsedData;
                 try {
                     parsedData = JSON.parse(storedData);
                     console.log("[ArticlePreviewPage] Parsed data:", parsedData);
                     if (!parsedData || typeof parsedData !== 'object' || Object.keys(parsedData).length === 0) {
-                         throw new Error(`Invalid preview data structure: ${JSON.stringify(parsedData)}`);
+                         const errorMsg = `Invalid preview data structure after parsing: ${JSON.stringify(parsedData)}`;
+                         console.error("[ArticlePreviewPage]", errorMsg);
+                         throw new Error(errorMsg); // Throw error if data is empty or not an object
                     }
                 } catch (parseError: any) {
                     console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
-                    console.error("[ArticlePreviewPage] Raw data:", storedData);
-                    if (isMounted) setError(`Önizleme verisi bozuk: ${parseError.message}`);
+                    console.error("[ArticlePreviewPage] Raw data was:", storedData);
+                    if (isMounted) setError(`Önizleme verisi bozuk veya okunamadı: ${parseError.message}. Raw Data: ${storedData.substring(0,100)}...`);
                     return;
                 }
 
@@ -192,9 +196,8 @@ export default function ArticlePreviewPage() {
     } else {
         // If searchParams are not immediately available (should be rare with App Router client components), handle it
          console.warn("[ArticlePreviewPage] searchParams not immediately available.");
-         // You might set an error or show a loading indicator here, but let's rely on the check inside loadPreview for now.
-         // setError("URL parametreleri bekleniyor...");
-         // setIsLoading(false); // Or keep loading
+         setError("URL parametreleri bekleniyor..."); // Provide feedback
+         setIsLoading(false); // Stop loading as we can't proceed
     }
 
 
@@ -216,7 +219,7 @@ export default function ArticlePreviewPage() {
    }
 
    if (error) {
-        console.log("[ArticlePreviewPage] Rendering error state:", error);
+        console.error("[ArticlePreviewPage] Rendering error state:", error); // Log the error being displayed
         return (
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
                  <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
@@ -227,11 +230,21 @@ export default function ArticlePreviewPage() {
         );
     }
 
-   // Assert articleData is not null here because error/loading states handle it
-   const articleData = previewData!;
+   // Assert previewData is not null here because error/loading states handle it
+   if (!previewData) {
+     console.error("[ArticlePreviewPage] Rendering error state: previewData is null or undefined after loading and error checks.");
+     return (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-destructive mb-4">Önizleme Hatası</h1>
+            <p className="text-muted-foreground mb-6">Önizleme verisi yüklenemedi (null).</p>
+            <Button onClick={() => window.close()} variant="outline">Sekmeyi Kapat</Button>
+        </div>
+     );
+   }
 
-   // Further check if articleData is an empty object (although validated earlier)
-   if (Object.keys(articleData).length === 0) {
+   // Further check if previewData is an empty object (though validated earlier)
+   if (Object.keys(previewData).length === 0) {
         console.error("[ArticlePreviewPage] Rendering error state: previewData is an empty object.");
         return (
              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
@@ -244,8 +257,8 @@ export default function ArticlePreviewPage() {
     }
 
 
-    console.log("[ArticlePreviewPage] Rendering article preview for:", articleData.title);
-    const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = articleData;
+    console.log("[ArticlePreviewPage] Rendering article preview for:", previewData.title);
+    const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = previewData;
 
   const categoryLinkClass = category === 'Teknoloji'
     ? 'text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'

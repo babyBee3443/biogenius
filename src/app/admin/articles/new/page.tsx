@@ -170,6 +170,10 @@ export default function NewArticlePage() {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen makale başlığını girin." });
              return;
          }
+         if (!slug) {
+            toast({ variant: "destructive", title: "Eksik Bilgi", description: "URL metni (slug) boş olamaz." });
+            return;
+         }
 
          setSaving(true);
 
@@ -264,37 +268,56 @@ export default function NewArticlePage() {
         };
 
         const previewKey = `preview_new_${Date.now()}`; // Ensure unique key
-        console.log(`[NewArticlePage/handlePreview] Preparing preview data for key: ${previewKey}`, previewData);
+        console.log(`[NewArticlePage/handlePreview] Generating preview key: ${previewKey}`);
 
         try {
-            localStorage.setItem(previewKey, JSON.stringify(previewData));
-            console.log(`[NewArticlePage/handlePreview] Saved data to localStorage with key: ${previewKey}. Verifying...`);
+            console.log(`[NewArticlePage/handlePreview] Preparing to save preview data to localStorage with key: ${previewKey}`);
+            console.log(`[NewArticlePage/handlePreview] Preview Data:`, previewData); // Log the data being saved
 
-            // Verification Step
+            const stringifiedData = JSON.stringify(previewData);
+            console.log(`[NewArticlePage/handlePreview] Stringified data length: ${stringifiedData.length}`);
+
+            localStorage.setItem(previewKey, stringifiedData);
+            console.log(`[NewArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${previewKey}`);
+
+            // Verification Step 1: Immediate Retrieval
             const storedData = localStorage.getItem(previewKey);
-             if (!storedData) {
-                 console.error(`[NewArticlePage/handlePreview] Verification failed: No data found for key ${previewKey} immediately after setting.`);
+            if (storedData) {
+                console.log(`[NewArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage immediately after setting. Length: ${storedData.length}`);
+                 // Verification Step 2: Parsing
+                try {
+                    const parsed = JSON.parse(storedData);
+                    console.log(`[NewArticlePage/handlePreview] Verification 2 SUCCESS: Data parsed successfully. Title: ${parsed.title}`);
+                } catch (parseError: any) {
+                     console.error(`[NewArticlePage/handlePreview] Verification 2 FAILED: Could not parse stored JSON.`, parseError);
+                     throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
+                }
+            } else {
+                 console.error(`[NewArticlePage/handlePreview] Verification 1 FAILED: No data found for key ${previewKey} immediately after setting.`);
                  throw new Error(`Verification failed: No data found for key ${previewKey} immediately after setting.`);
-             }
-            try {
-                 // Try parsing to ensure data is valid JSON
-                JSON.parse(storedData);
-                console.log(`[NewArticlePage/handlePreview] Verification successful. Data length: ${storedData.length}`);
-            } catch (parseError: any) {
-                 console.error(`[NewArticlePage/handlePreview] Verification failed: Data for key ${previewKey} is not valid JSON.`, parseError);
-                 throw new Error(`Verification failed: Data for key ${previewKey} is not valid JSON: ${parseError.message}`);
             }
 
             const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
-            window.open(previewUrl, '_blank');
-            console.log(`[NewArticlePage/handlePreview] Opened preview window for URL: ${previewUrl}`);
+             console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
+            const newWindow = window.open(previewUrl, '_blank');
+            if (!newWindow) {
+                 console.error("[NewArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                 toast({
+                     variant: "destructive",
+                     title: "Önizleme Penceresi Açılamadı",
+                     description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
+                     duration: 10000,
+                 });
+            } else {
+                 console.log("[NewArticlePage/handlePreview] Preview window opened successfully.");
+            }
 
         } catch (error: any) {
-            console.error("[NewArticlePage/handlePreview] Error during preview process:", error);
+            console.error("[NewArticlePage/handlePreview] Error during preview process (setItem or verification):", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi veya açılamadı: ${error.message}`,
+                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
                 duration: 10000,
             });
         }
@@ -516,11 +539,11 @@ export default function NewArticlePage() {
                               <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                             <Button className="w-full" onClick={() => handleSave()} disabled={saving}>
+                             <Button className="w-full" onClick={() => handleSave()} disabled={saving || !slug || !title}>
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Kaydet
                             </Button>
                              {status !== 'Yayınlandı' && (
-                                 <Button className="w-full" variant="default" onClick={() => handleSave(true)} disabled={saving}>
+                                 <Button className="w-full" variant="default" onClick={() => handleSave(true)} disabled={saving || !slug || !title}>
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Yayınla
                                  </Button>
                              )}
