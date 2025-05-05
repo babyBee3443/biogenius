@@ -75,7 +75,7 @@ const templates: Template[] = [
     id: 'standard-article',
     name: 'Standart Makale',
     description: 'Giriş, ana görsel, alt başlıklar ve sonuç bölümü içeren temel makale düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template-std-v3/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template-std-ai/300/200',
     category: 'Teknoloji',
     excerpt: 'Yapay zeka etiği ve toplumsal etkileri üzerine odaklanan standart bir makale yapısı.',
     seoTitle: 'Yapay Zeka Etiği ve Toplumsal Sorumluluklar',
@@ -84,7 +84,7 @@ const templates: Template[] = [
     blocks: [
       { id: generateId(), type: 'heading', level: 1, content: 'Yapay Zeka Etiği: Teknoloji ve Toplum Dengesi' },
       { id: generateId(), type: 'text', content: 'Yapay zeka (AI) hayatımızı dönüştürürken, beraberinde önemli etik soruları ve toplumsal sorumlulukları da getiriyor. Bu makalede, AI etiğinin temel ilkelerini ve karşılaşılan zorlukları inceleyeceğiz.' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-ai-ethics/800/400', alt: 'Yapay Zeka ve Etik Sembolü', caption: 'AI geliştirirken etik değerleri gözetmek.' },
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-ai-ethics-img/800/400', alt: 'Yapay Zeka ve Etik Sembolü', caption: 'AI geliştirirken etik değerleri gözetmek.' },
       { id: generateId(), type: 'text', content: 'AI sistemlerinin karar alma süreçlerindeki **şeffaflık**, **hesap verebilirlik** ve **adalet** gibi ilkeler, etik tartışmaların merkezinde yer alıyor. Algoritmik önyargılar, veri gizliliği ve otonom sistemlerin sorumluluğu gibi konular acil çözümler gerektiriyor.' },
       { id: generateId(), type: 'heading', level: 2, content: 'Algoritmik Önyargıların Tehlikeleri' },
       { id: generateId(), type: 'text', content: 'AI modelleri, eğitildikleri verilerdeki mevcut toplumsal önyargıları yansıtabilir ve hatta güçlendirebilir. Bu durum, işe alım süreçlerinden kredi başvurularına kadar birçok alanda ayrımcılığa yol açabilir. Önyargısız veri setleri oluşturmak ve adil algoritmalar geliştirmek kritik önem taşımaktadır.' },
@@ -99,7 +99,7 @@ const templates: Template[] = [
     id: 'listicle',
     name: 'Listeleme Makalesi',
     description: 'Belirli bir konuda numaralı veya madde işaretli öneriler/bilgiler sunan format.',
-    previewImageUrl: 'https://picsum.photos/seed/template-list-brain-v3/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template-list-brain/300/200',
     category: 'Biyoloji',
     excerpt: 'Beyin sağlığınızı korumak ve geliştirmek için bilimsel temelli 7 basit yöntemi listeleyen bir şablon.',
     seoTitle: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem',
@@ -109,31 +109,31 @@ const templates: Template[] = [
         { id: generateId(), type: 'heading', level: 1, content: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem' },
         { id: generateId(), type: 'text', content: 'Yaş aldıkça bilişsel fonksiyonlarımızı korumak ve beyin sağlığımızı optimize etmek hepimizin hedefi. İşte bilimsel araştırmalarla desteklenen 7 etkili yöntem:' },
         { id: generateId(), type: 'heading', level: 2, content: '1. Zihinsel Olarak Aktif Kalın' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-puzzle/600/300', alt: 'Yapboz Yapan Kişi', caption: 'Yeni şeyler öğrenmek ve bulmacalar çözmek beyni uyarır.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-puzzle-img/600/300', alt: 'Yapboz Yapan Kişi', caption: 'Yeni şeyler öğrenmek ve bulmacalar çözmek beyni uyarır.' },
         { id: generateId(), type: 'text', content: 'Okumak, yazmak, yeni bir dil veya müzik aleti öğrenmek, strateji oyunları oynamak gibi zihinsel aktiviteler, beyin hücreleri arasındaki bağlantıları güçlendirir ve bilişsel rezervinizi artırır.' },
         { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: '2. Fiziksel Egzersizi İhmal Etmeyin' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-running/600/300', alt: 'Koşan Kişi', caption: 'Aerobik egzersiz beyne giden kan akışını artırır.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-running-img/600/300', alt: 'Koşan Kişi', caption: 'Aerobik egzersiz beyne giden kan akışını artırır.' },
         { id: generateId(), type: 'text', content: 'Düzenli fiziksel aktivite, beyne oksijen ve besin taşıyan kan akışını iyileştirir. Hafıza ve öğrenme ile ilişkili beyin bölgelerinde yeni hücrelerin büyümesini teşvik edebilir.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: '3. Sağlıklı ve Dengeli Beslenin' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-food/600/300', alt: 'Beyin Dostu Besinler (Balık, Yemiş, Sebze)', caption:'Omega-3, antioksidanlar ve vitaminler önemlidir.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-food-img/600/300', alt: 'Beyin Dostu Besinler (Balık, Yemiş, Sebze)', caption:'Omega-3, antioksidanlar ve vitaminler önemlidir.' },
         { id: generateId(), type: 'text', content: 'Özellikle Akdeniz diyeti gibi, meyve, sebze, tam tahıllar, balık ve sağlıklı yağlar açısından zengin beslenme düzenleri beyin sağlığı ile ilişkilendirilmiştir.' },
          { id: generateId(), type: 'divider'},
          { id: generateId(), type: 'heading', level: 2, content: `4. Kaliteli Uyku Uyuyun` },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-sleep/600/300', alt: 'Uyuyan Kişi' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-sleep-img/600/300', alt: 'Uyuyan Kişi' },
          { id: generateId(), type: 'text', content: 'Uyku sırasında beyin, gün içinde öğrenilen bilgileri pekiştirir ve zararlı toksinleri temizler. Her gece 7-8 saat kesintisiz ve kaliteli uyku hedefleyin.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: `5. Sosyal Bağlantıları Koruyun` },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-social/600/300', alt: 'Sohbet Eden Arkadaşlar' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-social-img/600/300', alt: 'Sohbet Eden Arkadaşlar' },
         { id: generateId(), type: 'text', content: 'Güçlü sosyal ilişkiler, stresi azaltmaya ve beyin sağlığını korumaya yardımcı olabilir. Aile ve arkadaşlarla zaman geçirmek, sosyal aktivitelere katılmak önemlidir.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: `6. Stresi Etkili Yönetin` },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-yoga/600/300', alt: 'Yoga Yapan Kişi' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-yoga-img/600/300', alt: 'Yoga Yapan Kişi' },
         { id: generateId(), type: 'text', content: 'Kronik stres, beyin hücrelerine zarar verebilir ve hafızayı olumsuz etkileyebilir. Meditasyon, yoga, doğa yürüyüşleri gibi rahatlama teknikleri stresi yönetmenize yardımcı olabilir.' },
          { id: generateId(), type: 'divider'},
         { id: generateId(), type: 'heading', level: 2, content: `7. Kronik Hastalıkları Kontrol Altında Tutun` },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-doctor/600/300', alt: 'Doktor ve Hasta' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-doctor-img/600/300', alt: 'Doktor ve Hasta' },
         { id: generateId(), type: 'text', content: 'Yüksek tansiyon, diyabet, yüksek kolesterol gibi kronik sağlık sorunları beyin sağlığını olumsuz etkileyebilir. Bu hastalıkları doktorunuzun önerileri doğrultusunda kontrol altında tutmak önemlidir.' },
         { id: generateId(), type: 'text', content: 'Bu yöntemleri yaşam tarzınıza entegre ederek beyin sağlığınızı koruyabilir ve bilişsel yeteneklerinizi uzun yıllar boyunca sürdürebilirsiniz.'},
     ]
@@ -142,7 +142,7 @@ const templates: Template[] = [
     id: 'image-gallery',
     name: 'Görsel Galerisi',
     description: 'Görsellerin ön planda olduğu, açıklamalı ve tematik galeri düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template-gallery-space-v3/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template-gallery-space/300/200',
     category: 'Teknoloji',
     excerpt: 'James Webb Uzay Teleskobu tarafından çekilen nefes kesici uzay fotoğraflarından oluşan bir galeri.',
     seoTitle: 'James Webb Teleskobu Harikaları: Uzay Galerisi',
@@ -151,13 +151,13 @@ const templates: Template[] = [
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'James Webb Uzay Teleskobu ile Evrenin Derinlikleri' },
         { id: generateId(), type: 'text', content: 'James Webb Uzay Teleskobu (JWST), evrenin şimdiye kadar görülmemiş detaylarını gözler önüne seriyor. İşte bu güçlü teleskop tarafından yakalanan en büyüleyici görüntülerden bazıları:' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-carina/800/500', alt: 'Karina Nebulası', caption: 'Görsel 1: Karina Nebulası\'nın "Kozmik Uçurumları". Yıldız oluşum bölgelerini inanılmaz ayrıntılarla gösteriyor.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-carina-img/800/500', alt: 'Karina Nebulası', caption: 'Görsel 1: Karina Nebulası\'nın "Kozmik Uçurumları". Yıldız oluşum bölgelerini inanılmaz ayrıntılarla gösteriyor.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-stephan/800/500', alt: 'Stephan Beşlisi', caption: 'Görsel 2: Stephan Beşlisi galaksi grubu. Galaksilerin etkileşimini ve birleşmesini gözlemliyoruz.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-stephan-img/800/500', alt: 'Stephan Beşlisi', caption: 'Görsel 2: Stephan Beşlisi galaksi grubu. Galaksilerin etkileşimini ve birleşmesini gözlemliyoruz.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-ring/800/500', alt: 'Güney Halka Nebulası', caption: 'Görsel 3: Güney Halka Nebulası. Ölmekte olan bir yıldızın etrafındaki gaz ve toz bulutları.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-ring-img/800/500', alt: 'Güney Halka Nebulası', caption: 'Görsel 3: Güney Halka Nebulası. Ölmekte olan bir yıldızın etrafındaki gaz ve toz bulutları.' },
          { id: generateId(), type: 'divider' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-phantom/800/500', alt: 'Hayalet Galaksi (M74)', caption: 'Görsel 4: Hayalet Galaksi (M74). Galaksinin kızılötesi ışıkta görünen spiral kollarındaki gaz ve toz yapıları.' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-phantom-img/800/500', alt: 'Hayalet Galaksi (M74)', caption: 'Görsel 4: Hayalet Galaksi (M74). Galaksinin kızılötesi ışıkta görünen spiral kollarındaki gaz ve toz yapıları.' },
         { id: generateId(), type: 'text', content: 'JWST, kızılötesi gözlem yetenekleri sayesinde evrenin ilk zamanlarına ışık tutuyor ve yıldızların, galaksilerin oluşumu hakkındaki bilgilerimizi derinleştiriyor.' },
     ]
   },
@@ -165,7 +165,7 @@ const templates: Template[] = [
     id: 'faq-article',
     name: 'SSS Makalesi',
     description: 'Belirli bir konudaki sıkça sorulan sorulara net cevaplar veren format.',
-    previewImageUrl: 'https://picsum.photos/seed/template-faq-solar-v3/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template-faq-solar/300/200',
     category: 'Teknoloji',
     excerpt: 'Ev tipi güneş enerjisi sistemleri hakkında merak edilen temel sorular ve yanıtları.',
     seoTitle: 'Ev Tipi Güneş Enerjisi Sistemleri Hakkında SSS',
@@ -196,7 +196,7 @@ const templates: Template[] = [
     id: 'how-to-guide',
     name: 'Nasıl Yapılır Rehberi',
     description: 'Belirli bir işlemi adım adım anlatan, öğretici içerikler için ideal.',
-    previewImageUrl: 'https://picsum.photos/seed/template-howto-plant-v3/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template-howto-plant/300/200',
     category: 'Biyoloji',
     excerpt: 'Evde kolayca mikro yeşillik yetiştirmek için adım adım pratik bir rehber.',
     seoTitle: 'Evde Mikro Yeşillik Nasıl Yetiştirilir? Adım Adım Rehber',
@@ -209,23 +209,23 @@ const templates: Template[] = [
         { id: generateId(), type: 'text', content: '- Sığ bir tepsi veya kap (drenaj delikli veya deliksiz olabilir)\n- Yetiştirme ortamı (torf, kokopit veya özel mikro yeşillik toprağı)\n- Mikro yeşillik tohumları (roka, turp, brokoli, ayçiçeği vb.)\n- Sprey şişesi (su püskürtmek için)\n- Makas (hasat için)' },
         { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: Yetiştirme Ortamını Hazırlayın' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-soil/600/350', alt: 'Tepsiye Toprak Yayma', caption:'Toprağı nemlendirin ve düzleştirin.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-soil-img/600/350', alt: 'Tepsiye Toprak Yayma', caption:'Toprağı nemlendirin ve düzleştirin.' },
         { id: generateId(), type: 'text', content: 'Tepsiyi yaklaşık 2-3 cm kalınlığında yetiştirme ortamı ile doldurun. Toprağı hafifçe bastırın ve sprey şişesiyle iyice nemlendirin, ancak çamurlaşmamasına dikkat edin.' },
          { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: Tohumları Ekin' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-seeds/600/350', alt: 'Toprağa Tohum Serpme', caption:'Tohumları yüzeye eşit şekilde serpin.' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-seeds-img/600/350', alt: 'Toprağa Tohum Serpme', caption:'Tohumları yüzeye eşit şekilde serpin.' },
         { id: generateId(), type: 'text', content: 'Tohumları nemli toprağın yüzeyine eşit bir şekilde serpin. Tohumların birbirine çok yakın olmamasına özen gösterin. Üzerlerini çok ince bir tabaka toprakla kapatabilir veya açık bırakabilirsiniz (tohum türüne bağlı).' },
          { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: Çimlenme Süreci' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-cover/600/350', alt: 'Tepsiyi Kapatma', caption:'İlk birkaç gün karanlık ve nemli tutun.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-cover-img/600/350', alt: 'Tepsiyi Kapatma', caption:'İlk birkaç gün karanlık ve nemli tutun.' },
         { id: generateId(), type: 'text', content: 'Tepsiyi başka bir tepsiyle veya karanlık bir bezle kapatarak tohumların çimlenmesini teşvik edin. Bu aşamada ışığa ihtiyaçları yoktur. Toprağın nemli kalması için günde bir veya iki kez kontrol edip su püskürtün. Genellikle 2-4 gün içinde çimlenme başlar.' },
          { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 4: Işığa Çıkarma ve Büyütme' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-light/600/350', alt: 'Filizleri Işığa Koyma', caption:'Çimlenen filizleri aydınlık bir yere alın.' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-light-img/600/350', alt: 'Filizleri Işığa Koyma', caption:'Çimlenen filizleri aydınlık bir yere alın.' },
         { id: generateId(), type: 'text', content: 'Filizler görünmeye başlayınca tepsiyi aydınlık bir yere (doğrudan güneş ışığı almayan) veya bir bitki yetiştirme lambasının altına alın. Toprağı nemli tutmaya devam edin.' },
          { id: generateId(), type: 'divider' },
         { id: generateId(), type: 'heading', level: 2, content: 'Adım 5: Hasat' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-harvest/600/350', alt: 'Mikro Yeşillik Hasadı', caption:'İlk gerçek yapraklar çıktığında hasat edin.' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-harvest-img/600/350', alt: 'Mikro Yeşillik Hasadı', caption:'İlk gerçek yapraklar çıktığında hasat edin.' },
         { id: generateId(), type: 'text', content: 'Mikro yeşillikler genellikle 7-14 gün içinde hasat edilebilir hale gelir. İlk gerçek yaprak çifti tamamen açıldığında, temiz bir makasla toprağın hemen üzerinden kesin. Yıkayıp hemen tüketebilir veya buzdolabında birkaç gün saklayabilirsiniz. Afiyet olsun!' },
     ]
   },
@@ -233,7 +233,7 @@ const templates: Template[] = [
     id: 'interview-article',
     name: 'Röportaj Makalesi',
     description: 'Bir uzmanla yapılan söyleşiyi soru-cevap formatında detaylı bir şekilde sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/template-interview-neuro-v3/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template-interview-neuro/300/200',
     category: 'Biyoloji',
     excerpt: 'Nörobilim uzmanı Dr. Elif Aydın ile beyin plastisitesi ve öğrenme üzerine bir röportaj.',
     seoTitle: 'Röportaj: Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme',
@@ -241,7 +241,7 @@ const templates: Template[] = [
     keywords: ['nörobilim', 'plastisite', 'beyin', 'öğrenme', 'hafıza', 'röportaj'],
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme Üzerine Söyleşi' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif-aydin/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Nörobilim Uzmanı' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif-aydin-img/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Nörobilim Uzmanı' },
         { id: generateId(), type: 'text', content: 'Beynimizin yaşam boyu değişme ve adapte olma yeteneği olan nöroplastisite, öğrenme ve hafıza süreçlerimizin temelini oluşturuyor. Bu büyüleyici konuyu, alanın önde gelen isimlerinden Nörobilim Uzmanı Dr. Elif Aydın ile konuştuk.' },
         { id: generateId(), type: 'heading', level: 2, content: 'Nöroplastisite Tam Olarak Nedir?' },
         { id: generateId(), type: 'text', content: '**Soru:** Hocam, nöroplastisite kavramını basitçe nasıl açıklarsınız?' },
@@ -328,6 +328,7 @@ const blocksToHtml = (blocks: Block[]): string => {
                  }
                  break;
             default:
+                 // Fallback for unknown block types
                  html += `<!-- Unsupported block type: ${block.type} -->\n`;
         }
     });
@@ -408,7 +409,7 @@ export function TemplateSelector({
      };
 
     return (
-        <>
+        <AlertDialog> {/* Wrap the entire structure with AlertDialog */}
             <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
                 <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col"> {/* Wider dialog, height limit, flex */}
                     <DialogHeader>
@@ -442,12 +443,12 @@ export function TemplateSelector({
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                             {/* Use AlertDialogTrigger for confirmation */}
-                                            <AlertDialogTrigger asChild>
-                                                 <Button size="sm" onClick={() => handleSelectClick(template)}>
+                                             {/* Trigger the AlertDialog when "Seç" is clicked */}
+                                             <AlertDialogTrigger asChild>
+                                                 <Button size="sm" onClick={() => setSelectedTemplate(template)}> {/* Only set selected template here */}
                                                      Seç
                                                  </Button>
-                                            </AlertDialogTrigger>
+                                             </AlertDialogTrigger>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -462,24 +463,25 @@ export function TemplateSelector({
                 </DialogContent>
             </Dialog>
 
-            {/* Confirmation Dialog */}
-            <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
-                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => selectedTemplate && applyTemplate(selectedTemplate.blocks)}>
-                            Evet, Üzerine Yaz
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
+            {/* Confirmation Dialog Content - This is now correctly within AlertDialog context */}
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
+                        Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                     <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
+                     {/* Apply the template only when the confirmation action is clicked */}
+                     <AlertDialogAction onClick={() => selectedTemplate && applyTemplate(selectedTemplate.blocks)}>
+                         Evet, Üzerine Yaz
+                     </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }
+
+    
