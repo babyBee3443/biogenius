@@ -2,7 +2,7 @@
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation'; // Ensure useRouter is imported
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
 
 import {
   Tabs,
@@ -92,14 +93,18 @@ export default function NewArticlePage() {
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
-     // Auto-generate slug from title
-     React.useEffect(() => {
-         if (title) {
-             setSlug(generateSlug(title));
+     // Auto-generate slug from title (debounced)
+     const debouncedSetSlug = useDebouncedCallback((newTitle: string) => {
+         if (newTitle) {
+             setSlug(generateSlug(newTitle));
          } else {
              setSlug(''); // Clear slug if title is empty
          }
-     }, [title]);
+     }, 500); // 500ms delay
+
+     React.useEffect(() => {
+         debouncedSetSlug(title);
+     }, [title, debouncedSetSlug]);
 
     // Auto-generate SEO Title from main title if empty
     React.useEffect(() => {
@@ -244,7 +249,7 @@ export default function NewArticlePage() {
               return;
           }
          const previewData = {
-             id: 'preview',
+             id: 'preview_new', // Use a distinct ID for new article preview
              title: title || 'Başlıksız Makale',
              excerpt: excerpt || '', // Use excerpt for description
              category: category,
@@ -256,18 +261,32 @@ export default function NewArticlePage() {
              status: status,
              authorId: 'mock-admin', // Example author
              createdAt: new Date().toISOString(), // Example date
+             // Ensure all essential fields are present
+             seoTitle: seoTitle || title,
+             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
+             slug: slug || generateSlug(title),
          };
+
+          // --- Debugging & Fixed Key ---
+          const previewKey = "fixedPreviewKey_new"; // Use a fixed key for debugging
+          console.log(`[NewArticlePage/handlePreview] Preparing preview data for key: ${previewKey}`, previewData);
+
          try {
-             // Unique key for preview data
-             const previewKey = `articlePreviewData_new_${Date.now()}`;
-             localStorage.setItem(previewKey, JSON.stringify(previewData));
-             window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
+              if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                 console.log(`[NewArticlePage/handlePreview] Saving data to localStorage with key: ${previewKey}`);
+                 localStorage.setItem(previewKey, JSON.stringify(previewData));
+                 console.log(`[NewArticlePage/handlePreview] Data saved to localStorage.`);
+                 window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
+              } else {
+                  throw new Error("localStorage is not available.");
+              }
          } catch (error) {
-             console.error("Error saving preview data:", error);
+             console.error("[NewArticlePage/handlePreview] Error saving preview data:", error);
              toast({
                  variant: "destructive",
                  title: "Önizleme Hatası",
-                 description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu olabilir.",
+                 description: `Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu olabilir veya başka bir sorun oluştu. Detaylar için konsolu kontrol edin. Hata: ${(error as Error).message}`,
+                 duration: 10000, // Show longer duration for errors
              });
          }
      };

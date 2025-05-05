@@ -10,6 +10,7 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { getArticleById, updateArticle, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
 
 import {
   Tabs,
@@ -139,39 +140,40 @@ export default function EditArticlePage() {
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
-     // Auto-update slug when title changes (only if slug hasn't been manually changed or matches old slug)
-    React.useEffect(() => {
-        if (title && articleData && title !== articleData.title) {
+     // Auto-update slug when title changes (debounced, respects manual changes)
+     const debouncedSetSlug = useDebouncedCallback((newTitle: string, originalTitle: string, currentSlug: string) => {
+         if (newTitle && newTitle !== originalTitle) {
              // Check if slug is empty OR if slug matches the slug generated from the *original* title
-             if (!slug || slug === generateSlug(articleData.title)) {
-                 setSlug(generateSlug(title));
+             if (!currentSlug || currentSlug === generateSlug(originalTitle)) {
+                 setSlug(generateSlug(newTitle));
              }
-        } else if (title && !slug && !articleData) { // Generate slug if title exists but slug is empty (new article scenario?)
+         } else if (newTitle && !currentSlug) { // Generate slug if title exists but slug is empty
+            setSlug(generateSlug(newTitle));
+         }
+     }, 500); // 500ms delay
+
+     React.useEffect(() => {
+         if (articleData) { // Only run if articleData is loaded
+             debouncedSetSlug(title, articleData.title, slug);
+         } else if (title && !slug) { // Handle initial slug generation for potentially new articles (though this is edit page)
             setSlug(generateSlug(title));
-        } else if (title && !slug && articleData && !articleData.slug) { // Generate slug if loaded article has no slug
-             setSlug(generateSlug(title));
-        }
-    }, [title, articleData, slug]); // Depend on slug
+         }
+     }, [title, articleData, slug, debouncedSetSlug]);
 
      // Auto-generate SEO Title from main title if empty
      React.useEffect(() => {
-       if (title && !seoTitle && articleData && title !== articleData.title) {
+       if (title && !seoTitle) { // Simplified: Always sync if seoTitle is empty
          setSeoTitle(title);
-       } else if (title && !seoTitle && !articleData) { // For new articles
-          setSeoTitle(title);
        }
-     }, [title, seoTitle, articleData]);
+     }, [title, seoTitle]);
 
       // Auto-generate SEO Description from excerpt if empty
      React.useEffect(() => {
-        if (excerpt && !seoDescription && articleData && excerpt !== articleData.excerpt) {
+        if (excerpt && !seoDescription) { // Simplified: Always sync if seoDescription is empty
           const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
           setSeoDescription(desc);
-        } else if (excerpt && !seoDescription && !articleData) { // For new articles
-           const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
-           setSeoDescription(desc);
         }
-     }, [excerpt, seoDescription, articleData]);
+     }, [excerpt, seoDescription]);
 
 
     const handleAddBlock = (type: Block['type']) => {
@@ -240,6 +242,10 @@ export default function EditArticlePage() {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen makale başlığını girin." });
              return;
         }
+        if (!slug) {
+            toast({ variant: "destructive", title: "Eksik Bilgi", description: "URL metni (slug) boş olamaz." });
+            return;
+        }
 
          // Use the most recent articleData from state or fallback to initial if null
          // IMPORTANT: Do not include 'id', 'createdAt', 'authorId' in the update payload itself
@@ -252,7 +258,7 @@ export default function EditArticlePage() {
             mainImageUrl: mainImageUrl || null,
             isFeatured,
             isHero, // Include isHero in save data
-            slug: slug || generateSlug(title),
+            slug: slug, // Use state slug directly
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
             blocks: blocks.length > 0 ? blocks : [{ id: generateBlockId(), type: 'text', content: '' }], // Use default if empty
@@ -352,13 +358,13 @@ export default function EditArticlePage() {
 
 
       const handlePreview = () => {
-         if (!category) {
-             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
-             return;
-         }
+          if (!category) {
+              toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
+              return;
+          }
          // Create data for preview, mirroring ArticleData structure as closely as possible
          const previewData: Partial<ArticleData> = {
-             id: articleId || 'preview',
+             id: articleId || 'preview_edit', // Distinct ID for edit preview
              title: title || 'Başlıksız Makale',
              excerpt: excerpt || '', // Use excerpt for description
              category: category, // Use selected category
@@ -370,19 +376,34 @@ export default function EditArticlePage() {
              isHero: isHero,
              authorId: articleData?.authorId || 'mock-admin', // Use original authorId if available
              createdAt: articleData?.createdAt || new Date().toISOString(), // Use original createdAt if available
+             // Include SEO fields for completeness
+             seoTitle: seoTitle || title,
+             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
+             slug: slug || generateSlug(title),
+             keywords: keywords || [],
+             canonicalUrl: canonicalUrl || "",
          };
+
+         // --- Debugging & Fixed Key ---
+         const previewKey = "fixedPreviewKey_edit"; // Use a fixed key for debugging
+         console.log(`[EditArticlePage/handlePreview] Preparing preview data for key: ${previewKey}`, previewData);
+
          try {
-              // Generate a unique key for the preview data in localStorage
-             const previewKey = `articlePreviewData_${articleId || 'new'}_${Date.now()}`;
-             localStorage.setItem(previewKey, JSON.stringify(previewData));
-             // Open the preview page in a new tab, passing the key as a query parameter
-             window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
+             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                 console.log(`[EditArticlePage/handlePreview] Saving data to localStorage with key: ${previewKey}`);
+                 localStorage.setItem(previewKey, JSON.stringify(previewData));
+                 console.log(`[EditArticlePage/handlePreview] Data saved to localStorage.`);
+                 window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
+             } else {
+                 throw new Error("localStorage is not available.");
+             }
          } catch (error) {
-             console.error("Error saving preview data to localStorage:", error);
+             console.error("[EditArticlePage/handlePreview] Error saving preview data:", error);
              toast({
                  variant: "destructive",
                  title: "Önizleme Hatası",
-                 description: "Önizleme verisi kaydedilemedi.",
+                 description: `Önizleme verisi kaydedilemedi. Hata: ${(error as Error).message}`,
+                 duration: 10000,
              });
          }
      };
@@ -571,7 +592,7 @@ export default function EditArticlePage() {
                                              <p className="text-xs text-muted-foreground">Tavsiye edilen uzunluk: 150-160 karakter. ({seoDescription.length}/160)</p>
                                          </div>
                                          <div className="space-y-2">
-                                             <Label htmlFor="slug">URL Metni (Slug)</Label>
+                                             <Label htmlFor="slug">URL Metni (Slug) <span className="text-destructive">*</span></Label>
                                              <Input
                                                  id="slug"
                                                  value={slug}
@@ -641,13 +662,13 @@ export default function EditArticlePage() {
                                <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving}> {/* Save as draft/current status */}
+                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving || !slug}> {/* Save as draft/current status, disable if no slug */}
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 Kaydet
                              </Button>
                              {/* Show publish button only if the current status is not 'Yayınlandı' */}
                              {status !== 'Yayınlandı' && (
-                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving}>
+                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving || !slug}> {/* Disable if no slug */}
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                      Yayınla
                                  </Button>
