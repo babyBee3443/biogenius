@@ -116,6 +116,7 @@ export default function ArticlePreviewPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    let isMounted = true; // Track component mount status
     console.log("[ArticlePreviewPage] useEffect triggered.");
 
     if (typeof window === 'undefined') {
@@ -128,86 +129,97 @@ export default function ArticlePreviewPage() {
     if (!previewKey) {
         const msg = "Önizleme anahtarı bulunamadı. Lütfen URL'yi kontrol edin.";
         console.error("[ArticlePreviewPage]", msg);
-        setError(msg);
-        setIsLoading(false);
+        if (isMounted) setError(msg);
+        if (isMounted) setIsLoading(false);
         return;
     }
 
     console.log("[ArticlePreviewPage] Attempting to load preview data for key:", previewKey);
 
-    try {
-        // Use the unique key to get the correct data
-        console.log("[ArticlePreviewPage] Accessing localStorage.getItem with key:", previewKey);
-        const storedData = localStorage.getItem(previewKey);
-        console.log(`[ArticlePreviewPage] localStorage.getItem(${previewKey}) returned: ${storedData ? `Data of length ${storedData.length}` : 'null'}`);
+    // Add a small delay before accessing localStorage
+    const timerId = setTimeout(() => {
+        if (!isMounted) return; // Don't proceed if unmounted
+
+        try {
+            console.log("[ArticlePreviewPage] Accessing localStorage.getItem with key:", previewKey);
+            const storedData = localStorage.getItem(previewKey);
+            console.log(`[ArticlePreviewPage] localStorage.getItem(${previewKey}) returned: ${storedData ? `Data of length ${storedData.length}` : 'null'}`);
 
 
-        if (storedData) {
-            console.log(`[ArticlePreviewPage] Found data in localStorage for key ${previewKey}. Length: ${storedData.length}. Data (start):`, storedData.substring(0, 150) + "...");
+            if (storedData) {
+                console.log(`[ArticlePreviewPage] Found data in localStorage for key ${previewKey}. Length: ${storedData.length}. Data (start):`, storedData.substring(0, 150) + "...");
 
-            let parsedData;
-            try {
-                 parsedData = JSON.parse(storedData);
-                 console.log("[ArticlePreviewPage] Parsed data:", parsedData);
-            } catch (parseError) {
-                 console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
-                 console.error("[ArticlePreviewPage] Raw data from localStorage:", storedData); // Log raw data on parse error
-                 setError("Önizleme verisi bozuk. Lütfen tekrar deneyin.");
-                 setIsLoading(false);
-                 return;
-            }
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(storedData);
+                    console.log("[ArticlePreviewPage] Parsed data:", parsedData);
+                } catch (parseError) {
+                    console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
+                    console.error("[ArticlePreviewPage] Raw data from localStorage:", storedData); // Log raw data on parse error
+                    if (isMounted) setError("Önizleme verisi bozuk. Lütfen tekrar deneyin.");
+                    if (isMounted) setIsLoading(false);
+                    return;
+                }
 
 
-            // --- More Robust Validation ---
-            if (
-                parsedData &&
-                typeof parsedData === 'object' &&
-                Object.keys(parsedData).length > 0 && // Ensure it's not an empty object
-                typeof parsedData.title === 'string' && parsedData.title && // Must have a non-empty title
-                Array.isArray(parsedData.blocks) // Must have blocks array (can be empty)
-                // Add other required fields like category if crucial for preview
-                // && typeof parsedData.category === 'string' && parsedData.category
-             ) {
-                 // Normalize data before setting state
-                 const normalizedData: Partial<ArticleData> = {
-                    ...parsedData,
-                    // Use excerpt if available, otherwise try description, else undefined
-                    excerpt: parsedData.excerpt ?? parsedData.description,
-                    // Use mainImageUrl if available, otherwise try imageUrl, else undefined
-                    mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
-                 };
-                 console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
-                 setPreviewData(normalizedData);
-                 setError(null); // Clear previous errors if successful
+                // --- More Robust Validation ---
+                if (
+                    parsedData &&
+                    typeof parsedData === 'object' &&
+                    Object.keys(parsedData).length > 0 && // Ensure it's not an empty object
+                    typeof parsedData.title === 'string' && parsedData.title && // Must have a non-empty title
+                    Array.isArray(parsedData.blocks) // Must have blocks array (can be empty)
+                    // Add other required fields like category if crucial for preview
+                    // && typeof parsedData.category === 'string' && parsedData.category
+                ) {
+                    // Normalize data before setting state
+                    const normalizedData: Partial<ArticleData> = {
+                        ...parsedData,
+                        // Use excerpt if available, otherwise try description, else undefined
+                        excerpt: parsedData.excerpt ?? parsedData.description,
+                        // Use mainImageUrl if available, otherwise try imageUrl, else undefined
+                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
+                    };
+                    console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
+                    if (isMounted) setPreviewData(normalizedData);
+                    if (isMounted) setError(null); // Clear previous errors if successful
+                } else {
+                    const errorMsg = "Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.";
+                    console.error("[ArticlePreviewPage]", errorMsg);
+                    console.error("[ArticlePreviewPage] Invalid preview data structure:", parsedData); // Log invalid data structure
+                    if (isMounted) setError(errorMsg);
+                }
             } else {
-                 const errorMsg = "Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.";
-                 console.error("[ArticlePreviewPage]", errorMsg);
-                 console.error("[ArticlePreviewPage] Invalid preview data structure:", parsedData); // Log invalid data structure
-                 setError(errorMsg);
+                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
+                console.error("[ArticlePreviewPage]", errorMsg);
+                if (isMounted) setError(errorMsg);
             }
-        } else {
-             const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
-             console.error("[ArticlePreviewPage]", errorMsg);
-             setError(errorMsg);
-        }
-    } catch (e) {
-         console.error("[ArticlePreviewPage] Error accessing or processing preview data:", e);
-         setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
-    } finally {
-        console.log("[ArticlePreviewPage] Finished loading attempt. isLoading:", false);
-        setIsLoading(false); // Ensure loading is set to false in all cases
+        } catch (e) {
+            console.error("[ArticlePreviewPage] Error accessing or processing preview data:", e);
+            if (isMounted) setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
+        } finally {
+            console.log("[ArticlePreviewPage] Finished loading attempt. isLoading:", false);
+            if (isMounted) setIsLoading(false); // Ensure loading is set to false in all cases
 
-         // Optional: Clean up the specific localStorage item after loading.
-         // It might be safer *not* to remove immediately if the user might refresh.
-         // Consider removing it when the component unmounts or the window is closed.
-          console.log(`[ArticlePreviewPage] Attempting to remove localStorage item with key: ${previewKey}`);
-          try {
-              localStorage.removeItem(previewKey);
-              console.log(`[ArticlePreviewPage] Successfully removed localStorage item with key: ${previewKey}`);
-          } catch (removeError) {
-              console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey}:`, removeError);
-          }
-    }
+            // **REMOVED for debugging** - Do not remove the item immediately
+            // console.log(`[ArticlePreviewPage] Attempting to remove localStorage item with key: ${previewKey}`);
+            // try {
+            //     localStorage.removeItem(previewKey);
+            //     console.log(`[ArticlePreviewPage] Successfully removed localStorage item with key: ${previewKey}`);
+            // } catch (removeError) {
+            //     console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey}:`, removeError);
+            // }
+        }
+    }, 100); // 100ms delay before accessing localStorage
+
+    // Cleanup function to clear timeout and set isMounted to false
+    return () => {
+      isMounted = false;
+      clearTimeout(timerId);
+      console.log("[ArticlePreviewPage] Component unmounted or previewKey changed.");
+      // Consider removing the specific preview item here if needed on unmount
+      // try { localStorage.removeItem(previewKey); } catch (e) {}
+    };
 
   }, [previewKey]); // Depend ONLY on the previewKey
 

@@ -75,7 +75,7 @@ const templates: Template[] = [
       { id: generateId(), type: 'heading', level: 2, content: 'Konunun Derinlemesine İncelenmesi' },
       { id: generateId(), type: 'text', content: '**[Alt Konu 2]**\'nin daha detaylı incelendiği bölüm. Alt başlıklar kullanarak okunabilirliği artırın. İstatistikler, örnekler veya alıntılarla içeriği zenginleştirin. Örneğin, yapılan bir araştırmaya göre...' },
       { id: generateId(), type: 'heading', level: 2, content: 'Farklı Bir Perspektif ve Video İçerik' },
-      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', youtubeId: 'dQw4w9WgXcQ' }, // Example video
+      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' }, // Example video
       { id: generateId(), type: 'text', content: 'Konuyla ilgili farklı görüşler veya alternatif yaklaşımlar bu bölümde ele alınabilir. Tartışmalı konular için dengeli bir sunum önemlidir. Videoda ise konunun [Video İçeriği Açıklaması] gösterilmektedir.' },
       { id: generateId(), type: 'quote', content: 'Bilgi güçtür, ancak paylaşıldığında daha da güçlenir.', citation: 'Francis Bacon (Uyarlanmış)' },
       { id: generateId(), type: 'text', content: 'Sonuç paragrafı, makalede ele alınan ana noktaları özetler (**[Alt Konu 1]** ve **[Alt Konu 2]** gibi) ve okuyucuya bir çıkarım veya geleceğe yönelik bir mesaj sunar.' },
@@ -301,7 +301,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
     };
 
      // Handle template preview - pass the specific template's data
-     const handlePreview = (template: Template) => {
+     const handlePreview = async (template: Template) => { // Make async
         console.log(`[TemplateSelector] handlePreview called for template: ${template.id}`);
          // Construct the full ArticleData object for preview
          const previewData: Partial<ArticleData> = { // Use Partial as not all fields might be needed/defined in template
@@ -341,18 +341,15 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
              localStorage.setItem(localStorageKey, dataString);
              console.log(`[TemplateSelector] Finished attempting to save data for key ${localStorageKey}.`);
 
+             // **ADD DELAY HERE** before opening the window
+             await new Promise(resolve => setTimeout(resolve, 150)); // 150ms delay
+
               // Verify data was saved correctly *immediately* after setting
              const savedData = localStorage.getItem(localStorageKey);
              if (savedData) {
-                  console.log(`[TemplateSelector] Successfully retrieved data immediately after saving for key ${localStorageKey}. Length: ${savedData.length}.`);
-                 // Optional: Verify content match (can be slow for large data)
-                 // if (savedData === dataString) {
-                 //    console.log(`[TemplateSelector] Data content verification successful for key ${localStorageKey}.`);
-                 // } else {
-                 //    console.error(`[TemplateSelector] Data content verification failed! Retrieved data doesn't match for key ${localStorageKey}.`);
-                 // }
+                  console.log(`[TemplateSelector] Successfully retrieved data after delay for key ${localStorageKey}. Length: ${savedData.length}.`);
              } else {
-                 console.error(`[TemplateSelector] Verification failed! Could not retrieve data immediately after saving for key ${localStorageKey}. LocalStorage might be disabled or full.`);
+                 console.error(`[TemplateSelector] Verification failed! Could not retrieve data after delay for key ${localStorageKey}. LocalStorage might be disabled or full.`);
                   toast({
                      variant: "destructive",
                      title: "Önizleme Hatası",
