@@ -115,32 +115,39 @@ export default function ArticlePreviewPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    console.log("[ArticlePreviewPage] useEffect triggered.");
+
     if (typeof window === 'undefined') {
-        // Don't run localStorage logic on the server
+        console.log("[ArticlePreviewPage] Running on server, skipping localStorage logic.");
         setIsLoading(false);
         return;
     }
+    console.log("[ArticlePreviewPage] Running on client.");
 
     if (!previewKey) {
-        setError("Önizleme anahtarı bulunamadı. Lütfen URL'yi kontrol edin.");
+        const msg = "Önizleme anahtarı bulunamadı. Lütfen URL'yi kontrol edin.";
+        console.error("[ArticlePreviewPage]", msg);
+        setError(msg);
         setIsLoading(false);
         return;
     }
 
-    console.log("Attempting to load preview data for key:", previewKey); // Log key being used
+    console.log("[ArticlePreviewPage] Attempting to load preview data for key:", previewKey);
 
     try {
         // Use the unique key to get the correct data
         const storedData = localStorage.getItem(previewKey);
 
         if (storedData) {
-            console.log("Found data in localStorage:", storedData.substring(0, 100) + "..."); // Log found data (truncated)
+            console.log(`[ArticlePreviewPage] Found data in localStorage for key ${previewKey}. Length: ${storedData.length}. Data (start):`, storedData.substring(0, 150) + "...");
+
             let parsedData;
             try {
                  parsedData = JSON.parse(storedData);
-                 console.log("Parsed data:", parsedData); // Log parsed data
+                 console.log("[ArticlePreviewPage] Parsed data:", parsedData);
             } catch (parseError) {
-                 console.error("Error parsing JSON data:", parseError);
+                 console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
+                 console.error("[ArticlePreviewPage] Raw data from localStorage:", storedData); // Log raw data on parse error
                  setError("Önizleme verisi bozuk. Lütfen tekrar deneyin.");
                  setIsLoading(false);
                  return;
@@ -154,7 +161,8 @@ export default function ArticlePreviewPage() {
                 Object.keys(parsedData).length > 0 && // Ensure it's not an empty object
                 typeof parsedData.title === 'string' && parsedData.title && // Must have a non-empty title
                 Array.isArray(parsedData.blocks) // Must have blocks array (can be empty)
-                // Other required fields like category might be added here if crucial for preview
+                // Add other required fields like category if crucial for preview
+                // && typeof parsedData.category === 'string' && parsedData.category
              ) {
                  // Normalize data before setting state
                  const normalizedData: Partial<ArticleData> = {
@@ -164,29 +172,41 @@ export default function ArticlePreviewPage() {
                     // Use mainImageUrl if available, otherwise try imageUrl, else undefined
                     mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
                  };
-                 console.log("Validated and normalized data:", normalizedData); // Log final data
+                 console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
                  setPreviewData(normalizedData);
+                 setError(null); // Clear previous errors if successful
             } else {
-                 console.error("Invalid preview data structure:", parsedData); // Log invalid data structure
-                 setError("Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.");
+                 const errorMsg = "Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.";
+                 console.error("[ArticlePreviewPage]", errorMsg);
+                 console.error("[ArticlePreviewPage] Invalid preview data structure:", parsedData); // Log invalid data structure
+                 setError(errorMsg);
             }
         } else {
-             console.error("No data found in localStorage for key:", previewKey);
-             setError(`Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`);
+             const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
+             console.error("[ArticlePreviewPage]", errorMsg);
+             setError(errorMsg);
         }
     } catch (e) {
-         console.error("Error accessing or processing preview data:", e);
+         console.error("[ArticlePreviewPage] Error accessing or processing preview data:", e);
          setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
     } finally {
-        setIsLoading(false);
-         // Optional: Clean up the specific localStorage item after loading - maybe delay this or do it on window close
-         // console.log("Attempting to remove localStorage item with key:", previewKey);
-         // localStorage.removeItem(previewKey);
+        console.log("[ArticlePreviewPage] Finished loading attempt. isLoading:", false);
+         // Optional: Clean up the specific localStorage item after loading.
+         // It might be safer *not* to remove immediately if the user might refresh.
+         // Consider removing it when the component unmounts or the window is closed.
+         // console.log("[ArticlePreviewPage] Attempting to remove localStorage item with key:", previewKey);
+         // try {
+         //     localStorage.removeItem(previewKey);
+         //     console.log(`[ArticlePreviewPage] Removed localStorage item with key: ${previewKey}`);
+         // } catch (removeError) {
+         //     console.error(`[ArticlePreviewPage] Error removing localStorage item ${previewKey}:`, removeError);
+         // }
     }
 
-  }, [previewKey]); // Depend on the previewKey
+  }, [previewKey]); // Depend ONLY on the previewKey
 
    if (isLoading) {
+     console.log("[ArticlePreviewPage] Rendering loading state.");
      return (
         <div className="flex justify-center items-center h-screen text-lg">
             <Loader2 className="mr-3 h-6 w-6 animate-spin" />
@@ -196,6 +216,7 @@ export default function ArticlePreviewPage() {
    }
 
    if (error) {
+        console.log("[ArticlePreviewPage] Rendering error state:", error);
         return (
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
                 <h1 className="text-2xl font-bold text-destructive mb-4">Önizleme Hatası</h1>
@@ -208,11 +229,13 @@ export default function ArticlePreviewPage() {
    // Cast to full ArticleData *after* validation and normalization, acknowledging some fields might be missing
    const articleData = previewData as ArticleData | null;
 
-   if (!articleData) {
+   if (!articleData || Object.keys(articleData).length === 0) { // Added check for empty object too
+     console.log("[ArticlePreviewPage] Rendering notFound state (articleData is null or empty).");
      // This case might be redundant due to error handling, but good as a fallback
      notFound();
    }
 
+    console.log("[ArticlePreviewPage] Rendering article preview for:", articleData.title);
     // Destructure using standard ArticleData fields (handle potential undefined)
     const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = articleData;
 

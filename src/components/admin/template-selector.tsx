@@ -104,7 +104,7 @@ const templates: Template[] = [
         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-break/600/300', alt: 'Mola Veren Kişi' },
         { id: generateId(), type: 'text', content: 'Sürekli çalışmak yerine düzenli aralıklarla kısa molalar vermek, zihinsel yorgunluğu azaltır ve odaklanmayı artırır. Kalkıp biraz hareket etmek veya farklı bir aktivite yapmak iyi gelecektir.' },
          { id: generateId(), type: 'divider'},
-         { id: generateId(), type: 'heading', level: 2, content: `4. "Hayır" Demeyi Öğrenin` },
+         { id: generateId(), type: 'heading', level: 2, content: '4. Dikkat Dağıtıcıları Azaltın' }, // Corrected heading
          { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-focus/600/300', alt: 'Odaklanmış Çalışma Ortamı' }, // Added specific image
          { id: generateId(), type: 'text', content: 'Çalışma ortamınızdaki dikkat dağıtıcı unsurları (sosyal medya bildirimleri, gereksiz sekmeler vb.) minimuma indirin. Odaklanmış çalışma süreleri belirleyin.' },
          { id: generateId(), type: 'divider'},
@@ -301,6 +301,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
 
      // Handle template preview - pass the specific template's data
      const handlePreview = (template: Template) => {
+        console.log(`[TemplateSelector] handlePreview called for template: ${template.id}`);
          // Construct the full ArticleData object for preview
          const previewData: Partial<ArticleData> = { // Use Partial as not all fields might be needed/defined in template
              id: `template-preview-${template.id}`, // Unique ID for preview
@@ -321,39 +322,59 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
              authorId: 'template-author', // Placeholder author
              createdAt: new Date().toISOString(), // Current time for preview
              updatedAt: new Date().toISOString(),
-             // Ensure 'content' field exists, even if empty, to match ArticleData
-             // content: '', // Removed this line, block data is sufficient
          };
+          console.log(`[TemplateSelector] Generated previewData for ${template.id}:`, previewData);
 
          try {
               // Generate a unique key for localStorage for each template preview
              const localStorageKey = `articlePreviewData_${template.id}_${Date.now()}`;
-             console.log("Saving preview data for key:", localStorageKey); // Log the key
+             console.log(`[TemplateSelector] Generated localStorageKey for ${template.id}: ${localStorageKey}`);
+
              const dataString = JSON.stringify(previewData);
+             // Add a check for data size if localStorage has limits (though unlikely for this amount of data)
+             if (dataString.length > 4 * 1024 * 1024) { // Example limit: 4MB
+                console.warn(`[TemplateSelector] Preview data for ${template.id} might be too large for localStorage (${dataString.length} bytes).`);
+             }
+
              localStorage.setItem(localStorageKey, dataString);
-             console.log("Data saved to localStorage:", dataString); // Log the saved data
+             console.log(`[TemplateSelector] Saved data to localStorage for key ${localStorageKey}. Data length: ${dataString.length}`);
+
+              // Verify data was saved correctly
+             const savedData = localStorage.getItem(localStorageKey);
+             if (savedData === dataString) {
+                console.log(`[TemplateSelector] Successfully verified data saved for key ${localStorageKey}.`);
+             } else {
+                console.error(`[TemplateSelector] Verification failed! Data retrieved from localStorage does not match for key ${localStorageKey}.`);
+                console.log("[TemplateSelector] Retrieved data:", savedData?.substring(0,100) + "...");
+             }
+
 
              // Open the preview page with the unique key as a query parameter
-             const previewWindow = window.open(`/admin/preview?key=${localStorageKey}`, '_blank');
+             const previewUrl = `/admin/preview?key=${localStorageKey}`;
+             console.log(`[TemplateSelector] Opening preview window with URL: ${previewUrl}`);
+             const previewWindow = window.open(previewUrl, '_blank');
+
              if (!previewWindow) {
+                 console.error("[TemplateSelector] Failed to open preview window. Pop-up blocker likely active.");
                  toast({
                      variant: "destructive",
                      title: "Önizleme Açılamadı",
                      description: "Lütfen tarayıcınızda açılır pencerelere izin verin.",
                  });
+             } else {
+                 console.log("[TemplateSelector] Preview window opened successfully.");
              }
          } catch (error) {
-             console.error("Error saving template preview data:", error);
-             // Provide more specific error feedback
-             let errorMessage = "Şablon önizleme verisi kaydedilemedi.";
+             console.error("[TemplateSelector] Error during handlePreview:", error);
+             let errorMessage = "Şablon önizleme verisi işlenirken bir hata oluştu.";
              if (error instanceof Error) {
                 if (error.name === 'QuotaExceededError') {
-                    errorMessage = "Tarayıcı depolama alanı dolu. Lütfen eski verileri temizleyin.";
+                    errorMessage = "Tarayıcı depolama alanı dolu. Lütfen eski verileri temizleyin veya tarayıcı ayarlarınızı kontrol edin.";
                 } else {
                     errorMessage = `Bir hata oluştu: ${error.message}`;
                 }
              }
-             toast({
+              toast({
                  variant: "destructive",
                  title: "Önizleme Hatası",
                  description: errorMessage,
