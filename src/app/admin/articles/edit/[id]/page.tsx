@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -96,7 +97,8 @@ export default function EditArticlePage() {
                             setMainImageUrl(data.mainImageUrl || "");
                             setIsFeatured(data.isFeatured);
                             setIsHero(data.isHero); // Sync isHero state
-                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : defaultBlocks); // Use default if empty
+                            // Generate default blocks client-side if blocks are empty/null
+                            setBlocks(data.blocks && data.blocks.length > 0 ? data.blocks : [{ id: generateBlockId(), type: 'text', content: '' }]);
                             setSeoTitle(data.seoTitle || '');
                             setSeoDescription(data.seoDescription || '');
                             setSlug(data.slug);
@@ -247,7 +249,7 @@ export default function EditArticlePage() {
             slug: slug || generateSlug(title),
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
-            blocks: blocks || [],
+            blocks: blocks || [{ id: generateBlockId(), type: 'text', content: '' }], // Fallback to default block
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
             // 'updatedAt' will be handled by the updateArticle function on the backend/mock
@@ -270,7 +272,8 @@ export default function EditArticlePage() {
                  setMainImageUrl(updatedArticle.mainImageUrl || "");
                  setIsFeatured(updatedArticle.isFeatured);
                  setIsHero(updatedArticle.isHero); // Sync isHero after save
-                 setBlocks(updatedArticle.blocks || defaultBlocks); // Use default if empty
+                 // Use default block if blocks are empty after save
+                 setBlocks(updatedArticle.blocks && updatedArticle.blocks.length > 0 ? updatedArticle.blocks : [{ id: generateBlockId(), type: 'text', content: '' }]);
                  setSeoTitle(updatedArticle.seoTitle || '');
                  setSeoDescription(updatedArticle.seoDescription || '');
                  setSlug(updatedArticle.slug);
@@ -333,7 +336,8 @@ export default function EditArticlePage() {
 
      const handleRemoveTemplate = () => {
          if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
-            setBlocks(defaultBlocks); // Reset to default blocks
+            // Generate a new default block ID client-side
+            setBlocks([{ id: generateBlockId(), type: 'text', content: '' }]);
             setTemplateApplied(false); // Mark template as removed
             setSelectedBlockId(null); // Deselect any selected block
             toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
@@ -678,3 +682,5 @@ export default function EditArticlePage() {
          </div>
     );
 }
+
+    
