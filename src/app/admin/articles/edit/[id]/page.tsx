@@ -1,31 +1,3 @@
-
-"use client";
-
-import * as React from "react";
-import { notFound, useParams, useRouter } from 'next/navigation'; // Added useRouter
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "@/hooks/use-toast";
-import {
-  ArrowLeft,
-  Save,
-  Eye,
-  Upload,
-  Trash2,
-  History,
-  MessageSquare,
-  Loader2, // Added Loader for saving state
-  Star, // Icon for Hero
-} from "lucide-react";
-import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import Image from 'next/image';
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
@@ -628,4 +600,3 @@ export default function EditArticlePage() {
          </div>
     );
 }
-

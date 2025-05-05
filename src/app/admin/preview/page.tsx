@@ -100,13 +100,13 @@ const renderBlock = (block: Block) => {
     }
 };
 
-// Key used to store preview data in localStorage
-const FIXED_LOCAL_STORAGE_KEY = "articlePreviewData";
-
 export default function ArticlePreviewPage() {
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+  const templateKey = searchParams.get('templateKey');
 
   React.useEffect(() => {
     let isMounted = true;
@@ -121,9 +121,15 @@ export default function ArticlePreviewPage() {
 
     const loadPreview = () => {
         if (!isMounted) return;
-        console.log(`[ArticlePreviewPage] Attempting to load data from fixed key: ${FIXED_LOCAL_STORAGE_KEY}`);
+        if (!templateKey) {
+            console.warn("[ArticlePreviewPage] No templateKey provided in URL.");
+            setError("Önizleme verisi anahtarı (templateKey) belirtilmemiş.");
+            setIsLoading(false);
+            return;
+        }
+        console.log(`[ArticlePreviewPage] Attempting to load data with key: ${templateKey}`);
         try {
-            const storedData = localStorage.getItem(FIXED_LOCAL_STORAGE_KEY);
+            const storedData = localStorage.getItem(templateKey);
 
             if (storedData) {
                 console.log(`[ArticlePreviewPage] Found data in localStorage. Length: ${storedData.length}.`);
@@ -157,8 +163,8 @@ export default function ArticlePreviewPage() {
                          setPreviewData(normalizedData);
                          setError(null);
                          // Consider removing the item ONLY if it's meant to be single-use
-                         // localStorage.removeItem(FIXED_LOCAL_STORAGE_KEY);
-                         // console.log(`[ArticlePreviewPage] Removed localStorage item ${FIXED_LOCAL_STORAGE_KEY} after loading.`);
+                         localStorage.removeItem(templateKey);
+                         console.log(`[ArticlePreviewPage] Removed localStorage item ${templateKey} after loading.`);
                     }
                 } else {
                     const missingFields = [];
@@ -169,7 +175,7 @@ export default function ArticlePreviewPage() {
                     if (isMounted) setError(errorMsg);
                 }
             } else {
-                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${FIXED_LOCAL_STORAGE_KEY}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
+                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${templateKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
                 console.error("[ArticlePreviewPage]", errorMsg);
                 if (isMounted) setError(errorMsg);
             }
@@ -190,7 +196,7 @@ export default function ArticlePreviewPage() {
       console.log("[ArticlePreviewPage] Component unmounted.");
     };
 
-  }, []); // Empty dependency array, runs only once on mount
+  }, [templateKey]); // Depend on templateKey
 
    if (isLoading) {
      console.log("[ArticlePreviewPage] Rendering loading state.");

@@ -107,7 +107,7 @@ const templates: Template[] = [
         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-food/600/300', alt: 'Beyin Dostu Besinler (Balık, Yemiş, Sebze)', caption:'Omega-3, antioksidanlar ve vitaminler önemlidir.' },
         { id: generateId(), type: 'text', content: 'Özellikle Akdeniz diyeti gibi, meyve, sebze, tam tahıllar, balık ve sağlıklı yağlar açısından zengin beslenme düzenleri beyin sağlığı ile ilişkilendirilmiştir.' },
          { id: generateId(), type: 'divider'},
-         { id: generateId(), type: 'heading', level: 2, content: '4. Kaliteli Uyku Uyuyun' },
+         { id: generateId(), type: 'heading', level: 2, content: `4. Kaliteli Uyku Uyuyun` },
          { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-sleep/600/300', alt: 'Uyuyan Kişi' },
          { id: generateId(), type: 'text', content: 'Uyku sırasında beyin, gün içinde öğrenilen bilgileri pekiştirir ve zararlı toksinleri temizler. Her gece 7-8 saat kesintisiz ve kaliteli uyku hedefleyin.' },
          { id: generateId(), type: 'divider'},
@@ -242,7 +242,7 @@ const templates: Template[] = [
         { id: generateId(), type: 'heading', level: 2, content: 'Plastisiteyi Nasıl Geliştirebiliriz?' },
         { id: generateId(), type: 'text', content: '**Soru:** Günlük hayatta beyin plastisitesini desteklemek için neler yapabiliriz?' },
         { id: generateId(), type: 'text', content: '**Cevap:** Birkaç önemli faktör var: Sürekli yeni şeyler öğrenmeye açık olmak, zihinsel olarak zorlayıcı aktivitelerle meşgul olmak (bulmaca çözmek, yeni bir dil öğrenmek gibi), düzenli fiziksel egzersiz yapmak, kaliteli uyku uyumak ve sağlıklı beslenmek. Ayrıca, sosyal etkileşim ve stresi yönetmek de beyin sağlığı ve plastisitesi için önemlidir.' },
-        { id: generateId(), type: 'divider' },
+         { id: generateId(), type: 'divider' },
          { id: generateId(), type: 'heading', level: 2, content: 'Yaşlanma ve Plastisite' },
          { id: generateId(), type: 'text', content: '**Soru:** Yaş ilerledikçe beyin plastisitesi azalır mı?' },
          { id: generateId(), type: 'text', content: '**Cevap:** Evet, yaşla birlikte plastisite yeteneğinde bir miktar azalma olabilir, ancak beyin hiçbir zaman değişme yeteneğini tamamen kaybetmez. Yaşam boyu öğrenme ve yukarıda saydığım sağlıklı yaşam alışkanlıkları, yaşlılıkta bile bilişsel fonksiyonların korunmasına ve plastisitenin desteklenmesine yardımcı olabilir.' },
@@ -350,8 +350,11 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
 
         // Persist the preview data to localStorage using the template ID as part of the key
         try {
-            localStorage.setItem(`articlePreviewData-${template.id}`, JSON.stringify(previewData));
-            window.open('/admin/preview', '_blank');
+            const previewKey = `articlePreviewData_${template.id}_${Date.now()}`; // Unique key per preview
+            localStorage.setItem(previewKey, JSON.stringify(previewData));
+
+             // Open preview with the correct key
+             window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
         } catch (error) {
             console.error("Error saving preview data to localStorage:", error);
             toast({
