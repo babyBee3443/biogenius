@@ -27,7 +27,7 @@ import Image from 'next/image';
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+// Removed useDebouncedCallback import
 import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 // --- Main Page Component ---
@@ -473,4 +473,4 @@ export default function NewArticlePage() {
         </div>
     );
 }
-```
+
