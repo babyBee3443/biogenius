@@ -432,18 +432,22 @@ export function TemplateSelector({
 
             const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
             console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
-            const newWindow = window.open(previewUrl, '_blank');
-             if (!newWindow) {
-                 console.error("[TemplateSelector/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
-                 toast({
-                     variant: "destructive",
-                     title: "Önizleme Penceresi Açılamadı",
-                     description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                     duration: 10000,
-                 });
-             } else {
-                 console.log("[TemplateSelector/handlePreview] Preview window opened successfully.");
-             }
+
+            // Add a small delay before opening the window
+            setTimeout(() => {
+                const newWindow = window.open(previewUrl, '_blank');
+                if (!newWindow) {
+                    console.error("[TemplateSelector/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                    toast({
+                        variant: "destructive",
+                        title: "Önizleme Penceresi Açılamadı",
+                        description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
+                        duration: 10000,
+                    });
+                } else {
+                    console.log("[TemplateSelector/handlePreview] Preview window opened successfully after delay.");
+                }
+            }, 150); // 150ms delay
 
 
         } catch (error: any) {
@@ -494,10 +498,29 @@ export function TemplateSelector({
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                             {/* Button to trigger the selection process */}
-                                             <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSelectClick(template); }}>
-                                                Seç
-                                            </Button>
+                                             {/* Use AlertDialogTrigger for confirmation */}
+                                            <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={(open) => { if (!open) setSelectedTemplate(null); setIsConfirmOpen(open); }}>
+                                                <AlertDialogTrigger asChild>
+                                                     <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSelectClick(template); }}>
+                                                         Seç
+                                                     </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Düzenleyicide zaten içerik bulunuyor. "{selectedTemplate?.name}" şablonunu uygulamak mevcut içeriği silecektir.
+                                                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
+                                                            Evet, Üzerine Yaz
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -512,25 +535,6 @@ export function TemplateSelector({
                 </DialogContent>
             </Dialog>
 
-             {/* Centralized Confirmation Dialog */}
-             <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-                 <AlertDialogContent>
-                     <AlertDialogHeader>
-                         <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
-                         <AlertDialogDescription>
-                             Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
-                             Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
-                         </AlertDialogDescription>
-                     </AlertDialogHeader>
-                     <AlertDialogFooter>
-                         <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
-                         {/* Ensure applyTemplate is called with the stored selectedTemplate */}
-                         <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
-                             Evet, Üzerine Yaz
-                         </AlertDialogAction>
-                     </AlertDialogFooter>
-                 </AlertDialogContent>
-             </AlertDialog>
         </>
     );
 }

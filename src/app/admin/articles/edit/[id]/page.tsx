@@ -417,18 +417,23 @@ export default function EditArticlePage() {
 
             const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
             console.log(`[EditArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
-            const newWindow = window.open(previewUrl, '_blank');
-            if (!newWindow) {
-                 console.error("[EditArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
-                 toast({
-                     variant: "destructive",
-                     title: "Önizleme Penceresi Açılamadı",
-                     description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                     duration: 10000,
-                 });
-            } else {
-                 console.log("[EditArticlePage/handlePreview] Preview window opened successfully.");
-            }
+
+            // Add a small delay before opening the window
+            setTimeout(() => {
+                 const newWindow = window.open(previewUrl, '_blank');
+                 if (!newWindow) {
+                      console.error("[EditArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                      toast({
+                          variant: "destructive",
+                          title: "Önizleme Penceresi Açılamadı",
+                          description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
+                          duration: 10000,
+                      });
+                 } else {
+                      console.log("[EditArticlePage/handlePreview] Preview window opened successfully after delay.");
+                 }
+            }, 150); // 150ms delay
+
 
         } catch (error: any) {
             console.error("[EditArticlePage/handlePreview] Error during preview process (setItem or verification):", error);

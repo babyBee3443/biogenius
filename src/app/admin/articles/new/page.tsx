@@ -1,7 +1,7 @@
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter, useParams, notFound } from 'next/navigation'; // Import hooks
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -299,18 +299,22 @@ export default function NewArticlePage() {
 
             const previewUrl = `/admin/preview?key=${previewKey}`; // Use 'key' as query param
              console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
-            const newWindow = window.open(previewUrl, '_blank');
-            if (!newWindow) {
-                 console.error("[NewArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
-                 toast({
-                     variant: "destructive",
-                     title: "Önizleme Penceresi Açılamadı",
-                     description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                     duration: 10000,
-                 });
-            } else {
-                 console.log("[NewArticlePage/handlePreview] Preview window opened successfully.");
-            }
+
+             // Add a small delay before opening the window
+            setTimeout(() => {
+                const newWindow = window.open(previewUrl, '_blank');
+                if (!newWindow) {
+                     console.error("[NewArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                     toast({
+                         variant: "destructive",
+                         title: "Önizleme Penceresi Açılamadı",
+                         description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
+                         duration: 10000,
+                     });
+                } else {
+                     console.log("[NewArticlePage/handlePreview] Preview window opened successfully after delay.");
+                }
+            }, 150); // 150ms delay
 
         } catch (error: any) {
             console.error("[NewArticlePage/handlePreview] Error during preview process (setItem or verification):", error);
