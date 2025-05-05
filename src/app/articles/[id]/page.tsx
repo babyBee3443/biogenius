@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { ArrowLeft, Twitter, Facebook, Linkedin } from 'lucide-react';
 import { getArticleById, getArticles, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 import type { Block } from '@/components/admin/template-selector'; // Import Block type
+import { Card, CardContent } from '@/components/ui/card'; // Import Card components
+import { cn } from '@/lib/utils'; // Import cn
 
 // --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -142,7 +144,8 @@ export async function generateStaticParams() {
 
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
-  const article = await getArticleById(params.id);
+  const articleId = params.id; // Extract id first to avoid potential enumeration issues
+  const article = await getArticleById(articleId);
 
   // If article not found or not published, return 404
   if (!article || article.status !== 'Yayınlandı') {
@@ -156,7 +159,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   // Fetch related articles (simple example: same category, not the current one)
   const allArticles = await getArticles();
   const relatedArticles = allArticles
-      .filter(a => a.status === 'Yayınlandı' && a.category === article.category && a.id !== article.id)
+      .filter(a => a.status === 'Yayınlandı' && a.category === article.category && a.id !== articleId) // Use articleId here
       .slice(0, 2); // Limit to 2 related articles
 
   return (
@@ -191,7 +194,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
              article.blocks.map(renderBlock)
          ) : (
              // Fallback if blocks array is empty or undefined
-             <div dangerouslySetInnerHTML={createMarkup(article.content || '<p class="italic text-muted-foreground">[İçerik bulunamadı]</p>')} />
+             // Use createMarkup for potentially HTML content in legacy articles
+             <div dangerouslySetInnerHTML={createMarkup( '<p class="italic text-muted-foreground">[İçerik bulunamadı]</p>')} />
          )}
       </div>
 
