@@ -107,8 +107,8 @@ const renderBlock = (block: Block) => {
 };
 
 export default function ArticlePreviewPage() {
-  // Use ArticleData type here
-  const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
+  // Use a broader type initially, then refine
+  const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -118,15 +118,24 @@ export default function ArticlePreviewPage() {
         if (storedData) {
             const parsedData = JSON.parse(storedData);
 
-            // Refined validation - check for essential fields and types
+            // --- More Robust Validation ---
             if (
                 parsedData &&
-                typeof parsedData.title === 'string' && parsedData.title &&
-                Array.isArray(parsedData.blocks) && // Check if blocks is an array
-                typeof parsedData.category === 'string' && parsedData.category &&
-                typeof parsedData.slug === 'string' && parsedData.slug
+                typeof parsedData === 'object' && // Ensure it's an object
+                typeof parsedData.title === 'string' && parsedData.title && // Must have a non-empty title
+                Array.isArray(parsedData.blocks) && // Must have blocks array
+                typeof parsedData.category === 'string' && parsedData.category // Must have a category
+                // Optional fields like excerpt/description, mainImageUrl/imageUrl are handled below
              ) {
-                 setArticleData(parsedData as ArticleData); // Cast to ArticleData
+                 // Normalize data before setting state
+                 const normalizedData: Partial<ArticleData> = {
+                    ...parsedData,
+                    // Use excerpt if available, otherwise try description, else undefined
+                    excerpt: parsedData.excerpt ?? parsedData.description,
+                    // Use mainImageUrl if available, otherwise try imageUrl, else undefined
+                    mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
+                 };
+                 setPreviewData(normalizedData);
             } else {
                  console.error("Invalid preview data structure:", parsedData); // Log invalid data
                  setError("Önizleme verisi geçersiz veya eksik.");
@@ -161,12 +170,15 @@ export default function ArticlePreviewPage() {
         );
     }
 
+   // Cast to full ArticleData *after* validation and normalization, acknowledging some fields might be missing
+   const articleData = previewData as ArticleData | null;
+
    if (!articleData) {
      // This case might be redundant due to error handling, but good as a fallback
      notFound();
    }
 
-    // Destructure using standard ArticleData fields
+    // Destructure using standard ArticleData fields (handle potential undefined)
     const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = articleData;
 
   const categoryLinkClass = category === 'Teknoloji'
@@ -188,9 +200,9 @@ export default function ArticlePreviewPage() {
           <header className="mb-10">
              {/* Use Link for category if applicable, otherwise just span */}
              <span className={`text-sm font-medium mb-3 inline-block tracking-wide uppercase ${categoryLinkClass}`}>
-               {category}
+               {category || '[Kategori Yok]'}
              </span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{title || "Başlık Yok"}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{title || "[Başlık Yok]"}</h1>
              {excerpt && <p className="text-lg md:text-xl text-muted-foreground">{excerpt}</p>}
              {/* Display author and date if available in preview data */}
              {(authorId || createdAt) && (
@@ -248,3 +260,5 @@ export default function ArticlePreviewPage() {
     </div>
   );
 }
+
+    
