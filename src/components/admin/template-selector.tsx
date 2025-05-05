@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -346,85 +345,68 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
             blocks: template.blocks,
             category: template.category || 'Teknoloji', // Default category if not set
             status: 'Yayınlandı', // Preview as published
-            mainImageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl,
-            seoTitle: template.seoTitle || template.name,
-            seoDescription: template.seoDescription || template.description,
-            slug: template.id,
-            isFeatured: false, // Default values for flags
-            isHero: false,
-            keywords: template.keywords || [],
-            canonicalUrl: '',
-            authorId: 'template-preview', // Placeholder author
-            createdAt: new Date().toISOString(), // Use current time for preview
-            updatedAt: new Date().toISOString(),
+            mainImageUrl: template.blocks.find(b => b.type === 'image') ? template.blocks.find(b => b.type === 'image')!.url : undefined, // Find the first image block
         };
 
+        // Persist the preview data to localStorage using the template ID as part of the key
         try {
-            const localStorageKey = "articlePreviewData"; // Use a fixed key for simplicity
-            // console.log(`[TemplateSelector] Setting localStorage key: ${localStorageKey} for template ${template.id}`);
-            localStorage.setItem(localStorageKey, JSON.stringify(previewData));
-
-            const previewUrl = '/admin/preview';
-            // console.log(`[TemplateSelector] Opening preview URL: ${previewUrl}`);
-            const previewWindow = window.open(previewUrl, '_blank');
-
-            if (!previewWindow) {
-                toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Lütfen tarayıcınızda açılır pencerelere izin verin." });
-            }
+            localStorage.setItem(`articlePreviewData-${template.id}`, JSON.stringify(previewData));
+            window.open('/admin/preview', '_blank');
         } catch (error) {
-            console.error("[TemplateSelector] Error saving preview data to localStorage:", error);
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi kaydedilemedi." });
+            console.error("Error saving preview data to localStorage:", error);
+            toast({
+                variant: "destructive",
+                title: "Önizleme Hatası",
+                description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu olabilir.",
+            });
         }
      };
 
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Makale Şablonu Seç</DialogTitle>
-          <DialogDescription>
-            İçeriğinizi oluşturmaya başlamak için hazır bir şablon seçin. Şablon içeriği mevcut içeriğinizin üzerine yazılabilir (onayınızla).
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="flex-grow pr-4 -mr-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
-                {templates.map((template) => (
-                    <Card key={template.id} className="flex flex-col overflow-hidden group border hover:shadow-lg transition-shadow">
-                        <CardHeader className="p-0 relative h-32 overflow-hidden cursor-pointer" onClick={() => handlePreview(template)}>
-                             <Image
-                                src={template.previewImageUrl}
-                                alt={`${template.name} önizlemesi`}
-                                width={300}
-                                height={200}
-                                className="w-full h-full object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
-                                data-ai-hint="template preview abstract design"
-                             />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                              <CardTitle className="absolute bottom-2 left-3 text-sm font-semibold text-white p-1 bg-black/50 rounded text-shadow-sm">{template.name}</CardTitle>
-                               <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                   <Eye className="h-8 w-8 text-white/80" />
-                               </div>
-                         </CardHeader>
-                         <CardContent className="p-3 flex flex-col flex-grow">
-                             <p className="text-xs text-muted-foreground flex-grow mb-3">{template.description}</p>
-                             <div className="flex gap-2 mt-auto">
-                                 <Button variant="outline" size="sm" className="flex-1" onClick={() => handlePreview(template)}>
-                                    <Eye className="mr-1 h-3.5 w-3.5"/> Önizle
-                                </Button>
-                                <Button size="sm" className="flex-1" onClick={() => handleSelect(template.blocks)}>Seç</Button>
-                             </div>
-                         </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </ScrollArea>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Kapat
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-[925px]">
+                <DialogHeader>
+                    <DialogTitle>Şablon Seçin</DialogTitle>
+                    <DialogDescription>
+                        Mevcut şablonlardan birini seçerek makalenize hızlıca içerik ekleyebilirsiniz.
+                    </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[450px] w-full rounded-md border">
+                    <div className="grid gap-4 p-4 md:grid-cols-3">
+                        {templates.map((template) => (
+                            <Card key={template.id}>
+                                <CardHeader>
+                                    <CardTitle>{template.name}</CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex flex-col space-y-2">
+                                    <Image
+                                        src={template.previewImageUrl}
+                                        alt={template.description}
+                                        width={300}
+                                        height={200}
+                                        className="rounded object-cover"
+                                    />
+                                    <p className="text-sm text-muted-foreground">{template.description}</p>
+                                    <div className="flex justify-between">
+                                        <Button size="sm" onClick={() => handleSelect(template.blocks)}>
+                                            Şablonu Seç
+                                        </Button>
+                                         <Button size="sm" variant="outline" onClick={() => handlePreview(template)}>
+                                              <Eye className="mr-2 h-4 w-4" />
+                                             Önizle
+                                         </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </ScrollArea>
+                <DialogFooter>
+                    <Button type="button" variant="secondary" onClick={onClose}>
+                        Kapat
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
 }

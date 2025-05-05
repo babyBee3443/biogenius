@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -118,7 +117,6 @@ export default function NewArticlePage() {
             ...(type === 'gallery' && { images: [] }),
             ...(type === 'video' && { url: '', youtubeId: '' }), // Added youtubeId
             ...(type === 'quote' && { content: '', citation: '' }),
-            ...(type === 'code' && { language: 'javascript', content: '' }),
              ...(type === 'divider' && {}),
              ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
@@ -216,6 +214,8 @@ export default function NewArticlePage() {
             ...block,
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
         }));
+        // Clear existing blocks before applying the new template
+        setBlocks([]); 
         setBlocks(newBlocks);
         setIsTemplateSelectorOpen(false);
         toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
