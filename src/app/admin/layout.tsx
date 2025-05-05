@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers } from 'lucide-react'; // Added Layers icon
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy } from 'lucide-react'; // Added BookCopy icon
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -87,6 +87,22 @@ export default function AdminLayout({
                             <Link href="/admin/articles/new">
                             <PlusCircle />
                             <span>Yeni Makale</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Biyoloji Notları">
+                            <Link href="/admin/biyoloji-notlari">
+                            <BookCopy />
+                            <span>Biyoloji Notları</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Yeni Biyoloji Notu Ekle">
+                            <Link href="/admin/biyoloji-notlari/new">
+                            <PlusCircle />
+                            <span>Yeni Not Ekle</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -190,7 +206,6 @@ export default function AdminLayout({
            <SidebarTrigger className="md:hidden" />
            {/* Add other header elements like search or user menu here if needed */}
            <div className="flex items-center gap-2">
-             {/* Removed ThemeToggle from here */}
              {/* Example User Dropdown Trigger */}
              {/* TODO: Add dropdown menu for user actions */}
              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
