@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -101,7 +100,8 @@ const renderBlock = (block: Block) => {
     }
 };
 
-const FIXED_LOCAL_STORAGE_KEY = "articlePreviewData"; // Use a fixed key
+// Key used to store preview data in localStorage
+const FIXED_LOCAL_STORAGE_KEY = "articlePreviewData";
 
 export default function ArticlePreviewPage() {
   const [previewData, setPreviewData] = React.useState<Partial<ArticleData> | null>(null);
@@ -131,46 +131,51 @@ export default function ArticlePreviewPage() {
                 try {
                     parsedData = JSON.parse(storedData);
                     console.log("[ArticlePreviewPage] Parsed data:", parsedData);
-                } catch (parseError) {
+                    // Basic validation of the parsed data structure
+                    if (!parsedData || typeof parsedData !== 'object' || Object.keys(parsedData).length === 0) {
+                         throw new Error(`Invalid preview data structure: ${JSON.stringify(parsedData)}`);
+                    }
+                } catch (parseError: any) {
                     console.error("[ArticlePreviewPage] Error parsing JSON data:", parseError);
                     console.error("[ArticlePreviewPage] Raw data:", storedData);
-                    if (isMounted) setError("Önizleme verisi bozuk.");
+                    if (isMounted) setError(`Önizleme verisi bozuk: ${parseError.message}`);
                     return;
                 }
 
+                // Normalize and validate essential fields (title, blocks)
                 if (
-                    parsedData &&
-                    typeof parsedData === 'object' &&
-                    Object.keys(parsedData).length > 0 &&
                     typeof parsedData.title === 'string' && parsedData.title &&
                     Array.isArray(parsedData.blocks)
                 ) {
                     const normalizedData: Partial<ArticleData> = {
                         ...parsedData,
-                        excerpt: parsedData.excerpt ?? parsedData.description,
-                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
+                        excerpt: parsedData.excerpt ?? parsedData.description, // Handle potential description field
+                        mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl, // Handle potential imageUrl field
                     };
                     console.log("[ArticlePreviewPage] Validated and normalized data:", normalizedData);
                     if (isMounted) {
                          setPreviewData(normalizedData);
                          setError(null);
-                         // Optionally remove the item after loading to prevent stale previews
+                         // Consider removing the item ONLY if it's meant to be single-use
                          // localStorage.removeItem(FIXED_LOCAL_STORAGE_KEY);
                          // console.log(`[ArticlePreviewPage] Removed localStorage item ${FIXED_LOCAL_STORAGE_KEY} after loading.`);
                     }
                 } else {
-                    const errorMsg = "Önizleme verisi geçersiz veya eksik.";
+                    const missingFields = [];
+                    if (!parsedData.title) missingFields.push("title");
+                    if (!Array.isArray(parsedData.blocks)) missingFields.push("blocks");
+                    const errorMsg = `Önizleme verisi geçersiz veya eksik alanlar içeriyor: ${missingFields.join(', ')}.`;
                     console.error("[ArticlePreviewPage]", errorMsg, parsedData);
                     if (isMounted) setError(errorMsg);
                 }
             } else {
-                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${FIXED_LOCAL_STORAGE_KEY}).`;
+                const errorMsg = `Önizleme verisi bulunamadı (Anahtar: ${FIXED_LOCAL_STORAGE_KEY}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`;
                 console.error("[ArticlePreviewPage]", errorMsg);
                 if (isMounted) setError(errorMsg);
             }
-        } catch (e) {
-            console.error("[ArticlePreviewPage] Error accessing localStorage:", e);
-            if (isMounted) setError("Önizleme verisi yüklenirken bir hata oluştu.");
+        } catch (e: any) {
+            console.error("[ArticlePreviewPage] Error accessing localStorage or loading data:", e);
+            if (isMounted) setError(`Önizleme verisi yüklenirken bir hata oluştu: ${e.message}`);
         } finally {
              if (isMounted) setIsLoading(false);
         }
@@ -209,12 +214,22 @@ export default function ArticlePreviewPage() {
         );
     }
 
-   const articleData = previewData as ArticleData | null;
+   // Assert articleData is not null here because error/loading states handle it
+   const articleData = previewData!;
 
-   if (!articleData || Object.keys(articleData).length === 0) {
-     console.log("[ArticlePreviewPage] Rendering notFound state (articleData is null or empty).");
-     notFound();
-   }
+   // Further check if articleData is an empty object (although validated earlier)
+   if (Object.keys(articleData).length === 0) {
+        console.error("[ArticlePreviewPage] Rendering error state: previewData is an empty object.");
+        return (
+             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+                 <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h1 className="text-2xl font-bold text-destructive mb-4">Önizleme Hatası</h1>
+                <p className="text-muted-foreground mb-6">Boş önizleme verisi alındı.</p>
+                <Button onClick={() => window.close()} variant="outline">Sekmeyi Kapat</Button>
+            </div>
+        );
+    }
+
 
     console.log("[ArticlePreviewPage] Rendering article preview for:", articleData.title);
     const { title, excerpt, category, mainImageUrl, blocks, authorId, createdAt } = articleData;

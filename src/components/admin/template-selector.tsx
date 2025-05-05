@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -62,168 +61,169 @@ const templates: Template[] = [
     id: 'standard-article',
     name: 'Standart Makale',
     description: 'Başlık, ana görsel ve metin içeriği için temel düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template-std/300/200',
+    previewImageUrl: 'https://picsum.photos/seed/template-std-v2/300/200', // New preview seed
     category: 'Teknoloji',
-    excerpt: 'Bu şablon, genel konuları ele alan standart bir makale yapısı sunar.',
-    seoTitle: 'Standart Makale Başlığı',
-    seoDescription: 'Standart makale şablonu önizlemesi - temel yapı.',
+    excerpt: 'Kuantum bilgisayarların potansiyelini ele alan temel bir makale yapısı.', // Updated excerpt
+    seoTitle: 'Kuantum Bilgisayarların Temelleri', // Updated SEO Title
+    seoDescription: 'Standart makale şablonu kullanılarak kuantum bilgisayarların temelleri.', // Updated SEO Desc
     blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'Standart Makale Başlığı: Konuya Giriş' },
-      { id: generateId(), type: 'text', content: 'Bu makale, **[Önemli Konu]** hakkında genel bir bakış sunmaktadır. Günümüzdeki etkilerini ve gelecekteki potansiyelini ele alacağız. Giriş paragrafında konunun önemi ve makalenin kapsamı belirtilir.' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-main-content/800/400', alt: 'Standart Makale Ana Görseli', caption: 'Konuyu temsil eden görsel (isteğe bağlı açıklama)' },
-      { id: generateId(), type: 'text', content: 'Ana metin bölümü burada başlar. **[Alt Konu 1]** ile ilgili temel bilgiler, açıklamalar ve argümanlar bu kısımda yer alır. Paragraflar arasında mantıksal bir akış olmalıdır ve okuyucunun konuyu anlaması kolaylaştırılmalıdır.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Konunun Derinlemesine İncelenmesi' },
-      { id: generateId(), type: 'text', content: '**[Alt Konu 2]**\'nin daha detaylı incelendiği bölüm. Alt başlıklar kullanarak okunabilirliği artırın. İstatistikler, örnekler veya alıntılarla içeriği zenginleştirin. Örneğin, yapılan bir araştırmaya göre...' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Farklı Bir Perspektif ve Video İçerik' },
-      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' }, // Example video
-      { id: generateId(), type: 'text', content: 'Konuyla ilgili farklı görüşler veya alternatif yaklaşımlar bu bölümde ele alınabilir. Tartışmalı konular için dengeli bir sunum önemlidir. Videoda ise konunun [Video İçeriği Açıklaması] gösterilmektedir.' },
-      { id: generateId(), type: 'quote', content: 'Bilgi güçtür, ancak paylaşıldığında daha da güçlenir.', citation: 'Francis Bacon (Uyarlanmış)' },
-      { id: generateId(), type: 'text', content: 'Sonuç paragrafı, makalede ele alınan ana noktaları özetler (**[Alt Konu 1]** ve **[Alt Konu 2]** gibi) ve okuyucuya bir çıkarım veya geleceğe yönelik bir mesaj sunar.' },
+      { id: generateId(), type: 'heading', level: 1, content: 'Kuantum Bilgisayarlar: Yeni Bir Hesaplama Çağı' }, // Updated content
+      { id: generateId(), type: 'text', content: 'Kuantum bilgisayarlar, klasik bilgisayarların çözemediği problemleri çözme potansiyeli taşıyan devrim niteliğinde makinelerdir. Bu makalede, kuantum hesaplamanın temellerine ve olası uygulama alanlarına göz atacağız.' }, // Updated content
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-quantum-main/800/400', alt: 'Kuantum Bilgisayar Konsepti', caption: 'Kübitler ve süperpozisyon.' }, // Updated image & caption
+      { id: generateId(), type: 'text', content: 'Klasik bilgisayarlar bitleri (0 veya 1) kullanırken, kuantum bilgisayarlar **kübitleri** kullanır. Kübitler, süperpozisyon sayesinde aynı anda hem 0 hem de 1 değerini alabilirler. Bu özellik, belirli hesaplamalarda üstel bir hız artışı sağlar.' }, // Updated content
+      { id: generateId(), type: 'heading', level: 2, content: 'Kuantum Üstünlüğü ve Uygulamalar' },
+      { id: generateId(), type: 'text', content: 'Kuantum üstünlüğü, bir kuantum bilgisayarın en gelişmiş klasik bilgisayarın pratik olarak çözemeyeceği bir problemi çözdüğü noktayı ifade eder. İlaç keşfi, malzeme bilimi, finansal modelleme ve kriptografi gibi alanlarda devrim yaratabilir.' }, // Updated content
+      { id: generateId(), type: 'heading', level: 2, content: 'Zorluklar ve Gelecek' },
+      { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=WVv5OAR4Nik', youtubeId: 'WVv5OAR4Nik' }, // Different video
+      { id: generateId(), type: 'text', content: 'Kuantum bilgisayarların geliştirilmesi hala birçok teknik zorluk içermektedir. Kübitlerin kararlılığını sağlamak ve hata düzeltme mekanizmalarını geliştirmek önemlidir. Gelecekte, kuantum ve klasik bilgisayarların hibrit sistemlerde birlikte çalışması beklenmektedir.' }, // Updated content
+      { id: generateId(), type: 'quote', content: 'Geleceği tahmin etmenin en iyi yolu, onu icat etmektir.', citation: 'Alan Kay' }, // Updated quote
+      { id: generateId(), type: 'text', content: 'Sonuç olarak, kuantum bilgisayarlar hesaplama paradigmalarını değiştirme potansiyeline sahiptir ve bilim ve teknoloji için heyecan verici yeni kapılar açmaktadır.' }, // Updated content
     ]
   },
    {
     id: 'listicle',
     name: 'Listeleme Makalesi',
     description: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.',
-    previewImageUrl: 'https://picsum.photos/seed/template-list-preview/300/200',
-    category: 'Teknoloji',
-    excerpt: 'Bu şablon, belirli sayıda maddeyi listeleyen makaleler oluşturmak için idealdir.',
-    seoTitle: 'Liste Makalesi Başlığı',
-    seoDescription: 'Listeleme makalesi şablonu önizlemesi - numaralı öğeler.',
+    previewImageUrl: 'https://picsum.photos/seed/template-list-bio-v2/300/200', // New preview seed
+    category: 'Biyoloji', // Changed category
+    excerpt: 'Sağlıklı bir yaşam için uygulanabilecek temel adımları listeleyen bir şablon.', // Updated excerpt
+    seoTitle: 'Daha Sağlıklı Bir Yaşam İçin 5 Öneri', // Updated SEO Title
+    seoDescription: 'Listeleme makalesi şablonu ile sağlıklı yaşam önerileri.', // Updated SEO Desc
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Verimliliğinizi Artıracak 5 Basit Yöntem' },
-        { id: generateId(), type: 'text', content: 'Günlük hayatınızda veya işinizde daha verimli olmak mı istiyorsunuz? İşte size yardımcı olabilecek, uygulaması kolay 5 yöntem!' },
-        { id: generateId(), type: 'heading', level: 2, content: '1. Zaman Yönetimi Tekniklerini Kullanın (Pomodoro)' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-pomodoro/600/300', alt: 'Pomodoro Tekniği Zamanlayıcısı', caption: 'Çalışma ve mola sürelerini ayarlayın.' },
-        { id: generateId(), type: 'text', content: 'Pomodoro tekniği gibi zaman yönetimi yöntemleri, dikkatinizi odaklamanıza ve işleri belirli zaman dilimlerinde tamamlamanıza yardımcı olur. 25 dakika çalışıp 5 dakika mola vererek başlayabilirsiniz.' },
+        { id: generateId(), type: 'heading', level: 1, content: 'Daha Sağlıklı Bir Yaşam İçin 5 Öneri' }, // Updated content
+        { id: generateId(), type: 'text', content: 'Sağlığınızı iyileştirmek ve daha enerjik hissetmek için hayatınıza katabileceğiniz basit ama etkili 5 öneriyi sizin için derledik.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: '1. Dengeli Beslenin' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-food-healthy/600/300', alt: 'Sağlıklı Beslenme Tabağı', caption: 'Bol sebze, meyve ve tam tahıl tüketin.' }, // Updated image & caption
+        { id: generateId(), type: 'text', content: 'İşlenmiş gıdalar yerine taze ve doğal besinlere odaklanın. Öğünlerinizde protein, karbonhidrat ve sağlıklı yağ dengesini kurmaya özen gösterin. Yeterli lif alımı sindirim sisteminiz için kritiktir.' }, // Updated content
         { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: '2. Önceliklendirme Yapın (Eisenhower Matrisi)' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-matrix/600/300', alt: 'Eisenhower Matrisi', caption: 'Görevleri sınıflandırın.' }, // Added specific image
-        { id: generateId(), type: 'text', content: 'Görevlerinizi aciliyet ve önem derecelerine göre sınıflandırın. Eisenhower Matrisi (Acil/Önemli Matrisi) bu konuda size yol gösterebilir. Önemli ama acil olmayan işlere odaklanmak uzun vadede daha verimli olmanızı sağlar.' },
+        { id: generateId(), type: 'heading', level: 2, content: '2. Düzenli Egzersiz Yapın' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-exercise-out/600/300', alt: 'Doğada Egzersiz Yapan Kişi', caption: 'Haftada en az 150 dakika orta yoğunlukta aktivite.' }, // Updated image & caption
+        { id: generateId(), type: 'text', content: 'Fiziksel aktivite sadece kilo kontrolü için değil, aynı zamanda kalp sağlığı, ruh hali ve genel zindelik için de önemlidir. Sevdiğiniz bir egzersiz türünü bulun ve düzenli olarak yapın.' }, // Updated content
          { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: '3. Mola Vermeyi Unutmayın' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-break/600/300', alt: 'Mola Veren Kişi' },
-        { id: generateId(), type: 'text', content: 'Sürekli çalışmak yerine düzenli aralıklarla kısa molalar vermek, zihinsel yorgunluğu azaltır ve odaklanmayı artırır. Kalkıp biraz hareket etmek veya farklı bir aktivite yapmak iyi gelecektir.' },
+        { id: generateId(), type: 'heading', level: 2, content: '3. Yeterli Uyku Alın' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-sleep-peace/600/300', alt: 'Huzurlu Uyku Ortamı' }, // Updated image
+        { id: generateId(), type: 'text', content: 'Yetişkinler için genellikle 7-9 saat kaliteli uyku önerilir. Yetersiz uyku, bağışıklık sistemini zayıflatabilir, konsantrasyonu düşürebilir ve kronik hastalıklara yol açabilir.' }, // Updated content
          { id: generateId(), type: 'divider'},
-         { id: generateId(), type: 'heading', level: 2, content: '4. Dikkat Dağıtıcıları Azaltın' }, // Corrected heading
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-focus/600/300', alt: 'Odaklanmış Çalışma Ortamı' }, // Added specific image
-         { id: generateId(), type: 'text', content: 'Çalışma ortamınızdaki dikkat dağıtıcı unsurları (sosyal medya bildirimleri, gereksiz sekmeler vb.) minimuma indirin. Odaklanmış çalışma süreleri belirleyin.' },
+         { id: generateId(), type: 'heading', level: 2, content: '4. Stresi Yönetin' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-stress-relax/600/300', alt: 'Meditasyon Yapan Kişi' }, // Updated image
+         { id: generateId(), type: 'text', content: 'Kronik stres, sağlığınız üzerinde olumsuz etkilere neden olabilir. Meditasyon, yoga, derin nefes egzersizleri veya hobilerinizle ilgilenmek gibi stres yönetimi tekniklerini deneyin.' }, // Updated content
          { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: `5. "Hayır" Demeyi Öğrenin` },
-        { id: generateId(), type: 'text', content: 'Her isteğe "evet" demek yerine, önceliklerinize ve zamanınıza uygun olmayan talepleri nazikçe reddetmeyi öğrenin. Bu, enerjinizi önemli işlere ayırmanızı sağlar.' },
-        { id: generateId(), type: 'text', content: 'Bu yöntemleri uygulayarak verimliliğinizi önemli ölçüde artırabilirsiniz. Küçük adımlarla başlayın ve size en uygun olanları keşfedin!'},
+        { id: generateId(), type: 'heading', level: 2, content: `5. Bol Su İçin` },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-water-glass/600/300', alt: 'Bir Bardak Su' }, // Updated image
+        { id: generateId(), type: 'text', content: 'Vücudumuzun düzgün çalışması için su hayati öneme sahiptir. Gün boyunca yeterli miktarda su içmek, enerji seviyenizi yüksek tutar, cildinizi sağlıklı tutar ve toksinlerin atılmasına yardımcı olur.' }, // Updated content
+        { id: generateId(), type: 'text', content: 'Bu basit adımları hayatınıza entegre ederek genel sağlığınızı ve yaşam kalitenizi önemli ölçüde artırabilirsiniz.'}, // Updated content
     ]
   },
   {
     id: 'image-gallery',
     name: 'Görsel Galerisi',
     description: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template-gallery-show/300/200',
-    category: 'Biyoloji',
-    excerpt: 'Birden çok görseli açıklamalarıyla birlikte sergilemek için ideal bir yapı.',
-    seoTitle: 'Görsel Galerisi Başlığı',
-    seoDescription: 'Görsel galerisi şablonu önizlemesi - açıklayıcı resimler.',
+    previewImageUrl: 'https://picsum.photos/seed/template-gallery-arch-v2/300/200', // New preview seed
+    category: 'Teknoloji', // Changed category
+    excerpt: 'Modern mimarinin etkileyici örneklerini sergileyen bir görsel galeri.', // Updated excerpt
+    seoTitle: 'Modern Mimari Harikaları Galerisi', // Updated SEO Title
+    seoDescription: 'Görsel galerisi şablonu ile modern mimari örnekleri.', // Updated SEO Desc
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Doğanın Muhteşem Manzaraları Galerisi' },
-        { id: generateId(), type: 'text', content: 'Dünyanın dört bir yanından nefes kesici doğa manzaralarını bir araya getirdik. Bu görsel şölende kaybolmaya hazır olun.' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-mountains/800/500', alt: 'Karlı Dağ Zirveleri', caption: 'Görsel 1: Yüksek dağların zirvesindeki huzur verici manzara.' },
+        { id: generateId(), type: 'heading', level: 1, content: 'Modern Mimari Harikaları Galerisi' }, // Updated content
+        { id: generateId(), type: 'text', content: 'Dünyanın farklı köşelerinden, yenilikçi tasarımları ve etkileyici yapılarıyla öne çıkan modern mimari örneklerini sizin için derledik.' }, // Updated content
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-futur/800/500', alt: 'Fütüristik Bina Cephesi', caption: 'Görsel 1: Cesur çizgiler ve cam kullanımıyla dikkat çeken fütüristik bir yapı.' }, // Updated image & caption
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-forest/800/500', alt: 'Sisli Orman Yolu', caption: 'Görsel 2: Sabah sisiyle kaplı gizemli bir orman yolu.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-minimal/800/500', alt: 'Minimalist Konut Tasarımı', caption: 'Görsel 2: Doğal malzemeler ve sade formların birleşimiyle minimalist bir estetik.' }, // Updated image & caption
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-beach/800/500', alt: 'Gün Batımında Kumsal', caption: 'Görsel 3: Tropik bir kumsalda romantik gün batımı renkleri.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-bridge/800/500', alt: 'Asma Köprü Detayı', caption: 'Görsel 3: Mühendislik ve estetiği bir araya getiren modern bir köprü tasarımı.' }, // Updated image & caption
          { id: generateId(), type: 'divider' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-waterfall/800/500', alt: 'Gürleyen Şelale', caption: 'Görsel 4: Yemyeşil doğanın ortasında güçlü bir şelale.' },
-        { id: generateId(), type: 'text', content: 'Doğanın bu büyüleyici güzellikleri, bize dünyanın ne kadar çeşitli ve harika olduğunu hatırlatıyor. Hangi manzarayı en çok beğendiniz?' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-arch-interior/800/500', alt: 'Modern İç Mekan', caption: 'Görsel 4: Geniş ve aydınlık, fonksiyonel bir modern iç mekan düzenlemesi.' }, // Updated image & caption
+        { id: generateId(), type: 'text', content: 'Modern mimari, sadece estetik değil, aynı zamanda fonksiyonellik ve sürdürülebilirlik gibi konulara da odaklanarak yaşam alanlarımızı şekillendiriyor.' }, // Updated content
     ]
   },
   {
     id: 'faq-article',
     name: 'SSS Makalesi',
     description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/template-faq-ask/300/200',
-    category: 'Teknoloji',
-    excerpt: 'Belirli bir konu hakkındaki sıkça sorulan soruları yanıtlamak için kullanılır.',
-    seoTitle: 'SSS Makalesi Başlığı',
-    seoDescription: 'SSS makalesi şablonu önizlemesi - soru cevap formatı.',
+    previewImageUrl: 'https://picsum.photos/seed/template-faq-bio-v2/300/200', // New preview seed
+    category: 'Biyoloji', // Changed category
+    excerpt: 'Genetik testler hakkında sıkça sorulan soruları yanıtlayan bir şablon.', // Updated excerpt
+    seoTitle: 'Genetik Testler Hakkında SSS', // Updated SEO Title
+    seoDescription: 'SSS makalesi şablonu ile genetik testler hakkında merak edilenler.', // Updated SEO Desc
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Uzaktan Çalışma Hakkında Sıkça Sorulan Sorular' },
-        { id: generateId(), type: 'text', content: 'Uzaktan çalışma modeline geçiş yapanlar veya bu modeli merak edenler için en sık sorulan soruları ve yanıtlarını derledik.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: Uzaktan çalışmanın avantajları nelerdir?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Uzaktan çalışmanın başlıca avantajları arasında esnek çalışma saatleri, trafikten tasarruf, daha iyi iş-yaşam dengesi ve artan üretkenlik sayılabilir. Çalışanlar için daha fazla özerklik sağlar.'},
+        { id: generateId(), type: 'heading', level: 1, content: 'Genetik Testler Hakkında Sıkça Sorulan Sorular' }, // Updated content
+        { id: generateId(), type: 'text', content: 'Genetik testler, sağlık durumunuz, hastalık riskleriniz ve soy ağacınız hakkında bilgi edinmenizi sağlayabilir. Ancak bu testlerle ilgili birçok soru işareti de bulunmaktadır. İşte en yaygın sorular ve cevapları:' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: Genetik test nedir ve ne işe yarar?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Genetik testler, DNA\'nızdaki belirli değişiklikleri (varyasyonlar, mutasyonlar) analiz eden tıbbi testlerdir. Hastalık risklerini belirlemek, taşıyıcılık durumunu öğrenmek, ilaçlara verilen yanıtı tahmin etmek veya soy ağacını araştırmak gibi amaçlarla kullanılır.'}, // Updated content
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: Uzaktan çalışırken nasıl motive kalınır?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Kendi çalışma rutininizi oluşturmak, belirli hedefler koymak, düzenli molalar vermek ve sosyal etkileşimi sürdürmek motivasyonu korumaya yardımcı olur. Özel bir çalışma alanı yaratmak da önemlidir.'},
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: Genetik testlerin türleri nelerdir?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Teşhis testleri, taşıyıcılık testleri, doğum öncesi testler, yenidoğan tarama testleri, farmakogenetik testler ve doğrudan tüketiciye yönelik (DTC) testler gibi çeşitli türleri vardır. Her testin amacı ve sağladığı bilgi farklıdır.'}, // Updated content
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: Şirketler uzaktan çalışanları nasıl yönetebilir?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Açık iletişim kanalları kurmak, düzenli toplantılar yapmak, performansı sonuç odaklı değerlendirmek ve çalışanlara güvenmek etkili yönetim için kritiktir. Doğru teknolojik araçların kullanılması da süreci kolaylaştırır.'},
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: Genetik testler ne kadar güvenilirdir?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Testin güvenilirliği, testin türüne, yapıldığı laboratuvarın kalitesine ve analiz edilen spesifik genetik değişikliğe bağlıdır. Klinik amaçlı testler genellikle yüksek doğruluk oranına sahiptir, ancak DTC testlerinin sonuçları dikkatli yorumlanmalıdır. Sonuçlar mutlaka bir sağlık uzmanı veya genetik danışman ile değerlendirilmelidir.'}, // Updated content
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 4: Uzaktan çalışmanın dezavantajları var mıdır?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Evet, bazı dezavantajları olabilir. Sosyal izolasyon hissi, evdeki dikkat dağıtıcılar, iş ve özel yaşam sınırlarının bulanıklaşması gibi zorluklar yaşanabilir. Bu zorlukların üstesinden gelmek için bilinçli çaba göstermek gerekir.'},
+        { id: generateId(), type: 'heading', level: 2, content: 'Soru 4: Genetik bilgilerimin gizliliği nasıl korunur?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Klinik testlerde genetik bilgiler genellikle tıbbi gizlilik yasalarıyla korunur. Ancak DTC testlerde gizlilik politikaları şirketten şirkete değişebilir. Test yaptırmadan önce ilgili şirketin gizlilik politikasını dikkatlice incelemek önemlidir.'}, // Updated content
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'text', content: 'Uzaktan çalışma hakkında başka sorularınız varsa, yorumlar kısmında bize iletebilirsiniz.' },
+        { id: generateId(), type: 'text', content: 'Genetik testler hakkında daha fazla bilgi veya kişisel danışmanlık için bir genetik uzmanına başvurmanız önerilir.' }, // Updated content
     ]
   },
   {
     id: 'how-to-guide',
     name: 'Nasıl Yapılır Rehberi',
     description: 'Adım adım talimatlar içeren öğretici makaleler için.',
-    previewImageUrl: 'https://picsum.photos/seed/template-howto-steps/300/200',
-    category: 'Teknoloji',
-    excerpt: 'Bir işlemi veya görevi adım adım açıklayan rehberler oluşturmak için kullanılır.',
-    seoTitle: 'Nasıl Yapılır Rehberi Başlığı',
-    seoDescription: 'Nasıl yapılır rehberi şablonu önizlemesi - adım adım talimatlar.',
+    previewImageUrl: 'https://picsum.photos/seed/template-howto-photo-v2/300/200', // New preview seed
+    category: 'Teknoloji', // Kept category
+    excerpt: 'Akıllı telefonla daha iyi fotoğraflar çekmek için adım adım ipuçları.', // Updated excerpt
+    seoTitle: 'Telefonunuzla Daha İyi Fotoğraflar Nasıl Çekilir?', // Updated SEO Title
+    seoDescription: 'Nasıl yapılır rehberi şablonu ile mobil fotoğrafçılık ipuçları.', // Updated SEO Desc
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Basit Bir Web Sitesi Nasıl Yayınlanır?' },
-        { id: generateId(), type: 'text', content: 'Kendi web sitenizi oluşturmak ve yayınlamak düşündüğünüzden daha kolay olabilir! Bu rehberde, temel adımları takip ederek basit bir web sitesini nasıl çevrimiçi hale getirebileceğinizi göstereceğiz.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Gereksinimler' },
-        { id: generateId(), type: 'text', content: 'Başlamadan önce şunlara ihtiyacınız olacak:\n- **Bir Alan Adı (Domain):** Sitenizin adresi (örn: www.siteadim.com).\n- **Bir Barındırma (Hosting) Hesabı:** Sitenizin dosyalarını depolayacağınız yer.\n- **Web Sitesi Dosyaları:** HTML, CSS, JavaScript dosyaları veya bir site oluşturucu çıktısı.' },
+        { id: generateId(), type: 'heading', level: 1, content: 'Akıllı Telefonunuzla Daha İyi Fotoğraflar Nasıl Çekilir?' }, // Updated content
+        { id: generateId(), type: 'text', content: 'Profesyonel bir makineye ihtiyacınız yok! Akıllı telefonunuzun kamerasını daha etkili kullanarak harika fotoğraflar çekebilirsiniz. İşte size yol gösterecek bazı temel adımlar:' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Temel İpuçları' },
+        { id: generateId(), type: 'text', content: 'Başlamadan önce birkaç temel noktaya dikkat edelim:\n- **Lensinizi Temizleyin:** Parmak izleri ve kir, fotoğraf kalitesini düşürür.\n- **Dijital Zoomdan Kaçının:** Görüntüyü kırparak kaliteyi bozar. Onun yerine konuya yaklaşın.\n- **Işığı Anlayın:** İyi ışıklandırma, fotoğrafın temelidir. Doğal ışığı tercih edin.' }, // Updated content
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: Alan Adı ve Hosting Seçimi' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-domain/600/350', alt: 'Alan Adı ve Hosting Seçenekleri', caption:'Birçok farklı sağlayıcı bulunmaktadır.' },
-        { id: generateId(), type: 'text', content: 'İlk olarak, siteniz için uygun bir alan adı seçin ve bir hosting sağlayıcısından hesap alın. GoDaddy, Namecheap, Bluehost gibi popüler seçenekler mevcuttur.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: Kompozisyon Kurallarını Kullanın (Üçler Kuralı)' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-ruleofthirds/600/350', alt: 'Üçler Kuralı Izgarası', caption:'Konuyu kesişim noktalarına yerleştirin.' }, // Updated image & caption
+        { id: generateId(), type: 'text', content: 'Telefonunuzun kamera ayarlarından kılavuz çizgilerini (grid) açın. Önemli öğeleri veya konunuzu bu çizgilerin kesiştiği noktalara yerleştirmek, daha dengeli ve ilgi çekici fotoğraflar oluşturmanıza yardımcı olur.' }, // Updated content
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: Hosting Hesabınıza Dosyaları Yükleme' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-ftp/600/350', alt: 'FTP İstemcisi Dosya Yükleme', caption:'Dosyaları public_html klasörüne sürükleyin.' }, // Specific image
-        { id: generateId(), type: 'text', content: 'Hosting sağlayıcınızın kontrol paneli (cPanel, Plesk vb.) veya bir FTP istemcisi (FileZilla gibi) kullanarak web sitesi dosyalarınızı hosting hesabınızdaki genellikle `public_html` veya `www` adlı klasöre yükleyin.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: Odak ve Pozlamayı Ayarlayın' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-focus-tap/600/350', alt: 'Ekrana Dokunarak Odaklama', caption:'Netlemek istediğiniz noktaya dokunun.' }, // Updated image & caption
+        { id: generateId(), type: 'text', content: 'Çoğu akıllı telefon, ekrana dokunarak odak noktasını ve pozlamayı (parlaklığı) ayarlamanıza olanak tanır. Net olmasını istediğiniz alana dokunun ve gerekirse parlaklığı kaydırarak ayarlayın.' }, // Updated content
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: Alan Adını Hosting Hesabına Yönlendirme' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-dns/600/350', alt: 'DNS Ayarları Ekranı' },
-        { id: generateId(), type: 'text', content: 'Alan adınızı satın aldığınız yerdeki DNS (Domain Name System) ayarlarını, hosting sağlayıcınızın size verdiği nameserver adresleriyle güncelleyin. Bu işlem, alan adınızın sitenizin dosyalarının bulunduğu sunucuya işaret etmesini sağlar. (Bu işlemin tamamlanması birkaç saat sürebilir).' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: Farklı Açılardan Deneyin' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-angles-low/600/350', alt: 'Alçak Açıdan Fotoğraf Çekimi' }, // Updated image
+        { id: generateId(), type: 'text', content: 'Her zaman göz hizasından çekim yapmak zorunda değilsiniz. Alçaktan, yüksekten veya farklı perspektiflerden çekim yaparak daha dinamik ve yaratıcı kareler yakalayabilirsiniz.' }, // Updated content
          { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 4: Sitenizi Test Etme' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-browser/600/350', alt: 'Tarayıcıda Web Sitesi Görüntüsü', caption:'Sitenizin yüklendiğini kontrol edin.' }, // Specific image
-        { id: generateId(), type: 'text', content: 'DNS yönlendirmesi tamamlandıktan sonra, tarayıcınıza alan adınızı yazarak sitenizin doğru bir şekilde yüklenip yüklenmediğini kontrol edin.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'İpuçları' },
-        { id: generateId(), type: 'text', content: '- Başlangıç için statik HTML siteleri veya WordPress gibi içerik yönetim sistemleri kullanabilirsiniz.\n- Güvenlik için SSL sertifikası (HTTPS) kurmayı unutmayın.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Adım 4: Düzenleme Araçlarını Kullanın' },
+         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-edit-app/600/350', alt: 'Fotoğraf Düzenleme Uygulaması', caption:'Basit düzenlemeler büyük fark yaratabilir.' }, // Updated image & caption
+        { id: generateId(), type: 'text', content: 'Fotoğraf çektikten sonra, telefonunuzdaki veya üçüncü parti uygulamalardaki düzenleme araçlarını kullanarak küçük ayarlamalar yapın. Parlaklık, kontrast, keskinlik ve renk doygunluğu gibi ayarlar fotoğrafınızı daha etkili hale getirebilir.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Bonus İpucu' },
+        { id: generateId(), type: 'text', content: '- **Portre Modu:** Arka planı bulanıklaştırarak konuyu öne çıkarmak için portre modunu kullanın.\n- **HDR Modu:** Yüksek kontrastlı sahnelerde (parlak gökyüzü, gölgeli alanlar) hem aydınlık hem de karanlık bölgelerdeki detayları korumak için HDR\'yi etkinleştirin.' }, // Updated content
     ]
   },
    {
     id: 'interview-article',
     name: 'Röportaj Makalesi',
     description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/template-interview-qa/300/200',
-    category: 'Biyoloji',
-    excerpt: 'Uzmanlarla veya ilginç kişilerle yapılan röportajları sunmak için kullanılır.',
-    seoTitle: 'Röportaj: [Kişinin Adı]',
-    seoDescription: 'Röportaj makalesi şablonu önizlemesi - soru cevap formatı.',
+    previewImageUrl: 'https://picsum.photos/seed/template-interview-tech-v2/300/200', // New preview seed
+    category: 'Teknoloji', // Changed category
+    excerpt: 'Yapay zeka etiği uzmanı ile yapılan bir röportajı içeren şablon.', // Updated excerpt
+    seoTitle: 'Röportaj: Prof. Dr. Can Demir ile Yapay Zeka Etiği', // Updated SEO Title
+    seoDescription: 'Röportaj makalesi şablonu ile yapay zeka etiği üzerine bir söyleşi.', // Updated SEO Desc
     blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Dr. Elif Aydın ile Biyoteknolojinin Geleceği Üzerine Söyleşi' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Biyoteknoloji Uzmanı' },
-        { id: generateId(), type: 'text', content: 'Biyoteknoloji alanında yaptığı çalışmalarla tanınan Dr. Elif Aydın ile gen düzenleme, sentetik biyoloji ve bu teknolojilerin gelecekteki potansiyeli üzerine konuştuk.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Biyoteknoloji Alanına Giriş' },
-        { id: generateId(), type: 'text', content: '**Soru:** Biyoteknolojiye olan ilginiz nasıl başladı ve bu alanda uzmanlaşmaya nasıl karar verdiniz?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Çocukluğumdan beri biyolojiye büyük bir merakım vardı. Üniversitede genetik mühendisliği okurken, canlı sistemleri anlama ve onları iyileştirme potansiyeli beni büyüledi. Özellikle CRISPR teknolojisinin ilk çıktığı zamanlar, bu alana tamamen odaklanmama neden oldu.' },
+        { id: generateId(), type: 'heading', level: 1, content: 'Prof. Dr. Can Demir ile Yapay Zeka Etiği Üzerine Söyleşi' }, // Updated content
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-can-demir/400/400', alt: 'Prof. Dr. Can Demir Portresi', caption:'Prof. Dr. Can Demir, Yapay Zeka Etiği Uzmanı' }, // Updated image & caption
+        { id: generateId(), type: 'text', content: 'Yapay zeka (AI) teknolojilerinin hızla geliştiği günümüzde, etik konular giderek daha fazla önem kazanıyor. Bu alandaki çalışmalarıyla tanınan Prof. Dr. Can Demir ile AI etiğinin temel sorunlarını ve geleceğini konuştuk.' }, // Updated content
+        { id: generateId(), type: 'heading', level: 2, content: 'Yapay Zeka Etiğinin Önemi' },
+        { id: generateId(), type: 'text', content: '**Soru:** Yapay zeka etiği neden bu kadar önemli hale geldi?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** AI sistemleri artık hayatımızın birçok alanında karar alma süreçlerine dahil oluyor; sağlıktan finansa, ulaşımdan işe alıma kadar. Bu sistemlerin adil, şeffaf, hesap verebilir ve insan haklarına saygılı bir şekilde tasarlanıp kullanılması gerekiyor. Aksi takdirde, mevcut eşitsizlikleri derinleştirebilir veya yeni etik sorunlar yaratabilirler.' }, // Updated content
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Gen Düzenleme ve Etik Tartışmalar' },
-        { id: generateId(), type: 'text', content: '**Soru:** CRISPR gibi gen düzenleme teknolojilerinin sunduğu olanaklar heyecan verici. Ancak etik tartışmaları da beraberinde getiriyor. Bu konudaki düşünceleriniz nelerdir?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Bu teknolojilerin potansiyeli muazzam, özellikle kalıtsal hastalıkların tedavisinde. Ancak, insan germ hattı hücrelerinde (sperm, yumurta) yapılacak değişiklikler gibi konular ciddi etik kaygılar doğuruyor. Dikkatli bir şekilde düzenlemeler yapılması ve toplumsal bir tartışma yürütülmesi gerektiğine inanıyorum. Bilimin sorumlu bir şekilde ilerlemesi şart.' },
-        { id: generateId(), type: 'quote', content: "Teknolojinin kendisi ne iyi ne de kötüdür; onu nasıl kullandığımız belirleyicidir.", citation:"Dr. Elif Aydın" },
+        { id: generateId(), type: 'heading', level: 2, content: 'Algoritmik Önyargı ve Adalet' },
+        { id: generateId(), type: 'text', content: '**Soru:** Algoritmik önyargı en çok tartışılan konulardan biri. Bu sorunu nasıl çözebiliriz?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Algoritmik önyargı, genellikle AI sistemlerinin eğitildiği verilerdeki mevcut toplumsal önyargılardan kaynaklanır. Çözüm, sadece teknik değil, aynı zamanda sosyal bir yaklaşım gerektiriyor. Daha çeşitli ve temsili veri setleri kullanmak, algoritmaların adalet metriklerine göre değerlendirilmesi, şeffaflık ve denetlenebilirlik mekanizmaları geliştirmek önemli adımlar.' }, // Updated content
+        { id: generateId(), type: 'quote', content: "Yapay zekayı geliştirirken, insanlığımızı kaybetmemeliyiz.", citation:"Prof. Dr. Can Demir" }, // Updated quote
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Biyoteknolojinin Geleceği' },
-        { id: generateId(), type: 'text', content: '**Soru:** Önümüzdeki 10 yıl içinde biyoteknoloji alanında en büyük atılımları nerede bekliyorsunuz?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Kişiselleştirilmiş tıp alanında büyük ilerlemeler göreceğiz. Hastalıkların genetik yatkınlığa göre önlenmesi veya tedavi edilmesi yaygınlaşacak. Ayrıca, sentetik biyoloji sayesinde yeni malzemeler, yakıtlar ve ilaçlar üretebileceğiz. Yapay zekanın biyolojik veri analizindeki rolü de giderek artacak.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Gelecekteki Zorluklar ve Fırsatlar' },
+        { id: generateId(), type: 'text', content: '**Soru:** Yapay zeka etiği alanında bizi gelecekte neler bekliyor?' },
+        { id: generateId(), type: 'text', content: '**Cevap:** Otonom sistemlerin (örneğin sürücüsüz araçlar) karar alma mekanizmalarındaki etik ikilemler, yapay genel zekanın (AGI) potansiyel etkileri ve AI\'ın iş gücü üzerindeki dönüşümü gibi konular daha fazla gündemde olacak. Aynı zamanda, AI\'ı toplumsal fayda için kullanma, örneğin iklim değişikliğiyle mücadele veya sağlık hizmetlerini iyileştirme gibi büyük fırsatlar da var. Önemli olan, bu teknolojiyi etik bir çerçevede geliştirmek ve yönlendirmek.' }, // Updated content
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'text', content: 'Dr. Elif Aydın\'a bu aydınlatıcı söyleşi için teşekkür ediyoruz. Biyoteknolojinin geleceği hakkında daha fazla bilgi edinmek isteyenler, Dr. Aydın\'ın yayınlarını takip edebilirler.' },
+        { id: generateId(), type: 'text', content: 'Prof. Dr. Can Demir\'e değerli görüşleri için teşekkür ederiz. Yapay zeka etiği, hepimizin düşünmesi gereken kritik bir konu olmaya devam edecek.' }, // Updated content
     ]
   },
 ];
@@ -231,6 +231,7 @@ const templates: Template[] = [
 // --- Helper Functions ---
 
 // Function to convert block structure to HTML (basic implementation for backward compatibility)
+// NOTE: This function is deprecated and might not fully represent complex block types.
 const blocksToHtml = (blocks: Block[]): string => {
     let html = '';
     blocks.forEach(block => {
@@ -241,7 +242,8 @@ const blocksToHtml = (blocks: Block[]): string => {
             case 'text':
                 const processedContent = block.content
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br />'); // Basic newline handling
                 html += `<p>${processedContent}</p>\n`;
                 break;
             case 'image':
@@ -272,7 +274,8 @@ const blocksToHtml = (blocks: Block[]): string => {
                  html += `</div>\n`;
                  break;
              case 'video':
-                 const videoId = block.youtubeId || block.url.split('v=')[1]?.split('&')[0] || block.url.split('/').pop();
+                 // Basic YouTube embed from youtubeId or URL
+                 const videoId = block.youtubeId || block.url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.pop();
                  if (videoId && videoId.length === 11) {
                      html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
                  } else if (block.url) {
@@ -280,7 +283,12 @@ const blocksToHtml = (blocks: Block[]): string => {
                  }
                  break;
              case 'section':
-                 html += `<!-- Section: ${block.sectionType} -->\n`;
+                 // Section rendering depends heavily on implementation, basic comment here
+                 html += `<!-- Section: ${block.sectionType} Settings: ${JSON.stringify(block.settings)} -->\n`;
+                 // For custom text, render the content
+                 if(block.sectionType === 'custom-text' && block.settings?.content) {
+                    html += `<div>${block.settings.content}</div>\n`
+                 }
                  break;
         }
     });
@@ -291,9 +299,12 @@ const blocksToHtml = (blocks: Block[]): string => {
 export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTemplateBlocks }: TemplateSelectorProps) {
 
     const handleSelect = (blocks: Block[]) => {
+        // Use the primary callback for block-based editors
         onSelectTemplateBlocks(blocks);
+
+        // Call deprecated function for backward compatibility (with warning)
         if (onSelectTemplate) {
-             console.warn("TemplateSelector: onSelectTemplate is deprecated. Use onSelectTemplateBlocks instead.");
+             console.warn("TemplateSelector: onSelectTemplate is deprecated and may not accurately represent block structure. Use onSelectTemplateBlocks instead.");
              const htmlContent = blocksToHtml(blocks);
              onSelectTemplate(htmlContent);
         }
@@ -301,77 +312,44 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
     };
 
      // Handle template preview - pass the specific template's data
-     const handlePreview = async (template: Template) => {
-        console.log(`[TemplateSelector] Previewing template: ${template.id}`);
-         // Construct the full ArticleData object for preview
-         const previewData: Partial<ArticleData> = {
-             id: `preview-${template.id}`, // Use a distinct preview ID
-             title: template.name,
-             excerpt: template.excerpt || template.description,
-             blocks: template.blocks,
-             category: template.category || 'Teknoloji',
-             status: 'Yayınlandı',
-             mainImageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl,
-             seoTitle: template.seoTitle || template.name,
-             seoDescription: template.seoDescription || template.description,
-             slug: template.id,
-             isFeatured: false,
-             isHero: false,
-             keywords: template.keywords || [],
-             canonicalUrl: '',
-             authorId: 'template-preview',
-             createdAt: new Date().toISOString(),
-             updatedAt: new Date().toISOString(),
-         };
+     const handlePreview = (template: Template) => {
+        // Construct the full ArticleData object for preview
+        const previewData: Partial<ArticleData> = {
+            id: `preview-${template.id}`, // Use a distinct preview ID
+            title: template.seoTitle || template.name,
+            excerpt: template.excerpt || template.description,
+            blocks: template.blocks,
+            category: template.category || 'Teknoloji', // Default category if not set
+            status: 'Yayınlandı', // Preview as published
+            mainImageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl,
+            seoTitle: template.seoTitle || template.name,
+            seoDescription: template.seoDescription || template.description,
+            slug: template.id,
+            isFeatured: false, // Default values for flags
+            isHero: false,
+            keywords: template.keywords || [],
+            canonicalUrl: '',
+            authorId: 'template-preview', // Placeholder author
+            createdAt: new Date().toISOString(), // Use current time for preview
+            updatedAt: new Date().toISOString(),
+        };
 
-         try {
-             // Use a fixed key for simplicity in testing, overwrite existing preview data
-             const localStorageKey = "articlePreviewData";
-             console.log(`[TemplateSelector] Preparing to save data to localStorage with key: ${localStorageKey}`);
-             const dataString = JSON.stringify(previewData);
-             console.log(`[TemplateSelector] Data to save (first 500 chars): ${dataString.substring(0, 500)}...`);
+        try {
+            const localStorageKey = "articlePreviewData"; // Use a fixed key
+            console.log(`[TemplateSelector] Setting localStorage key: ${localStorageKey}`);
+            localStorage.setItem(localStorageKey, JSON.stringify(previewData));
 
-              // Remove old data first to ensure clean state
-             localStorage.removeItem(localStorageKey);
-             console.log(`[TemplateSelector] Removed old data for key: ${localStorageKey}`);
+            const previewUrl = '/admin/preview';
+            console.log(`[TemplateSelector] Opening preview URL: ${previewUrl}`);
+            const previewWindow = window.open(previewUrl, '_blank');
 
-             // Save the new data
-             localStorage.setItem(localStorageKey, dataString);
-             console.log(`[TemplateSelector] Saved new data to localStorage for key: ${localStorageKey}. Length: ${dataString.length}`);
-
-             // Verify immediately
-             const savedData = localStorage.getItem(localStorageKey);
-             if (!savedData || savedData !== dataString) {
-                console.error(`[TemplateSelector] Verification failed! Data mismatch after saving for key: ${localStorageKey}.`);
-                toast({ variant: "destructive", title: "Önizleme Hatası", description: "Veri kaydedilemedi." });
-                return;
-             }
-              console.log(`[TemplateSelector] Data verified successfully for key: ${localStorageKey}`);
-
-             // Open the preview page without a dynamic key, relying on the fixed key
-             const previewUrl = '/admin/preview';
-             console.log(`[TemplateSelector] Opening preview window: ${previewUrl}`);
-             const previewWindow = window.open(previewUrl, '_blank');
-
-             if (!previewWindow) {
-                 console.error("[TemplateSelector] Failed to open preview window. Pop-up blocker likely active.");
-                 toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Lütfen tarayıcınızda açılır pencerelere izin verin." });
-             } else {
-                 console.log("[TemplateSelector] Preview window opened.");
-             }
-
-         } catch (error) {
-             console.error("[TemplateSelector] Error during handlePreview:", error);
-             let errorMessage = "Şablon önizleme verisi işlenirken bir hata oluştu.";
-             if (error instanceof Error) {
-                 if (error.name === 'QuotaExceededError') {
-                     errorMessage = "Tarayıcı depolama alanı dolu.";
-                 } else {
-                     errorMessage = `Bir hata oluştu: ${error.message}`;
-                 }
-             }
-             toast({ variant: "destructive", title: "Önizleme Hatası", description: errorMessage });
-         }
+            if (!previewWindow) {
+                toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Lütfen tarayıcınızda açılır pencerelere izin verin." });
+            }
+        } catch (error) {
+            console.error("[TemplateSelector] Error saving preview data to localStorage:", error);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi kaydedilemedi." });
+        }
      };
 
 
