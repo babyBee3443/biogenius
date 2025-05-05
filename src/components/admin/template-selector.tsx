@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -9,6 +10,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,8 +60,9 @@ interface TemplateSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   /** @deprecated Use onSelectTemplateBlocks instead */
-  onSelectTemplate?: (content: string) => void;
+  onSelectTemplate?: (content: string) => void; // Keep for potential backward compatibility if needed
   onSelectTemplateBlocks: (blocks: Block[]) => void;
+  blocksCurrentlyExist: boolean; // Indicates if there are blocks in the editor
 }
 
 
@@ -314,102 +327,159 @@ const blocksToHtml = (blocks: Block[]): string => {
                     html += `<div>${block.settings.content}</div>\n`
                  }
                  break;
+            default:
+                 html += `<!-- Unsupported block type: ${block.type} -->\n`;
         }
     });
     return html;
 };
 
 
-export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTemplateBlocks }: TemplateSelectorProps) {
+export function TemplateSelector({
+  isOpen,
+  onClose,
+  onSelectTemplate,
+  onSelectTemplateBlocks,
+  blocksCurrentlyExist
+}: TemplateSelectorProps) {
+    const [selectedTemplate, setSelectedTemplate] = React.useState<Template | null>(null);
+    const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
 
-    const handleSelect = (blocks: Block[]) => {
-        // Use the primary callback for block-based editors
+    const handleSelectClick = (template: Template) => {
+        setSelectedTemplate(template);
+        if (blocksCurrentlyExist) {
+            setIsConfirmOpen(true); // Show confirmation dialog if blocks exist
+        } else {
+            applyTemplate(template.blocks); // Apply directly if no blocks exist
+        }
+    };
+
+    const applyTemplate = (blocks: Block[]) => {
         onSelectTemplateBlocks(blocks);
-
-        // Call deprecated function for backward compatibility (with warning)
         if (onSelectTemplate) {
-             console.warn("TemplateSelector: onSelectTemplate is deprecated and may not accurately represent block structure. Use onSelectTemplateBlocks instead.");
+             console.warn("TemplateSelector: onSelectTemplate is deprecated. Use onSelectTemplateBlocks instead.");
              const htmlContent = blocksToHtml(blocks);
              onSelectTemplate(htmlContent);
         }
         onClose();
+        setIsConfirmOpen(false); // Close confirmation dialog if open
+        setSelectedTemplate(null); // Reset selected template
     };
 
      // Handle template preview - pass the specific template's data
      const handlePreview = (template: Template) => {
-        // Construct the full ArticleData object for preview
-        const previewData: Partial<ArticleData> = {
-            id: `preview-${template.id}`, // Use a distinct preview ID
-            title: template.seoTitle || template.name,
-            excerpt: template.excerpt || template.description,
-            blocks: template.blocks,
-            category: template.category || 'Teknoloji', // Default category if not set
-            status: 'Yayınlandı', // Preview as published
-            mainImageUrl: template.blocks.find(b => b.type === 'image') ? template.blocks.find(b => b.type === 'image')!.url : undefined, // Find the first image block
-        };
+         // Construct the full ArticleData object for preview
+         const previewData: Partial<ArticleData> = {
+             id: `preview-${template.id}`, // Use a distinct preview ID
+             title: template.seoTitle || template.name,
+             excerpt: template.excerpt || template.description,
+             blocks: template.blocks,
+             category: template.category || 'Teknoloji', // Default category if not set
+             status: 'Yayınlandı', // Preview as published
+             // Try to find the first image block's URL to use as mainImageUrl
+             mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
+             seoTitle: template.seoTitle,
+             seoDescription: template.seoDescription,
+             keywords: template.keywords,
+             createdAt: new Date().toISOString(), // Use current date for preview
+             updatedAt: new Date().toISOString(),
+             authorId: 'template-author',
+             slug: `template-${template.id}-preview`,
+             isFeatured: false,
+             isHero: false,
+         };
 
-        // Persist the preview data to localStorage using the template ID as part of the key
-        try {
-            const previewKey = `articlePreviewData_${template.id}_${Date.now()}`; // Unique key per preview
-            localStorage.setItem(previewKey, JSON.stringify(previewData));
+         // Persist the preview data to localStorage using the template ID as part of the key
+         try {
+             const previewKey = `articlePreviewData_${template.id}_${Date.now()}`; // Unique key per preview
+             localStorage.setItem(previewKey, JSON.stringify(previewData));
+             console.log(`[TemplateSelector] Saved preview data with key: ${previewKey}`);
 
              // Open preview with the correct key
              window.open(`/admin/preview?templateKey=${previewKey}`, '_blank');
-        } catch (error) {
-            console.error("Error saving preview data to localStorage:", error);
-            toast({
-                variant: "destructive",
-                title: "Önizleme Hatası",
-                description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu olabilir.",
-            });
-        }
+         } catch (error) {
+             console.error("[TemplateSelector] Error saving preview data to localStorage:", error);
+             toast({
+                 variant: "destructive",
+                 title: "Önizleme Hatası",
+                 description: "Önizleme verisi kaydedilemedi. Tarayıcı depolama alanı dolu olabilir.",
+             });
+         }
      };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[925px]">
-                <DialogHeader>
-                    <DialogTitle>Şablon Seçin</DialogTitle>
-                    <DialogDescription>
-                        Mevcut şablonlardan birini seçerek makalenize hızlıca içerik ekleyebilirsiniz.
-                    </DialogDescription>
-                </DialogHeader>
-                <ScrollArea className="h-[450px] w-full rounded-md border">
-                    <div className="grid gap-4 p-4 md:grid-cols-3">
-                        {templates.map((template) => (
-                            <Card key={template.id}>
-                                <CardHeader>
-                                    <CardTitle>{template.name}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex flex-col space-y-2">
-                                    <Image
-                                        src={template.previewImageUrl}
-                                        alt={template.description}
-                                        width={300}
-                                        height={200}
-                                        className="rounded object-cover"
-                                    />
-                                    <p className="text-sm text-muted-foreground">{template.description}</p>
-                                    <div className="flex justify-between">
-                                        <Button size="sm" onClick={() => handleSelect(template.blocks)}>
-                                            Şablonu Seç
-                                        </Button>
-                                         <Button size="sm" variant="outline" onClick={() => handlePreview(template)}>
-                                              <Eye className="mr-2 h-4 w-4" />
-                                             Önizle
-                                         </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                </ScrollArea>
-                <DialogFooter>
-                    <Button type="button" variant="secondary" onClick={onClose}>
-                        Kapat
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <>
+            <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col"> {/* Wider dialog, height limit, flex */}
+                    <DialogHeader>
+                        <DialogTitle>Makale Şablonu Seç</DialogTitle>
+                        <DialogDescription>
+                            İçeriğinizi oluşturmaya başlamak için hazır bir şablon seçin.
+                            {blocksCurrentlyExist && <span className="text-destructive font-medium"> Şablon içeriği mevcut içeriğinizin üzerine yazılabilir (onayınızla).</span>}
+                        </DialogDescription>
+                    </DialogHeader>
+                     {/* Make ScrollArea take remaining space */}
+                    <ScrollArea className="flex-grow w-full rounded-md border my-4">
+                        <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
+                            {templates.map((template) => (
+                                <Card key={template.id} className="flex flex-col">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-base">{template.name}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="flex flex-col flex-grow space-y-3">
+                                        <div className="relative aspect-[3/2] w-full rounded overflow-hidden">
+                                            <Image
+                                                src={template.previewImageUrl}
+                                                alt={template.description}
+                                                layout="fill"
+                                                objectFit="cover"
+                                                className="rounded"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground flex-grow">{template.description}</p>
+                                        <div className="flex justify-between items-center pt-2">
+                                             <Button size="sm" variant="outline" onClick={() => handlePreview(template)}>
+                                                  <Eye className="mr-2 h-4 w-4" />
+                                                 Önizle
+                                             </Button>
+                                             {/* Use AlertDialogTrigger for confirmation */}
+                                            <AlertDialogTrigger asChild>
+                                                 <Button size="sm" onClick={() => handleSelectClick(template)}>
+                                                     Seç
+                                                 </Button>
+                                            </AlertDialogTrigger>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={onClose}>
+                            Kapat
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirmation Dialog */}
+            <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Düzenleyicide zaten içerik bulunuyor. Seçili şablonu uygulamak mevcut içeriği silecektir.
+                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => selectedTemplate && applyTemplate(selectedTemplate.blocks)}>
+                            Evet, Üzerine Yaz
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }

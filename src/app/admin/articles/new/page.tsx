@@ -9,7 +9,6 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-// import { useDebouncedCallback } from 'use-debounce'; // Removed unused import
 import { createArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 
 import {
@@ -38,7 +37,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, Star } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-react"; // Added Layers icon
+
+// Helper to generate unique block IDs safely on the client
+const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+const defaultBlocks: Block[] = [{ id: generateBlockId(), type: 'text', content: '' }];
 
 // --- Main Page Component ---
 
@@ -47,6 +50,7 @@ export default function NewArticlePage() {
 
     // --- State ---
     const [saving, setSaving] = React.useState(false); // Added saving state
+    const [templateApplied, setTemplateApplied] = React.useState(false); // Track if template is applied
 
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
@@ -56,9 +60,8 @@ export default function NewArticlePage() {
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
-    // Block Editor State - Initialize empty and add initial block client-side
-    const [blocks, setBlocks] = React.useState<Block[]>([]);
-    const [initialBlockAdded, setInitialBlockAdded] = React.useState(false);
+    // Block Editor State - Initialize with default block
+    const [blocks, setBlocks] = React.useState<Block[]>(defaultBlocks);
 
     // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
@@ -70,16 +73,6 @@ export default function NewArticlePage() {
     // Other States
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
-
-     // Generate initial block on client-side after hydration to avoid mismatch
-    React.useEffect(() => {
-        if (!initialBlockAdded) {
-            const initialBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-            setBlocks([{ id: initialBlockId, type: 'text', content: '' }]);
-            setInitialBlockAdded(true);
-        }
-    }, [initialBlockAdded]);
-
 
     // --- Handlers ---
 
@@ -118,9 +111,8 @@ export default function NewArticlePage() {
 
 
     const handleAddBlock = (type: Block['type']) => {
-        // ID generation happens client-side, safe from hydration issues here
         const newBlock: Block = {
-            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            id: generateBlockId(),
             type: type,
             ...(type === 'text' && { content: '' }),
             ...(type === 'heading' && { level: 2, content: '' }),
@@ -132,12 +124,14 @@ export default function NewArticlePage() {
              ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
         setBlocks([...blocks, newBlock]);
-         setSelectedBlockId(newBlock.id); // Select the newly added block
+        setSelectedBlockId(newBlock.id); // Select the newly added block
+        setTemplateApplied(false); // Adding manually modifies template
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks(blocks.filter(block => block.id !== id));
          if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
+         setTemplateApplied(false); // Deleting modifies template
     };
 
      // Update block state
@@ -147,11 +141,13 @@ export default function NewArticlePage() {
                  block.id === updatedBlock.id ? updatedBlock : block
              )
          );
+         // Modifying content doesn't necessarily change template structure
      };
 
      // Reorder blocks
      const handleReorderBlocks = (reorderedBlocks: Block[]) => {
          setBlocks(reorderedBlocks);
+         setTemplateApplied(false); // Reordering modifies template
      };
 
      // Block selection
@@ -183,7 +179,7 @@ export default function NewArticlePage() {
              slug: slug || generateSlug(title),
              keywords: keywords || [],
              canonicalUrl: canonicalUrl || "",
-             blocks: blocks || [],
+             blocks: blocks.length > 0 ? blocks : defaultBlocks, // Use default if empty
              seoTitle: seoTitle || title,
              seoDescription: seoDescription || excerpt.substring(0, 160) || "",
              authorId: 'mock-admin', // Assign a default author ID
@@ -214,23 +210,26 @@ export default function NewArticlePage() {
 
      // Handler for template selection
      const handleTemplateSelect = (templateBlocks: Block[]) => {
-        if (blocks.length > 0 && blocks.some(b => (b.type === 'text' && b.content !== '') || b.type !== 'text')) {
-            if (!window.confirm("Mevcut içerik bölümlerinin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
-                 setIsTemplateSelectorOpen(false);
-                 return;
-            }
-        }
-         // ID generation happens client-side during template selection, safe from hydration issues
-        const newBlocks = templateBlocks.map(block => ({
-            ...block,
-            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
-        }));
-        // Clear existing blocks before applying the new template
-        setBlocks([]);
-        setBlocks(newBlocks);
-        setIsTemplateSelectorOpen(false);
-        toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
+         // Confirmation handled within TemplateSelector now
+         const newBlocks = templateBlocks.map(block => ({
+             ...block,
+             id: generateBlockId() // Assign new IDs on client
+         }));
+         setBlocks(newBlocks);
+         setTemplateApplied(true); // Mark template as applied
+         setIsTemplateSelectorOpen(false);
+         toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
      };
+
+     const handleRemoveTemplate = () => {
+         if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
+             setBlocks([{ id: generateBlockId(), type: 'text', content: '' }]); // Reset to default
+             setTemplateApplied(false); // Mark template as removed
+             setSelectedBlockId(null); // Deselect any selected block
+             toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
+         }
+     };
+
 
       const handlePreview = () => {
           if (!category) {
@@ -490,6 +489,12 @@ export default function NewArticlePage() {
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Yayınla
                                  </Button>
                              )}
+                             {/* Conditionally show Remove Template button */}
+                             {templateApplied && (
+                                <Button variant="outline" className="w-full text-destructive border-destructive/50 hover:bg-destructive/10" onClick={handleRemoveTemplate} disabled={saving}>
+                                    <Layers className="mr-2 h-4 w-4" /> Şablonu Kaldır
+                                </Button>
+                             )}
                         </CardContent>
                      </Card>
                  </aside>
@@ -500,6 +505,7 @@ export default function NewArticlePage() {
                  isOpen={isTemplateSelectorOpen}
                  onClose={() => setIsTemplateSelectorOpen(false)}
                  onSelectTemplateBlocks={handleTemplateSelect}
+                 blocksCurrentlyExist={blocks.length > 1 || (blocks[0] && blocks[0].content !== '')} // Pass if blocks exist
              />
         </div>
     );
