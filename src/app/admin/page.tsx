@@ -295,15 +295,15 @@ export default async function AdminDashboard() {
                                 {recentArticles.map((article) => (
                                     <TableRow key={article.id}>
                                         <TableCell className="font-medium">
-                                             <Link href={`/admin/articles/edit/${article.id}`} className="hover:underline">
+                                            <Link href={`/admin/articles/edit/${article.id}`} className="hover:underline">
                                                 {article.title}
                                             </Link>
                                         </TableCell>
                                         <TableCell>{article.category}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="outline" size="sm" asChild>
-                                                 <Link href={`/articles/${article.id}`} target="_blank">Görüntüle</Link>
-                                             </Button>
+                                                <Link href={`/articles/${article.id}`} target="_blank">Görüntüle</Link>
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))}

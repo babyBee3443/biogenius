@@ -55,6 +55,7 @@ const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
 >(({ className, ...props }, ref) => (
+  // No whitespace inside the <tr> element
   <tr
     ref={ref}
     className={cn(

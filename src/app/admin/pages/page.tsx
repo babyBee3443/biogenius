@@ -59,33 +59,33 @@ export default function AdminPagesPage() {
               {pages.map((page) => (
                 <TableRow key={page.id}>
                   <TableCell className="font-medium">
-                     {/* Link page name to edit page */}
+                    {/* Link page name to edit page */}
                     <Link href={`/admin/pages/edit/${page.id}`} className="hover:underline">
-                        {page.name}
+                      {page.name}
                     </Link>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{page.path}</TableCell>
                   <TableCell>{page.status}</TableCell>
                   <TableCell>{page.lastModified}</TableCell>
                   <TableCell className="text-right space-x-1">
-                     {/* Edit Button */}
-                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <Link href={`/admin/pages/edit/${page.id}`} title="Sayfayı Düzenle">
-                           <FilePenLine className="h-4 w-4" />
-                           <span className="sr-only">Düzenle</span>
-                        </Link>
-                     </Button>
-                     {/* View Button */}
-                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                         <Link href={page.path} target="_blank" title="Sayfayı Görüntüle">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">Görüntüle</span>
-                        </Link>
-                     </Button>
-                     {/* Delete Button (Placeholder) */}
-                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Sayfayı Sil (Yakında)" disabled>
-                        <Trash2 className="h-4 w-4" />
-                       <span className="sr-only">Sil</span>
+                    {/* Edit Button */}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                      <Link href={`/admin/pages/edit/${page.id}`} title="Sayfayı Düzenle">
+                        <FilePenLine className="h-4 w-4" />
+                        <span className="sr-only">Düzenle</span>
+                      </Link>
+                    </Button>
+                    {/* View Button */}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                      <Link href={page.path} target="_blank" title="Sayfayı Görüntüle">
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">Görüntüle</span>
+                      </Link>
+                    </Button>
+                    {/* Delete Button (Placeholder) */}
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Sayfayı Sil (Yakında)" disabled>
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Sil</span>
                     </Button>
                   </TableCell>
                 </TableRow>

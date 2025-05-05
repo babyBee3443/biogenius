@@ -106,35 +106,35 @@ export default function AdminUsersPage() {
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
-                       <Avatar className="h-9 w-9"> {/* Slightly larger avatar */}
-                         <AvatarImage src={user.avatar} alt={user.name} />
-                         <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
-                       </Avatar>
-                       <div>
-                            <Link href={`/admin/users/edit/${user.id}`} className="font-medium hover:underline">{user.name}</Link>
-                            <div className="text-xs text-muted-foreground">{user.id}</div>
-                       </div>
+                      <Avatar className="h-9 w-9"> {/* Slightly larger avatar */}
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <Link href={`/admin/users/edit/${user.id}`} className="font-medium hover:underline">{user.name}</Link>
+                        <div className="text-xs text-muted-foreground">{user.id}</div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>
-                     <Badge variant={getRoleVariant(user.role)}>
-                        {user.role}
-                     </Badge>
+                    <Badge variant={getRoleVariant(user.role)}>
+                      {user.role}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{user.joinedAt}</TableCell>
                   <TableCell className="text-right">
-                     {/* Link to Edit User Page */}
+                    {/* Link to Edit User Page */}
                     <Button variant="ghost" size="icon" className="mr-1" asChild>
-                       <Link href={`/admin/users/edit/${user.id}`}>
-                          <UserCog className="h-4 w-4" />
-                          <span className="sr-only">Kullanıcıyı Düzenle</span>
-                       </Link>
+                      <Link href={`/admin/users/edit/${user.id}`}>
+                        <UserCog className="h-4 w-4" />
+                        <span className="sr-only">Kullanıcıyı Düzenle</span>
+                      </Link>
                     </Button>
-                     {/* TODO: Implement Delete Functionality */}
+                    {/* TODO: Implement Delete Functionality */}
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                       <Trash2 className="h-4 w-4" />
-                       <span className="sr-only">Kullanıcıyı Sil</span>
+                      <span className="sr-only">Kullanıcıyı Sil</span>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -164,4 +164,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

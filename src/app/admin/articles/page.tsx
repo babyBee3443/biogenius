@@ -210,16 +210,16 @@ export default function AdminArticlesPage() {
                 {articles.map((article) => (
                   <TableRow key={article.id} className={deletingId === article.id ? 'opacity-50' : ''}>
                     <TableCell className="font-medium">
-                       <Link href={`/admin/articles/edit/${article.id}`} className="hover:underline">
-                          {article.title}
-                       </Link>
+                      <Link href={`/admin/articles/edit/${article.id}`} className="hover:underline">
+                        {article.title}
+                      </Link>
                     </TableCell>
                     <TableCell>
-                       <Badge variant="secondary" className={`${getCategoryClass(article.category)} font-normal`}>
-                          {article.category}
-                       </Badge>
+                      <Badge variant="secondary" className={`${getCategoryClass(article.category)} font-normal`}>
+                        {article.category}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{article.authorId || 'Bilinmiyor'}</TableCell> {/* Display authorId */}
+                    <TableCell className="text-muted-foreground">{article.authorId || 'Bilinmiyor'}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(article.status)} className={article.status === 'Arşivlendi' ? 'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive' : ''}>
                         {article.status}
@@ -228,24 +228,24 @@ export default function AdminArticlesPage() {
                     <TableCell>{article.createdAt ? new Date(article.createdAt).toLocaleDateString('tr-TR') : '-'}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId === article.id}>
-                         <Link href={`/admin/articles/edit/${article.id}`}>
-                             <FilePenLine className="h-4 w-4" />
-                             <span className="sr-only">Düzenle</span>
-                         </Link>
+                        <Link href={`/admin/articles/edit/${article.id}`}>
+                          <FilePenLine className="h-4 w-4" />
+                          <span className="sr-only">Düzenle</span>
+                        </Link>
                       </Button>
                       <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(article.id, article.title)}
-                          disabled={deletingId === article.id}
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(article.id, article.title)}
+                        disabled={deletingId === article.id}
                       >
                         {deletingId === article.id ? (
-                             <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                             <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         )}
-                         <span className="sr-only">Sil</span>
+                        <span className="sr-only">Sil</span>
                       </Button>
                     </TableCell>
                   </TableRow>
