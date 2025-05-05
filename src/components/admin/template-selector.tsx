@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -35,6 +36,7 @@ interface Template {
   description: string;
   previewImageUrl: string; // URL for the small preview image in the selector dialog
   blocks: Block[]; // Content as an array of blocks, including placeholder images for the actual article content
+  category?: 'Teknoloji' | 'Biyoloji'; // Optional: category hint for preview styling
 }
 
 interface TemplateSelectorProps {
@@ -58,6 +60,7 @@ const templates: Template[] = [
     name: 'Standart Makale',
     description: 'Başlık, ana görsel ve metin içeriği için temel düzen.',
     previewImageUrl: 'https://picsum.photos/seed/template-std/300/200', // Preview image for selector dialog
+    category: 'Teknoloji', // Category hint
     blocks: [
       { id: generateId(), type: 'heading', level: 1, content: 'Standart Makale Başlığı: Konuya Giriş' },
       { id: generateId(), type: 'text', content: 'Bu makale, **[Önemli Konu]** hakkında genel bir bakış sunmaktadır. Günümüzdeki etkilerini ve gelecekteki potansiyelini ele alacağız. Giriş paragrafında konunun önemi ve makalenin kapsamı belirtilir.' },
@@ -77,6 +80,7 @@ const templates: Template[] = [
     name: 'Listeleme Makalesi',
     description: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.',
     previewImageUrl: 'https://picsum.photos/seed/template-list-preview/300/200', // Preview image for selector dialog
+    category: 'Teknoloji', // Category hint
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Verimliliğinizi Artıracak 5 Basit Yöntem' },
         { id: generateId(), type: 'text', content: 'Günlük hayatınızda veya işinizde daha verimli olmak mı istiyorsunuz? İşte size yardımcı olabilecek, uygulaması kolay 5 yöntem!' },
@@ -104,6 +108,7 @@ const templates: Template[] = [
     name: 'Görsel Galerisi',
     description: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.',
     previewImageUrl: 'https://picsum.photos/seed/template-gallery-show/300/200', // Preview image for selector dialog
+    category: 'Biyoloji', // Category hint
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Doğanın Muhteşem Manzaraları Galerisi' },
         { id: generateId(), type: 'text', content: 'Dünyanın dört bir yanından nefes kesici doğa manzaralarını bir araya getirdik. Bu görsel şölende kaybolmaya hazır olun.' },
@@ -122,6 +127,7 @@ const templates: Template[] = [
     name: 'SSS Makalesi',
     description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
     previewImageUrl: 'https://picsum.photos/seed/template-faq-ask/300/200', // Preview image for selector dialog
+    category: 'Teknoloji', // Category hint
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Uzaktan Çalışma Hakkında Sıkça Sorulan Sorular' },
         { id: generateId(), type: 'text', content: 'Uzaktan çalışma modeline geçiş yapanlar veya bu modeli merak edenler için en sık sorulan soruları ve yanıtlarını derledik.' },
@@ -145,6 +151,7 @@ const templates: Template[] = [
     name: 'Nasıl Yapılır Rehberi',
     description: 'Adım adım talimatlar içeren öğretici makaleler için.',
     previewImageUrl: 'https://picsum.photos/seed/template-howto-steps/300/200', // Preview image for selector dialog
+    category: 'Teknoloji', // Category hint
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Basit Bir Web Sitesi Nasıl Yayınlanır?' },
         { id: generateId(), type: 'text', content: 'Kendi web sitenizi oluşturmak ve yayınlamak düşündüğünüzden daha kolay olabilir! Bu rehberde, temel adımları takip ederek basit bir web sitesini nasıl çevrimiçi hale getirebileceğinizi göstereceğiz.' },
@@ -173,6 +180,7 @@ const templates: Template[] = [
     name: 'Röportaj Makalesi',
     description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
     previewImageUrl: 'https://picsum.photos/seed/template-interview-qa/300/200', // Preview image for selector dialog
+    category: 'Biyoloji', // Category hint
     blocks: [
         { id: generateId(), type: 'heading', level: 1, content: 'Dr. Elif Aydın ile Biyoteknolojinin Geleceği Üzerine Söyleşi' },
         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Biyoteknoloji Uzmanı' }, // Placeholder content image (profile picture)
@@ -275,15 +283,19 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
         onClose(); // Close the dialog after selection
     };
 
-     // Handle template preview
+     // Handle template preview - pass the specific template's data
      const handlePreview = (template: Template) => {
          const previewData = {
              id: `template-preview-${template.id}`,
              title: `${template.name} Şablon Önizlemesi`,
              description: template.description,
-             category: 'Teknoloji', // Default category for preview, can be adjusted
-             imageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl, // Use first image in blocks or preview image
-             blocks: template.blocks,
+             category: template.category || 'Teknoloji', // Use template category or default
+             imageUrl: template.blocks.find(b => b.type === 'image')?.url || template.previewImageUrl,
+             blocks: template.blocks, // Pass the actual blocks of the selected template
+             status: 'Yayınlandı', // Set a default status for preview
+             isFeatured: false, // Default values for preview
+             isHero: false,
+             // Add other necessary fields for the preview page to render correctly
          };
          try {
              localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
