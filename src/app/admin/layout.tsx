@@ -190,7 +190,7 @@ export default function AdminLayout({
            <SidebarTrigger className="md:hidden" />
            {/* Add other header elements like search or user menu here if needed */}
            <div className="flex items-center gap-2">
-             <ThemeToggle />
+             {/* Removed ThemeToggle from here */}
              {/* Example User Dropdown Trigger */}
              {/* TODO: Add dropdown menu for user actions */}
              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
