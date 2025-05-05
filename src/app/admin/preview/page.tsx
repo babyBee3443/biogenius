@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -6,7 +5,7 @@ import { notFound, useSearchParams } from 'next/navigation'; // Import useSearch
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Eye } from 'lucide-react'; // Added Eye
+import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2 } from 'lucide-react'; // Added Eye and VideoIcon
 import type { Block } from '@/components/admin/template-selector';
 import type { ArticleData } from '@/lib/mock-data'; // Import the standard ArticleData interface
 
@@ -16,12 +15,12 @@ const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> =
   // Simple rendering, ensuring HTML is handled safely if needed.
   // Using dangerouslySetInnerHTML is risky without sanitization.
   // For preview, rendering plain text might be safer or use a basic markdown parser.
-  <p dangerouslySetInnerHTML={{ __html: block.content?.replace(/\n/g, '<br />') || '[Boş Metin Bloğu]' }} />
+  <div dangerouslySetInnerHTML={{ __html: block.content?.replace(/\n/g, '<br />') || '<p class="italic text-muted-foreground">[Boş Metin Bloğu]</p>' }} />
 );
 
 const HeadingBlockRenderer: React.FC<{ block: Extract<Block, { type: 'heading' }> }> = ({ block }) => {
   const Tag = `h${block.level}` as keyof JSX.IntrinsicElements;
-  return <Tag>{block.content || '[Boş Başlık]'}</Tag>;
+  return <Tag>{block.content || <span className="italic text-muted-foreground">[Boş Başlık]</span>}</Tag>;
 };
 
 const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }> = ({ block }) => (
@@ -30,7 +29,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             <Image src={block.url} alt={block.alt || 'Makale Görseli'} width={800} height={400} className="rounded-lg shadow-md mx-auto max-w-full h-auto" data-ai-hint="article content placeholder"/>
         ) : (
             <div className="bg-muted rounded-lg aspect-video flex items-center justify-center text-muted-foreground italic">
-                [Görsel Alanı]
+                [Görsel Alanı - URL Yok]
             </div>
         )}
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
@@ -66,7 +65,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
 
 const QuoteBlockRenderer: React.FC<{ block: Extract<Block, { type: 'quote' }> }> = ({ block }) => (
     <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-6">
-        <p>{block.content || '[Boş Alıntı]'}</p>
+        <p>{block.content || <span className="italic text-muted-foreground">[Boş Alıntı]</span>}</p>
         {block.citation && <footer className="mt-2 text-sm not-italic">— {block.citation}</footer>}
     </blockquote>
 );
@@ -123,16 +122,30 @@ export default function ArticlePreviewPage() {
     }
 
     if (!previewKey) {
-        setError("Önizleme anahtarı bulunamadı.");
+        setError("Önizleme anahtarı bulunamadı. Lütfen URL'yi kontrol edin.");
         setIsLoading(false);
         return;
     }
 
+    console.log("Attempting to load preview data for key:", previewKey); // Log key being used
+
     try {
         // Use the unique key to get the correct data
         const storedData = localStorage.getItem(previewKey);
+
         if (storedData) {
-            const parsedData = JSON.parse(storedData);
+            console.log("Found data in localStorage:", storedData.substring(0, 100) + "..."); // Log found data (truncated)
+            let parsedData;
+            try {
+                 parsedData = JSON.parse(storedData);
+                 console.log("Parsed data:", parsedData); // Log parsed data
+            } catch (parseError) {
+                 console.error("Error parsing JSON data:", parseError);
+                 setError("Önizleme verisi bozuk. Lütfen tekrar deneyin.");
+                 setIsLoading(false);
+                 return;
+            }
+
 
             // --- More Robust Validation ---
             if (
@@ -140,9 +153,8 @@ export default function ArticlePreviewPage() {
                 typeof parsedData === 'object' &&
                 Object.keys(parsedData).length > 0 && // Ensure it's not an empty object
                 typeof parsedData.title === 'string' && parsedData.title && // Must have a non-empty title
-                Array.isArray(parsedData.blocks) && // Must have blocks array
-                typeof parsedData.category === 'string' && parsedData.category // Must have a category
-                // Optional fields like excerpt/description, mainImageUrl/imageUrl are handled below
+                Array.isArray(parsedData.blocks) // Must have blocks array (can be empty)
+                // Other required fields like category might be added here if crucial for preview
              ) {
                  // Normalize data before setting state
                  const normalizedData: Partial<ArticleData> = {
@@ -152,29 +164,35 @@ export default function ArticlePreviewPage() {
                     // Use mainImageUrl if available, otherwise try imageUrl, else undefined
                     mainImageUrl: parsedData.mainImageUrl ?? parsedData.imageUrl,
                  };
+                 console.log("Validated and normalized data:", normalizedData); // Log final data
                  setPreviewData(normalizedData);
             } else {
-                 console.error("Invalid preview data structure from localStorage:", parsedData); // Log invalid data
+                 console.error("Invalid preview data structure:", parsedData); // Log invalid data structure
                  setError("Önizleme verisi geçersiz veya eksik. Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.");
             }
         } else {
-            setError(`Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`);
+             console.error("No data found in localStorage for key:", previewKey);
+             setError(`Önizleme verisi bulunamadı (Anahtar: ${previewKey}). Lütfen şablonu veya makaleyi tekrar kaydedip önizlemeyi deneyin.`);
         }
     } catch (e) {
-         console.error("Error parsing preview data:", e);
+         console.error("Error accessing or processing preview data:", e);
          setError("Önizleme verisi yüklenirken bir hata oluştu. Tarayıcı konsolunu kontrol edin.");
     } finally {
         setIsLoading(false);
          // Optional: Clean up the specific localStorage item after loading - maybe delay this or do it on window close
-         // setTimeout(() => {
-         //   localStorage.removeItem(previewKey);
-         // }, 30000); // Remove after 30 seconds
+         // console.log("Attempting to remove localStorage item with key:", previewKey);
+         // localStorage.removeItem(previewKey);
     }
 
   }, [previewKey]); // Depend on the previewKey
 
    if (isLoading) {
-     return <div className="flex justify-center items-center h-screen">Önizleme yükleniyor...</div>;
+     return (
+        <div className="flex justify-center items-center h-screen text-lg">
+            <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+            Önizleme yükleniyor...
+        </div>
+     );
    }
 
    if (error) {

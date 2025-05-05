@@ -104,7 +104,7 @@ const templates: Template[] = [
         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-break/600/300', alt: 'Mola Veren Kişi' },
         { id: generateId(), type: 'text', content: 'Sürekli çalışmak yerine düzenli aralıklarla kısa molalar vermek, zihinsel yorgunluğu azaltır ve odaklanmayı artırır. Kalkıp biraz hareket etmek veya farklı bir aktivite yapmak iyi gelecektir.' },
          { id: generateId(), type: 'divider'},
-         { id: generateId(), type: 'heading', level: 2, content: '4. Dikkat Dağıtıcıları Azaltın' },
+         { id: generateId(), type: 'heading', level: 2, content: `4. "Hayır" Demeyi Öğrenin` },
          { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-focus/600/300', alt: 'Odaklanmış Çalışma Ortamı' }, // Added specific image
          { id: generateId(), type: 'text', content: 'Çalışma ortamınızdaki dikkat dağıtıcı unsurları (sosyal medya bildirimleri, gereksiz sekmeler vb.) minimuma indirin. Odaklanmış çalışma süreleri belirleyin.' },
          { id: generateId(), type: 'divider'},
@@ -322,21 +322,41 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
              createdAt: new Date().toISOString(), // Current time for preview
              updatedAt: new Date().toISOString(),
              // Ensure 'content' field exists, even if empty, to match ArticleData
-             content: '',
+             // content: '', // Removed this line, block data is sufficient
          };
+
          try {
-              console.log("Saving preview data for template:", template.id, previewData); // Debug log
-             // Generate a unique key for localStorage for each template preview
+              // Generate a unique key for localStorage for each template preview
              const localStorageKey = `articlePreviewData_${template.id}_${Date.now()}`;
-             localStorage.setItem(localStorageKey, JSON.stringify(previewData));
+             console.log("Saving preview data for key:", localStorageKey); // Log the key
+             const dataString = JSON.stringify(previewData);
+             localStorage.setItem(localStorageKey, dataString);
+             console.log("Data saved to localStorage:", dataString); // Log the saved data
+
              // Open the preview page with the unique key as a query parameter
-             window.open(`/admin/preview?key=${localStorageKey}`, '_blank');
+             const previewWindow = window.open(`/admin/preview?key=${localStorageKey}`, '_blank');
+             if (!previewWindow) {
+                 toast({
+                     variant: "destructive",
+                     title: "Önizleme Açılamadı",
+                     description: "Lütfen tarayıcınızda açılır pencerelere izin verin.",
+                 });
+             }
          } catch (error) {
              console.error("Error saving template preview data:", error);
+             // Provide more specific error feedback
+             let errorMessage = "Şablon önizleme verisi kaydedilemedi.";
+             if (error instanceof Error) {
+                if (error.name === 'QuotaExceededError') {
+                    errorMessage = "Tarayıcı depolama alanı dolu. Lütfen eski verileri temizleyin.";
+                } else {
+                    errorMessage = `Bir hata oluştu: ${error.message}`;
+                }
+             }
              toast({
                  variant: "destructive",
                  title: "Önizleme Hatası",
-                 description: "Şablon önizleme verisi kaydedilemedi.",
+                 description: errorMessage,
              });
          }
      };
