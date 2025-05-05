@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image"; // Using next/image for placeholders
+import { Eye } from 'lucide-react'; // Import Eye icon for preview
+import { toast } from "@/hooks/use-toast"; // Import toast for error feedback
 
 // --- Block Types (Should match the editor's block types) ---
 export type Block =
@@ -21,11 +23,11 @@ export type Block =
   | { id: string; type: 'heading'; level: number; content: string }
   | { id: string; type: 'image'; url: string; alt: string; caption?: string }
   | { id: string; type: 'gallery'; images: { url: string; alt: string }[] }
-  | { id: string; type: 'video'; url: string; youtubeId?: string | null } // Added optional youtubeId
+  | { id: string; type: 'video'; url: string; youtubeId?: string | null }
   | { id: string; type: 'quote'; content: string; citation?: string }
   | { id: string; type: 'code'; language: string; content: string }
   | { id: string; type: 'divider' }
-  | { id: string; type: 'section'; sectionType: string; settings: Record<string, any> }; // Added Section Block Type
+  | { id: string; type: 'section'; sectionType: string; settings: Record<string, any> };
 
 // Define Template Structure
 interface Template {
@@ -260,6 +262,30 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
         onClose(); // Close the dialog after selection
     };
 
+     // Handle template preview
+     const handlePreview = (template: Template) => {
+         const previewData = {
+             id: `template-preview-${template.id}`,
+             title: `${template.name} Şablon Önizlemesi`,
+             description: template.description,
+             category: 'Teknoloji', // Default category for preview, can be adjusted
+             imageUrl: template.previewImageUrl, // Use template preview for main image
+             blocks: template.blocks,
+         };
+         try {
+             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
+             window.open('/admin/preview', '_blank');
+         } catch (error) {
+             console.error("Error saving template preview data:", error);
+             toast({
+                 variant: "destructive",
+                 title: "Önizleme Hatası",
+                 description: "Şablon önizleme verisi kaydedilemedi.",
+             });
+         }
+     };
+
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}> {/* Ensure close on background click */}
       <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col">
@@ -272,8 +298,8 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
         <ScrollArea className="flex-grow pr-4 -mr-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
                 {templates.map((template) => (
-                    <Card key={template.id} className="cursor-pointer hover:shadow-lg transition-shadow flex flex-col overflow-hidden group" onClick={() => handleSelect(template.blocks)}>
-                        <CardHeader className="p-0 relative h-32 overflow-hidden"> {/* Fixed height */}
+                    <Card key={template.id} className="flex flex-col overflow-hidden group border hover:shadow-lg transition-shadow">
+                        <CardHeader className="p-0 relative h-32 overflow-hidden cursor-pointer" onClick={() => handleSelect(template.blocks)}> {/* Make header clickable */}
                              <Image
                                 src={template.previewImageUrl} // This is the small image shown in the dialog
                                 alt={`${template.name} önizlemesi`}
@@ -286,8 +312,14 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, onSelectTe
                               <CardTitle className="absolute bottom-2 left-3 text-sm font-semibold text-white p-1 bg-black/50 rounded text-shadow-sm">{template.name}</CardTitle> {/* Title on image */}
                          </CardHeader>
                          <CardContent className="p-3 flex flex-col flex-grow"> {/* Reduced padding */}
-                             <p className="text-xs text-muted-foreground flex-grow mb-2">{template.description}</p>
-                             <Button variant="outline" size="sm" className="mt-auto w-full" onClick={(e) => { e.stopPropagation(); handleSelect(template.blocks); }}>Seç</Button>
+                             <p className="text-xs text-muted-foreground flex-grow mb-3">{template.description}</p>
+                             {/* Moved buttons to CardContent */}
+                             <div className="flex gap-2 mt-auto">
+                                 <Button variant="outline" size="sm" className="flex-1" onClick={(e) => { e.stopPropagation(); handlePreview(template); }}>
+                                    <Eye className="mr-1 h-3.5 w-3.5"/> Önizle
+                                </Button>
+                                <Button size="sm" className="flex-1" onClick={(e) => { e.stopPropagation(); handleSelect(template.blocks); }}>Seç</Button>
+                             </div>
                          </CardContent>
                     </Card>
                 ))}
