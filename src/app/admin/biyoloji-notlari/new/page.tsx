@@ -308,13 +308,11 @@ export default function NewBiyolojiNotuPage() {
                                              <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loadingCategories}>
                                                 <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                                 <SelectContent>
-                                                    {loadingCategories ? (
-                                                        <SelectItem disabled>Yükleniyor...</SelectItem> {/* Remove value="" */}
-                                                     ) : (
-                                                        categories.map(cat => (
-                                                           <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                                        ))
-                                                     )}
+                                                    {loadingCategories && <SelectItem value="" disabled>Yükleniyor...</SelectItem>}
+                                                     {!loadingCategories && categories.length === 0 && <SelectItem value="" disabled>Önce kategori ekleyin</SelectItem>}
+                                                     {!loadingCategories && categories.map(cat => (
+                                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                                     ))}
                                                       <Separator />
                                                       <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
                                                 </SelectContent>
@@ -400,4 +398,3 @@ export default function NewBiyolojiNotuPage() {
         </div>
     );
 }
-
