@@ -63,12 +63,14 @@ export default function EditArticlePage() {
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
 
-    // --- Data Fetching ---
+    // --- Data Fetching - Delayed until client-side hydration ---
     React.useEffect(() => {
         let isMounted = true;
         if (articleId) {
             setLoading(true);
             setError(null); // Reset error on new fetch
+
+            // Fetch data after initial mount to avoid hydration issues
             getArticleById(articleId)
                 .then(data => {
                     if (isMounted) {
@@ -112,7 +114,7 @@ export default function EditArticlePage() {
             setLoading(false);
         }
         return () => { isMounted = false }; // Cleanup function
-    }, [articleId]);
+    }, [articleId]); // Only run when articleId changes
 
      // --- Handlers ---
      const generateSlug = (text: string) => {
@@ -152,6 +154,7 @@ export default function EditArticlePage() {
 
 
     const handleAddBlock = (type: Block['type']) => {
+        // ID generation happens client-side, safe from hydration issues
         const newBlock: Block = {
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             type: type,
@@ -292,6 +295,7 @@ export default function EditArticlePage() {
                  return;
             }
         }
+        // ID generation happens client-side, safe from hydration issues
          const newBlocks = templateBlocks.map(block => ({
             ...block,
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
@@ -624,3 +628,4 @@ export default function EditArticlePage() {
          </div>
     );
 }
+

@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,7 @@ const BlockWrapper: React.FC<BlockWrapperProps> = ({
         }
       )}
       onClick={onSelect} // Select block when the wrapper area is clicked
-      data-block-wrapper-id={blockId} // Add ID for scrolling target
+      data-block-wrapper-id={blockId} // Use the stable blockId passed from parent
     >
       {/* Controls */}
       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -75,3 +76,4 @@ const BlockWrapper: React.FC<BlockWrapperProps> = ({
 };
 
 export default BlockWrapper;
+

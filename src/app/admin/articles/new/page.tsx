@@ -46,19 +46,29 @@ export default function NewArticlePage() {
     const [isHero, setIsHero] = React.useState(false); // Added isHero state
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
-    // Block Editor State
-    const [blocks, setBlocks] = React.useState<Block[]>([
-        { id: `block-${Date.now()}`, type: 'text', content: '' },
-    ]);
+    // Block Editor State - Initialize empty and add initial block client-side
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
+    const [initialBlockAdded, setInitialBlockAdded] = React.useState(false);
 
-    // Other States
-    const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
+    // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
+
+    // Other States
+    const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
+
+     // Generate initial block on client-side after hydration to avoid mismatch
+    React.useEffect(() => {
+        if (!initialBlockAdded) {
+            const initialBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+            setBlocks([{ id: initialBlockId, type: 'text', content: '' }]);
+            setInitialBlockAdded(true);
+        }
+    }, [initialBlockAdded]);
 
 
     // --- Handlers ---
@@ -98,6 +108,7 @@ export default function NewArticlePage() {
 
 
     const handleAddBlock = (type: Block['type']) => {
+        // ID generation happens client-side, safe from hydration issues here
         const newBlock: Block = {
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             type: type,
@@ -194,12 +205,13 @@ export default function NewArticlePage() {
 
      // Handler for template selection
      const handleTemplateSelect = (templateBlocks: Block[]) => {
-        if (blocks.length > 1 || (blocks.length === 1 && blocks[0].type === 'text' && (blocks[0] as Extract<Block, { type: 'text' }>).content !== '')) {
+        if (blocks.length > 0 && blocks.some(b => (b.type === 'text' && b.content !== '') || b.type !== 'text')) {
             if (!window.confirm("Mevcut içerik bölümlerinin üzerine şablon uygulansın mı? Bu işlem geri alınamaz.")) {
                  setIsTemplateSelectorOpen(false);
                  return;
             }
         }
+         // ID generation happens client-side during template selection, safe from hydration issues
         const newBlocks = templateBlocks.map(block => ({
             ...block,
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`
@@ -221,6 +233,10 @@ export default function NewArticlePage() {
              category: category,
              imageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
              blocks,
+              // Include other relevant fields for preview if necessary
+             isFeatured: isFeatured,
+             isHero: isHero,
+             status: status,
          };
          try {
              localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
