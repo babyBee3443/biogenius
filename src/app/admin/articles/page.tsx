@@ -26,6 +26,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast"; // Import toast
 import { getArticles, deleteArticle, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
+import { cn } from "@/lib/utils"; // Import cn utility
 
 const getStatusVariant = (status: ArticleData['status']): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
@@ -61,8 +62,10 @@ export default function AdminArticlesPage() {
   const fetchArticles = React.useCallback(async () => {
     setLoading(true);
     setError(null);
+    console.log("[fetchArticles] Fetching articles...");
     try {
       const data = await getArticles(); // Fetch from mock data source
+      console.log("[fetchArticles] Raw data fetched:", data.length, "articles");
        // Apply filtering and sorting here based on state
        const filteredData = data.filter(article =>
           article.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -71,12 +74,14 @@ export default function AdminArticlesPage() {
        // Add sorting logic here
 
       setArticles(filteredData);
+      console.log("[fetchArticles] Filtered data set to state:", filteredData.length, "articles");
     } catch (err) {
-      console.error("Error fetching articles:", err);
+      console.error("[fetchArticles] Error fetching articles:", err);
       setError("Makaleler yüklenirken bir hata oluştu.");
       toast({ variant: "destructive", title: "Hata", description: "Makaleler yüklenemedi." });
     } finally {
       setLoading(false);
+      console.log("[fetchArticles] Fetching complete, loading set to false.");
     }
   }, [searchTerm]); // Add dependencies for filters and sorting
 
@@ -85,27 +90,37 @@ export default function AdminArticlesPage() {
   }, [fetchArticles]); // Fetch articles on component mount and when fetchArticles changes
 
    const handleDelete = async (id: string, title: string) => {
+     console.log(`[handleDelete] Attempting to delete article: ${id} (${title})`);
      if (window.confirm(`"${title}" başlıklı makaleyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+         console.log(`[handleDelete] User confirmed deletion for: ${id}`);
          setDeletingId(id); // Indicate deletion in progress for this row
          try {
+             console.log(`[handleDelete] Calling deleteArticle(${id})`);
              const success = await deleteArticle(id);
+             console.log(`[handleDelete] deleteArticle(${id}) returned: ${success}`);
              if (success) {
                  toast({
-                     variant: "destructive",
+                     variant: "default", // Changed variant for visual distinction
                      title: "Makale Silindi",
                      description: `"${title}" başlıklı makale başarıyla silindi.`,
                  });
-                 // Refetch articles after successful deletion
-                 fetchArticles();
+                 console.log(`[handleDelete] Deletion successful for ${id}. Refetching articles...`);
+                 // Refetch articles after successful deletion to update the list
+                 await fetchArticles(); // Use await to ensure fetch completes before resetting deletingId
+                 console.log(`[handleDelete] Article list refetched after deleting ${id}.`);
              } else {
+                 console.error(`[handleDelete] deleteArticle(${id}) failed.`);
                  toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinemedi." });
              }
          } catch (error) {
-             console.error("Error deleting article:", error);
+             console.error(`[handleDelete] Error during deletion of ${id}:`, error);
              toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinirken bir hata oluştu." });
          } finally {
-              setDeletingId(null); // Reset deleting state
+             console.log(`[handleDelete] Resetting deletingId for ${id}.`);
+             setDeletingId(null); // Reset deleting state regardless of success or failure
          }
+     } else {
+        console.log(`[handleDelete] User cancelled deletion for: ${id}`);
      }
    };
 
@@ -118,7 +133,7 @@ export default function AdminArticlesPage() {
         </div>
         <div className="flex gap-2">
              <Button variant="outline" onClick={fetchArticles} disabled={loading}>
-                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                 <RefreshCw className={cn("mr-2 h-4 w-4", loading && 'animate-spin')} />
                  Yenile
              </Button>
              <Button asChild>
@@ -151,6 +166,13 @@ export default function AdminArticlesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             {/* ... Status filter items ... */}
+                             <DropdownMenuLabel>Duruma Göre Filtrele</DropdownMenuLabel>
+                             <DropdownMenuSeparator />
+                             {/* Add Checkbox items for filtering logic */}
+                             <DropdownMenuCheckboxItem>Yayınlandı</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem>Taslak</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem>İncelemede</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem>Arşivlendi</DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     {/* Category Filter Dropdown (Placeholder) */}
@@ -162,6 +184,10 @@ export default function AdminArticlesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                            {/* ... Category filter items ... */}
+                            <DropdownMenuLabel>Kategoriye Göre Filtrele</DropdownMenuLabel>
+                             <DropdownMenuSeparator />
+                             <DropdownMenuCheckboxItem>Teknoloji</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem>Biyoloji</DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     {/* Sort Dropdown (Placeholder) */}
@@ -173,6 +199,12 @@ export default function AdminArticlesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             {/* ... Sort options ... */}
+                            <DropdownMenuLabel>Sırala</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {/* Add Radio items for sorting logic */}
+                             <DropdownMenuCheckboxItem>Başlık (A-Z)</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem>Tarih (En Yeni)</DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem>Tarih (En Eski)</DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                  </div>
@@ -207,14 +239,14 @@ export default function AdminArticlesPage() {
               </TableHeader>
               <TableBody>
                 {articles.map((article) => (
-                  <TableRow key={article.id} className={deletingId === article.id ? 'opacity-50' : ''}>
+                  <TableRow key={article.id} className={cn(deletingId === article.id && 'opacity-50 pointer-events-none')}>
                     <TableCell className="font-medium">
                       <Link href={`/admin/articles/edit/${article.id}`} className="hover:underline">
                         {article.title}
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className={`${getCategoryClass(article.category)} font-normal`}>
+                      <Badge variant="secondary" className={cn(getCategoryClass(article.category), "font-normal")}>
                         {article.category}
                       </Badge>
                     </TableCell>
@@ -238,6 +270,7 @@ export default function AdminArticlesPage() {
                         className="text-destructive hover:text-destructive"
                         onClick={() => handleDelete(article.id, article.title)}
                         disabled={deletingId === article.id}
+                        aria-label="Sil"
                       >
                         {deletingId === article.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -270,6 +303,7 @@ export default function AdminArticlesPage() {
                         </PaginationItem>
                     ))}
                     {/* Add Ellipsis if needed */}
+                     {totalPages > 5 && currentPage < totalPages - 2 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
                     <PaginationItem>
                       <PaginationNext href={currentPage < totalPages ? `/admin/articles?page=${currentPage + 1}` : '#'} aria-disabled={currentPage >= totalPages} />
                     </PaginationItem>
