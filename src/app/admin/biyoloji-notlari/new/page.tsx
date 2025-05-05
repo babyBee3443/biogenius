@@ -226,11 +226,11 @@ export default function NewBiyolojiNotuPage() {
             updatedAt: new Date().toISOString(),
         };
 
-        console.log(`[NewBiyolojiNotuPage/handlePreview] Saving preview data:`, previewData);
+        console.log(`[NewBiyolojiNotuPage/handlePreview] Saving preview data with key: ${PREVIEW_STORAGE_KEY}:`, previewData);
 
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully saved preview data`);
+            console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully saved preview data for key: ${PREVIEW_STORAGE_KEY}`);
 
             // Verification Step
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
@@ -309,7 +309,7 @@ export default function NewBiyolojiNotuPage() {
                                                 <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                                 <SelectContent>
                                                     {loadingCategories ? (
-                                                        <SelectItem value="" disabled>Yükleniyor...</SelectItem>
+                                                        <SelectItem disabled>Yükleniyor...</SelectItem> {/* Remove value="" */}
                                                      ) : (
                                                         categories.map(cat => (
                                                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
@@ -400,3 +400,4 @@ export default function NewBiyolojiNotuPage() {
         </div>
     );
 }
+

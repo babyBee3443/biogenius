@@ -41,7 +41,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key
 export default function EditBiyolojiNotuPage() {
     const router = useRouter();
     const params = useParams();
-    const noteId = params.id as string;
+    const noteId = React.use(params.id) as string; // Use React.use for simpler param access
 
     // --- State ---
     const [noteData, setNoteData] = React.useState<NoteData | null>(null);
@@ -285,7 +285,7 @@ export default function EditBiyolojiNotuPage() {
         };
 
 
-        console.log(`[EditBiyolojiNotuPage/handlePreview] Saving preview data:`, previewData);
+        console.log(`[EditBiyolojiNotuPage/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
 
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
@@ -389,7 +389,7 @@ export default function EditBiyolojiNotuPage() {
                                     <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loading}>
                                         <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                         <SelectContent>
-                                            {categories.length === 0 && <SelectItem value="" disabled>Yükleniyor...</SelectItem>}
+                                            {categories.length === 0 && <SelectItem disabled>Yükleniyor...</SelectItem>}
                                             {categories.map(cat => (
                                                 <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                             ))}
