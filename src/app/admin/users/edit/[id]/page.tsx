@@ -55,7 +55,7 @@ export default function EditUserPage() {
     const params = useParams();
     const router = useRouter();
     // Ensure params.id is accessed safely and correctly
-    const userId = React.use(params.id) as string;
+    const userId = params.id as string;
 
 
     const [user, setUser] = React.useState<User | null>(null);
@@ -199,7 +199,7 @@ export default function EditUserPage() {
 
 
     return (
-        <AlertDialog> {/* Wrap with AlertDialog for the trigger to work */}
+        <AlertDialog open={isConfirmDeleteDialogOpen} onOpenChange={setIsConfirmDeleteDialogOpen}>
          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -211,7 +211,7 @@ export default function EditUserPage() {
                 </div>
                  <div className="flex flex-wrap gap-2">
                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isDeleting || isSaving}>
+                        <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
                             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                         </Button>
                     </AlertDialogTrigger>
@@ -353,7 +353,7 @@ export default function EditUserPage() {
               <Separator />
              <div className="flex justify-end gap-2">
                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isDeleting || isSaving}>
+                    <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
                         {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                     </Button>
                 </AlertDialogTrigger>
@@ -381,3 +381,6 @@ export default function EditUserPage() {
     );
 
 }
+
+
+    
