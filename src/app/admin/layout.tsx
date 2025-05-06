@@ -83,6 +83,7 @@ export default function AdminLayout({
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
         <SidebarHeader className="flex items-center justify-center p-4 mt-4">
+          {/* Logo SVG */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -103,7 +104,8 @@ export default function AdminLayout({
           </svg>
         </SidebarHeader>
 
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-2"> {/* Changed mt-8 to mt-2 */}
+        {/* Welcome User Section */}
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden"> {/* Removed mt-2 */}
           <span className="font-semibold text-md text-muted-foreground">
             Hoşgeldiniz
           </span>
