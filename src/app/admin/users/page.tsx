@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
           });
           console.log(`[AdminUsersPage/handleDelete] Deletion successful for ${id}. Refetching users...`);
           await fetchUsers(); // Refresh the list
-          // Adjust current page if the last item on the page was deleted
+          // Adjust current page if the last item on the page was deleted and it was the only item on that page
           if (paginatedUsers.length === 1 && currentPage > 1) {
             console.log(`[AdminUsersPage/handleDelete] Last item on page deleted, moving to page ${currentPage - 1}`);
             setCurrentPage(currentPage - 1);
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
                     <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="user avatar placeholder"/>
                             <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>

@@ -603,17 +603,20 @@ export const deleteUser = async (id: string): Promise<boolean> => {
   await delay(80);
   loadData();
   console.log(`[mock-data/deleteUser] Attempting to delete user with id: ${id}`);
-  console.log(`[mock-data/deleteUser] Users before deletion:`, JSON.stringify(mockUsers.map(u => u.id)));
   const initialLength = mockUsers.length;
-  mockUsers = mockUsers.filter(u => u.id !== id);
+  console.log(`[mock-data/deleteUser] Users before deletion (${initialLength}):`, mockUsers.map(u => u.id));
+  mockUsers = mockUsers.filter(u => {
+    console.log(`[mock-data/deleteUser] Checking user ${u.id} against ${id}`);
+    return u.id !== id;
+  });
   const success = mockUsers.length < initialLength;
-  console.log(`[mock-data/deleteUser] Users after filtering:`, JSON.stringify(mockUsers.map(u => u.id)));
+  console.log(`[mock-data/deleteUser] Users after filtering (${mockUsers.length}):`, mockUsers.map(u => u.id));
   console.log(`[mock-data/deleteUser] Deletion success: ${success}`);
   if (success) {
     console.log(`[mock-data/deleteUser] Saving updated user list to localStorage.`);
     saveData();
   } else {
-    console.warn(`[mock-data/deleteUser] User with id ${id} not found, no changes made.`);
+    console.warn(`[mock-data/deleteUser] User with id ${id} not found or no changes made.`);
   }
   return success;
 };
