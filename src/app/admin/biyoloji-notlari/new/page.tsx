@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -6,22 +7,24 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
 import { BlockEditor } from "@/components/admin/block-editor";
-import { TemplateSelector, type Block } from "@/components/admin/template-selector"; // Import TemplateSelector
+import { TemplateSelector, type Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
-import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data'; // Import getCategories
+import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data';
+import { generateBiologyNote, type GenerateBiologyNoteInput, type GenerateBiologyNoteOutput, type ContentBlock as AiContentBlock } from '@/ai/flows/generate-biology-note-flow';
 
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs"; // Import Tabs
+} from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -34,13 +37,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers } from "lucide-react"; // Added Layers icon
+import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle } from "lucide-react";
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 // Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key
+const PREVIEW_STORAGE_KEY = 'preview_data';
+
+// --- AI Chat Message Type ---
+interface AiChatMessage {
+    id: string;
+    type: 'user' | 'ai' | 'error';
+    content: string | React.ReactNode;
+    actions?: React.ReactNode; // For AI messages with actions like "Apply to Editor"
+}
 
 // --- Main Page Component ---
 export default function NewBiyolojiNotuPage() {
@@ -48,58 +61,62 @@ export default function NewBiyolojiNotuPage() {
 
     // --- State ---
     const [saving, setSaving] = React.useState(false);
-    const [templateApplied, setTemplateApplied] = React.useState(false); // Track if template is applied
-    const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false); // State for modal
-    const [categories, setCategories] = React.useState<Category[]>([]); // State for categories
-    const [loadingCategories, setLoadingCategories] = React.useState(true); // Loading state for categories
+    const [templateApplied, setTemplateApplied] = React.useState(false);
+    const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
+    const [categories, setCategories] = React.useState<Category[]>([]);
+    const [loadingCategories, setLoadingCategories] = React.useState(true);
 
     const [title, setTitle] = React.useState("");
     const [summary, setSummary] = React.useState("");
-    const [category, setCategory] = React.useState(""); // Category is now a string
-    const [level, setLevel] = React.useState<NoteData['level'] | "">(""); // Example: "Lise 9"
+    const [category, setCategory] = React.useState("");
+    const [level, setLevel] = React.useState<NoteData['level'] | "">("Lise 9"); // Default to Lise 9
     const [tags, setTags] = React.useState<string[]>([]);
     const [imageUrl, setImageUrl] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [blocks, setBlocks] = React.useState<Block[]>([]); // Start empty, add default in effect
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
 
-    // Default block effect and category loading
+    // --- AI Chat State ---
+    const [isAiPanelOpen, setIsAiPanelOpen] = React.useState(false);
+    const [aiTopic, setAiTopic] = React.useState("");
+    const [aiKeywords, setAiKeywords] = React.useState("");
+    const [aiOutline, setAiOutline] = React.useState("");
+    const [aiMessages, setAiMessages] = React.useState<AiChatMessage[]>([]);
+    const [isAiGenerating, setIsAiGenerating] = React.useState(false);
+    const aiChatContainerRef = React.useRef<HTMLDivElement>(null);
+
+
     React.useEffect(() => {
         if (blocks.length === 0) {
             setBlocks([createDefaultBlock()]);
         }
+        setLoadingCategories(true);
+        getCategories()
+            .then(data => setCategories(data))
+            .catch(err => {
+                console.error("Error fetching categories:", err);
+                toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
+            })
+            .finally(() => setLoadingCategories(false));
+    }, []);
 
-         setLoadingCategories(true);
-         getCategories()
-             .then(data => setCategories(data))
-             .catch(err => {
-                 console.error("Error fetching categories:", err);
-                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
-             })
-             .finally(() => setLoadingCategories(false));
-
-    }, []); // Empty dependency array ensures this runs only once on mount
-
-    // --- Handlers ---
-
-    // Auto-generate slug from title (debounced)
     const debouncedSetSlug = useDebouncedCallback((newTitle: string) => {
-        if (newTitle) {
-            setSlug(generateSlug(newTitle));
-        } else {
-            setSlug('');
-        }
+        if (newTitle) setSlug(generateSlug(newTitle));
+        else setSlug('');
     }, 500);
 
-    React.useEffect(() => {
-        debouncedSetSlug(title);
-    }, [title, debouncedSetSlug]);
+    React.useEffect(() => debouncedSetSlug(title), [title, debouncedSetSlug]);
 
-    // --- Block Editor Handlers ---
+    React.useEffect(() => {
+        if (aiChatContainerRef.current) {
+            aiChatContainerRef.current.scrollTop = aiChatContainerRef.current.scrollHeight;
+        }
+    }, [aiMessages]);
+
+
     const handleAddBlock = (type: Block['type']) => {
         const newBlock: Block = {
-            id: generateBlockId(),
-            type: type,
+            id: generateBlockId(), type,
             ...(type === 'text' && { content: '' }),
             ...(type === 'heading' && { level: 2, content: '' }),
             ...(type === 'image' && { url: '', alt: '', caption: '' }),
@@ -109,67 +126,47 @@ export default function NewBiyolojiNotuPage() {
             ...(type === 'divider' && {}),
             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
-        setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
+        setBlocks((prev) => [...prev, newBlock]);
         setSelectedBlockId(newBlock.id);
-        setTemplateApplied(false); // Adding manually modifies template
+        setTemplateApplied(false);
     };
 
     const handleDeleteBlock = (id: string) => {
-        setBlocks((prevBlocks) => prevBlocks.filter(block => block.id !== id));
+        setBlocks((prev) => prev.filter(block => block.id !== id));
         if (selectedBlockId === id) setSelectedBlockId(null);
-        setTemplateApplied(false); // Deleting modifies template
+        setTemplateApplied(false);
     };
 
     const handleUpdateBlock = (updatedBlock: Block) => {
-        setBlocks(prevBlocks =>
-            prevBlocks.map(block =>
-                block.id === updatedBlock.id ? updatedBlock : block
-            )
-        );
+        setBlocks(prev => prev.map(b => b.id === updatedBlock.id ? updatedBlock : b));
     };
 
     const handleReorderBlocks = (reorderedBlocks: Block[]) => {
         setBlocks(reorderedBlocks);
-        setTemplateApplied(false); // Reordering modifies template
+        setTemplateApplied(false);
     };
 
-    const handleBlockSelect = (id: string | null) => {
-        setSelectedBlockId(id);
-    };
-    // --- End Block Editor Handlers ---
+    const handleBlockSelect = (id: string | null) => setSelectedBlockId(id);
 
     const handleSave = async () => {
          if (!title || !slug || !category || !level) {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen Başlık, Kategori ve Seviye alanlarını doldurun." });
              return;
          }
-
          setSaving(true);
-
          const newNoteData: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt'> = {
-             title,
-             slug,
-             category, // Category is string
-             level,
-             tags,
-             summary,
+             title, slug, category, level, tags, summary,
              contentBlocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
              imageUrl: imageUrl || null,
          };
-
-         console.log("Preparing to create note:", newNoteData);
-
          try {
              const newNote = await createNote(newNoteData);
              if (newNote) {
-                 toast({
-                     title: "Not Oluşturuldu",
-                     description: `"${newNote.title}" başlıklı not başarıyla oluşturuldu.`,
-                 });
-                  router.push(`/admin/biyoloji-notlari/edit/${newNote.id}`);
+                 toast({ title: "Not Oluşturuldu", description: `"${newNote.title}" başlıklı not başarıyla oluşturuldu.` });
+                 router.push(`/admin/biyoloji-notlari/edit/${newNote.id}`);
              } else {
-                  toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Not oluşturulamadı." });
-                  setSaving(false);
+                 toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Not oluşturulamadı." });
+                 setSaving(false);
              }
          } catch (error) {
              console.error("Error creating note:", error);
@@ -178,12 +175,8 @@ export default function NewBiyolojiNotuPage() {
          }
     };
 
-    // --- Template Handlers ---
-     const handleTemplateSelect = (templateBlocks: Block[]) => {
-         const newBlocks = templateBlocks.map(block => ({
-             ...block,
-             id: generateBlockId()
-         }));
+    const handleTemplateSelect = (templateBlocks: Block[]) => {
+         const newBlocks = templateBlocks.map(block => ({ ...block, id: generateBlockId() }));
          setBlocks(newBlocks);
          setTemplateApplied(true);
          setIsTemplateSelectorOpen(false);
@@ -198,65 +191,107 @@ export default function NewBiyolojiNotuPage() {
              toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
          }
      };
-     // --- End Template Handlers ---
 
-
-     const handlePreview = () => {
+    const handlePreview = () => {
+        // ... (existing handlePreview logic, ensure it uses PREVIEW_STORAGE_KEY and handles 'note' type)
         if (typeof window === 'undefined') return;
-
         if (!category || !level) {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce Kategori ve Seviye seçin." });
             return;
         }
-
-        // Simulate NoteData structure for preview
-        const previewData: Partial<NoteData> & { previewType: 'note' } = { // Add a type identifier
-            previewType: 'note',
-            id: 'preview_new_note',
-            title: title || 'Başlıksız Not',
-            slug: slug || generateSlug(title),
-            category: category, // Category is string
-            level: level,
-            tags: tags,
-            summary: summary || '',
-            contentBlocks: blocks, // Use contentBlocks for notes
+        const previewData: Partial<NoteData> & { previewType: 'note' } = {
+            previewType: 'note', id: 'preview_new_note', title: title || 'Başlıksız Not', slug: slug || generateSlug(title),
+            category: category, level: level, tags: tags, summary: summary || '', contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         };
-
-        console.log(`[NewBiyolojiNotuPage/handlePreview] Saving preview data with key: ${PREVIEW_STORAGE_KEY}:`, previewData);
-
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully saved preview data for key: ${PREVIEW_STORAGE_KEY}`);
-
-            // Verification Step
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             if (!storedData) throw new Error("Verification failed: No data found in localStorage.");
             const parsed = JSON.parse(storedData);
-            if (!parsed || parsed.previewType !== 'note') throw new Error("Verification failed: Invalid data structure in localStorage.");
-            console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS");
-            // ---
-
+            if (!parsed || parsed.previewType !== 'note') throw new Error("Verification failed: Invalid data structure.");
             const previewUrl = `/admin/preview`;
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window: ${previewUrl}`);
-
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
-                if (!newWindow) {
-                     console.error("[NewBiyolojiNotuPage/handlePreview] Failed to open preview window.");
-                     toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Pop-up engelleyiciyi kontrol edin.", duration: 10000 });
-                } else {
-                     console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened.");
-                }
+                if (!newWindow) toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Pop-up engelleyiciyi kontrol edin.", duration: 10000 });
             }, 150);
-
         } catch (error: any) {
-            console.error("[NewBiyolojiNotuPage/handlePreview] Error:", error);
             toast({ variant: "destructive", title: "Önizleme Hatası", description: error.message, duration: 10000 });
         }
     };
+
+    // --- AI Chat Handlers ---
+    const handleAiGenerateNote = async () => {
+        if (!aiTopic.trim()) {
+            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: 'Lütfen bir konu girin.' }]);
+            return;
+        }
+        if (!level) {
+            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: 'Lütfen not için bir seviye seçin (form alanından).' }]);
+            return;
+        }
+
+        const userInput: GenerateBiologyNoteInput = {
+            topic: aiTopic,
+            level: level, // Use the level from the main form
+            keywords: aiKeywords,
+            outline: aiOutline,
+        };
+
+        setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: `Konu: ${aiTopic}${aiKeywords ? `, Anahtar Kelimeler: ${aiKeywords}` : ''}${aiOutline ? `, Taslak: ${aiOutline}` : ''}` }]);
+        setIsAiGenerating(true);
+
+        try {
+            const aiOutput = await generateBiologyNote(userInput);
+            setAiMessages(prev => [...prev, {
+                id: Date.now().toString(), type: 'ai',
+                content: (
+                    <div>
+                        <p className="font-semibold">İşte oluşturulan not önerisi:</p>
+                        <p><strong>Başlık:</strong> {aiOutput.title}</p>
+                        <p><strong>Özet:</strong> {aiOutput.summary}</p>
+                        <p><strong>Etiketler:</strong> {aiOutput.tags.join(', ')}</p>
+                        <p className="mt-2"><strong>İçerik Blokları:</strong> {aiOutput.contentBlocks.length} adet</p>
+                    </div>
+                ),
+                actions: (
+                    <Button size="sm" className="mt-2" onClick={() => applyAiSuggestionToEditor(aiOutput)}>
+                        Editöre Uygula
+                    </Button>
+                )
+            }]);
+        } catch (error: any) {
+            console.error("AI note generation error:", error);
+            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: `AI not oluştururken hata: ${error.message}` }]);
+        } finally {
+            setIsAiGenerating(false);
+        }
+    };
+
+    const applyAiSuggestionToEditor = (aiOutput: GenerateBiologyNoteOutput) => {
+        setTitle(aiOutput.title);
+        setSummary(aiOutput.summary);
+        setTags(aiOutput.tags);
+        // Convert AI content blocks to editor blocks (ensure ID generation)
+        const newEditorBlocks: Block[] = aiOutput.contentBlocks.map((aiBlock: AiContentBlock) => {
+            const baseBlock = { id: generateBlockId(), type: aiBlock.type };
+            switch (aiBlock.type) {
+                case 'text': return { ...baseBlock, content: aiBlock.content } as Block;
+                case 'heading': return { ...baseBlock, level: aiBlock.level, content: aiBlock.content } as Block;
+                case 'image': return { ...baseBlock, url: aiBlock.url, alt: aiBlock.alt, caption: aiBlock.caption } as Block;
+                case 'video': return { ...baseBlock, url: aiBlock.url, youtubeId: aiBlock.youtubeId } as Block;
+                case 'quote': return { ...baseBlock, content: aiBlock.content, citation: aiBlock.citation } as Block;
+                case 'divider': return { ...baseBlock } as Block;
+                default: return { ...baseBlock, type: 'text', content: '[Desteklenmeyen AI Blok Tipi]' } as Block; // Fallback
+            }
+        });
+        setBlocks(newEditorBlocks);
+        setTemplateApplied(true); // Similar to applying a template
+        toast({ title: "AI Önerisi Uygulandı", description: "AI tarafından oluşturulan içerik editöre aktarıldı." });
+        setIsAiPanelOpen(false); // Close panel after applying
+    };
+
 
     return (
         <div className="flex flex-col h-full">
@@ -267,6 +302,9 @@ export default function NewBiyolojiNotuPage() {
                 </Button>
                 <h1 className="text-xl font-semibold flex items-center gap-2"> <BookCopy className="h-6 w-6 text-green-600"/> Yeni Biyoloji Notu Oluştur</h1>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsAiPanelOpen(prev => !prev)} className={isAiPanelOpen ? "bg-primary/10" : ""}>
+                        <Sparkles className="mr-2 h-4 w-4" /> AI Yardımcı {isAiPanelOpen ? "(Kapat)" : "(Aç)"}
+                    </Button>
                     <Button variant="outline" size="sm" onClick={handlePreview} disabled={saving}>
                         <Eye className="mr-2 h-4 w-4" /> Önizle
                     </Button>
@@ -283,17 +321,14 @@ export default function NewBiyolojiNotuPage() {
                      <Tabs defaultValue="content">
                          <TabsList className="mb-6">
                             <TabsTrigger value="content">Not İçeriği</TabsTrigger>
-                             <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon Seç</TabsTrigger> {/* Template Trigger */}
+                             <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon Seç</TabsTrigger>
                          </TabsList>
-
                          <TabsContent value="content" className="space-y-6">
-                            {/* Metadata Card */}
                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Not Bilgileri</CardTitle>
-                                </CardHeader>
+                                <CardHeader><CardTitle>Not Bilgileri</CardTitle></CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div className="space-y-2">
+                                    {/* ... (existing form fields for title, slug, category, level, summary, tags, imageUrl) ... */}
+                                     <div className="space-y-2">
                                         <Label htmlFor="title">Başlık <span className="text-destructive">*</span></Label>
                                         <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Notun başlığını girin" required />
                                     </div>
@@ -357,25 +392,15 @@ export default function NewBiyolojiNotuPage() {
                                     </div>
                                 </CardContent>
                             </Card>
-
                             <Separator />
-
-                             {/* Block Editor Section */}
                             <BlockEditor
-                              blocks={blocks}
-                              onAddBlock={handleAddBlock}
-                              onDeleteBlock={handleDeleteBlock}
-                              onUpdateBlock={handleUpdateBlock}
-                              onReorderBlocks={handleReorderBlocks}
-                              selectedBlockId={selectedBlockId}
-                              onBlockSelect={handleBlockSelect}
+                              blocks={blocks} onAddBlock={handleAddBlock} onDeleteBlock={handleDeleteBlock}
+                              onUpdateBlock={handleUpdateBlock} onReorderBlocks={handleReorderBlocks}
+                              selectedBlockId={selectedBlockId} onBlockSelect={handleBlockSelect}
                             />
                           </TabsContent>
-
-                          {/* Template Tab Content (Placeholder for trigger) */}
                            <TabsContent value="template">
                                <p className="text-muted-foreground">Şablon seçmek için yukarıdaki "Şablon Seç" sekmesine tıklayın.</p>
-                               {/* Show Remove Template button if a template is applied */}
                                {templateApplied && (
                                     <Button variant="outline" className="mt-4 text-destructive border-destructive/50 hover:bg-destructive/10" onClick={handleRemoveTemplate} disabled={saving}>
                                         <Layers className="mr-2 h-4 w-4" /> Şablonu Kaldır
@@ -384,15 +409,63 @@ export default function NewBiyolojiNotuPage() {
                            </TabsContent>
                      </Tabs>
                 </div>
+
+                 {/* Right AI Panel (Collapsible) */}
+                 {isAiPanelOpen && (
+                    <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-4 flex flex-col">
+                        <CardHeader className="p-0 mb-2">
+                             <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> AI Not Oluşturucu</CardTitle>
+                             <CardDescription className="text-xs">AI'dan not içeriği oluşturmasını isteyin.</CardDescription>
+                        </CardHeader>
+
+                        <div className="space-y-3 flex-grow flex flex-col">
+                            <ScrollArea className="flex-grow pr-3 -mr-3" ref={aiChatContainerRef}>
+                                <div className="space-y-3 mb-3">
+                                    {aiMessages.map(msg => (
+                                        <div key={msg.id} className={`p-3 rounded-lg max-w-[90%] ${msg.type === 'user' ? 'bg-primary/10 self-end text-right' : msg.type === 'ai' ? 'bg-secondary self-start' : 'bg-destructive/10 text-destructive self-start'}`}>
+                                            <div className="text-sm">{msg.content}</div>
+                                            {msg.actions && <div className="mt-2">{msg.actions}</div>}
+                                        </div>
+                                    ))}
+                                    {isAiGenerating && (
+                                        <div className="p-3 rounded-lg bg-secondary self-start flex items-center">
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            <span>AI düşünüyor...</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </ScrollArea>
+
+                            <form onSubmit={(e) => { e.preventDefault(); handleAiGenerateNote(); }} className="mt-auto pt-3 border-t">
+                                 <div className="space-y-2">
+                                    <Label htmlFor="ai-topic">Konu Başlığı</Label>
+                                    <Input id="ai-topic" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder="Örn: Fotosentez Aşamaları" />
+                                </div>
+                                <div className="space-y-2 mt-2">
+                                    <Label htmlFor="ai-keywords">Anahtar Kelimeler (isteğe bağlı)</Label>
+                                    <Input id="ai-keywords" value={aiKeywords} onChange={(e) => setAiKeywords(e.target.value)} placeholder="Örn: kloroplast, ATP, Calvin döngüsü" />
+                                </div>
+                                 <div className="space-y-2 mt-2">
+                                    <Label htmlFor="ai-outline">İstenen Taslak/Bölümler (isteğe bağlı)</Label>
+                                    <Textarea id="ai-outline" value={aiOutline} onChange={(e) => setAiOutline(e.target.value)} placeholder="Örn: Tanımı, Işığa bağlı reaksiyonlar, Işıktan bağımsız reaksiyonlar, Önemi" rows={2} />
+                                </div>
+                                <Button type="submit" className="w-full mt-3" disabled={isAiGenerating || !level}>
+                                    {isAiGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
+                                    AI ile Not Oluştur
+                                </Button>
+                                {!level && <p className="text-xs text-destructive text-center mt-1">Not oluşturmak için lütfen formdaki "Seviye" alanını seçin.</p>}
+                            </form>
+                        </div>
+                    </aside>
+                )}
              </div>
 
-              {/* Template Selector Modal */}
               <TemplateSelector
                   isOpen={isTemplateSelectorOpen}
                   onClose={() => setIsTemplateSelectorOpen(false)}
                   onSelectTemplateBlocks={handleTemplateSelect}
                   blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))}
-                  templateTypeFilter="note" // Filter for note templates
+                  templateTypeFilter="note"
               />
         </div>
     );
