@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -29,6 +28,17 @@ import Link from "next/link";
 import { toast } from "@/hooks/use-toast"; // Import toast for feedback
 import { getUsers, deleteUser, type User } from "@/lib/mock-data"; // Import user data functions
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 const getRoleVariant = (role: string): "default" | "secondary" | "outline" | "destructive" => {
      switch (role) {
@@ -44,7 +54,12 @@ export default function AdminUsersPage() {
   const [users, setUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [deletingId, setDeletingId] = React.useState<string | null>(null); // Track which user is being deleted
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
+
+  // State for AlertDialog
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
+  const [userToDelete, setUserToDelete] = React.useState<{ id: string; name: string } | null>(null);
+
 
   // Filtering and Search state
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -52,7 +67,7 @@ export default function AdminUsersPage() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = React.useState(1);
-  const itemsPerPage = 5; // Example: 5 users per page
+  const itemsPerPage = 5;
 
   const fetchUsers = React.useCallback(async () => {
     console.log("[AdminUsersPage/fetchUsers] Fetching users...");
@@ -80,10 +95,9 @@ export default function AdminUsersPage() {
     setSelectedRoles(prev =>
       prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
     );
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1); 
   };
 
-  // Filtered and paginated users
   const filteredUsers = users.filter(user =>
     (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      user.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -96,40 +110,46 @@ export default function AdminUsersPage() {
     currentPage * itemsPerPage
   );
 
-  const handleDelete = async (id: string, name: string) => {
-    console.log(`[AdminUsersPage/handleDelete] Attempting to delete user: ${id} (${name})`);
-    if (window.confirm(`"${name}" kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-      console.log(`[AdminUsersPage/handleDelete] User confirmed deletion for: ${id}`);
-      setDeletingId(id); // Show loader on the specific delete button
-      try {
-        console.log(`[AdminUsersPage/handleDelete] Calling deleteUser(${id}) from mock-data`);
-        const success = await deleteUser(id);
-        console.log(`[AdminUsersPage/handleDelete] deleteUser(${id}) returned: ${success}`);
-        if (success) {
-          toast({
-            title: "Kullanıcı Silindi",
-            description: `"${name}" kullanıcısı başarıyla silindi.`,
-          });
-          console.log(`[AdminUsersPage/handleDelete] Deletion successful for ${id}. Refetching users...`);
-          await fetchUsers(); // Refresh the list
-          // Adjust current page if the last item on the page was deleted and it was the only item on that page
-           if (paginatedUsers.length === 1 && currentPage > 1 && totalPages > 1 && currentPage === totalPages) {
-             console.log(`[AdminUsersPage/handleDelete] Last item on page deleted, moving to page ${currentPage - 1}`);
-             setCurrentPage(currentPage - 1);
-           }
-        } else {
-          console.error(`[AdminUsersPage/handleDelete] deleteUser(${id}) failed (returned false).`);
-          toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
+  const handleDeleteInitiate = (id: string, name: string) => {
+    setUserToDelete({ id, name });
+    setIsConfirmDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    const { id, name } = userToDelete;
+    console.log(`[AdminUsersPage/confirmDelete] User confirmed deletion for: ${id}`);
+    setDeletingId(id);
+    setIsConfirmDeleteDialogOpen(false); // Close dialog
+
+    try {
+      console.log(`[AdminUsersPage/confirmDelete] Calling deleteUser(${id}) from mock-data`);
+      const success = await deleteUser(id);
+      console.log(`[AdminUsersPage/confirmDelete] deleteUser(${id}) returned: ${success}`);
+      if (success) {
+        toast({
+          title: "Kullanıcı Silindi",
+          description: `"${name}" kullanıcısı başarıyla silindi.`,
+        });
+        console.log(`[AdminUsersPage/confirmDelete] Deletion successful for ${id}. Refetching users...`);
+        await fetchUsers(); 
+        if (paginatedUsers.length === 1 && currentPage > 1 && totalPages > 1 && currentPage === totalPages) {
+           console.log(`[AdminUsersPage/confirmDelete] Last item on page deleted, moving to page ${currentPage - 1}`);
+           setCurrentPage(currentPage - 1);
         }
-      } catch (error) {
-        console.error(`[AdminUsersPage/handleDelete] Error during deletion of ${id}:`, error);
-        toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinirken bir hata oluştu." });
-      } finally {
-        console.log(`[AdminUsersPage/handleDelete] Resetting deletingId for ${id}.`);
-        setDeletingId(null); // Hide loader
+        console.log(`[AdminUsersPage/confirmDelete] User list refetched after deleting ${id}.`);
+      } else {
+        console.error(`[AdminUsersPage/confirmDelete] deleteUser(${id}) failed (returned false).`);
+        toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
       }
-    } else {
-        console.log(`[AdminUsersPage/handleDelete] User cancelled deletion for: ${id}`);
+    } catch (error) {
+      console.error(`[AdminUsersPage/confirmDelete] Error during deletion of ${id}:`, error);
+      toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinirken bir hata oluştu." });
+    } finally {
+      console.log(`[AdminUsersPage/confirmDelete] Resetting deletingId for ${id}.`);
+      setDeletingId(null);
+      setUserToDelete(null); // Clear user to delete
     }
   };
 
@@ -146,15 +166,14 @@ export default function AdminUsersPage() {
                  Yenile
             </Button>
             <Button asChild>
-                <Link href="/admin/users/new"> {/* Link to new user page */}
+                <Link href="/admin/users/new">
                     <UserPlus className="mr-2 h-4 w-4" /> Yeni Kullanıcı Ekle
                 </Link>
             </Button>
         </div>
       </div>
 
-      {/* Filtering and Search Bar */}
-       <Card>
+      <Card>
             <CardHeader>
                 <CardTitle>Filtrele ve Ara</CardTitle>
             </CardHeader>
@@ -244,17 +263,19 @@ export default function AdminUsersPage() {
                             <span className="sr-only">Kullanıcıyı Düzenle</span>
                         </Link>
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(user.id, user.name)}
-                            disabled={!!deletingId} // Disable all delete buttons if any delete is in progress
-                            aria-label="Kullanıcıyı Sil"
-                        >
-                            {deletingId === user.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
-                            <span className="sr-only">Kullanıcıyı Sil</span>
-                        </Button>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteInitiate(user.id, user.name)}
+                                disabled={!!deletingId} 
+                                aria-label="Kullanıcıyı Sil"
+                            >
+                                {deletingId === user.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
+                                <span className="sr-only">Kullanıcıyı Sil</span>
+                            </Button>
+                         </AlertDialogTrigger>
                     </TableCell>
                     </TableRow>
                 ))}
@@ -298,8 +319,23 @@ export default function AdminUsersPage() {
              </CardContent>
          )}
       </Card>
+
+       <AlertDialog open={isConfirmDeleteDialogOpen} onOpenChange={setIsConfirmDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{userToDelete?.name}" kullanıcısını silmek üzeresiniz. Bu işlem geri alınamaz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>İptal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Evet, Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
-    
