@@ -51,7 +51,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data';
 interface AiChatMessage {
     id: string;
     type: 'user' | 'ai' | 'error';
-    content: string | React.ReactNode;
+    content: string | React.ReactNode; // Allow ReactNode for richer AI responses
 }
 
 // --- Main Page Component ---
@@ -262,13 +262,49 @@ export default function NewBiyolojiNotuPage() {
 
         try {
             const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInput);
+            
+            // Format AI output for display in chat
+            const aiResponseContent = (
+                <div className="space-y-2 text-left">
+                    {aiOutput.suggestedTitle && (
+                        <div>
+                            <strong className="block text-sm font-medium">Önerilen Başlık:</strong>
+                            <p className="text-sm">{aiOutput.suggestedTitle}</p>
+                        </div>
+                    )}
+                    {aiOutput.suggestedSummary && (
+                        <div>
+                            <strong className="block text-sm font-medium">Önerilen Özet:</strong>
+                            <p className="text-sm whitespace-pre-wrap">{aiOutput.suggestedSummary}</p>
+                        </div>
+                    )}
+                    {aiOutput.suggestedTags && aiOutput.suggestedTags.length > 0 && (
+                        <div>
+                            <strong className="block text-sm font-medium">Önerilen Etiketler:</strong>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {aiOutput.suggestedTags.map(tag => (
+                                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                     {aiOutput.suggestedContentIdeas && (
+                        <div>
+                            <strong className="block text-sm font-medium">Önerilen İçerik Fikirleri/Taslak:</strong>
+                            <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '<br />') }} />
+                        </div>
+                    )}
+                </div>
+            );
+            
             setAiMessages(prev => [...prev, {
                 id: Date.now().toString(), type: 'ai',
-                content: aiOutput.suggestionText, // Display the raw text suggestion
+                content: aiResponseContent,
             }]);
+
         } catch (error: any) {
             console.error("AI note generation error:", error);
-            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: `AI not oluştururken hata: ${error.message}` }]);
+            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: `AI not önerisi oluştururken hata: ${error.message}` }]);
         } finally {
             setIsAiGenerating(false);
         }
@@ -395,18 +431,22 @@ export default function NewBiyolojiNotuPage() {
                  {isAiPanelOpen && (
                     <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-4 flex flex-col">
                         <CardHeader className="p-0 mb-2">
-                             <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> AI Not Oluşturucu</CardTitle>
-                             <CardDescription className="text-xs">AI'dan not içeriği hakkında fikir ve öneri alın.</CardDescription>
+                             <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> AI Not Yardımcısı</CardTitle>
+                             <CardDescription className="text-xs">AI'dan not içeriği, başlık, özet ve etiketler için fikir ve öneri alın.</CardDescription>
                         </CardHeader>
 
                         <div className="space-y-3 flex-grow flex flex-col">
                             <ScrollArea className="flex-grow pr-3 -mr-3" ref={aiChatContainerRef}>
                                 <div className="space-y-3 mb-3">
                                     {aiMessages.map(msg => (
-                                        <div key={msg.id} className={`p-3 rounded-lg max-w-[90%] text-sm ${msg.type === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.type === 'ai' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
-                                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                                        <div key={msg.id} className={`p-3 rounded-lg max-w-[95%] text-sm ${msg.type === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.type === 'ai' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
+                                            {typeof msg.content === 'string' ? (
+                                                <div className="whitespace-pre-wrap">{msg.content}</div>
+                                            ) : (
+                                                msg.content // Render ReactNode directly
+                                            )}
                                         </div>
-                                    ))}
+                                    )}
                                     {isAiGenerating && (
                                         <div className="p-3 rounded-lg bg-secondary self-start flex items-center mr-auto">
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
