@@ -14,13 +14,13 @@ import {
   SidebarInset,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarGroupContent,
+  // SidebarGroupContent, // This was correctly removed in a previous step, ensuring it stays removed.
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag } from 'lucide-react'; // Added BookCopy, Tag icons
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { Card, CardContent } from '@/components/ui/card'; // Added Card for main content area
+// import { ThemeToggle } from '@/components/theme-toggle'; // Removed as per user request
+// import { Card, CardContent } from '@/components/ui/card'; // This was unused
 
 export const metadata: Metadata = {
   title: 'TeknoBiyo Admin',
@@ -41,20 +41,21 @@ export default function AdminLayout({
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="1.5" // Adjusted from 2 to 1.5 for a slightly thinner look
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow" // Added animation
+            className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
           >
-            <path d="M12 2 L12 6" />
-            <path d="M12 18 L12 22" />
-            <path d="M4.93 4.93 L7.76 7.76" />
-            <path d="M16.24 16.24 L19.07 19.07" />
-            <path d="M2 12 L6 12" />
-            <path d="M18 12 L22 12" />
-            <path d="M4.93 19.07 L7.76 16.24" />
-            <path d="M16.24 7.76 L19.07 4.93" />
-            <circle cx="12" cy="12" r="3" />
+            {/* More biology-themed paths - e.g. a stylized leaf or DNA strand */}
+            <path d="M12 22A10 10 0 0 0 12 2" />
+            <path d="M12 2a10 10 0 0 0-7.07 17.07" />
+            <path d="M12 2a10 10 0 0 1 7.07 17.07" />
+            <path d="M2 12A10 10 0 0 0 12 22" />
+            <path d="M22 12a10 10 0 0 0-10 10" />
+            <path d="M17.07 7.07A5 5 0 0 0 12 4.07" />
+            <path d="M7.07 7.07A5 5 0 0 1 12 4.07" />
+            <path d="M4.07 12A5 5 0 0 0 7.07 17.07" />
+            <path d="M19.93 12a5 5 0 0 1-2.93 4.93" />
           </svg>
           <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">
             TeknoBiyo
@@ -72,7 +73,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarGroup className="p-0">
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
-              <SidebarGroupContent>
+              {/* <SidebarGroupContent> - This component is not defined and was removed. The content is directly in SidebarMenu. */}
                 <SidebarMenu>
                     <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Tüm Makaleler">
@@ -109,7 +110,7 @@ export default function AdminLayout({
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Kategoriler">
                             <Link href="/admin/categories">
-                            <Tag /> {/* Added Category Icon */}
+                            <Tag />
                             <span>Kategoriler</span>
                             </Link>
                         </SidebarMenuButton>
@@ -122,14 +123,13 @@ export default function AdminLayout({
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                    {/* Add Tags, Media links here later */}
                 </SidebarMenu>
-             </SidebarGroupContent>
+             {/* </SidebarGroupContent> */}
             </SidebarGroup>
 
             <SidebarGroup className="p-0">
                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Yönetim</SidebarGroupLabel>
-               <SidebarGroupContent>
+               {/* <SidebarGroupContent> */}
                  <SidebarMenu>
                     <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Kullanıcılar">
@@ -148,12 +148,12 @@ export default function AdminLayout({
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                  </SidebarMenu>
-              </SidebarGroupContent>
+               {/* </SidebarGroupContent> */}
             </SidebarGroup>
 
              <SidebarGroup className="p-0">
                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
-               <SidebarGroupContent>
+               {/* <SidebarGroupContent> */}
                  <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Genel Ayarlar">
@@ -171,9 +171,8 @@ export default function AdminLayout({
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                    {/* Add Analytics, Logs links here later */}
                  </SidebarMenu>
-               </SidebarGroupContent>
+              {/* </SidebarGroupContent> */}
              </SidebarGroup>
 
           </SidebarMenu>
@@ -181,7 +180,7 @@ export default function AdminLayout({
         <SidebarFooter className="p-2">
            <SidebarGroup className="p-0">
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Hesap</SidebarGroupLabel>
-              <SidebarGroupContent>
+              {/* <SidebarGroupContent> */}
                  <SidebarMenu>
                    <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Profil">
@@ -196,7 +195,6 @@ export default function AdminLayout({
                    </SidebarMenuItem>
                     <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Çıkış Yap">
-                        {/* TODO: Implement actual logout */}
                         <Link href="/login">
                            <LogOut />
                            <span>Çıkış Yap</span>
@@ -204,18 +202,14 @@ export default function AdminLayout({
                      </SidebarMenuButton>
                    </SidebarMenuItem>
                  </SidebarMenu>
-              </SidebarGroupContent>
+               {/* </SidebarGroupContent> */}
            </SidebarGroup>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="flex flex-col"> {/* Removed pt-14 as header is inside */}
-         {/* Header for mobile and top bar content */}
+      <SidebarInset className="flex flex-col">
          <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:justify-end">
            <SidebarTrigger className="md:hidden" />
-           {/* Add other header elements like search or user menu here if needed */}
            <div className="flex items-center gap-2">
-             {/* Example User Dropdown Trigger */}
-             {/* TODO: Add dropdown menu for user actions */}
              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                 <Avatar className="size-7">
                    <AvatarImage src="https://picsum.photos/seed/admin-avatar/32/32" alt="Admin" />
@@ -224,9 +218,9 @@ export default function AdminLayout({
              </Button>
            </div>
          </header>
-         {/* Main content pushes below the sticky header automatically due to flex layout */}
-         <main className="flex-1 p-4 md:p-6">
-            {/* Removed Card wrapping here, let individual pages manage their main container */}
+         {/* Adjusted padding: pt-16 (h-14 for header + 0.5rem extra) ensures content starts below the header. */}
+         {/* On medium screens and up, the padding will be pt-[calc(3.5rem+1.5rem)] = pt-20 */}
+         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]">
             {children}
          </main>
       </SidebarInset>
