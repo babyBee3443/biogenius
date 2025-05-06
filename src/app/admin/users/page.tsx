@@ -37,7 +37,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  // AlertDialogTrigger, // No longer needed here for the row button
 } from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 const getRoleVariant = (role: string): "default" | "secondary" | "outline" | "destructive" => {
@@ -263,19 +263,17 @@ export default function AdminUsersPage() {
                             <span className="sr-only">Kullanıcıyı Düzenle</span>
                         </Link>
                         </Button>
-                        <AlertDialogTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteInitiate(user.id, user.name)}
-                                disabled={!!deletingId} 
-                                aria-label="Kullanıcıyı Sil"
-                            >
-                                {deletingId === user.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
-                                <span className="sr-only">Kullanıcıyı Sil</span>
-                            </Button>
-                         </AlertDialogTrigger>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteInitiate(user.id, user.name)}
+                            disabled={!!deletingId} 
+                            aria-label="Kullanıcıyı Sil"
+                        >
+                            {deletingId === user.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
+                            <span className="sr-only">Kullanıcıyı Sil</span>
+                        </Button>
                     </TableCell>
                     </TableRow>
                 ))}
