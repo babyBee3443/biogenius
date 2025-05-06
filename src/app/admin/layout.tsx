@@ -1,4 +1,3 @@
-
 "use client"; // Add "use client" for useState and useEffect
 
 import type { Metadata } from 'next';
@@ -256,17 +255,16 @@ export default function AdminLayout({
            <div className="flex items-center gap-2">
             <Link href="/admin/profile" passHref>
               <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8" asChild>
-                <a> {/* Add an anchor tag for the Link to work correctly with Button asChild */}
-                  <Avatar className="size-7">
-                    <AvatarImage src={currentUserAvatar} alt={currentUserName} />
-                    <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </a>
+                {/* Removed the explicit <a> tag here */}
+                <Avatar className="size-7">
+                  <AvatarImage src={currentUserAvatar} alt={currentUserName} />
+                  <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                </Avatar>
               </Button>
             </Link>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-6"> {/* Removed fixed top padding */}
+         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]"> {/* Adjusted top padding */}
             {children}
          </main>
       </SidebarInset>
