@@ -16,16 +16,21 @@ import {z}  from 'genkit';
 
 // --- Chat Message Schema for History ---
 const ChatMessageSchema = z.object({
-    role: z.enum(['user', 'assistant']), // 'system_error' handled internally, not passed to AI history
+    role: z.enum(['user', 'assistant', 'system_error']), // Added system_error for internal handling
     content: z.string(),
 });
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 
 
 // --- Input Schema ---
+// For the AI prompt, we will filter out system_error messages from history.
+const AiChatMessageSchema = z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+});
 const BiologyChatInputSchema = z.object({
   query: z.string().describe('The user\'s biology-related question or statement.'),
-  history: z.array(ChatMessageSchema).optional().describe('Previous messages in the conversation for context. Exclude system error messages.'),
+  history: z.array(AiChatMessageSchema).optional().describe('Previous messages in the conversation for context. Exclude system error messages.'),
 });
 export type BiologyChatInput = z.infer<typeof BiologyChatInputSchema>;
 
@@ -53,8 +58,7 @@ const biologyChatPrompt = ai.definePrompt({
     {{#if history.length}}
     Previous conversation:
     {{#each history}}
-    {{#if (eq this.role "user")}}User: {{this.content}}{{/if}}
-    {{#if (eq this.role "assistant")}}AI: {{this.content}}{{/if}}
+    {{this.role}}: {{this.content}}
     {{/each}}
     {{/if}}
 
@@ -82,6 +86,17 @@ const biologyChatFlow = ai.defineFlow(
 );
 
 // --- Exported Wrapper Function ---
-export async function biologyChat(input: BiologyChatInput): Promise<BiologyChatOutput> {
-  return biologyChatFlow(input);
+// This function now accepts the ChatMessage type (which includes system_error)
+// and filters it before passing to the AI flow.
+export async function biologyChat(
+    input: { query: string; history?: ChatMessage[] }
+): Promise<BiologyChatOutput> {
+  const historyForAI = input.history
+    ? input.history
+        .filter(m => m.role === 'user' || m.role === 'assistant') // Filter out system_error
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })) // Ensure correct type for AI
+    : undefined;
+
+  return biologyChatFlow({ query: input.query, history: historyForAI });
 }
+

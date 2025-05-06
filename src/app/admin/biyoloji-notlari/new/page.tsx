@@ -275,7 +275,7 @@ export default function NewBiyolojiNotuPage() {
             currentTags: tags,
             currentCategory: category,
             currentLevel: level,
-            currentBlocksStructure: blocks.map(b => ({ type: b.type, contentPreview: (b as any).content?.substring(0, 50) || `[${b.type} bloğu]` }) as GenerateNoteAiBlockStructure[]) // Correctly type the structure
+            currentBlocksStructure: blocks.map(b => ({ type: b.type, contentPreview: (b as any).content?.substring(0, 50) || `[${b.type} bloğu]` }) as GenerateNoteAiBlockStructure[])
         };
 
         const userInput: GenerateBiologyNoteSuggestionInput = {
@@ -360,12 +360,13 @@ export default function NewBiyolojiNotuPage() {
 
         try {
             // Filter out system_error messages before sending to AI history
-            const historyForAI: AiDirectChatMessage[] = aiChatMessages
-                .filter(m => m.role === 'user' || m.role === 'assistant')
-                .map(m => ({ id: m.id, role: m.role, content: m.content }));
+            // and ensure the history objects match AiDirectChatMessageDef for the flow
+            const historyForAI: AiDirectChatMessageDef[] = aiChatMessages
+                .filter(m => m.role === 'user' || m.role === 'assistant') // Filter out system_error for the AI
+                .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })); // Ensure correct role type
 
-            const input: BiologyChatInput = { query: userQuery, history: historyForAI };
-            const response: BiologyChatOutput = await biologyChat(input);
+
+            const response: BiologyChatOutput = await biologyChat({ query: userQuery, history: historyForAI });
 
             setAiChatMessages(prev => [...prev, { id: `ai-${Date.now()}`, role: 'assistant', content: response.answer }]);
         } catch (error: any) {
@@ -607,3 +608,4 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
+
