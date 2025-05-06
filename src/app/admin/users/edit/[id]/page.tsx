@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, KeyRound, Activity } from "lucide-react"; // Added icons
+import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2 } from "lucide-react"; // Added Loader2
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge"; // For status/role
@@ -41,12 +41,13 @@ interface UserActivity {
 
 export default function EditUserPage() {
     const params = useParams();
-    const userId = params.id as string; // Correct way to get userId
+    const userId = React.use(params.id) as string;
 
     const [user, setUser] = React.useState<User | null>(null);
     const [activity, setActivity] = React.useState<UserActivity[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [name, setName] = React.useState("");
+    const [username, setUsername] = React.useState(""); // Added username state
     const [role, setRole] = React.useState("");
     const [isSaving, setIsSaving] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
@@ -59,6 +60,7 @@ export default function EditUserPage() {
                     if (userData) {
                         setUser(userData);
                         setName(userData.name);
+                        setUsername(userData.username); // Set username
                         setRole(userData.role);
                         setActivity(userActivityData);
                     } else {
@@ -77,9 +79,13 @@ export default function EditUserPage() {
         if (!user) return;
         setIsSaving(true);
         try {
+            // Username is not updatable in this mock setup after creation, so we don't pass it to mockUpdateUser
             const updatedUser = await mockUpdateUser(userId, { name, role });
             if (updatedUser) {
                  setUser(updatedUser); // Update local state
+                 setName(updatedUser.name); // Re-sync form fields
+                 setRole(updatedUser.role);
+                 setUsername(updatedUser.username); // Re-sync username although it's not changed
                  toast({
                     title: "Kullanıcı Güncellendi",
                     description: `${updatedUser.name} kullanıcısının bilgileri başarıyla güncellendi.`,
@@ -87,9 +93,9 @@ export default function EditUserPage() {
             } else {
                 toast({ variant: "destructive", title: "Güncelleme Hatası", description: "Kullanıcı güncellenemedi."});
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error updating user:", error);
-            toast({ variant: "destructive", title: "Hata", description: "Kullanıcı güncellenirken bir sorun oluştu." });
+            toast({ variant: "destructive", title: "Hata", description: error.message || "Kullanıcı güncellenirken bir sorun oluştu." });
         } finally {
             setIsSaving(false);
         }
@@ -111,13 +117,14 @@ export default function EditUserPage() {
                     window.location.href = '/admin/users';
                 } else {
                     toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
+                     setIsDeleting(false);
                 }
-            } catch (error) {
+            } catch (error: any) {
                  console.error("Error deleting user:", error);
-                 toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinirken bir hata oluştu." });
-            } finally {
-                setIsDeleting(false);
+                 toast({ variant: "destructive", title: "Silme Hatası", description: error.message || "Kullanıcı silinirken bir hata oluştu." });
+                 setIsDeleting(false);
             }
+            // No finally block for setIsDeleting(false) here if redirecting on success
         }
     };
 
@@ -174,8 +181,8 @@ export default function EditUserPage() {
                                 <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Katılma Tarihi: {user.joinedAt}</p>
-                                    <p className="text-sm text-muted-foreground">Son Giriş: {user.lastLogin}</p>
+                                    <p className="text-sm text-muted-foreground">Katılma Tarihi: {new Date(user.joinedAt).toLocaleDateString('tr-TR')}</p>
+                                    <p className="text-sm text-muted-foreground">Son Giriş: {user.lastLogin ? new Date(user.lastLogin).toLocaleString('tr-TR') : '-'}</p>
                                 </div>
                             </div>
                              <Separator />
@@ -185,12 +192,18 @@ export default function EditUserPage() {
                                     <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label htmlFor="username">Kullanıcı Adı</Label>
+                                    <Input id="username" value={username} disabled />
+                                    <p className="text-xs text-muted-foreground">Kullanıcı adı değiştirilemez.</p>
+                                </div>
+                             </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
                                     <Label htmlFor="email">E-posta</Label>
                                     <Input id="email" type="email" value={user.email} disabled />
                                      <p className="text-xs text-muted-foreground">E-posta adresi değiştirilemez.</p>
                                 </div>
-                             </div>
-                            <div className="space-y-2">
+                                <div className="space-y-2">
                                 <Label htmlFor="role">Rol</Label>
                                 <Select value={role} onValueChange={setRole} required>
                                     <SelectTrigger id="role">
@@ -202,7 +215,8 @@ export default function EditUserPage() {
                                         <SelectItem value="Admin">Admin</SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
+                                </div>
+                             </div>
                         </CardContent>
                      </Card>
 
@@ -264,3 +278,4 @@ export default function EditUserPage() {
          </form>
     );
 }
+

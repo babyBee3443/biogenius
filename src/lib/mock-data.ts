@@ -47,7 +47,8 @@ export interface NoteData {
 // --- User Data Structure ---
 export interface User {
   id: string;
-  name: string;
+  name: string; // Full name
+  username: string; // Unique username for login and display
   email: string;
   role: 'Admin' | 'Editor' | 'User' | string; // Allow string for flexibility, but define common roles
   joinedAt: string; // ISO Date string
@@ -329,11 +330,11 @@ let defaultMockNotes: NoteData[] = [
 ];
 
 let defaultMockUsers: User[] = [
-  { id: 'u1', name: 'Ali Veli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15T10:00:00Z', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22T10:30:00Z' },
-  { id: 'u2', name: 'Ayşe Kaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22T11:00:00Z', avatar: 'https://picsum.photos/seed/u2/128/128', lastLogin: '2024-07-21T15:00:00Z' },
-  { id: 'u3', name: 'Mehmet Yılmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10T12:00:00Z', avatar: 'https://picsum.photos/seed/u3/128/128', lastLogin: '2024-07-20T09:15:00Z' },
-  { id: 'u4', name: 'Zeynep Demir', email: 'zeynep.demir@example.com', role: 'User', joinedAt: '2024-07-01T13:00:00Z', avatar: 'https://picsum.photos/seed/u4/128/128', lastLogin: '2024-07-18T11:00:00Z' },
-  { id: 'u5', name: 'Can Öztürk', email: 'can.ozturk@example.com', role: 'Editor', joinedAt: '2024-05-19T14:00:00Z', avatar: 'https://picsum.photos/seed/u5/128/128', lastLogin: '2024-07-19T18:45:00Z' },
+  { id: 'u1', name: 'Ali Veli', username: 'aliveli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15T10:00:00Z', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22T10:30:00Z' },
+  { id: 'u2', name: 'Ayşe Kaya', username: 'aysekaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22T11:00:00Z', avatar: 'https://picsum.photos/seed/u2/128/128', lastLogin: '2024-07-21T15:00:00Z' },
+  { id: 'u3', name: 'Mehmet Yılmaz', username: 'mehmetyilmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10T12:00:00Z', avatar: 'https://picsum.photos/seed/u3/128/128', lastLogin: '2024-07-20T09:15:00Z' },
+  { id: 'u4', name: 'Zeynep Demir', username: 'zeynepdemir', email: 'zeynep.demir@example.com', role: 'User', joinedAt: '2024-07-01T13:00:00Z', avatar: 'https://picsum.photos/seed/u4/128/128', lastLogin: '2024-07-18T11:00:00Z' },
+  { id: 'u5', name: 'Can Öztürk', username: 'canozturk', email: 'can.ozturk@example.com', role: 'Editor', joinedAt: '2024-05-19T14:00:00Z', avatar: 'https://picsum.photos/seed/u5/128/128', lastLogin: '2024-07-19T18:45:00Z' },
 ];
 
 // --- In-Memory Data Stores with localStorage Persistence ---
@@ -574,6 +575,14 @@ export const getUserById = async (id: string): Promise<User | null> => {
 export const createUser = async (data: Omit<User, 'id' | 'joinedAt'>): Promise<User> => {
     await delay(50);
     loadData();
+    // Validate if username or email already exists
+    if (mockUsers.some(u => u.username === data.username)) {
+        throw new Error(`Kullanıcı adı "${data.username}" zaten mevcut.`);
+    }
+    if (mockUsers.some(u => u.email === data.email)) {
+        throw new Error(`E-posta adresi "${data.email}" zaten mevcut.`);
+    }
+
     const newUser: User = {
         ...data,
         id: `user-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
@@ -590,6 +599,12 @@ export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'jo
     loadData();
     const userIndex = mockUsers.findIndex(u => u.id === id);
     if (userIndex === -1) return null;
+    
+    // If username is being updated, check for uniqueness
+    if (data.username && data.username !== mockUsers[userIndex].username && mockUsers.some(u => u.username === data.username && u.id !== id)) {
+        throw new Error(`Kullanıcı adı "${data.username}" zaten mevcut.`);
+    }
+
     const updatedUser = {
         ...mockUsers[userIndex],
         ...data,

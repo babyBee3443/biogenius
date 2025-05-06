@@ -16,13 +16,14 @@ import { createUser, type User } from "@/lib/mock-data"; // Import createUser
 export default function AdminNewUserPage() {
     const router = useRouter();
     const [name, setName] = React.useState("");
+    const [username, setUsername] = React.useState(""); // Added username state
     const [email, setEmail] = React.useState("");
     const [role, setRole] = React.useState<User['role']>("User"); // Default to 'User'
     const [password, setPassword] = React.useState(""); // Basic password field
     const [saving, setSaving] = React.useState(false);
 
     const handleSave = async () => {
-        if (!name || !email || !role || !password) {
+        if (!name || !username || !email || !role || !password) {
             toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen tüm zorunlu alanları doldurun." });
             return;
         }
@@ -30,12 +31,21 @@ export default function AdminNewUserPage() {
             toast({ variant: "destructive", title: "Geçersiz Şifre", description: "Şifre en az 6 karakter olmalıdır." });
             return;
         }
+        if (username.length < 3) {
+             toast({ variant: "destructive", title: "Geçersiz Kullanıcı Adı", description: "Kullanıcı adı en az 3 karakter olmalıdır." });
+             return;
+        }
+        if (/\s/.test(username)) {
+            toast({ variant: "destructive", title: "Geçersiz Kullanıcı Adı", description: "Kullanıcı adı boşluk içeremez." });
+            return;
+        }
+
 
         setSaving(true);
         try {
             // Note: In a real app, password should be hashed securely on the backend.
             // Here we are just passing it for the mock data structure.
-            const newUser = await createUser({ name, email, role }); // Password is not part of User type for createUser
+            const newUser = await createUser({ name, username, email, role }); // Password is not part of User type for createUser
             if (newUser) {
                 toast({
                     title: "Kullanıcı Oluşturuldu",
@@ -82,15 +92,32 @@ export default function AdminNewUserPage() {
                             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="email">E-posta <span className="text-destructive">*</span></Label>
-                            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            <Label htmlFor="username">Kullanıcı Adı <span className="text-destructive">*</span></Label>
+                            <Input 
+                                id="username" 
+                                value={username} 
+                                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} 
+                                required 
+                                placeholder="örn: alivel_42 (boşluksuz)"
+                            />
+                             <p className="text-xs text-muted-foreground">Giriş yapmak ve yorumlarda görünmek için kullanılır.</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
+                            <Label htmlFor="email">E-posta <span className="text-destructive">*</span></Label>
+                            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Şifre <span className="text-destructive">*</span></Label>
+                            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="En az 6 karakter"/>
+                             <p className="text-xs text-muted-foreground">Kullanıcı ilk girişinde şifresini değiştirmelidir.</p>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
                             <Label htmlFor="role">Rol <span className="text-destructive">*</span></Label>
                             <Select value={role} onValueChange={(value) => setRole(value as User['role'])} required>
-                                <SelectTrigger id="role">
+                                <SelectTrigger id="role" className="md:w-1/2">
                                     <SelectValue placeholder="Rol seçin" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -100,12 +127,6 @@ export default function AdminNewUserPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Şifre <span className="text-destructive">*</span></Label>
-                            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="En az 6 karakter"/>
-                             <p className="text-xs text-muted-foreground">Kullanıcı ilk girişinde şifresini değiştirmelidir.</p>
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
              <div className="flex justify-end">
