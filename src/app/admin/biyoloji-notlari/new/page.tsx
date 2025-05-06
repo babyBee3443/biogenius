@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -10,7 +9,7 @@ import { BlockEditor } from "@/components/admin/block-editor";
 import { TemplateSelector, type Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
 import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data';
-import { generateBiologyNote, type GenerateBiologyNoteInput, type GenerateBiologyNoteOutput, type ContentBlock as AiContentBlock } from '@/ai/flows/generate-biology-note-flow';
+import { generateBiologyNote, type GenerateBiologyNoteInput, type GenerateBiologyNoteOutput } from '@/ai/flows/generate-biology-note-flow';
 
 import {
   Card,
@@ -52,8 +51,7 @@ interface AiChatMessage {
     id: string;
     type: 'user' | 'ai' | 'error';
     content: string | React.ReactNode;
-    actions?: React.ReactNode; // For AI messages with actions like "Apply to Editor"
-    aiData?: GenerateBiologyNoteOutput; // To store the raw AI output for later use
+    // Removed actions and aiData as AI suggestions will be displayed directly in chat
 }
 
 // --- Main Page Component ---
@@ -262,39 +260,35 @@ export default function NewBiyolojiNotuPage() {
 
         try {
             const aiOutput = await generateBiologyNote(userInput);
-            // Display AI suggestions in the chat panel
-            const suggestionContent = (
-                <div className="space-y-2">
-                    <p className="font-semibold">AI tarafından oluşturulan not önerisi:</p>
-                    <div><strong>Başlık:</strong> {aiOutput.title}</div>
-                    <div><strong>Özet:</strong> {aiOutput.summary}</div>
-                    <div><strong>Etiketler:</strong> {aiOutput.tags.join(', ')}</div>
-                    <div className="mt-2"><strong>İçerik Blokları ({aiOutput.contentBlocks.length} adet):</strong></div>
-                    <ul className="list-disc pl-5 space-y-1 text-xs">
-                        {aiOutput.contentBlocks.map((block, index) => (
-                            <li key={index}>
-                                <strong>{block.type === 'heading' ? `H${block.level}` : block.type.charAt(0).toUpperCase() + block.type.slice(1)}:</strong>{' '}
-                                {block.type === 'text' && (block.content.length > 50 ? block.content.substring(0, 47) + '...' : block.content)}
-                                {block.type === 'heading' && block.content}
-                                {block.type === 'image' && `URL: ${block.url.substring(0,30)}... Alt: ${block.alt}`}
-                                {block.type === 'video' && `URL: ${block.url.substring(0,30)}...`}
-                                {block.type === 'quote' && (block.content.length > 40 ? block.content.substring(0, 37) + '...' : block.content)}
-                                {block.type === 'divider' && <span className="italic">-Ayırıcı-</span>}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            );
+            // Display AI suggestions in the chat panel as structured text
+            const suggestionText = `
+AI tarafından oluşturulan not önerisi:
+
+**Başlık:** ${aiOutput.title}
+
+**Özet:** ${aiOutput.summary}
+
+**Etiketler:** ${aiOutput.tags.join(', ')}
+
+**İçerik Blokları (${aiOutput.contentBlocks.length} adet):**
+${aiOutput.contentBlocks.map((block, index) => {
+    let blockContent = `  ${index + 1}. **${block.type === 'heading' ? `H${block.level}` : block.type.charAt(0).toUpperCase() + block.type.slice(1)}:** `;
+    switch (block.type) {
+        case 'text': blockContent += block.content; break;
+        case 'heading': blockContent += block.content; break;
+        case 'image': blockContent += `URL: ${block.url}, Alt: ${block.alt}${block.caption ? ', Açıklama: ' + block.caption : ''}`; break;
+        case 'video': blockContent += `URL: ${block.url}${block.youtubeId ? ', YouTube ID: ' + block.youtubeId : ''}`; break;
+        case 'quote': blockContent += `"${block.content}"${block.citation ? ' - ' + block.citation : ''}`; break;
+        case 'divider': blockContent += `-Ayırıcı-`; break;
+        default: blockContent += `[Desteklenmeyen Blok Tipi: ${(block as any).type}]`;
+    }
+    return blockContent;
+}).join('\n')}
+            `.trim(); // Use trim to remove leading/trailing whitespace from the template literal
 
             setAiMessages(prev => [...prev, {
                 id: Date.now().toString(), type: 'ai',
-                content: suggestionContent,
-                aiData: aiOutput, // Store the raw AI output
-                actions: (
-                    <Button size="sm" className="mt-2" onClick={() => applyAiSuggestionToEditor(aiOutput)}>
-                        Bu Öneriyi Editöre Uygula
-                    </Button>
-                )
+                content: suggestionText, // Display as plain text
             }]);
         } catch (error: any) {
             console.error("AI note generation error:", error);
@@ -304,31 +298,7 @@ export default function NewBiyolojiNotuPage() {
         }
     };
 
-    const applyAiSuggestionToEditor = (aiOutput: GenerateBiologyNoteOutput) => {
-        setTitle(aiOutput.title);
-        setSummary(aiOutput.summary);
-        setTags(aiOutput.tags);
-        // Convert AI content blocks to editor blocks (ensure ID generation)
-        const newEditorBlocks: Block[] = aiOutput.contentBlocks.map((aiBlock: AiContentBlock) => {
-            const baseBlock = { id: generateBlockId(), type: aiBlock.type };
-            switch (aiBlock.type) {
-                case 'text': return { ...baseBlock, content: aiBlock.content } as Block;
-                case 'heading': return { ...baseBlock, level: aiBlock.level, content: aiBlock.content } as Block;
-                case 'image': return { ...baseBlock, url: aiBlock.url, alt: aiBlock.alt, caption: aiBlock.caption } as Block;
-                case 'video': return { ...baseBlock, url: aiBlock.url, youtubeId: aiBlock.youtubeId } as Block;
-                case 'quote': return { ...baseBlock, content: aiBlock.content, citation: aiBlock.citation } as Block;
-                case 'divider': return { ...baseBlock } as Block;
-                default:
-                     // Attempt to handle potential type mismatches or unexpected types gracefully
-                    console.warn("Unsupported AI block type encountered in applyAiSuggestionToEditor:", (aiBlock as any).type);
-                    return { ...baseBlock, type: 'text', content: `[Desteklenmeyen AI Blok Tipi: ${(aiBlock as any).type}]` } as Block;
-            }
-        });
-        setBlocks(newEditorBlocks);
-        setTemplateApplied(true); // Similar to applying a template
-        toast({ title: "AI Önerisi Uygulandı", description: "AI tarafından oluşturulan içerik editöre aktarıldı." });
-        setIsAiPanelOpen(false); // Close panel after applying
-    };
+    // Removed applyAiSuggestionToEditor function as AI output will only be displayed in chat
 
 
     return (
@@ -379,8 +349,8 @@ export default function NewBiyolojiNotuPage() {
                                              <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loadingCategories}>
                                                 <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                                 <SelectContent>
-                                                    {loadingCategories && <SelectItem value="loading" disabled>Yükleniyor...</SelectItem>}
-                                                     {!loadingCategories && categories.length === 0 && <SelectItem value="no-categories" disabled>Önce kategori ekleyin</SelectItem>}
+                                                    {loadingCategories && <SelectItem value="" disabled>Yükleniyor...</SelectItem>}
+                                                     {!loadingCategories && categories.length === 0 && <SelectItem value="" disabled>Önce kategori ekleyin</SelectItem>}
                                                      {!loadingCategories && categories.map(cat => (
                                                         <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                                      ))}
@@ -461,7 +431,7 @@ export default function NewBiyolojiNotuPage() {
                                     {aiMessages.map(msg => (
                                         <div key={msg.id} className={`p-3 rounded-lg max-w-[90%] text-sm ${msg.type === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.type === 'ai' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
                                             <div className="whitespace-pre-wrap">{msg.content}</div>
-                                            {msg.actions && <div className="mt-2">{msg.actions}</div>}
+                                            {/* Removed actions from AI messages */}
                                         </div>
                                     ))}
                                     {isAiGenerating && (
@@ -507,6 +477,3 @@ export default function NewBiyolojiNotuPage() {
         </div>
     );
 }
-
-
-    

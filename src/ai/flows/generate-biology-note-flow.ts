@@ -17,37 +17,37 @@ const BaseBlockSchema = z.object({
 });
 
 const TextBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('text').describe("The type of the block, must be 'text' for this block type."),
+  type: z.enum(['text']).describe("The type of the block, must be 'text' for this block type."),
   content: z.string().describe("Text content. Use Markdown-like syntax for bold (**text**), italic (*text*), and newlines for paragraphs."),
 });
 
 const HeadingBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('heading').describe("The type of the block, must be 'heading' for this block type."),
+  type: z.enum(['heading']).describe("The type of the block, must be 'heading' for this block type."),
   level: z.number().min(2).max(4).describe("Heading level (2-4). H2 for main sections, H3-H4 for sub-sections within the note."),
   content: z.string().describe("Heading text content."),
 });
 
 const ImageBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('image').describe("The type of the block, must be 'image' for this block type."),
+  type: z.enum(['image']).describe("The type of the block, must be 'image' for this block type."),
   url: z.string().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
   alt: z.string().describe("Alternative text for the image, describing its content for accessibility and SEO."),
   caption: z.string().optional().describe("Optional caption for the image, providing context or a short explanation."),
 });
 
 const VideoBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('video').describe("The type of the block, must be 'video' for this block type."),
+  type: z.enum(['video']).describe("The type of the block, must be 'video' for this block type."),
   url: z.string().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
   youtubeId: z.string().optional().nullable().describe("The YouTube video ID, extracted from the URL if it's a YouTube link. (e.g., for 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', the ID is 'dQw4w9WgXcQ')."),
 });
 
 const QuoteBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('quote').describe("The type of the block, must be 'quote' for this block type."),
+  type: z.enum(['quote']).describe("The type of the block, must be 'quote' for this block type."),
   content: z.string().describe("The quote text. This should be a concise and impactful statement related to the topic."),
   citation: z.string().optional().describe("Optional citation for the quote (e.g., author, source)."),
 });
 
 const DividerBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('divider').describe("The type of the block, must be 'divider' for this block type."),
+  type: z.enum(['divider']).describe("The type of the block, must be 'divider' for this block type."),
 });
 
 
@@ -87,7 +87,7 @@ const biologyNotePrompt = ai.definePrompt({
   output: { schema: GenerateBiologyNoteOutputSchema },
   prompt: `
     You are an expert biology educator tasked with assisting a user in creating concise and informative study notes for high school students.
-    Your role is to **suggest** content for the different parts of a biology note based on the provided topic, level, keywords, and outline.
+    Your role is to **suggest content** for the different parts of a biology note based on the provided topic, level, keywords, and outline.
     You will identify the key information needed for each field in the output schema (title, summary, tags, contentBlocks) and provide relevant suggestions.
 
     Note Topic: {{{topic}}}
@@ -105,19 +105,18 @@ const biologyNotePrompt = ai.definePrompt({
         *   For 'heading' blocks, suggest a level (2-4) and the heading text.
         *   For 'text' blocks, describe the key points or explanation to include. Use clear and concise language. You can use Markdown-like syntax for **bold** and *italic* text. Newlines will be treated as paragraph breaks.
         *   For 'image' blocks:
-            *   Provide a relevant \`url\`. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making sure the 'seed' is descriptive (e.g., 'ai-cell-division', 'ai-dna-structure').
-            *   Provide a descriptive \`alt\` text.
-            *   Optionally, add a \`caption\`.
+            *   Suggest a relevant image URL. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making sure the 'seed' is descriptive (e.g., 'ai-cell-division', 'ai-dna-structure').
+            *   Suggest descriptive alt text.
+            *   Optionally, suggest a caption.
         *   For 'video' blocks:
-            *   Suggest a relevant YouTube video \`url\`.
-            *   Extract its \`youtubeId\` if it's a YouTube link.
+            *   Suggest a relevant YouTube video URL.
+            *   If it's a YouTube link, suggest its YouTube ID.
         *   For 'quote' blocks, suggest a quote and an optional citation.
         *   Use 'divider' blocks to suggest visual separation between distinct sections.
 
-    Your goal is to provide a structured set of suggestions that the user can then use to fill in the actual note editor.
+    Your goal is to provide a structured set of suggestions that the user can then review.
     Ensure your output strictly adheres to the 'GenerateBiologyNoteOutput' schema, where each field contains your *suggestion* for that part of the note.
-    The user will then take these suggestions and finalize the content in their editor.
-    Focus on providing the suggestions as structured text, not on generating the final output directly. The "type" field for each block must exactly match one of the literal string values defined in the schema (e.g., "text", "heading").
+    The "type" field for each block must exactly match one of the literal string values defined in the schema (e.g., "text", "heading").
   `,
 });
 
