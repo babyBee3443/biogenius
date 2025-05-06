@@ -19,37 +19,37 @@ const BaseBlockSchema = z.object({
 });
 
 const TextBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('text'),
+  type: z.enum(['text']),
   content: z.string().describe("Text content. Use Markdown-like syntax for bold (**text**), italic (*text*), and newlines for paragraphs."),
 });
 
 const HeadingBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('heading'),
+  type: z.enum(['heading']),
   level: z.number().min(2).max(4).describe("Heading level (2-4). H2 for main sections, H3-H4 for sub-sections within the note."),
   content: z.string().describe("Heading text content."),
 });
 
 const ImageBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('image'),
-  url: z.string().url().or(z.literal("https://picsum.photos/seed/ai-placeholder/800/400")).describe("URL of a relevant image. If a specific image isn't known, use 'https://picsum.photos/seed/ai-placeholder/800/400' as a placeholder. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL."),
+  type: z.enum(['image']),
+  url: z.string().url().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
   alt: z.string().describe("Alternative text for the image, describing its content for accessibility and SEO."),
   caption: z.string().optional().describe("Optional caption for the image, providing context or a short explanation."),
 });
 
 const VideoBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('video'),
+  type: z.enum(['video']),
   url: z.string().url().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
   youtubeId: z.string().optional().nullable().describe("The YouTube video ID, extracted from the URL if it's a YouTube link. (e.g., for 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', the ID is 'dQw4w9WgXcQ')."),
 });
 
 const QuoteBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('quote'),
+  type: z.enum(['quote']),
   content: z.string().describe("The quote text. This should be a concise and impactful statement related to the topic."),
   citation: z.string().optional().describe("Optional citation for the quote (e.g., author, source)."),
 });
 
 const DividerBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('divider'),
+  type: z.enum(['divider']),
   // No specific fields for divider, it's just a visual separator.
 });
 
@@ -113,12 +113,12 @@ const biologyNotePrompt = ai.definePrompt({
         *   For headings, use H2 for main sections and H3/H4 for sub-sections.
         *   For text blocks, use clear and concise language. You can use Markdown-like syntax for **bold** and *italic* text. Newlines will be treated as paragraph breaks.
         *   For image blocks:
-            *   Provide a relevant url. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making sure the 'seed' is descriptive (e.g., 'ai-cell-division', 'ai-dna-structure').
-            *   Provide a descriptive alt text.
-            *   Optionally, add a caption.
+            *   Provide a relevant \`url\`. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making sure the 'seed' is descriptive (e.g., 'ai-cell-division', 'ai-dna-structure').
+            *   Provide a descriptive \`alt\` text.
+            *   Optionally, add a \`caption\`.
         *   For video blocks:
-            *   Provide a relevant YouTube video url.
-            *   Extract and provide the youtubeId.
+            *   Provide a relevant YouTube video \`url\`.
+            *   Extract and provide the \`youtubeId\`.
         *   For quote blocks, provide the quote content and an optional citation.
         *   Use divider blocks to visually separate distinct sections.
         *   Ensure the content is accurate, well-structured, and appropriate for the specified 'level'.
@@ -152,10 +152,3 @@ const generateBiologyNoteFlow = ai.defineFlow(
 export async function generateBiologyNote(input: GenerateBiologyNoteInput): Promise<GenerateBiologyNoteOutput> {
   return generateBiologyNoteFlow(input);
 }
-
-// Non-exported Zod schemas:
-// const GenerateBiologyNoteInputSchemaInternal = GenerateBiologyNoteInputSchema;
-// const GenerateBiologyNoteOutputSchemaInternal = GenerateBiologyNoteOutputSchema;
-// const ContentBlockSchemaInternal = ContentBlockSchema;
-// These internal versions are not strictly necessary as the schemas are used directly above,
-// but it's a way to emphasize they are not part of the public API of this 'use server' file.
