@@ -19,37 +19,37 @@ const BaseBlockSchema = z.object({
 });
 
 const TextBlockSchema = BaseBlockSchema.extend({
-  type: z.string().describe("The type of the block, must be 'text' for this block type."),
+  type: z.literal('text').describe("The type of the block, must be 'text' for this block type."),
   content: z.string().describe("Text content. Use Markdown-like syntax for bold (**text**), italic (*text*), and newlines for paragraphs."),
 });
 
 const HeadingBlockSchema = BaseBlockSchema.extend({
-  type: z.string().describe("The type of the block, must be 'heading' for this block type."),
+  type: z.literal('heading').describe("The type of the block, must be 'heading' for this block type."),
   level: z.number().min(2).max(4).describe("Heading level (2-4). H2 for main sections, H3-H4 for sub-sections within the note."),
   content: z.string().describe("Heading text content."),
 });
 
 const ImageBlockSchema = BaseBlockSchema.extend({
-  type: z.string().describe("The type of the block, must be 'image' for this block type."),
-  url: z.string().url().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
+  type: z.literal('image').describe("The type of the block, must be 'image' for this block type."),
+  url: z.string().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
   alt: z.string().describe("Alternative text for the image, describing its content for accessibility and SEO."),
   caption: z.string().optional().describe("Optional caption for the image, providing context or a short explanation."),
 });
 
 const VideoBlockSchema = BaseBlockSchema.extend({
-  type: z.string().describe("The type of the block, must be 'video' for this block type."),
-  url: z.string().url().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
+  type: z.literal('video').describe("The type of the block, must be 'video' for this block type."),
+  url: z.string().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
   youtubeId: z.string().optional().nullable().describe("The YouTube video ID, extracted from the URL if it's a YouTube link. (e.g., for 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', the ID is 'dQw4w9WgXcQ')."),
 });
 
 const QuoteBlockSchema = BaseBlockSchema.extend({
-  type: z.string().describe("The type of the block, must be 'quote' for this block type."),
+  type: z.literal('quote').describe("The type of the block, must be 'quote' for this block type."),
   content: z.string().describe("The quote text. This should be a concise and impactful statement related to the topic."),
   citation: z.string().optional().describe("Optional citation for the quote (e.g., author, source)."),
 });
 
 const DividerBlockSchema = BaseBlockSchema.extend({
-  type: z.string().describe("The type of the block, must be 'divider' for this block type."),
+  type: z.literal('divider').describe("The type of the block, must be 'divider' for this block type."),
   // No specific fields for divider, it's just a visual separator.
 });
 
@@ -108,12 +108,12 @@ const biologyNotePrompt = ai.definePrompt({
         *   For 'heading' blocks, use H2 for main sections (level: 2) and H3/H4 for sub-sections (level: 3 or 4).
         *   For 'text' blocks, use clear and concise language. You can use Markdown-like syntax for **bold** and *italic* text. Newlines will be treated as paragraph breaks.
         *   For 'image' blocks:
-            *   Provide a relevant \`url\`. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making the 'seed' descriptive (e.g., 'ai-cell-division', 'ai-dna-structure'). The URL must be a valid URL format.
-            *   Provide a descriptive \`alt\` text.
-            *   Optionally, add a \`caption\`.
+            *   Provide a relevant url. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making the 'seed' descriptive (e.g., 'ai-cell-division', 'ai-dna-structure'). The URL must be a valid URL format.
+            *   Provide a descriptive alt text.
+            *   Optionally, add a caption.
         *   For 'video' blocks:
-            *   Provide a relevant YouTube video \`url\`. The URL must be a valid URL format.
-            *   Extract and provide the \`youtubeId\`.
+            *   Provide a relevant YouTube video url. The URL must be a valid URL format.
+            *   Extract and provide the youtubeId.
         *   For 'quote' blocks, provide the quote content and an optional citation.
         *   Use 'divider' blocks to visually separate distinct sections. A 'divider' block only needs a 'type' field set to 'divider'.
         *   Ensure the content is accurate, well-structured, and appropriate for the specified 'level'.
@@ -144,3 +144,4 @@ const generateBiologyNoteFlow = ai.defineFlow(
 export async function generateBiologyNote(input: GenerateBiologyNoteInput): Promise<GenerateBiologyNoteOutput> {
   return generateBiologyNoteFlow(input);
 }
+
