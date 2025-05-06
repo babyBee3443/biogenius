@@ -1,3 +1,4 @@
+
 "use client"; // Add "use client" for useState and useEffect
 
 import type { Metadata } from 'next';
@@ -19,7 +20,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag } from 'lucide-react';
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home } from 'lucide-react'; // Added Home icon
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -87,7 +88,7 @@ export default function AdminLayout({
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5" 
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
@@ -238,11 +239,18 @@ export default function AdminLayout({
                    </SidebarMenuItem>
                     <SidebarMenuItem>
                      <SidebarMenuButton onClick={handleLogout} asChild tooltip="Çıkış Yap">
-                        {/* Link removed as onClick is handled directly by Button */}
                         <button className="w-full">
                            <LogOut />
                            <span>Çıkış Yap</span>
                         </button>
+                     </SidebarMenuButton>
+                   </SidebarMenuItem>
+                   <SidebarMenuItem>
+                     <SidebarMenuButton asChild tooltip="Siteyi Görüntüle">
+                        <Link href="/" target="_blank">
+                           <Home />
+                           <span>Siteyi Görüntüle</span>
+                        </Link>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
                  </SidebarMenu>
@@ -254,8 +262,7 @@ export default function AdminLayout({
            <SidebarTrigger className="md:hidden" />
            <div className="flex items-center gap-2">
             <Link href="/admin/profile" passHref>
-              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8" asChild>
-                {/* Removed the explicit <a> tag here */}
+              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                 <Avatar className="size-7">
                   <AvatarImage src={currentUserAvatar} alt={currentUserName} />
                   <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
