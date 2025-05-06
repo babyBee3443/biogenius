@@ -47,16 +47,18 @@ const titleContainerVariants = {
 };
 
 const letterRevealVariants = {
-  hidden: { opacity: 0, y: 10 }, // Start slightly faded and down
+  hidden: { opacity: 0, y: 10, filter: 'blur(2px)' }, // Start slightly faded, down, and blurred
   visible: {
     opacity: 1,
     y: 0,
+    filter: 'blur(0px)',
     transition: {
-      duration: 0.5,
-      ease: "easeOut",
+      duration: 0.6, // Slightly longer for a smoother reveal
+      ease: [0.6, -0.05, 0.01, 0.99], // Custom ease for a more dynamic effect
     },
   },
 };
+
 
 export default function Home() {
   const [allArticles, setAllArticles] = React.useState<ArticleData[]>([]);
@@ -145,20 +147,40 @@ export default function Home() {
         aria-label="Teknoloji ve Biyolojinin Kesişim Noktası"
       >
         {titleParts.map((part, partIndex) => (
-            <span key={`part-${partIndex}`} className="inline-block"> {/* Wrap word parts */}
-                {part.text.split("").map((char, charIndex) => (
-                    <motion.span
-                        key={`${partIndex}-${charIndex}`}
-                        variants={letterRevealVariants}
-                        className={cn(
-                            "inline-block", // Keep inline-block for transform origin
-                            part.colorClass,
-                        )}
-                    >
-                        {char === ' ' ? '\u00A0' : char}
-                    </motion.span>
-                ))}
-            </span>
+          <span key={`part-${partIndex}`} className="inline-block relative overflow-hidden group">
+            {part.text.split("").map((char, charIndex) => (
+              <motion.span
+                key={`${partIndex}-${charIndex}`}
+                variants={letterRevealVariants}
+                className={cn(
+                  "inline-block",
+                  part.colorClass
+                )}
+              >
+                {char === ' ' ? '\u00A0' : char}
+              </motion.span>
+            ))}
+            {/* Shimmer effect for specific words */}
+            {(part.text.toLowerCase() === "teknoloji" || part.text.toLowerCase() === "biyolojinin") && (
+                <motion.span
+                    className={cn(
+                        "absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70 dark:via-white/20",
+                        "pointer-events-none" // Ensure it doesn't interfere with text selection
+                    )}
+                    style={{
+                        backgroundSize: '200% 100%',
+                    }}
+                    initial={{ backgroundPosition: '-200% 0' }}
+                    animate={{ backgroundPosition: ['-200% 0', '200% 0'] }}
+                    transition={{
+                        duration: 2.5, // Slower shimmer
+                        ease: "linear",
+                        repeat: Infinity,
+                        delay: partIndex * 0.5 + 0.5, // Stagger shimmer start
+                    }}
+                 />
+            )}
+          </span>
         ))}
       </motion.h1>
 

@@ -34,7 +34,7 @@ export default function AdminLayout({
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex items-center justify-center p-4">
+        <SidebarHeader className="flex items-center justify-center p-4 mt-4"> {/* Added mt-4 */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -56,10 +56,10 @@ export default function AdminLayout({
         </SidebarHeader>
 
         <div className="py-4 text-center group-data-[collapsible=icon]:hidden">
-          <span className="font-semibold text-md text-muted-foreground"> {/* Changed font style */}
+          <span className="font-semibold text-md text-muted-foreground">
             Hoşgeldiniz
           </span>
-          <span className="block font-bold text-lg mt-1"> {/* Added block and margin */}
+          <span className="block font-bold text-lg mt-1">
             {currentUserName}
           </span>
         </div>
@@ -213,7 +213,7 @@ export default function AdminLayout({
              </Button>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]"> {/* Adjusted padding to ensure content is not overlapped */}
+         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]">
             {children}
          </main>
       </SidebarInset>

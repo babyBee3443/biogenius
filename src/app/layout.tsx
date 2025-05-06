@@ -1,9 +1,10 @@
+
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google'; // Removed Geist_Mono, using only Geist Sans
+import { Geist } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
-import Header from '@/components/header';
-import Footer from '@/components/footer';
+// Header and Footer are removed here as they might not be needed on every page (e.g. login)
+// They will be imported into specific layouts or pages that require them.
 import { Toaster } from '@/components/ui/toaster';
 
 const geistSans = Geist({
@@ -11,11 +12,9 @@ const geistSans = Geist({
   subsets: ['latin'],
 });
 
-// Removed geistMono
-
 export const metadata: Metadata = {
-  title: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri', // Enhanced title
-  description: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.', // Enhanced description
+  title: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
+  description: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
 };
 
 export default function RootLayout({
@@ -25,7 +24,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      {/* Applied Geist Sans font variable directly to body */}
       <body className={`${geistSans.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -33,12 +31,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            {/* Added slight top padding to main content area */}
-            <main className="flex-grow container py-12">{children}</main>
-            <Footer />
-          </div>
+          {/*
+            Removed fixed structure <div className="flex flex-col min-h-screen">
+            This allows pages like the login page to define their own full-screen layout.
+            Pages that need Header/Footer will use a specific layout component (e.g., MainLayout.tsx)
+          */}
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>
