@@ -62,7 +62,7 @@ interface UserActivity {
 
 export default function EditUserPage() {
     const params = useParams();
-    const userId = params.id as string;
+    const userId = React.use(params.id) as string;
 
     const [user, setUser] = React.useState<User | null>(null);
     const [activity, setActivity] = React.useState<UserActivity[]>([]);

@@ -106,7 +106,7 @@ const getPageById = async (id: string): Promise<PageData | null> => {
 export default function EditPage() {
     const router = useRouter();
     const params = useParams();
-    const pageId = params.id as string;
+    const pageId = React.use(params.id) as string;
 
     const [pageData, setPageData] = React.useState<PageData | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -607,5 +607,3 @@ export default function EditPage() {
         </div>
     );
 }
-
-    

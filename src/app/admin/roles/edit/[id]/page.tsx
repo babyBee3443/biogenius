@@ -109,7 +109,7 @@ const getAllPermissions = async (): Promise<PermissionCategory[]> => {
 
 export default function EditRolePage() {
     const params = useParams();
-    const roleId = params.id as string;
+    const roleId = React.use(params.id) as string;
 
     const [role, setRole] = React.useState<Role | null>(null);
     const [allPermissions, setAllPermissions] = React.useState<PermissionCategory[]>([]);
