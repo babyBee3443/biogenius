@@ -53,6 +53,7 @@ interface AiChatMessage {
     type: 'user' | 'ai' | 'error';
     content: string | React.ReactNode;
     actions?: React.ReactNode; // For AI messages with actions like "Apply to Editor"
+    aiData?: GenerateBiologyNoteOutput; // To store the raw AI output for later use
 }
 
 // --- Main Page Component ---
@@ -193,7 +194,6 @@ export default function NewBiyolojiNotuPage() {
      };
 
     const handlePreview = () => {
-        // ... (existing handlePreview logic, ensure it uses PREVIEW_STORAGE_KEY and handles 'note' type)
         if (typeof window === 'undefined') return;
         if (!category || !level) {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce Kategori ve Seviye seçin." });
@@ -205,21 +205,39 @@ export default function NewBiyolojiNotuPage() {
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         };
+        
+        console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[NewBiyolojiNotuPage/handlePreview] Preview Data:`, previewData);
+
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
+            console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
+            
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             if (!storedData) throw new Error("Verification failed: No data found in localStorage.");
             const parsed = JSON.parse(storedData);
             if (!parsed || parsed.previewType !== 'note') throw new Error("Verification failed: Invalid data structure.");
-            const previewUrl = `/admin/preview`;
+            console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS");
+
+            const previewUrl = `/admin/preview`; // Single, fixed preview URL
+            console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window: ${previewUrl}`);
+
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
-                if (!newWindow) toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Pop-up engelleyiciyi kontrol edin.", duration: 10000 });
+                if (!newWindow) {
+                    console.error("[NewBiyolojiNotuPage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                    toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Pop-up engelleyiciyi kontrol edin.", duration: 10000 });
+                } else {
+                    console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened successfully.");
+                }
             }, 150);
+
         } catch (error: any) {
+            console.error("[NewBiyolojiNotuPage/handlePreview] Error during preview process:", error);
             toast({ variant: "destructive", title: "Önizleme Hatası", description: error.message, duration: 10000 });
         }
     };
+
 
     // --- AI Chat Handlers ---
     const handleAiGenerateNote = async () => {
@@ -244,20 +262,37 @@ export default function NewBiyolojiNotuPage() {
 
         try {
             const aiOutput = await generateBiologyNote(userInput);
+            // Display AI suggestions in the chat panel
+            const suggestionContent = (
+                <div className="space-y-2">
+                    <p className="font-semibold">AI tarafından oluşturulan not önerisi:</p>
+                    <div><strong>Başlık:</strong> {aiOutput.title}</div>
+                    <div><strong>Özet:</strong> {aiOutput.summary}</div>
+                    <div><strong>Etiketler:</strong> {aiOutput.tags.join(', ')}</div>
+                    <div className="mt-2"><strong>İçerik Blokları ({aiOutput.contentBlocks.length} adet):</strong></div>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                        {aiOutput.contentBlocks.map((block, index) => (
+                            <li key={index}>
+                                <strong>{block.type === 'heading' ? `H${block.level}` : block.type.charAt(0).toUpperCase() + block.type.slice(1)}:</strong>{' '}
+                                {block.type === 'text' && (block.content.length > 50 ? block.content.substring(0, 47) + '...' : block.content)}
+                                {block.type === 'heading' && block.content}
+                                {block.type === 'image' && `URL: ${block.url.substring(0,30)}... Alt: ${block.alt}`}
+                                {block.type === 'video' && `URL: ${block.url.substring(0,30)}...`}
+                                {block.type === 'quote' && (block.content.length > 40 ? block.content.substring(0, 37) + '...' : block.content)}
+                                {block.type === 'divider' && <span className="italic">-Ayırıcı-</span>}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            );
+
             setAiMessages(prev => [...prev, {
                 id: Date.now().toString(), type: 'ai',
-                content: (
-                    <div>
-                        <p className="font-semibold">İşte oluşturulan not önerisi:</p>
-                        <p><strong>Başlık:</strong> {aiOutput.title}</p>
-                        <p><strong>Özet:</strong> {aiOutput.summary}</p>
-                        <p><strong>Etiketler:</strong> {aiOutput.tags.join(', ')}</p>
-                        <p className="mt-2"><strong>İçerik Blokları:</strong> {aiOutput.contentBlocks.length} adet</p>
-                    </div>
-                ),
+                content: suggestionContent,
+                aiData: aiOutput, // Store the raw AI output
                 actions: (
                     <Button size="sm" className="mt-2" onClick={() => applyAiSuggestionToEditor(aiOutput)}>
-                        Editöre Uygula
+                        Bu Öneriyi Editöre Uygula
                     </Button>
                 )
             }]);
@@ -283,7 +318,10 @@ export default function NewBiyolojiNotuPage() {
                 case 'video': return { ...baseBlock, url: aiBlock.url, youtubeId: aiBlock.youtubeId } as Block;
                 case 'quote': return { ...baseBlock, content: aiBlock.content, citation: aiBlock.citation } as Block;
                 case 'divider': return { ...baseBlock } as Block;
-                default: return { ...baseBlock, type: 'text', content: '[Desteklenmeyen AI Blok Tipi]' } as Block; // Fallback
+                default:
+                     // Attempt to handle potential type mismatches or unexpected types gracefully
+                    console.warn("Unsupported AI block type encountered in applyAiSuggestionToEditor:", (aiBlock as any).type);
+                    return { ...baseBlock, type: 'text', content: `[Desteklenmeyen AI Blok Tipi: ${(aiBlock as any).type}]` } as Block;
             }
         });
         setBlocks(newEditorBlocks);
@@ -327,7 +365,6 @@ export default function NewBiyolojiNotuPage() {
                             <Card>
                                 <CardHeader><CardTitle>Not Bilgileri</CardTitle></CardHeader>
                                 <CardContent className="space-y-4">
-                                    {/* ... (existing form fields for title, slug, category, level, summary, tags, imageUrl) ... */}
                                      <div className="space-y-2">
                                         <Label htmlFor="title">Başlık <span className="text-destructive">*</span></Label>
                                         <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Notun başlığını girin" required />
@@ -422,15 +459,15 @@ export default function NewBiyolojiNotuPage() {
                             <ScrollArea className="flex-grow pr-3 -mr-3" ref={aiChatContainerRef}>
                                 <div className="space-y-3 mb-3">
                                     {aiMessages.map(msg => (
-                                        <div key={msg.id} className={`p-3 rounded-lg max-w-[90%] ${msg.type === 'user' ? 'bg-primary/10 self-end text-right' : msg.type === 'ai' ? 'bg-secondary self-start' : 'bg-destructive/10 text-destructive self-start'}`}>
-                                            <div className="text-sm">{msg.content}</div>
+                                        <div key={msg.id} className={`p-3 rounded-lg max-w-[90%] text-sm ${msg.type === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.type === 'ai' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
+                                            <div className="whitespace-pre-wrap">{msg.content}</div>
                                             {msg.actions && <div className="mt-2">{msg.actions}</div>}
                                         </div>
                                     ))}
                                     {isAiGenerating && (
-                                        <div className="p-3 rounded-lg bg-secondary self-start flex items-center">
+                                        <div className="p-3 rounded-lg bg-secondary self-start flex items-center mr-auto">
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                            <span>AI düşünüyor...</span>
+                                            <span className="text-sm">AI düşünüyor...</span>
                                         </div>
                                     )}
                                 </div>
@@ -470,3 +507,6 @@ export default function NewBiyolojiNotuPage() {
         </div>
     );
 }
+
+
+    
