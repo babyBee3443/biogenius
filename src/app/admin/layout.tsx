@@ -39,10 +39,7 @@ export default function AdminLayout({
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
   const router = useRouter();
 
-  React.useEffect(() => {
-    // Set document title (alternative for metadata in client components)
-    document.title = 'TeknoBiyo Admin';
-    
+  const loadUserData = () => {
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('currentUser');
       if (storedUser) {
@@ -55,8 +52,24 @@ export default function AdminLayout({
           setCurrentUserName("Kullanıcı"); // Fallback
           setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
         }
+      } else {
+        // If no user in localStorage, potentially redirect to login or set defaults
+        setCurrentUserName("Kullanıcı");
+        setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
       }
     }
+  };
+
+  React.useEffect(() => {
+    // Set document title (alternative for metadata in client components)
+    document.title = 'TeknoBiyo Admin';
+    loadUserData(); // Load user data on initial mount
+
+    // Listen for custom event to update user data
+    window.addEventListener('currentUserUpdated', loadUserData);
+    return () => {
+      window.removeEventListener('currentUserUpdated', loadUserData);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -90,7 +103,7 @@ export default function AdminLayout({
           </svg>
         </SidebarHeader>
 
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden">
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-8"> {/* Added mt-8 */}
           <span className="font-semibold text-md text-muted-foreground">
             Hoşgeldiniz
           </span>
@@ -249,7 +262,7 @@ export default function AdminLayout({
              </Button>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]">
+         <main className="flex-1 p-4 md:p-6 pt-6"> {/* Removed fixed top padding */}
             {children}
          </main>
       </SidebarInset>
