@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -53,7 +52,7 @@ interface UserActivity {
 export default function EditUserPage() {
     const params = useParams();
     const router = useRouter();
-    const userId = React.use(params.id) as string;
+    const userId = params.id as string; // Correctly assign params.id
 
 
     const [user, setUser] = React.useState<User | null>(null);
@@ -313,4 +312,4 @@ export default function EditUserPage() {
             </AlertDialog>
          </form>
     );
-}
+
