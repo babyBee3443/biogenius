@@ -132,3 +132,4 @@ const generateBiologyNoteSuggestionFlow = ai.defineFlow(
 export async function generateBiologyNoteSuggestion(input: GenerateBiologyNoteSuggestionInput): Promise<GenerateBiologyNoteSuggestionOutput> {
   return generateBiologyNoteSuggestionFlow(input);
 }
+
