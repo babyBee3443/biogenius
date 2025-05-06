@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -622,12 +623,5 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
-```
-  </change>
-  <change>
-    <file>src/ai/dev.ts</file>
-    <description>Import generate-biology-note-flow and biology-chat-flow.</description>
-    <content><![CDATA[
-// Flows will be imported for their side effects in this file.
-import './flows/generate-biology-note-flow';
-import './flows/biology-chat-flow';
+
+    
