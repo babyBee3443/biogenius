@@ -103,7 +103,7 @@ export default function AdminLayout({
           </svg>
         </SidebarHeader>
 
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-8">
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-2"> {/* Changed mt-8 to mt-2 */}
           <span className="font-semibold text-md text-muted-foreground">
             Hoşgeldiniz
           </span>
@@ -263,10 +263,10 @@ export default function AdminLayout({
            <div className="flex items-center gap-2">
             <Link href="/admin/profile" passHref>
               <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
-                <Avatar className="size-7">
-                  <AvatarImage src={currentUserAvatar} alt={currentUserName} />
-                  <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
-                </Avatar>
+                  <Avatar className="size-7">
+                    <AvatarImage src={currentUserAvatar} alt={currentUserName} />
+                    <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                  </Avatar>
               </Button>
             </Link>
            </div>
