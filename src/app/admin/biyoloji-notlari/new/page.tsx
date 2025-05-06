@@ -11,6 +11,7 @@ import { TemplateSelector, type Block } from "@/components/admin/template-select
 import { useDebouncedCallback } from 'use-debounce';
 import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data';
 import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput } from '@/ai/flows/generate-biology-note-flow';
+import { biologyChat, type BiologyChatInput, type BiologyChatOutput } from '@/ai/flows/biology-chat-flow';
 
 
 import {
@@ -38,9 +39,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon } from "lucide-react";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge'; // Added Badge import
+import { Badge } from '@/components/ui/badge';
 
 
 // Helper to generate unique block IDs safely on the client
@@ -49,12 +50,19 @@ const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', 
 
 const PREVIEW_STORAGE_KEY = 'preview_data';
 
-// --- AI Chat Message Type ---
-interface AiChatMessage {
+// --- AI Message Types ---
+interface AiAssistantMessage {
     id: string;
     type: 'user' | 'ai' | 'error';
-    content: string | React.ReactNode; // Allow ReactNode for richer AI responses
+    content: string | React.ReactNode;
 }
+
+interface AiDirectChatMessage {
+    id: string;
+    role: 'user' | 'assistant' | 'system_error';
+    content: string;
+}
+
 
 // --- Main Page Component ---
 export default function NewBiyolojiNotuPage() {
@@ -77,14 +85,21 @@ export default function NewBiyolojiNotuPage() {
     const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
 
-    // --- AI Chat State ---
-    const [isAiPanelOpen, setIsAiPanelOpen] = React.useState(false);
-    const [aiTopic, setAiTopic] = React.useState("");
-    const [aiKeywords, setAiKeywords] = React.useState("");
-    const [aiOutline, setAiOutline] = React.useState("");
-    const [aiMessages, setAiMessages] = React.useState<AiChatMessage[]>([]);
-    const [isAiGenerating, setIsAiGenerating] = React.useState(false);
-    const aiChatContainerRef = React.useRef<HTMLDivElement>(null);
+    // --- AI Note Assistant State ---
+    const [isAiAssistantPanelOpen, setIsAiAssistantPanelOpen] = React.useState(false);
+    const [aiAssistantTopic, setAiAssistantTopic] = React.useState("");
+    const [aiAssistantKeywords, setAiAssistantKeywords] = React.useState("");
+    const [aiAssistantOutline, setAiAssistantOutline] = React.useState("");
+    const [aiAssistantMessages, setAiAssistantMessages] = React.useState<AiAssistantMessage[]>([]);
+    const [isAiAssistantGenerating, setIsAiAssistantGenerating] = React.useState(false);
+    const aiAssistantChatContainerRef = React.useRef<HTMLDivElement>(null);
+
+    // --- AI Biology Chat State ---
+    const [isAiChatPanelOpen, setIsAiChatPanelOpen] = React.useState(false);
+    const [aiChatMessages, setAiChatMessages] = React.useState<AiDirectChatMessage[]>([]);
+    const [aiChatInput, setAiChatInput] = React.useState("");
+    const [isAiChatResponding, setIsAiChatResponding] = React.useState(false);
+    const aiDirectChatContainerRef = React.useRef<HTMLDivElement>(null);
 
 
     React.useEffect(() => {
@@ -111,10 +126,16 @@ export default function NewBiyolojiNotuPage() {
     React.useEffect(() => debouncedSetSlug(title), [title, debouncedSetSlug]);
 
     React.useEffect(() => {
-        if (aiChatContainerRef.current) {
-            aiChatContainerRef.current.scrollTop = aiChatContainerRef.current.scrollHeight;
+        if (aiAssistantChatContainerRef.current) {
+            aiAssistantChatContainerRef.current.scrollTop = aiAssistantChatContainerRef.current.scrollHeight;
         }
-    }, [aiMessages]);
+    }, [aiAssistantMessages]);
+
+    React.useEffect(() => {
+        if (aiDirectChatContainerRef.current) {
+            aiDirectChatContainerRef.current.scrollTop = aiDirectChatContainerRef.current.scrollHeight;
+        }
+    }, [aiChatMessages]);
 
 
     const handleAddBlock = (type: Block['type']) => {
@@ -207,14 +228,14 @@ export default function NewBiyolojiNotuPage() {
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         };
-        
+
         console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
         console.log(`[NewBiyolojiNotuPage/handlePreview] Preview Data:`, previewData);
 
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
-            
+
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             if (!storedData) throw new Error("Verification failed: No data found in localStorage.");
             const parsed = JSON.parse(storedData);
@@ -241,40 +262,38 @@ export default function NewBiyolojiNotuPage() {
     };
 
 
-    // --- AI Chat Handlers ---
-    const handleAiGenerateNote = async () => {
-        if (!aiTopic.trim()) {
-            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: 'Lütfen bir konu girin.' }]);
+    // --- AI Note Assistant Handlers ---
+    const handleAiAssistantGenerateNote = async () => {
+        if (!aiAssistantTopic.trim()) {
+            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: 'Lütfen bir konu girin.' }]);
             return;
         }
         if (!level) {
-            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: 'Lütfen not için bir seviye seçin (form alanından).' }]);
+            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: 'Lütfen not için bir seviye seçin (form alanından).' }]);
             return;
         }
 
-        // Gather current form field values to pass to AI
         const currentFormData = {
             currentTitle: title,
             currentSummary: summary,
             currentTags: tags,
             currentCategory: category,
             currentLevel: level,
-            // Pass a simplified version of the blocks for AI to understand the structure
             currentBlocksStructure: blocks.map(b => ({ type: b.type, contentPreview: (b as any).content?.substring(0, 50) || `[${b.type} bloğu]` }) )
         };
 
         const userInput: GenerateBiologyNoteSuggestionInput = {
-            topic: aiTopic,
-            level: level, // Use the level from the main form
-            keywords: aiKeywords,
-            outline: aiOutline,
+            topic: aiAssistantTopic,
+            level: level,
+            keywords: aiAssistantKeywords,
+            outline: aiAssistantOutline,
             currentFormData: currentFormData,
         };
 
-        let userMessage = `Konu: ${aiTopic}`;
-        if (aiKeywords) userMessage += `, Anahtar Kelimeler: ${aiKeywords}`;
-        if (aiOutline) userMessage += `, Taslak: ${aiOutline}`;
-        
+        let userMessage = `Konu: ${aiAssistantTopic}`;
+        if (aiAssistantKeywords) userMessage += `, Anahtar Kelimeler: ${aiAssistantKeywords}`;
+        if (aiAssistantOutline) userMessage += `, Taslak: ${aiAssistantOutline}`;
+
         userMessage += `\n\nMevcut Form Alanları ve Not Yapısı (bunları dikkate alarak öneri ver):`;
         if (currentFormData.currentTitle) userMessage += `\n- Başlık: ${currentFormData.currentTitle}`;
         if (currentFormData.currentSummary) userMessage += `\n- Özet: ${currentFormData.currentSummary}`;
@@ -288,13 +307,11 @@ export default function NewBiyolojiNotuPage() {
             });
         }
 
-
-        setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: userMessage }]);
-        setIsAiGenerating(true);
+        setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: userMessage }]);
+        setIsAiAssistantGenerating(true);
 
         try {
             const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInput);
-            
             const aiResponseContent = (
                 <div className="space-y-2 text-left">
                     {aiOutput.suggestedTitle && (
@@ -327,17 +344,34 @@ export default function NewBiyolojiNotuPage() {
                     )}
                 </div>
             );
-            
-            setAiMessages(prev => [...prev, {
-                id: Date.now().toString(), type: 'ai',
-                content: aiResponseContent,
-            }]);
-
+            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'ai', content: aiResponseContent }]);
         } catch (error: any) {
-            console.error("AI note generation error:", error);
-            setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: `AI not önerisi oluştururken hata: ${error.message}` }]);
+            console.error("AI note suggestion error:", error);
+            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: `AI not önerisi oluştururken hata: ${error.message}` }]);
         } finally {
-            setIsAiGenerating(false);
+            setIsAiAssistantGenerating(false);
+        }
+    };
+
+    // --- AI Biology Chat Handlers ---
+    const handleAiChatSubmit = async () => {
+        const userQuery = aiChatInput.trim();
+        if (!userQuery) return;
+
+        setAiChatMessages(prev => [...prev, { id: `user-${Date.now()}`, role: 'user', content: userQuery }]);
+        setAiChatInput("");
+        setIsAiChatResponding(true);
+
+        try {
+            const input: BiologyChatInput = { query: userQuery, history: aiChatMessages.filter(m => m.role !== 'system_error') }; // Pass previous chat messages for context
+            const response: BiologyChatOutput = await biologyChat(input);
+
+            setAiChatMessages(prev => [...prev, { id: `ai-${Date.now()}`, role: 'assistant', content: response.answer }]);
+        } catch (error: any) {
+            console.error("AI biology chat error:", error);
+            setAiChatMessages(prev => [...prev, { id: `error-${Date.now()}`, role: 'system_error', content: `AI sohbet yanıtı alınırken hata oluştu: ${error.message}` }]);
+        } finally {
+            setIsAiChatResponding(false);
         }
     };
 
@@ -351,8 +385,11 @@ export default function NewBiyolojiNotuPage() {
                 </Button>
                 <h1 className="text-xl font-semibold flex items-center gap-2"> <BookCopy className="h-6 w-6 text-green-600"/> Yeni Biyoloji Notu Oluştur</h1>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setIsAiPanelOpen(prev => !prev)} className={isAiPanelOpen ? "bg-primary/10" : ""}>
-                        <Sparkles className="mr-2 h-4 w-4" /> AI Yardımcı {isAiPanelOpen ? "(Kapat)" : "(Aç)"}
+                     <Button variant="outline" size="sm" onClick={() => setIsAiChatPanelOpen(prev => !prev)} className={isAiChatPanelOpen ? "bg-blue-100 dark:bg-blue-900/30" : ""}>
+                        <ChatIcon className="mr-2 h-4 w-4" /> AI Sohbet {isAiChatPanelOpen ? "(Kapat)" : "(Aç)"}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setIsAiAssistantPanelOpen(prev => !prev)} className={isAiAssistantPanelOpen ? "bg-primary/10" : ""}>
+                        <Sparkles className="mr-2 h-4 w-4" /> AI Öneri {isAiAssistantPanelOpen ? "(Kapat)" : "(Aç)"}
                     </Button>
                     <Button variant="outline" size="sm" onClick={handlePreview} disabled={saving}>
                         <Eye className="mr-2 h-4 w-4" /> Önizle
@@ -390,7 +427,7 @@ export default function NewBiyolojiNotuPage() {
                                              <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loadingCategories}>
                                                 <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                                 <SelectContent>
-                                                    {loadingCategories ? (
+                                                     {loadingCategories ? (
                                                         <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
                                                      ) : (
                                                         categories.map(cat => (
@@ -460,18 +497,18 @@ export default function NewBiyolojiNotuPage() {
                      </Tabs>
                 </div>
 
-                 {/* Right AI Panel (Collapsible) */}
-                 {isAiPanelOpen && (
+                {/* Right AI Assistant Panel (Collapsible) */}
+                 {isAiAssistantPanelOpen && (
                     <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-4 flex flex-col">
                         <CardHeader className="p-0 mb-2">
-                             <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> AI Not Yardımcısı</CardTitle>
+                             <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> AI Not Öneri Yardımcısı</CardTitle>
                              <CardDescription className="text-xs">AI'dan not içeriği, başlık, özet ve etiketler için fikir ve öneri alın.</CardDescription>
                         </CardHeader>
 
                         <div className="space-y-3 flex-grow flex flex-col">
-                            <ScrollArea className="flex-grow pr-3 -mr-3" ref={aiChatContainerRef}>
+                            <ScrollArea className="flex-grow pr-3 -mr-3" ref={aiAssistantChatContainerRef}>
                                 <div className="space-y-3 mb-3">
-                                    {aiMessages.map(msg => (
+                                    {aiAssistantMessages.map(msg => (
                                         <div key={msg.id} className={`p-3 rounded-lg max-w-[95%] text-sm ${msg.type === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.type === 'ai' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
                                             {typeof msg.content === 'string' ? (
                                                 <div className="whitespace-pre-wrap">{msg.content}</div>
@@ -480,7 +517,7 @@ export default function NewBiyolojiNotuPage() {
                                             )}
                                         </div>
                                     ))}
-                                    {isAiGenerating && (
+                                    {isAiAssistantGenerating && (
                                         <div className="p-3 rounded-lg bg-secondary self-start flex items-center mr-auto">
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                             <span className="text-sm">AI düşünüyor...</span>
@@ -489,27 +526,70 @@ export default function NewBiyolojiNotuPage() {
                                 </div>
                             </ScrollArea>
 
-                            <form onSubmit={(e) => { e.preventDefault(); handleAiGenerateNote(); }} className="mt-auto pt-3 border-t">
+                            <form onSubmit={(e) => { e.preventDefault(); handleAiAssistantGenerateNote(); }} className="mt-auto pt-3 border-t">
                                  <div className="space-y-2">
-                                    <Label htmlFor="ai-topic">Konu Başlığı</Label>
-                                    <Input id="ai-topic" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder="Örn: Fotosentez Aşamaları" />
+                                    <Label htmlFor="ai-assistant-topic">Konu Başlığı</Label>
+                                    <Input id="ai-assistant-topic" value={aiAssistantTopic} onChange={(e) => setAiAssistantTopic(e.target.value)} placeholder="Örn: Fotosentez Aşamaları" />
                                 </div>
                                 <div className="space-y-2 mt-2">
-                                    <Label htmlFor="ai-keywords">Anahtar Kelimeler (isteğe bağlı)</Label>
-                                    <Input id="ai-keywords" value={aiKeywords} onChange={(e) => setAiKeywords(e.target.value)} placeholder="Örn: kloroplast, ATP, Calvin döngüsü" />
+                                    <Label htmlFor="ai-assistant-keywords">Anahtar Kelimeler (isteğe bağlı)</Label>
+                                    <Input id="ai-assistant-keywords" value={aiAssistantKeywords} onChange={(e) => setAiAssistantKeywords(e.target.value)} placeholder="Örn: kloroplast, ATP, Calvin döngüsü" />
                                 </div>
                                  <div className="space-y-2 mt-2">
-                                    <Label htmlFor="ai-outline">İstenen Taslak/Bölümler (isteğe bağlı)</Label>
-                                    <Textarea id="ai-outline" value={aiOutline} onChange={(e) => setAiOutline(e.target.value)} placeholder="Örn: Tanımı, Işığa bağlı reaksiyonlar, Işıktan bağımsız reaksiyonlar, Önemi" rows={2} />
+                                    <Label htmlFor="ai-assistant-outline">İstenen Taslak/Bölümler (isteğe bağlı)</Label>
+                                    <Textarea id="ai-assistant-outline" value={aiAssistantOutline} onChange={(e) => setAiAssistantOutline(e.target.value)} placeholder="Örn: Tanımı, Işığa bağlı reaksiyonlar, Işıktan bağımsız reaksiyonlar, Önemi" rows={2} />
                                 </div>
                                  <p className="text-xs text-muted-foreground mt-2">
                                     AI, önerilerde bulunurken soldaki formdaki <strong>Başlık, Özet, Etiketler, Kategori ve Seviye</strong> alanlarını ve <strong>mevcut blok yapısını</strong> dikkate alacaktır.
                                 </p>
-                                <Button type="submit" className="w-full mt-3" disabled={isAiGenerating || !level}>
-                                    {isAiGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
+                                <Button type="submit" className="w-full mt-3" disabled={isAiAssistantGenerating || !level}>
+                                    {isAiAssistantGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
                                     AI'dan Öneri Al
                                 </Button>
-                                {!level && <p className="text-xs text-destructive text-center mt-1">Not oluşturmak için lütfen formdaki "Seviye" alanını seçin.</p>}
+                                {!level && <p className="text-xs text-destructive text-center mt-1">Öneri almak için lütfen formdaki "Seviye" alanını seçin.</p>}
+                            </form>
+                        </div>
+                    </aside>
+                )}
+
+                 {/* Right AI Biology Chat Panel (Collapsible) */}
+                 {isAiChatPanelOpen && (
+                    <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-4 flex flex-col">
+                        <CardHeader className="p-0 mb-2">
+                             <CardTitle className="text-lg flex items-center gap-2"><ChatIcon className="h-5 w-5 text-blue-600"/> AI Biyoloji Sohbet</CardTitle>
+                             <CardDescription className="text-xs">Biyoloji uzmanı AI ile sohbet edin. AI, doğruluğu ön planda tutar ve emin olmadığı konularda bunu belirtir.</CardDescription>
+                        </CardHeader>
+
+                        <div className="space-y-3 flex-grow flex flex-col">
+                            <ScrollArea className="flex-grow pr-3 -mr-3" ref={aiDirectChatContainerRef}>
+                                <div className="space-y-3 mb-3">
+                                    {aiChatMessages.map(msg => (
+                                        <div key={msg.id} className={`p-3 rounded-lg max-w-[95%] text-sm ${msg.role === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.role === 'assistant' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
+                                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                                        </div>
+                                    ))}
+                                    {isAiChatResponding && (
+                                        <div className="p-3 rounded-lg bg-secondary self-start flex items-center mr-auto">
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            <span className="text-sm">AI yanıtlıyor...</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </ScrollArea>
+
+                            <form onSubmit={(e) => { e.preventDefault(); handleAiChatSubmit(); }} className="mt-auto pt-3 border-t flex gap-2 items-center">
+                                 <Input
+                                     id="ai-chat-input"
+                                     value={aiChatInput}
+                                     onChange={(e) => setAiChatInput(e.target.value)}
+                                     placeholder="Biyoloji sorunuzu yazın..."
+                                     className="flex-grow"
+                                     disabled={isAiChatResponding}
+                                 />
+                                <Button type="submit" size="icon" disabled={isAiChatResponding || !aiChatInput.trim()}>
+                                    <Send className="h-4 w-4" />
+                                    <span className="sr-only">Gönder</span>
+                                </Button>
                             </form>
                         </div>
                     </aside>
@@ -526,6 +606,12 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
-
-
-    
+```
+  </change>
+  <change>
+    <file>src/ai/dev.ts</file>
+    <description>Import the new biologyChatFlow into the Genkit dev server.</description>
+    <content><![CDATA[
+// Flows will be imported for their side effects in this file.
+import './flows/generate-biology-note-flow';
+import './flows/biology-chat-flow';
