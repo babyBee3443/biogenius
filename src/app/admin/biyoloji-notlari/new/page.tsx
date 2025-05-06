@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -259,13 +258,25 @@ export default function NewBiyolojiNotuPage() {
             outline: aiOutline,
         };
 
-        setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: `Konu: ${aiTopic}${aiKeywords ? `, Anahtar Kelimeler: ${aiKeywords}` : ''}${aiOutline ? `, Taslak: ${aiOutline}` : ''}` }]);
+        // Include existing template field data in the user message for AI context
+        let userMessage = `Konu: ${aiTopic}`;
+        if (aiKeywords) userMessage += `, Anahtar Kelimeler: ${aiKeywords}`;
+        if (aiOutline) userMessage += `, Taslak: ${aiOutline}`;
+        
+        userMessage += `\n\nMevcut Form Alanları (bunları dikkate alarak öneri ver):`;
+        if (title) userMessage += `\n- Başlık: ${title}`;
+        if (summary) userMessage += `\n- Özet: ${summary}`;
+        if (tags.length > 0) userMessage += `\n- Etiketler: ${tags.join(', ')}`;
+        if (category) userMessage += `\n- Kategori: ${category}`;
+        if (level) userMessage += `\n- Seviye: ${level}`;
+
+
+        setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: userMessage }]);
         setIsAiGenerating(true);
 
         try {
             const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInput);
             
-            // Format AI output for display in chat
             const aiResponseContent = (
                 <div className="space-y-2 text-left">
                     {aiOutput.suggestedTitle && (
@@ -310,7 +321,7 @@ export default function NewBiyolojiNotuPage() {
         } finally {
             setIsAiGenerating(false);
         }
-    }; // This closing brace was missing
+    };
 
 
     return (
@@ -361,11 +372,17 @@ export default function NewBiyolojiNotuPage() {
                                              <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loadingCategories}>
                                                 <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                                 <SelectContent>
-                                                    {loadingCategories && <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>}
-                                                     {!loadingCategories && categories.length === 0 && <SelectItem value="no_category_placeholder" disabled>Önce kategori ekleyin</SelectItem>}
-                                                     {!loadingCategories && categories.map(cat => (
-                                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                                     ))}
+                                                    {loadingCategories ? (
+                                                        <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
+                                                     ) : (
+                                                        categories.length === 0 ? (
+                                                            <SelectItem value="no_category_placeholder" disabled>Önce kategori ekleyin</SelectItem>
+                                                        ) : (
+                                                            categories.map(cat => (
+                                                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                                            ))
+                                                        )
+                                                     )}
                                                       <Separator />
                                                       <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
                                                 </SelectContent>
@@ -395,7 +412,7 @@ export default function NewBiyolojiNotuPage() {
                                             <Tag className="h-4 w-4 text-muted-foreground"/>
                                             <Input id="tags" value={tags.join(', ')} onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag !== ''))} placeholder="Etiketleri virgülle ayırın (örn: hücre, dna, organel)" />
                                         </div>
-                                        <p className="text-xs text-muted-foreground">Notun bulunabilirliğini artırmak için ilgili anahtar kelimeleri girin.</p>
+                                        <p className="text-xs text-muted-foreground">Notun bulunabilirliğini artırmak için ilgili anahtar kelimeleri belirtin.</p>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="image-url">Kapak Görsel URL</Label>
@@ -471,6 +488,9 @@ export default function NewBiyolojiNotuPage() {
                                     <Label htmlFor="ai-outline">İstenen Taslak/Bölümler (isteğe bağlı)</Label>
                                     <Textarea id="ai-outline" value={aiOutline} onChange={(e) => setAiOutline(e.target.value)} placeholder="Örn: Tanımı, Işığa bağlı reaksiyonlar, Işıktan bağımsız reaksiyonlar, Önemi" rows={2} />
                                 </div>
+                                 <p className="text-xs text-muted-foreground mt-2">
+                                    AI, önerilerde bulunurken soldaki formdaki <strong>Başlık, Özet, Etiketler, Kategori ve Seviye</strong> alanlarını dikkate alacaktır.
+                                </p>
                                 <Button type="submit" className="w-full mt-3" disabled={isAiGenerating || !level}>
                                     {isAiGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
                                     AI'dan Öneri Al
@@ -489,6 +509,6 @@ export default function NewBiyolojiNotuPage() {
                   blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))}
                   templateTypeFilter="note"
               />
-        </div>
+         </div>
     );
 }
