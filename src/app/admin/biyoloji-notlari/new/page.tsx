@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -39,6 +40,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle } from "lucide-react";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge'; // Added Badge import
 
 
 // Helper to generate unique block IDs safely on the client
@@ -308,7 +310,7 @@ export default function NewBiyolojiNotuPage() {
         } finally {
             setIsAiGenerating(false);
         }
-    };
+    }; // This closing brace was missing
 
 
     return (
@@ -446,7 +448,7 @@ export default function NewBiyolojiNotuPage() {
                                                 msg.content // Render ReactNode directly
                                             )}
                                         </div>
-                                    )}
+                                    ))}
                                     {isAiGenerating && (
                                         <div className="p-3 rounded-lg bg-secondary self-start flex items-center mr-auto">
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
