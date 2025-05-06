@@ -103,7 +103,7 @@ export default function AdminLayout({
           </svg>
         </SidebarHeader>
 
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-8"> {/* Added mt-8 */}
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-8">
           <span className="font-semibold text-md text-muted-foreground">
             Hoşgeldiniz
           </span>
@@ -254,12 +254,16 @@ export default function AdminLayout({
          <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:justify-end">
            <SidebarTrigger className="md:hidden" />
            <div className="flex items-center gap-2">
-             <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
-                <Avatar className="size-7">
-                   <AvatarImage src={currentUserAvatar} alt={currentUserName} />
-                   <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
-                 </Avatar>
-             </Button>
+            <Link href="/admin/profile" passHref>
+              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8" asChild>
+                <a> {/* Add an anchor tag for the Link to work correctly with Button asChild */}
+                  <Avatar className="size-7">
+                    <AvatarImage src={currentUserAvatar} alt={currentUserName} />
+                    <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </a>
+              </Button>
+            </Link>
            </div>
          </header>
          <main className="flex-1 p-4 md:p-6 pt-6"> {/* Removed fixed top padding */}
