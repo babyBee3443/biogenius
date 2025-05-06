@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -10,8 +9,8 @@ import { BlockEditor } from "@/components/admin/block-editor";
 import { TemplateSelector, type Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
 import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data';
-import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput } from '@/ai/flows/generate-biology-note-flow';
-import { biologyChat, type BiologyChatInput, type BiologyChatOutput } from '@/ai/flows/biology-chat-flow';
+import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput, type AiBlockStructure as GenerateNoteAiBlockStructure } from '@/ai/flows/generate-biology-note-flow';
+import { biologyChat, type BiologyChatInput, type BiologyChatOutput, type ChatMessage as AiDirectChatMessageDef } from '@/ai/flows/biology-chat-flow';
 
 
 import {
@@ -39,7 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon, Send } from "lucide-react"; // Added Send icon
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 
@@ -57,11 +56,8 @@ interface AiAssistantMessage {
     content: string | React.ReactNode;
 }
 
-interface AiDirectChatMessage {
-    id: string;
-    role: 'user' | 'assistant' | 'system_error';
-    content: string;
-}
+// Use the imported type for AI Direct Chat
+type AiDirectChatMessage = AiDirectChatMessageDef;
 
 
 // --- Main Page Component ---
@@ -279,7 +275,7 @@ export default function NewBiyolojiNotuPage() {
             currentTags: tags,
             currentCategory: category,
             currentLevel: level,
-            currentBlocksStructure: blocks.map(b => ({ type: b.type, contentPreview: (b as any).content?.substring(0, 50) || `[${b.type} bloğu]` }) )
+            currentBlocksStructure: blocks.map(b => ({ type: b.type, contentPreview: (b as any).content?.substring(0, 50) || `[${b.type} bloğu]` }) as GenerateNoteAiBlockStructure[]) // Correctly type the structure
         };
 
         const userInput: GenerateBiologyNoteSuggestionInput = {
@@ -297,10 +293,10 @@ export default function NewBiyolojiNotuPage() {
         userMessage += `\n\nMevcut Form Alanları ve Not Yapısı (bunları dikkate alarak öneri ver):`;
         if (currentFormData.currentTitle) userMessage += `\n- Başlık: ${currentFormData.currentTitle}`;
         if (currentFormData.currentSummary) userMessage += `\n- Özet: ${currentFormData.currentSummary}`;
-        if (currentFormData.currentTags.length > 0) userMessage += `\n- Etiketler: ${currentFormData.currentTags.join(', ')}`;
+        if (currentFormData.currentTags && currentFormData.currentTags.length > 0) userMessage += `\n- Etiketler: ${currentFormData.currentTags.join(', ')}`;
         if (currentFormData.currentCategory) userMessage += `\n- Kategori: ${currentFormData.currentCategory}`;
         if (currentFormData.currentLevel) userMessage += `\n- Seviye: ${currentFormData.currentLevel}`;
-        if (currentFormData.currentBlocksStructure.length > 0) {
+        if (currentFormData.currentBlocksStructure && currentFormData.currentBlocksStructure.length > 0) {
             userMessage += `\n- Mevcut Bloklar (${currentFormData.currentBlocksStructure.length} adet):`;
             currentFormData.currentBlocksStructure.forEach((b, i) => {
                 userMessage += `\n  - Blok ${i+1}: Tip: ${b.type}, İçerik Önizlemesi: ${b.contentPreview}`;
@@ -363,7 +359,12 @@ export default function NewBiyolojiNotuPage() {
         setIsAiChatResponding(true);
 
         try {
-            const input: BiologyChatInput = { query: userQuery, history: aiChatMessages.filter(m => m.role !== 'system_error') }; // Pass previous chat messages for context
+            // Filter out system_error messages before sending to AI history
+            const historyForAI: AiDirectChatMessage[] = aiChatMessages
+                .filter(m => m.role === 'user' || m.role === 'assistant')
+                .map(m => ({ id: m.id, role: m.role, content: m.content }));
+
+            const input: BiologyChatInput = { query: userQuery, history: historyForAI };
             const response: BiologyChatOutput = await biologyChat(input);
 
             setAiChatMessages(prev => [...prev, { id: `ai-${Date.now()}`, role: 'assistant', content: response.answer }]);
@@ -606,12 +607,3 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
-```
-  </change>
-  <change>
-    <file>src/ai/dev.ts</file>
-    <description>Import the new biologyChatFlow into the Genkit dev server.</description>
-    <content><![CDATA[
-// Flows will be imported for their side effects in this file.
-import './flows/generate-biology-note-flow';
-import './flows/biology-chat-flow';
