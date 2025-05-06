@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { LogIn, Mail, KeyRound, Eye, EyeOff, Loader2, User } from 'lucide-react'; // Added User icon
+import { LogIn, User, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react'; // Changed Mail to User
 import Link from 'next/link';
+import { getUsers, type User as UserData } from '@/lib/mock-data'; // Import getUsers and User type
 
 // Placeholder Logo
 const AnimatedLogo = () => (
@@ -50,7 +51,7 @@ const AnimatedLogo = () => (
 
 export default function LoginPage() {
   const router = useRouter();
-  const [emailOrUsername, setEmailOrUsername] = React.useState(''); // Changed from email
+  const [emailOrUsername, setEmailOrUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -61,28 +62,58 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Simulate API call / User fetching
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Updated validation to accept username 'admin' or email 'admin@teknobiyo.com'
-    if (
-      (emailOrUsername.toLowerCase() === 'admin@teknobiyo.com' || emailOrUsername.toLowerCase() === 'admin') &&
-      password === 'password123'
-    ) {
-      toast({
-        title: 'Giriş Başarılı!',
-        description: 'Admin paneline yönlendiriliyorsunuz...',
-      });
-      // In a real app, you'd set a session/token here
-      router.push('/admin');
-    } else {
-      setError('Geçersiz e-posta/kullanıcı adı veya şifre. Lütfen tekrar deneyin.');
-      toast({
-        variant: 'destructive',
-        title: 'Giriş Başarısız',
-        description: 'E-posta/kullanıcı adı veya şifreniz yanlış.',
-      });
+    try {
+        const allUsers = await getUsers();
+        const lowercasedInput = emailOrUsername.toLowerCase();
+
+        const foundUser = allUsers.find(
+            (user: UserData) =>
+                user.email.toLowerCase() === lowercasedInput ||
+                user.username.toLowerCase() === lowercasedInput
+        );
+
+        // For mock purposes: If a user is found by email/username,
+        // and ANY password is provided, consider it a successful login.
+        // In a real app, password would be hashed and compared securely.
+        if (foundUser && password) {
+            toast({
+                title: 'Giriş Başarılı!',
+                description: `${foundUser.name}, admin paneline yönlendiriliyorsunuz...`,
+            });
+            // In a real app, you'd set a session/token here
+            router.push('/admin');
+        } else if (
+          (emailOrUsername.toLowerCase() === 'admin@teknobiyo.com' || emailOrUsername.toLowerCase() === 'admin') &&
+          password === 'password123'
+        ) {
+           toast({
+                title: 'Giriş Başarılı! (Varsayılan Admin)',
+                description: 'Admin paneline yönlendiriliyorsunuz...',
+            });
+            router.push('/admin');
+        }
+        else {
+            setError('Geçersiz e-posta/kullanıcı adı veya şifre. Lütfen tekrar deneyin.');
+            toast({
+                variant: 'destructive',
+                title: 'Giriş Başarısız',
+                description: 'E-posta/kullanıcı adı veya şifreniz yanlış.',
+            });
+        }
+    } catch (fetchError) {
+        console.error("Error fetching users:", fetchError);
+        setError('Kullanıcı verileri yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+        toast({
+            variant: 'destructive',
+            title: 'Giriş Hatası',
+            description: 'Kullanıcılar yüklenemedi.',
+        });
     }
+
+
     setIsLoading(false);
   };
 
@@ -120,8 +151,8 @@ export default function LoginPage() {
                 </Label>
                 <Input
                   id="emailOrUsername"
-                  type="text" // Changed type to text to accommodate username
-                  placeholder="admin@example.com veya admin"
+                  type="text"
+                  placeholder="E-posta adresiniz veya kullanıcı adınız"
                   value={emailOrUsername}
                   onChange={(e) => setEmailOrUsername(e.target.value)}
                   required
@@ -198,3 +229,4 @@ export default function LoginPage() {
       </footer>
     </div>
   );
+}
