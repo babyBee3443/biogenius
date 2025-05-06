@@ -51,7 +51,7 @@ export default function AdminProfilePage() {
           if (storedUser && storedUser.id) {
             setUserId(storedUser.id);
           } else {
-            console.error("User ID not found in stored currentUser object.");
+            // console.error("User ID not found in stored currentUser object."); // Removed this line
             toast({ variant: "destructive", title: "Hata", description: "Oturum bilgileri bulunamadı. Lütfen tekrar giriş yapın." });
             router.push('/login'); // Redirect to login if no valid user ID
           }
