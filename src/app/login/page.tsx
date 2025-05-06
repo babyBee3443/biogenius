@@ -75,13 +75,14 @@ export default function LoginPage() {
                 (user.username && user.username.toLowerCase() === lowercasedInput)
         );
 
-        if (foundUser && password) { // Basic check: if user found and any password entered
-            // Store user info in localStorage
+        // For mock purposes, any password for a found user is accepted
+        // In a real app, you'd compare a hashed password.
+        if (foundUser && password) {
+            // Store the entire foundUser object (or necessary parts including ID) in localStorage
             if (typeof window !== 'undefined') {
-                localStorage.setItem('currentUser', JSON.stringify({ 
-                    name: foundUser.name, 
-                    avatar: foundUser.avatar || `https://picsum.photos/seed/${foundUser.username}/32/32`
-                }));
+                localStorage.setItem('currentUser', JSON.stringify(foundUser));
+                 // Dispatch an event to notify other components (like Header/Layout) of user change
+                window.dispatchEvent(new CustomEvent('currentUserUpdated'));
             }
             toast({
                 title: 'Giriş Başarılı!',
@@ -90,14 +91,20 @@ export default function LoginPage() {
             router.push('/admin');
         } else if (
           (emailOrUsername.toLowerCase() === 'admin@teknobiyo.com' || emailOrUsername.toLowerCase() === 'admin') &&
-          password === 'password123'
+          password === 'password123' // Default admin credentials
         ) {
-           // Store admin user info in localStorage
+           const defaultAdminUser: UserData = {
+                id: 'admin-default', // A specific ID for the default admin
+                name: 'Admin User',
+                username: 'admin',
+                email: 'admin@teknobiyo.com',
+                role: 'Admin',
+                joinedAt: new Date().toISOString(),
+                avatar: 'https://picsum.photos/seed/admin-avatar/32/32'
+           };
            if (typeof window !== 'undefined') {
-                localStorage.setItem('currentUser', JSON.stringify({ 
-                    name: 'Admin User', 
-                    avatar: 'https://picsum.photos/seed/admin-avatar/32/32' 
-                }));
+                localStorage.setItem('currentUser', JSON.stringify(defaultAdminUser));
+                window.dispatchEvent(new CustomEvent('currentUserUpdated'));
             }
            toast({
                 title: 'Giriş Başarılı! (Varsayılan Admin)',

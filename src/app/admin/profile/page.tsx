@@ -1,8 +1,7 @@
-
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Keep useRouter if needed for other actions
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,13 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Twitter, Linkedin, Globe, Instagram, Facebook, Youtube, X as XIcon, Upload, Save, KeyRound, Loader2 } from 'lucide-react';
+import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon } from 'lucide-react';
 import { getUserById, updateUser, type User } from '@/lib/mock-data';
 
 export default function AdminProfilePage() {
-  const router = useRouter();
+  const router = useRouter(); // Keep for potential future use
 
-  const [userId, setUserId] = React.useState<string | null>(null);
+  const [userId, setUserId] = React.useState<string | null>(null); // This will be fetched from localStorage
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
@@ -42,29 +41,32 @@ export default function AdminProfilePage() {
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Effect to get the logged-in user's ID from localStorage
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
+      const storedUserString = localStorage.getItem('currentUser');
+      if (storedUserString) {
         try {
-          const userData = JSON.parse(storedUser);
-          if (userData && userData.id) {
-            setUserId(userData.id);
+          const storedUser = JSON.parse(storedUserString);
+          if (storedUser && storedUser.id) {
+            setUserId(storedUser.id);
           } else {
-            // Fallback or redirect if no user ID found
-            console.warn("User ID not found in localStorage, using default or redirecting...");
-            // For demo, let's use a default ID if none found. In real app, redirect to login.
-            setUserId('u1'); // Default to 'u1' for demo if no ID
+            console.error("User ID not found in stored currentUser object.");
+            toast({ variant: "destructive", title: "Hata", description: "Oturum bilgileri bulunamadı. Lütfen tekrar giriş yapın." });
+            router.push('/login'); // Redirect to login if no valid user ID
           }
         } catch (e) {
-          console.error("Error parsing user data from localStorage for ID", e);
-          setUserId('u1'); // Default on error
+          console.error("Error parsing currentUser from localStorage:", e);
+          toast({ variant: "destructive", title: "Hata", description: "Oturum bilgileri okunamadı." });
+          router.push('/login');
         }
       } else {
-        setUserId('u1'); // Default if no user in local storage
+        toast({ variant: "destructive", title: "Oturum Yok", description: "Lütfen giriş yapın." });
+        router.push('/login'); // Redirect if no currentUser in localStorage
       }
     }
-  }, []);
+  }, [router]);
+
 
   React.useEffect(() => {
     if (userId) {
@@ -87,6 +89,7 @@ export default function AdminProfilePage() {
             setAvatarUrl(data.avatar || "https://picsum.photos/seed/default-avatar/128/128");
           } else {
             toast({ variant: "destructive", title: "Hata", description: "Kullanıcı profili bulunamadı." });
+            // Potentially redirect or show a "not found" state within the profile page
           }
         })
         .catch(err => {
@@ -128,13 +131,18 @@ export default function AdminProfilePage() {
             if (storedCurrentUser) {
                 try {
                     const currentUserData = JSON.parse(storedCurrentUser);
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        ...currentUserData,
-                        name: result.name,
-                        avatar: result.avatar
-                    }));
-                    // Trigger a custom event to notify header to update (if header listens)
-                    window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+                    // Ensure we update the correct user in localStorage
+                    if (currentUserData.id === userId) {
+                        localStorage.setItem('currentUser', JSON.stringify({
+                            ...currentUserData, // Keep existing relevant fields like ID, email, role
+                            name: result.name,
+                            avatar: result.avatar,
+                            username: result.username, // Persist username if it's part of currentUser
+                            // Persist other fields if they are part of what 'currentUser' stores
+                        }));
+                        // Trigger a custom event to notify header to update (if header listens)
+                        window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+                    }
                 } catch (e) { console.error("Failed to update localStorage user", e); }
             }
         }
@@ -204,7 +212,7 @@ export default function AdminProfilePage() {
   }
 
   if (!user) {
-    return <div className="text-center py-10 text-destructive">Kullanıcı profili yüklenemedi.</div>;
+    return <div className="text-center py-10 text-destructive">Kullanıcı profili yüklenemedi veya oturum bulunamadı.</div>;
   }
 
   return (
