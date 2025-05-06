@@ -1,9 +1,9 @@
-
 'use server';
 /**
  * @fileOverview AI flow for generating biology note suggestions.
  * This flow now provides structured suggestions for various fields of a biology note,
  * and considers existing form data and block structure provided by the user.
+ * It's designed to act as an expert biology educator, prioritizing accuracy.
  *
  * - generateBiologyNoteSuggestion - A function that handles biology note suggestion generation.
  * - GenerateBiologyNoteSuggestionInput - The input type for the function.
@@ -49,15 +49,19 @@ const GenerateBiologyNoteSuggestionOutputSchema = z.object({
 export type GenerateBiologyNoteSuggestionOutput = z.infer<typeof GenerateBiologyNoteSuggestionOutputSchema>;
 
 
-// --- Genkit Prompt Definition (Updated) ---
+// --- Genkit Prompt Definition (Updated for Expert Persona and Accuracy) ---
 const biologyNoteSuggestionPrompt = ai.definePrompt({
   name: 'generateBiologyNoteSuggestionPrompt',
   input: { schema: GenerateBiologyNoteSuggestionInputSchema },
   output: { schema: GenerateBiologyNoteSuggestionOutputSchema },
   prompt: `
-    You are an expert biology educator. Your task is to provide suggestions for creating a biology study note.
+    You are an **expert biology educator and a highly knowledgeable biology assistant.**
+    Your primary goal is to provide **accurate, scientifically sound, and helpful** suggestions for creating biology study notes.
+    **Accuracy is paramount.** If you are unsure about a specific piece of information, if there isn't a clear scientific consensus, or if the user's request is outside the scope of biology, you **must clearly state that** instead of providing potentially incorrect or misleading information. **Do not make up answers or guess.** Your suggestions should be based on established biological principles.
+
+    Your task is to provide suggestions for creating a biology study note.
     The user will provide a topic, a target audience level, optional keywords, an optional outline, and potentially some already filled-in form data and the current structure of their note (blocks).
-    
+
     Based on ALL this input, generate suggestions for the following fields. If the user has already provided a value for a field (like title, summary, tags), try to improve or build upon it rather than completely replacing it, unless the user's input is very minimal or clearly a placeholder.
 
     1.  **suggestedTitle**: A clear and concise title for the note.
@@ -77,6 +81,8 @@ const biologyNoteSuggestionPrompt = ai.definePrompt({
           - Block Type: {{this.type}}, Content Preview: "{{this.contentPreview}}"
           {{/each}}
           Your 'suggestedContentIdeas' should aim to complement, expand upon, or fill in the gaps of this existing structure. You might suggest new blocks or ways to enhance the existing ones.
+        {{else}}
+        - If no blocks currently exist, provide a comprehensive set of content ideas that could form the basis of a new note.
         {{/if}}
 
     User Input for Context:
@@ -102,6 +108,7 @@ const biologyNoteSuggestionPrompt = ai.definePrompt({
 
     Your entire output must be a JSON object matching the 'GenerateBiologyNoteSuggestionOutputSchema'.
     Focus on providing informative and structured textual suggestions for each field. The 'suggestedContentIdeas' should be textual content, NOT a list of block objects.
+    **Remember to be an expert, accurate, and cautious biology assistant. If unsure, state it.**
   `,
 });
 
@@ -125,6 +132,3 @@ const generateBiologyNoteSuggestionFlow = ai.defineFlow(
 export async function generateBiologyNoteSuggestion(input: GenerateBiologyNoteSuggestionInput): Promise<GenerateBiologyNoteSuggestionOutput> {
   return generateBiologyNoteSuggestionFlow(input);
 }
-
-
-    
