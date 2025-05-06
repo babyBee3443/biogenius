@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -9,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { LogIn, Mail, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { LogIn, Mail, KeyRound, Eye, EyeOff, Loader2, User } from 'lucide-react'; // Added User icon
 import Link from 'next/link';
 
 // Placeholder Logo
@@ -51,7 +50,7 @@ const AnimatedLogo = () => (
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = React.useState('');
+  const [emailOrUsername, setEmailOrUsername] = React.useState(''); // Changed from email
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -65,8 +64,11 @@ export default function LoginPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Basic validation (replace with actual auth logic)
-    if (email === 'admin@teknobiyo.com' && password === 'password123') {
+    // Updated validation to accept username 'admin' or email 'admin@teknobiyo.com'
+    if (
+      (emailOrUsername.toLowerCase() === 'admin@teknobiyo.com' || emailOrUsername.toLowerCase() === 'admin') &&
+      password === 'password123'
+    ) {
       toast({
         title: 'Giriş Başarılı!',
         description: 'Admin paneline yönlendiriliyorsunuz...',
@@ -74,11 +76,11 @@ export default function LoginPage() {
       // In a real app, you'd set a session/token here
       router.push('/admin');
     } else {
-      setError('Geçersiz e-posta veya şifre. Lütfen tekrar deneyin.');
+      setError('Geçersiz e-posta/kullanıcı adı veya şifre. Lütfen tekrar deneyin.');
       toast({
         variant: 'destructive',
         title: 'Giriş Başarısız',
-        description: 'E-posta veya şifreniz yanlış.',
+        description: 'E-posta/kullanıcı adı veya şifreniz yanlış.',
       });
     }
     setIsLoading(false);
@@ -113,15 +115,15 @@ export default function LoginPage() {
           <CardContent className="p-8 space-y-6">
             <form onSubmit={handleLogin} className="space-y-6">
               <motion.div variants={itemVariants} className="space-y-2">
-                <Label htmlFor="email" className="flex items-center text-muted-foreground">
-                  <Mail className="mr-2 h-4 w-4" /> E-posta Adresi
+                <Label htmlFor="emailOrUsername" className="flex items-center text-muted-foreground">
+                  <User className="mr-2 h-4 w-4" /> E-posta veya Kullanıcı Adı
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="emailOrUsername"
+                  type="text" // Changed type to text to accommodate username
+                  placeholder="admin@example.com veya admin"
+                  value={emailOrUsername}
+                  onChange={(e) => setEmailOrUsername(e.target.value)}
                   required
                   className="h-11 text-base"
                   disabled={isLoading}
@@ -196,4 +198,3 @@ export default function LoginPage() {
       </footer>
     </div>
   );
-}
