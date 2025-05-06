@@ -29,10 +29,12 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const currentUserName = "Admin User"; // Placeholder for actual user name
+
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex items-center justify-center p-4"> {/* Changed p-2 to p-4 */}
+        <SidebarHeader className="flex items-center justify-center p-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -51,13 +53,14 @@ export default function AdminLayout({
             <path d="M14.5 5.5L17.5 7.5" />
             <path d="M10 12H14" />
           </svg>
-          {/* TeknoBiyo text moved out of here */}
         </SidebarHeader>
 
-        {/* Moved TeknoBiyo text here, below the logo and above the menu */}
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden"> {/* Increased py-2 to py-4 */}
-          <span className="font-bold text-lg">
-            TeknoBiyo
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden">
+          <span className="font-semibold text-md text-muted-foreground"> {/* Changed font style */}
+            Hoşgeldiniz
+          </span>
+          <span className="block font-bold text-lg mt-1"> {/* Added block and margin */}
+            {currentUserName}
           </span>
         </div>
 
@@ -182,7 +185,7 @@ export default function AdminLayout({
                             <AvatarImage src="https://picsum.photos/seed/admin-avatar/32/32" alt="Admin" />
                             <AvatarFallback>AD</AvatarFallback>
                           </Avatar>
-                          <span>Admin User</span>
+                          <span>{currentUserName}</span>
                         </Link>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
@@ -210,11 +213,10 @@ export default function AdminLayout({
              </Button>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]">
+         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]"> {/* Adjusted padding to ensure content is not overlapped */}
             {children}
          </main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
-
