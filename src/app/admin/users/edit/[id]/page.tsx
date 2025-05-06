@@ -14,29 +14,8 @@ import { ArrowLeft, Save, Trash2, KeyRound, Activity } from "lucide-react"; // A
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge"; // For status/role
+import { getUserById, updateUser as mockUpdateUser, deleteUser as mockDeleteUser, type User } from '@/lib/mock-data'; // Renamed functions for clarity
 
-// Mock data fetching - replace with actual API call
-const getUserById = async (id: string): Promise<User | null> => {
-    // Simulate API delay
-    // await new Promise(resolve => setTimeout(resolve, 500)); // Removed delay
-
-    const users: User[] = [
-         { id: 'u1', name: 'Ali Veli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22 10:30' },
-         { id: 'u2', name: 'Ayşe Kaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22', avatar: 'https://picsum.photos/seed/u2/128/128', lastLogin: '2024-07-21 15:00' },
-         { id: 'u3', name: 'Mehmet Yılmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10', avatar: 'https://picsum.photos/seed/u3/128/128', lastLogin: '2024-07-20 09:15' },
-    ];
-    return users.find(user => user.id === id) || null;
-};
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  joinedAt: string;
-  avatar: string;
-  lastLogin: string; // Added last login example
-}
 
 // Mock activity data - replace with actual API call
 const getUserActivity = async (userId: string): Promise<UserActivity[]> => {
@@ -62,13 +41,16 @@ interface UserActivity {
 
 export default function EditUserPage() {
     const params = useParams();
-    const userId = React.use(params.id) as string;
+    const userId = params.id as string; // Correct way to get userId
 
     const [user, setUser] = React.useState<User | null>(null);
     const [activity, setActivity] = React.useState<UserActivity[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [name, setName] = React.useState("");
     const [role, setRole] = React.useState("");
+    const [isSaving, setIsSaving] = React.useState(false);
+    const [isDeleting, setIsDeleting] = React.useState(false);
+
 
     React.useEffect(() => {
         if (userId) {
@@ -91,28 +73,51 @@ export default function EditUserPage() {
         }
     }, [userId]);
 
-    const handleSave = () => {
-        console.log("Updating user:", { userId, name, role });
-        // TODO: Implement actual API call to update user details (name, role)
-        toast({
-            title: "Kullanıcı Güncellendi",
-            description: `${name} kullanıcısının bilgileri başarıyla güncellendi.`,
-        });
-         // Refetch or update local state if necessary
-        if(user) setUser({...user, name, role});
+    const handleSave = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            const updatedUser = await mockUpdateUser(userId, { name, role });
+            if (updatedUser) {
+                 setUser(updatedUser); // Update local state
+                 toast({
+                    title: "Kullanıcı Güncellendi",
+                    description: `${updatedUser.name} kullanıcısının bilgileri başarıyla güncellendi.`,
+                });
+            } else {
+                toast({ variant: "destructive", title: "Güncelleme Hatası", description: "Kullanıcı güncellenemedi."});
+            }
+        } catch (error) {
+            console.error("Error updating user:", error);
+            toast({ variant: "destructive", title: "Hata", description: "Kullanıcı güncellenirken bir sorun oluştu." });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-     const handleDelete = () => {
-        if (window.confirm(`${name} (${user?.email}) kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-            console.log("Deleting user:", userId);
-            // TODO: Implement actual API call to delete the user
-             toast({
-                 variant: "destructive",
-                 title: "Kullanıcı Silindi",
-                 description: `${name} kullanıcısı silindi.`,
-            });
-            // TODO: Redirect to users list page
-             // router.push('/admin/users');
+     const handleDelete = async () => {
+        if (!user) return;
+        if (window.confirm(`${user.name} (${user.email}) kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+            setIsDeleting(true);
+            try {
+                const success = await mockDeleteUser(userId);
+                if (success) {
+                    toast({
+                        variant: "destructive",
+                        title: "Kullanıcı Silindi",
+                        description: `${user.name} kullanıcısı silindi.`,
+                    });
+                    // Redirect to users list page (using next/navigation is better but window.location for simplicity here)
+                    window.location.href = '/admin/users';
+                } else {
+                    toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
+                }
+            } catch (error) {
+                 console.error("Error deleting user:", error);
+                 toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinirken bir hata oluştu." });
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
@@ -146,11 +151,11 @@ export default function EditUserPage() {
                     <p className="text-muted-foreground">{user.email}</p>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                    <Button variant="destructive" onClick={handleDelete}>
-                        <Trash2 className="mr-2 h-4 w-4" /> Kullanıcıyı Sil
+                    <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || isSaving}>
+                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                     </Button>
-                    <Button onClick={handleSave}>
-                        <Save className="mr-2 h-4 w-4" /> Değişiklikleri Kaydet
+                    <Button onClick={handleSave} disabled={isSaving || isDeleting}>
+                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                     </Button>
                 </div>
             </div>
@@ -165,7 +170,7 @@ export default function EditUserPage() {
                         <CardContent className="space-y-4">
                              <div className="flex items-center space-x-4">
                                 <Avatar className="h-16 w-16">
-                                <AvatarImage src={user.avatar} alt={user.name} />
+                                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="user avatar placeholder"/>
                                 <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div>
@@ -249,11 +254,11 @@ export default function EditUserPage() {
 
               <Separator />
              <div className="flex justify-end gap-2">
-                 <Button variant="destructive" onClick={handleDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Kullanıcıyı Sil
+                 <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || isSaving}>
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                 </Button>
-                <Button onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" /> Değişiklikleri Kaydet
+                <Button onClick={handleSave} disabled={isSaving || isDeleting}>
+                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                 </Button>
              </div>
          </form>
