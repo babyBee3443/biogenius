@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -258,7 +259,8 @@ export default function NewBiyolojiNotuPage() {
             currentTags: tags,
             currentCategory: category,
             currentLevel: level,
-            // Add other relevant fields from your form if needed
+            // Pass a simplified version of the blocks for AI to understand the structure
+            currentBlocksStructure: blocks.map(b => ({ type: b.type, contentPreview: (b as any).content?.substring(0, 50) || `[${b.type} bloğu]` }) )
         };
 
         const userInput: GenerateBiologyNoteSuggestionInput = {
@@ -266,19 +268,25 @@ export default function NewBiyolojiNotuPage() {
             level: level, // Use the level from the main form
             keywords: aiKeywords,
             outline: aiOutline,
-            currentFormData: currentFormData, // Pass current form data
+            currentFormData: currentFormData,
         };
 
         let userMessage = `Konu: ${aiTopic}`;
         if (aiKeywords) userMessage += `, Anahtar Kelimeler: ${aiKeywords}`;
         if (aiOutline) userMessage += `, Taslak: ${aiOutline}`;
         
-        userMessage += `\n\nMevcut Form Alanları (bunları dikkate alarak öneri ver):`;
+        userMessage += `\n\nMevcut Form Alanları ve Not Yapısı (bunları dikkate alarak öneri ver):`;
         if (currentFormData.currentTitle) userMessage += `\n- Başlık: ${currentFormData.currentTitle}`;
         if (currentFormData.currentSummary) userMessage += `\n- Özet: ${currentFormData.currentSummary}`;
         if (currentFormData.currentTags.length > 0) userMessage += `\n- Etiketler: ${currentFormData.currentTags.join(', ')}`;
         if (currentFormData.currentCategory) userMessage += `\n- Kategori: ${currentFormData.currentCategory}`;
         if (currentFormData.currentLevel) userMessage += `\n- Seviye: ${currentFormData.currentLevel}`;
+        if (currentFormData.currentBlocksStructure.length > 0) {
+            userMessage += `\n- Mevcut Bloklar (${currentFormData.currentBlocksStructure.length} adet):`;
+            currentFormData.currentBlocksStructure.forEach((b, i) => {
+                userMessage += `\n  - Blok ${i+1}: Tip: ${b.type}, İçerik Önizlemesi: ${b.contentPreview}`;
+            });
+        }
 
 
         setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: userMessage }]);
@@ -385,13 +393,9 @@ export default function NewBiyolojiNotuPage() {
                                                     {loadingCategories ? (
                                                         <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
                                                      ) : (
-                                                        categories.length === 0 ? (
-                                                            <SelectItem value="no_category_placeholder" disabled>Önce kategori ekleyin</SelectItem>
-                                                        ) : (
-                                                            categories.map(cat => (
-                                                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                                            ))
-                                                        )
+                                                        categories.map(cat => (
+                                                           <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                                        ))
                                                      )}
                                                       <Separator />
                                                       <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
@@ -499,7 +503,7 @@ export default function NewBiyolojiNotuPage() {
                                     <Textarea id="ai-outline" value={aiOutline} onChange={(e) => setAiOutline(e.target.value)} placeholder="Örn: Tanımı, Işığa bağlı reaksiyonlar, Işıktan bağımsız reaksiyonlar, Önemi" rows={2} />
                                 </div>
                                  <p className="text-xs text-muted-foreground mt-2">
-                                    AI, önerilerde bulunurken soldaki formdaki <strong>Başlık, Özet, Etiketler, Kategori ve Seviye</strong> alanlarını dikkate alacaktır.
+                                    AI, önerilerde bulunurken soldaki formdaki <strong>Başlık, Özet, Etiketler, Kategori ve Seviye</strong> alanlarını ve <strong>mevcut blok yapısını</strong> dikkate alacaktır.
                                 </p>
                                 <Button type="submit" className="w-full mt-3" disabled={isAiGenerating || !level}>
                                     {isAiGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
@@ -522,3 +526,6 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
+
+
+    
