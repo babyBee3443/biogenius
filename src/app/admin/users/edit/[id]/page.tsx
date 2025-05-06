@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { notFound, useParams } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation'; // Added useRouter
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,16 +10,27 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2 } from "lucide-react"; // Added Loader2
+import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge"; // For status/role
-import { getUserById, updateUser as mockUpdateUser, deleteUser as mockDeleteUser, type User } from '@/lib/mock-data'; // Renamed functions for clarity
+import { Badge } from "@/components/ui/badge";
+import { getUserById, updateUser as mockUpdateUser, deleteUser as mockDeleteUser, type User } from '@/lib/mock-data';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 
 // Mock activity data - replace with actual API call
 const getUserActivity = async (userId: string): Promise<UserActivity[]> => {
-     // await new Promise(resolve => setTimeout(resolve, 700)); // Removed delay
      if (userId === 'u1') {
          return [
              { timestamp: '2024-07-22 11:00', action: 'Makale oluşturdu: "Yeni Teknoloji Trendleri"' },
@@ -41,26 +52,35 @@ interface UserActivity {
 
 export default function EditUserPage() {
     const params = useParams();
-    const userId = React.use(params.id) as string;
+    const router = useRouter();
+    const userId = params.id as string | undefined; // Directly access params.id
 
     const [user, setUser] = React.useState<User | null>(null);
     const [activity, setActivity] = React.useState<UserActivity[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [name, setName] = React.useState("");
-    const [username, setUsername] = React.useState(""); // Added username state
+    const [username, setUsername] = React.useState("");
     const [role, setRole] = React.useState("");
     const [isSaving, setIsSaving] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
 
+    // State for AlertDialog
+    const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
+
 
     React.useEffect(() => {
+        if (!userId) {
+            setLoading(false);
+            notFound(); // Or handle error appropriately
+            return;
+        }
         if (userId) {
             Promise.all([getUserById(userId), getUserActivity(userId)])
                 .then(([userData, userActivityData]) => {
                     if (userData) {
                         setUser(userData);
                         setName(userData.name);
-                        setUsername(userData.username); // Set username
+                        setUsername(userData.username);
                         setRole(userData.role);
                         setActivity(userActivityData);
                     } else {
@@ -76,16 +96,15 @@ export default function EditUserPage() {
     }, [userId]);
 
     const handleSave = async () => {
-        if (!user) return;
+        if (!user || !userId) return;
         setIsSaving(true);
         try {
-            // Username is not updatable in this mock setup after creation, so we don't pass it to mockUpdateUser
             const updatedUser = await mockUpdateUser(userId, { name, role });
             if (updatedUser) {
-                 setUser(updatedUser); // Update local state
-                 setName(updatedUser.name); // Re-sync form fields
+                 setUser(updatedUser);
+                 setName(updatedUser.name);
                  setRole(updatedUser.role);
-                 setUsername(updatedUser.username); // Re-sync username although it's not changed
+                 setUsername(updatedUser.username);
                  toast({
                     title: "Kullanıcı Güncellendi",
                     description: `${updatedUser.name} kullanıcısının bilgileri başarıyla güncellendi.`,
@@ -101,36 +120,37 @@ export default function EditUserPage() {
         }
     };
 
-     const handleDelete = async () => {
+     const handleDeleteInitiate = () => {
         if (!user) return;
-        if (window.confirm(`${user.name} (${user.email}) kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-            setIsDeleting(true);
-            try {
-                const success = await mockDeleteUser(userId);
-                if (success) {
-                    toast({
-                        variant: "destructive",
-                        title: "Kullanıcı Silindi",
-                        description: `${user.name} kullanıcısı silindi.`,
-                    });
-                    // Redirect to users list page (using next/navigation is better but window.location for simplicity here)
-                    window.location.href = '/admin/users';
-                } else {
-                    toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
-                     setIsDeleting(false);
-                }
-            } catch (error: any) {
-                 console.error("Error deleting user:", error);
-                 toast({ variant: "destructive", title: "Silme Hatası", description: error.message || "Kullanıcı silinirken bir hata oluştu." });
+        setIsConfirmDeleteDialogOpen(true);
+    };
+
+     const confirmDelete = async () => {
+        if (!user || !userId) return;
+        setIsDeleting(true);
+        setIsConfirmDeleteDialogOpen(false);
+        try {
+            const success = await mockDeleteUser(userId);
+            if (success) {
+                toast({
+                    variant: "destructive",
+                    title: "Kullanıcı Silindi",
+                    description: `${user.name} kullanıcısı silindi.`,
+                });
+                router.push('/admin/users');
+            } else {
+                toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
                  setIsDeleting(false);
             }
-            // No finally block for setIsDeleting(false) here if redirecting on success
+        } catch (error: any) {
+             console.error("Error deleting user:", error);
+             toast({ variant: "destructive", title: "Silme Hatası", description: error.message || "Kullanıcı silinirken bir hata oluştu." });
+             setIsDeleting(false);
         }
     };
 
     const handlePasswordReset = () => {
          console.log("Sending password reset email to:", user?.email);
-         // TODO: Implement API call to trigger password reset flow for the user
          toast({
              title: "Şifre Sıfırlama E-postası Gönderildi",
              description: `${user?.email} adresine şifre sıfırlama talimatları gönderildi.`,
@@ -139,7 +159,7 @@ export default function EditUserPage() {
 
 
     if (loading) {
-        return <div className="flex justify-center items-center h-64">Kullanıcı bilgileri yükleniyor...</div>;
+        return <div className="flex justify-center items-center h-64"><Loader2 className="mr-2 h-6 w-6 animate-spin"/>Kullanıcı bilgileri yükleniyor...</div>;
     }
 
      if (!user) {
@@ -158,9 +178,11 @@ export default function EditUserPage() {
                     <p className="text-muted-foreground">{user.email}</p>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                    <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || isSaving}>
-                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                    </Button>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                        </Button>
+                    </AlertDialogTrigger>
                     <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                     </Button>
@@ -168,7 +190,6 @@ export default function EditUserPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* User Details */}
                 <div className="lg:col-span-2 space-y-6">
                      <Card>
                         <CardHeader>
@@ -238,14 +259,12 @@ export default function EditUserPage() {
                              ) : (
                                 <p className="text-sm text-muted-foreground">Bu kullanıcı için henüz bir etkinlik kaydedilmemiş.</p>
                              )}
-                             {/* Optional: Add link to full activity log */}
                              <Button variant="link" size="sm" className="p-0 h-auto mt-4"><Activity className="mr-1 h-3 w-3"/> Tüm Etkinlikleri Görüntüle</Button>
                          </CardContent>
                      </Card>
 
                 </div>
 
-                {/* Actions Sidebar */}
                  <div className="space-y-6">
                      <Card>
                         <CardHeader>
@@ -255,27 +274,42 @@ export default function EditUserPage() {
                             <Button variant="outline" className="w-full justify-start" onClick={handlePasswordReset}>
                                <KeyRound className="mr-2 h-4 w-4" /> Şifre Sıfırlama E-postası Gönder
                             </Button>
-                             {/* Add other actions like Suspend User, Force Logout etc. */}
                               <Button variant="outline" className="w-full justify-start" disabled>
-                                {/* Placeholder for future action */}
                                 Kullanıcıyı Askıya Al (Yakında)
                              </Button>
                         </CardContent>
                      </Card>
-                     {/* Could add cards for user stats, groups, permissions etc. here */}
                  </div>
              </div>
 
               <Separator />
              <div className="flex justify-end gap-2">
-                 <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || isSaving}>
-                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                </Button>
+                 <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                    </Button>
+                </AlertDialogTrigger>
                 <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                 </Button>
              </div>
+
+             <AlertDialog open={isConfirmDeleteDialogOpen} onOpenChange={setIsConfirmDeleteDialogOpen}>
+                <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    "{user?.name}" kullanıcısını silmek üzeresiniz. Bu işlem geri alınamaz.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setIsConfirmDeleteDialogOpen(false)}>İptal</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmDelete} className={cn(buttonVariants({ variant: "destructive" }))}>
+                    Evet, Sil
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
          </form>
     );
 }
-
