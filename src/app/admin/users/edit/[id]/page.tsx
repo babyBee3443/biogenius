@@ -4,7 +4,7 @@
 import * as React from "react";
 import { notFound, useParams, useRouter } from 'next/navigation'; // Added useRouter
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,7 +53,8 @@ interface UserActivity {
 export default function EditUserPage() {
     const params = useParams();
     const router = useRouter();
-    const userId = params.id as string | undefined; // Directly access params.id
+    const userId = React.use(params.id) as string;
+
 
     const [user, setUser] = React.useState<User | null>(null);
     const [activity, setActivity] = React.useState<UserActivity[]>([]);
