@@ -1,6 +1,11 @@
 
+"use client"; // Add "use client" for useState and useEffect
+
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter for logout redirect
+import * as React from 'react'; // Import React for state
+
 import {
   SidebarProvider,
   Sidebar,
@@ -19,22 +24,52 @@ import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, Shield
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export const metadata: Metadata = {
-  title: 'TeknoBiyo Admin',
-  description: 'TeknoBiyo Yönetim Paneli',
-};
+// Metadata cannot be dynamic in client components this way.
+// export const metadata: Metadata = {
+//   title: 'TeknoBiyo Admin',
+//   description: 'TeknoBiyo Yönetim Paneli',
+// };
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const currentUserName = "Admin User"; // Placeholder for actual user name
+  const [currentUserName, setCurrentUserName] = React.useState("Kullanıcı");
+  const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
+  const router = useRouter();
+
+  React.useEffect(() => {
+    // Set document title (alternative for metadata in client components)
+    document.title = 'TeknoBiyo Admin';
+    
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setCurrentUserName(userData.name || "Kullanıcı");
+          setCurrentUserAvatar(userData.avatar || "https://picsum.photos/seed/default-avatar/32/32");
+        } catch (e) {
+          console.error("Error parsing user data from localStorage", e);
+          setCurrentUserName("Kullanıcı"); // Fallback
+          setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
+        }
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser');
+    }
+    router.push('/login');
+  };
 
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex items-center justify-center p-4 mt-4"> {/* Added mt-4 */}
+        <SidebarHeader className="flex items-center justify-center p-4 mt-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -182,19 +217,20 @@ export default function AdminLayout({
                      <SidebarMenuButton asChild tooltip="Profil">
                         <Link href="/admin/profile">
                           <Avatar className="size-5">
-                            <AvatarImage src="https://picsum.photos/seed/admin-avatar/32/32" alt="Admin" />
-                            <AvatarFallback>AD</AvatarFallback>
+                            <AvatarImage src={currentUserAvatar} alt={currentUserName} />
+                            <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <span>{currentUserName}</span>
                         </Link>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
                     <SidebarMenuItem>
-                     <SidebarMenuButton asChild tooltip="Çıkış Yap">
-                        <Link href="/login">
+                     <SidebarMenuButton onClick={handleLogout} asChild tooltip="Çıkış Yap">
+                        {/* Link removed as onClick is handled directly by Button */}
+                        <button className="w-full">
                            <LogOut />
                            <span>Çıkış Yap</span>
-                        </Link>
+                        </button>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
                  </SidebarMenu>
@@ -207,8 +243,8 @@ export default function AdminLayout({
            <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                 <Avatar className="size-7">
-                   <AvatarImage src="https://picsum.photos/seed/admin-avatar/32/32" alt="Admin" />
-                   <AvatarFallback>AD</AvatarFallback>
+                   <AvatarImage src={currentUserAvatar} alt={currentUserName} />
+                   <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                  </Avatar>
              </Button>
            </div>

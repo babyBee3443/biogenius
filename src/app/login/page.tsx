@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { LogIn, User, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react'; // Changed Mail to User
+import { LogIn, User, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { getUsers, type User as UserData } from '@/lib/mock-data'; // Import getUsers and User type
+import { getUsers, type User as UserData } from '@/lib/mock-data';
 
 // Placeholder Logo
 const AnimatedLogo = () => (
@@ -75,21 +75,30 @@ export default function LoginPage() {
                 (user.username && user.username.toLowerCase() === lowercasedInput)
         );
 
-        // For mock purposes: If a user is found by email/username,
-        // and ANY password is provided, consider it a successful login.
-        // In a real app, password would be hashed and compared securely.
-        // Also, added a basic hardcoded admin/password for easy testing.
         if (foundUser && password) { // Basic check: if user found and any password entered
+            // Store user info in localStorage
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('currentUser', JSON.stringify({ 
+                    name: foundUser.name, 
+                    avatar: foundUser.avatar || `https://picsum.photos/seed/${foundUser.username}/32/32`
+                }));
+            }
             toast({
                 title: 'Giriş Başarılı!',
                 description: `${foundUser.name}, admin paneline yönlendiriliyorsunuz...`,
             });
-            // In a real app, you'd set a session/token here
             router.push('/admin');
         } else if (
           (emailOrUsername.toLowerCase() === 'admin@teknobiyo.com' || emailOrUsername.toLowerCase() === 'admin') &&
           password === 'password123'
         ) {
+           // Store admin user info in localStorage
+           if (typeof window !== 'undefined') {
+                localStorage.setItem('currentUser', JSON.stringify({ 
+                    name: 'Admin User', 
+                    avatar: 'https://picsum.photos/seed/admin-avatar/32/32' 
+                }));
+            }
            toast({
                 title: 'Giriş Başarılı! (Varsayılan Admin)',
                 description: 'Admin paneline yönlendiriliyorsunuz...',
@@ -112,7 +121,6 @@ export default function LoginPage() {
             description: 'Kullanıcılar yüklenemedi.',
         });
     }
-
 
     setIsLoading(false);
   };
