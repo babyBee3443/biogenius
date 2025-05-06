@@ -54,12 +54,15 @@ const biologyChatPrompt = ai.definePrompt({
 
     The user will ask you a question. If a chat history is provided, consider it for context.
     Provide a clear, concise, and informative answer.
+    **IMPORTANT: Your entire response MUST be in Turkish.**
 
+    {{#if history}}
     {{#if history.length}}
     Previous conversation:
     {{#each history}}
     {{this.role}}: {{this.content}}
     {{/each}}
+    {{/if}}
     {{/if}}
 
     User's current query: {{{query}}}
@@ -93,7 +96,7 @@ export async function biologyChat(
 ): Promise<BiologyChatOutput> {
   const historyForAI = input.history
     ? input.history
-        .filter(m => m.role === 'user' || m.role === 'assistant') // Filter out system_error
+        .filter(m => m.role === 'user' || m.role === 'assistant') // Filter out system_error for the AI
         .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })) // Ensure correct type for AI
     : undefined;
 
