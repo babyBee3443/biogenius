@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"; // Added for Bio
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2, Upload, Globe, Twitter, Linkedin } from "lucide-react"; // Added new icons
+import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2, Upload, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon } from "lucide-react"; // Added new icons for social media
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +55,10 @@ export default function EditUserPage() {
     const params = useParams();
     const router = useRouter();
     // Ensure params.id is accessed safely and correctly
-    const userId = params.id as string;
+    let userId: string | null = null;
+    if (params && params.id) {
+        userId = Array.isArray(params.id) ? params.id[0] : params.id;
+    }
 
 
     const [user, setUser] = React.useState<User | null>(null);
@@ -69,12 +72,18 @@ export default function EditUserPage() {
     const [website, setWebsite] = React.useState("");
     const [twitterHandle, setTwitterHandle] = React.useState("");
     const [linkedinProfile, setLinkedinProfile] = React.useState("");
+    const [instagramProfile, setInstagramProfile] = React.useState("");
+    const [facebookProfile, setFacebookProfile] = React.useState("");
+    const [youtubeChannel, setYoutubeChannel] = React.useState("");
+    const [xProfile, setXProfile] = React.useState("");
+
 
     const [isSaving, setIsSaving] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
 
     // State for AlertDialog
     const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
 
     React.useEffect(() => {
@@ -98,6 +107,10 @@ export default function EditUserPage() {
                     setWebsite(userData.website || '');
                     setTwitterHandle(userData.twitterHandle || '');
                     setLinkedinProfile(userData.linkedinProfile || '');
+                    setInstagramProfile(userData.instagramProfile || '');
+                    setFacebookProfile(userData.facebookProfile || '');
+                    setYoutubeChannel(userData.youtubeChannel || '');
+                    setXProfile(userData.xProfile || '');
                     setActivity(userActivityData);
                 } else {
                     notFound();
@@ -111,6 +124,18 @@ export default function EditUserPage() {
         
     }, [userId]);
 
+    const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAvatar(reader.result as string);
+                 toast({ title: "Profil Resmi Güncellendi", description: "Yeni profil resmi yüklendi. Kaydetmeyi unutmayın." });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSave = async () => {
         if (!user || !userId || typeof userId !== 'string') return;
         setIsSaving(true);
@@ -123,7 +148,11 @@ export default function EditUserPage() {
                 bio, 
                 website, 
                 twitterHandle, 
-                linkedinProfile 
+                linkedinProfile,
+                instagramProfile,
+                facebookProfile,
+                youtubeChannel,
+                xProfile,
             };
             const updatedUser = await mockUpdateUser(userId, updatedUserData);
             if (updatedUser) {
@@ -136,6 +165,10 @@ export default function EditUserPage() {
                  setWebsite(updatedUser.website || '');
                  setTwitterHandle(updatedUser.twitterHandle || '');
                  setLinkedinProfile(updatedUser.linkedinProfile || '');
+                 setInstagramProfile(updatedUser.instagramProfile || '');
+                 setFacebookProfile(updatedUser.facebookProfile || '');
+                 setYoutubeChannel(updatedUser.youtubeChannel || '');
+                 setXProfile(updatedUser.xProfile || '');
                  toast({
                     title: "Kullanıcı Güncellendi",
                     description: `${updatedUser.name} kullanıcısının bilgileri başarıyla güncellendi.`,
@@ -234,15 +267,17 @@ export default function EditUserPage() {
                                 <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col space-y-2 items-center sm:items-start">
+                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                        <Upload className="mr-2 h-4 w-4"/> Profil Resmi Yükle
+                                    </Button>
                                     <Input 
-                                        id="avatar-url" 
-                                        value={avatar} 
-                                        onChange={(e) => setAvatar(e.target.value)} 
-                                        placeholder="Profil resmi URL'si"
-                                        className="max-w-xs"
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleAvatarUpload}
+                                        className="hidden"
+                                        accept="image/png, image/jpeg, image/gif"
                                     />
-                                    <p className="text-xs text-muted-foreground">Doğrudan URL girin veya yakında Yükle butonu.</p>
-                                    {/* <Button type="button" variant="outline" disabled><Upload className="mr-2 h-4 w-4"/>Resim Yükle (Yakında)</Button> */}
+                                    <p className="text-xs text-muted-foreground">PNG, JPG, GIF (Maks. 2MB)</p>
                                 </div>
                             </div>
                              <Separator />
@@ -289,10 +324,10 @@ export default function EditUserPage() {
                                     <Input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com"/>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="twitter" className="flex items-center gap-2"><Twitter className="h-4 w-4 text-muted-foreground"/>Twitter</Label>
+                                    <Label htmlFor="x-profile" className="flex items-center gap-2"><XIcon className="h-4 w-4 text-muted-foreground"/>X (Twitter)</Label>
                                     <div className="flex items-center">
-                                        <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">twitter.com/</span>
-                                        <Input id="twitter" value={twitterHandle} onChange={(e) => setTwitterHandle(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
+                                        <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">x.com/</span>
+                                        <Input id="x-profile" value={xProfile} onChange={(e) => setXProfile(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
                                     </div>
                                 </div>
                                  <div className="space-y-2">
@@ -300,6 +335,27 @@ export default function EditUserPage() {
                                     <div className="flex items-center">
                                         <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">linkedin.com/in/</span>
                                         <Input id="linkedin" value={linkedinProfile} onChange={(e) => setLinkedinProfile(e.target.value)} placeholder="profil-url" className="rounded-l-none"/>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="instagram" className="flex items-center gap-2"><Instagram className="h-4 w-4 text-muted-foreground"/>Instagram</Label>
+                                    <div className="flex items-center">
+                                        <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">instagram.com/</span>
+                                        <Input id="instagram" value={instagramProfile} onChange={(e) => setInstagramProfile(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="facebook" className="flex items-center gap-2"><Facebook className="h-4 w-4 text-muted-foreground"/>Facebook</Label>
+                                     <div className="flex items-center">
+                                        <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">facebook.com/</span>
+                                        <Input id="facebook" value={facebookProfile} onChange={(e) => setFacebookProfile(e.target.value)} placeholder="profil.adi" className="rounded-l-none"/>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="youtube" className="flex items-center gap-2"><Youtube className="h-4 w-4 text-muted-foreground"/>YouTube</Label>
+                                     <div className="flex items-center">
+                                        <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">youtube.com/</span>
+                                        <Input id="youtube" value={youtubeChannel} onChange={(e) => setYoutubeChannel(e.target.value)} placeholder="@kanaladi veya channel/ID" className="rounded-l-none"/>
                                     </div>
                                 </div>
                              </div>
@@ -381,6 +437,3 @@ export default function EditUserPage() {
     );
 
 }
-
-
-    

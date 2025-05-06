@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea"; // Added Textarea for Bio
 import { toast } from "@/hooks/use-toast"; // Import toast for feedback
-import { Twitter, Linkedin, Globe } from 'lucide-react'; // Added icons for social links
+import { Twitter, Linkedin, Globe, Instagram, Facebook, Youtube, X as XIcon, Upload } from 'lucide-react'; // Added icons for social links and Upload
 
 export default function AdminProfilePage() {
 
@@ -20,14 +20,23 @@ export default function AdminProfilePage() {
   const [website, setWebsite] = React.useState("https://teknobiyo.example.com");
   const [twitter, setTwitter] = React.useState("teknobiyo");
   const [linkedin, setLinkedin] = React.useState("teknobiyo");
+  const [instagram, setInstagram] = React.useState("teknobiyo_insta");
+  const [facebook, setFacebook] = React.useState("teknobiyofb");
+  const [youtube, setYoutube] = React.useState("TeknoBiyoChannel");
+  const [xProfile, setXProfile] = React.useState("teknobiyo_x");
+  const [avatarUrl, setAvatarUrl] = React.useState("https://picsum.photos/seed/admin-avatar/128/128");
+
+
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   // Placeholder save functions - replace with actual API calls
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Saving profile:", { fullName, bio, website, twitter, linkedin });
+    console.log("Saving profile:", { fullName, bio, website, twitter, linkedin, instagram, facebook, youtube, xProfile, avatarUrl });
     // Add API call logic here
     toast({ title: "Profil Güncellendi", description: "Kişisel bilgileriniz başarıyla kaydedildi." });
   };
@@ -51,11 +60,29 @@ export default function AdminProfilePage() {
      setConfirmPassword("");
   };
 
-    // Placeholder for image upload logic
-   const handleAvatarChange = () => {
-     // Trigger file input or open modal
-     console.log("Changing avatar...");
-      toast({ title: "Özellik Yakında", description: "Profil resmi değiştirme özelliği yakında eklenecektir." });
+   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+     const file = event.target.files?.[0];
+     if (file) {
+       // Basic client-side validation (optional)
+       if (file.size > 2 * 1024 * 1024) { // 2MB limit
+         toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 2MB'den küçük bir resim dosyası seçin." });
+         return;
+       }
+       if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type)) {
+         toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG veya GIF formatında bir resim seçin." });
+         return;
+       }
+
+       const reader = new FileReader();
+       reader.onloadend = () => {
+         setAvatarUrl(reader.result as string);
+         // TODO: In a real app, you'd likely upload the file to a server here
+         // and then set the avatarUrl to the server-hosted image URL.
+         // For now, we're using the base64 data URI directly (can be long).
+         toast({ title: "Profil Resmi Önizlemesi Güncellendi", description: "Değişiklikleri kaydetmeyi unutmayın." });
+       };
+       reader.readAsDataURL(file);
+     }
    };
 
 
@@ -73,12 +100,21 @@ export default function AdminProfilePage() {
           <form onSubmit={handleProfileSave} className="space-y-6"> {/* Increased spacing */}
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6"> {/* Adjusted for responsive layout */}
                 <Avatar className="h-20 w-20"> {/* Larger Avatar */}
-                <AvatarImage src="https://picsum.photos/seed/admin-avatar/128/128" alt="Admin" />
+                <AvatarImage src={avatarUrl} alt="Admin" />
                 <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col space-y-2 items-center sm:items-start">
-                    <Button type="button" variant="outline" onClick={handleAvatarChange}>Profil Resmini Değiştir</Button>
-                    <p className="text-xs text-muted-foreground">JPG, PNG veya GIF. Maks. 800KB.</p>
+                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                       <Upload className="mr-2 h-4 w-4"/> Profil Resmini Değiştir
+                    </Button>
+                    <Input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        onChange={handleAvatarChange}
+                        accept="image/png, image/jpeg, image/gif" 
+                    />
+                    <p className="text-xs text-muted-foreground">PNG, JPG veya GIF. Maks. 2MB.</p>
                 </div>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> {/* Grid layout for inputs */}
@@ -100,24 +136,47 @@ export default function AdminProfilePage() {
             {/* Social Links */}
              <div className="space-y-4">
                 <h3 className="text-base font-medium">Sosyal Medya Bağlantıları</h3>
-                 <div className="space-y-2 flex items-center gap-3">
-                     <Label htmlFor="website" className="w-8 pt-2"><Globe className="h-5 w-5 text-muted-foreground" /></Label>
-                    <Input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com" />
-                </div>
-                <div className="space-y-2 flex items-center gap-3">
-                    <Label htmlFor="twitter" className="w-8 pt-2"><Twitter className="h-5 w-5 text-muted-foreground" /></Label>
-                    <div className="flex items-center w-full">
-                       <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">twitter.com/</span>
-                       <Input id="twitter" value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="kullaniciadiniz" className="rounded-l-none"/>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />Web Sitesi</Label>
+                        <Input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com" />
                     </div>
-                </div>
-                 <div className="space-y-2 flex items-center gap-3">
-                     <Label htmlFor="linkedin" className="w-8 pt-2"><Linkedin className="h-5 w-5 text-muted-foreground" /></Label>
-                      <div className="flex items-center w-full">
-                         <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">linkedin.com/in/</span>
-                        <Input id="linkedin" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="profil-url" className="rounded-l-none" />
-                     </div>
-                </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="x-profile" className="flex items-center gap-2"><XIcon className="h-4 w-4 text-muted-foreground" />X (Twitter)</Label>
+                        <div className="flex items-center">
+                            <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">x.com/</span>
+                            <Input id="x-profile" value={xProfile} onChange={(e) => setXProfile(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="linkedin" className="flex items-center gap-2"><Linkedin className="h-4 w-4 text-muted-foreground" />LinkedIn</Label>
+                        <div className="flex items-center">
+                            <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">linkedin.com/in/</span>
+                            <Input id="linkedin" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="profil-url" className="rounded-l-none" />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="instagram" className="flex items-center gap-2"><Instagram className="h-4 w-4 text-muted-foreground" />Instagram</Label>
+                        <div className="flex items-center">
+                            <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">instagram.com/</span>
+                            <Input id="instagram" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="facebook" className="flex items-center gap-2"><Facebook className="h-4 w-4 text-muted-foreground" />Facebook</Label>
+                        <div className="flex items-center">
+                            <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">facebook.com/</span>
+                            <Input id="facebook" value={facebook} onChange={(e) => setFacebook(e.target.value)} placeholder="profil.adi" className="rounded-l-none"/>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="youtube" className="flex items-center gap-2"><Youtube className="h-4 w-4 text-muted-foreground" />YouTube</Label>
+                        <div className="flex items-center">
+                            <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">youtube.com/</span>
+                            <Input id="youtube" value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="@kanaladi veya channel/ID" className="rounded-l-none"/>
+                        </div>
+                    </div>
+                 </div>
              </div>
 
              <Separator />
