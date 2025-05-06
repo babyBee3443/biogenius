@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -377,6 +378,20 @@ export default function NewBiyolojiNotuPage() {
         }
     };
 
+    const toggleAiAssistantPanel = () => {
+        setIsAiAssistantPanelOpen(prev => !prev);
+        if (!isAiAssistantPanelOpen) { // If opening assistant, close chat
+            setIsAiChatPanelOpen(false);
+        }
+    };
+
+    const toggleAiChatPanel = () => {
+        setIsAiChatPanelOpen(prev => !prev);
+        if (!isAiChatPanelOpen) { // If opening chat, close assistant
+            setIsAiAssistantPanelOpen(false);
+        }
+    };
+
 
     return (
         <div className="flex flex-col h-full">
@@ -387,10 +402,10 @@ export default function NewBiyolojiNotuPage() {
                 </Button>
                 <h1 className="text-xl font-semibold flex items-center gap-2"> <BookCopy className="h-6 w-6 text-green-600"/> Yeni Biyoloji Notu Oluştur</h1>
                 <div className="flex items-center gap-2">
-                     <Button variant="outline" size="sm" onClick={() => setIsAiChatPanelOpen(prev => !prev)} className={isAiChatPanelOpen ? "bg-blue-100 dark:bg-blue-900/30" : ""}>
+                     <Button variant="outline" size="sm" onClick={toggleAiChatPanel} className={isAiChatPanelOpen ? "bg-blue-100 dark:bg-blue-900/30" : ""}>
                         <ChatIcon className="mr-2 h-4 w-4" /> AI Sohbet {isAiChatPanelOpen ? "(Kapat)" : "(Aç)"}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setIsAiAssistantPanelOpen(prev => !prev)} className={isAiAssistantPanelOpen ? "bg-primary/10" : ""}>
+                    <Button variant="outline" size="sm" onClick={toggleAiAssistantPanel} className={isAiAssistantPanelOpen ? "bg-primary/10" : ""}>
                         <Sparkles className="mr-2 h-4 w-4" /> AI Öneri {isAiAssistantPanelOpen ? "(Kapat)" : "(Aç)"}
                     </Button>
                     <Button variant="outline" size="sm" onClick={handlePreview} disabled={saving}>
@@ -608,4 +623,3 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
-
