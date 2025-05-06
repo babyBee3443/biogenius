@@ -23,7 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  // AlertDialogTrigger, // No longer needed directly for these buttons
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +52,9 @@ interface UserActivity {
 export default function EditUserPage() {
     const params = useParams();
     const router = useRouter();
-    const userId = params.id as string; // Correctly assign params.id
+    // Ensure params.id is accessed safely and correctly
+    const userIdFromParams = params?.id;
+    const userId = Array.isArray(userIdFromParams) ? userIdFromParams[0] : userIdFromParams;
 
 
     const [user, setUser] = React.useState<User | null>(null);
@@ -69,37 +71,39 @@ export default function EditUserPage() {
 
 
     React.useEffect(() => {
-        if (!userId) {
+        if (!userId || typeof userId !== 'string') {
+            console.error("Invalid or missing userId:", userId);
             setLoading(false);
-            notFound(); // Or handle error appropriately
+            notFound(); 
             return;
         }
-        if (userId) {
-            Promise.all([getUserById(userId), getUserActivity(userId)])
-                .then(([userData, userActivityData]) => {
-                    if (userData) {
-                        setUser(userData);
-                        setName(userData.name);
-                        setUsername(userData.username);
-                        setRole(userData.role);
-                        setActivity(userActivityData);
-                    } else {
-                        notFound();
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching user data:", error);
-                    toast({ variant: "destructive", title: "Hata", description: "Kullanıcı bilgileri yüklenirken bir sorun oluştu." });
-                })
-                .finally(() => setLoading(false));
-        }
+        
+        setLoading(true);
+        Promise.all([getUserById(userId as string), getUserActivity(userId as string)])
+            .then(([userData, userActivityData]) => {
+                if (userData) {
+                    setUser(userData);
+                    setName(userData.name);
+                    setUsername(userData.username);
+                    setRole(userData.role);
+                    setActivity(userActivityData);
+                } else {
+                    notFound();
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching user data:", error);
+                toast({ variant: "destructive", title: "Hata", description: "Kullanıcı bilgileri yüklenirken bir sorun oluştu." });
+            })
+            .finally(() => setLoading(false));
+        
     }, [userId]);
 
     const handleSave = async () => {
-        if (!user || !userId) return;
+        if (!user || !userId || typeof userId !== 'string') return;
         setIsSaving(true);
         try {
-            const updatedUser = await mockUpdateUser(userId, { name, role });
+            const updatedUser = await mockUpdateUser(userId, { name, role, username });
             if (updatedUser) {
                  setUser(updatedUser);
                  setName(updatedUser.name);
@@ -126,7 +130,7 @@ export default function EditUserPage() {
     };
 
      const confirmDelete = async () => {
-        if (!user || !userId) return;
+        if (!user || !userId || typeof userId !== 'string') return;
         setIsDeleting(true);
         setIsConfirmDeleteDialogOpen(false);
         try {
@@ -178,11 +182,9 @@ export default function EditUserPage() {
                     <p className="text-muted-foreground">{user.email}</p>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
-                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                        </Button>
-                    </AlertDialogTrigger>
+                    <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                    </Button>
                     <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                     </Button>
@@ -214,8 +216,7 @@ export default function EditUserPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="username">Kullanıcı Adı</Label>
-                                    <Input id="username" value={username} disabled />
-                                    <p className="text-xs text-muted-foreground">Kullanıcı adı değiştirilemez.</p>
+                                    <Input id="username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} required />
                                 </div>
                              </div>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -284,11 +285,9 @@ export default function EditUserPage() {
 
               <Separator />
              <div className="flex justify-end gap-2">
-                 <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
-                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                    </Button>
-                </AlertDialogTrigger>
+                <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                </Button>
                 <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                 </Button>
@@ -313,3 +312,4 @@ export default function EditUserPage() {
          </form>
     );
 
+}
