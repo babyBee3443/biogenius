@@ -71,14 +71,15 @@ export default function LoginPage() {
 
         const foundUser = allUsers.find(
             (user: UserData) =>
-                user.email.toLowerCase() === lowercasedInput ||
-                user.username.toLowerCase() === lowercasedInput
+                (user.email && user.email.toLowerCase() === lowercasedInput) ||
+                (user.username && user.username.toLowerCase() === lowercasedInput)
         );
 
         // For mock purposes: If a user is found by email/username,
         // and ANY password is provided, consider it a successful login.
         // In a real app, password would be hashed and compared securely.
-        if (foundUser && password) {
+        // Also, added a basic hardcoded admin/password for easy testing.
+        if (foundUser && password) { // Basic check: if user found and any password entered
             toast({
                 title: 'Giriş Başarılı!',
                 description: `${foundUser.name}, admin paneline yönlendiriliyorsunuz...`,
@@ -94,8 +95,7 @@ export default function LoginPage() {
                 description: 'Admin paneline yönlendiriliyorsunuz...',
             });
             router.push('/admin');
-        }
-        else {
+        } else {
             setError('Geçersiz e-posta/kullanıcı adı veya şifre. Lütfen tekrar deneyin.');
             toast({
                 variant: 'destructive',
