@@ -77,6 +77,7 @@ export default function AdminUsersPage() {
     setSelectedRoles(prev =>
       prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
     );
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   // Filtered and paginated users
@@ -103,6 +104,10 @@ export default function AdminUsersPage() {
             description: `"${name}" kullanıcısı başarıyla silindi.`,
           });
           await fetchUsers(); // Refresh the list
+          // Adjust current page if the last item on the page was deleted
+          if (paginatedUsers.length === 1 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+          }
         } else {
           toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
         }
@@ -123,8 +128,8 @@ export default function AdminUsersPage() {
             <p className="text-muted-foreground">Kullanıcı rollerini ve durumlarını yönetin.</p>
          </div>
         <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchUsers} disabled={loading}>
-                 <RefreshCw className={cn("mr-2 h-4 w-4", loading && 'animate-spin')} />
+            <Button variant="outline" onClick={fetchUsers} disabled={loading || deletingId !== null}>
+                 <RefreshCw className={cn("mr-2 h-4 w-4", (loading || deletingId !== null) && 'animate-spin')} />
                  Yenile
             </Button>
             <Button asChild>
@@ -145,7 +150,7 @@ export default function AdminUsersPage() {
                     placeholder="Kullanıcı adı veya e-postada ara..."
                     className="flex-1"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
                  />
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -231,7 +236,7 @@ export default function AdminUsersPage() {
                             size="icon"
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleDelete(user.id, user.name)}
-                            disabled={deletingId === user.id}
+                            disabled={deletingId === user.id || deletingId !== null && deletingId !== user.id}
                         >
                             {deletingId === user.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
                             <span className="sr-only">Kullanıcıyı Sil</span>
