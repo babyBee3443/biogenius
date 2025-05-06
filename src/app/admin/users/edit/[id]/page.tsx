@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -53,13 +52,9 @@ interface UserActivity {
 
 export default function EditUserPage() {
     const params = useParams();
-    const router = useRouter();
-    // Ensure params.id is accessed safely and correctly
-    let userId: string | null = null;
-    if (params && params.id) {
-        userId = Array.isArray(params.id) ? params.id[0] : params.id;
-    }
+    const userId = React.use(params.id) as string; // Correctly use React.use for dynamic segment
 
+    const router = useRouter();
 
     const [user, setUser] = React.useState<User | null>(null);
     const [activity, setActivity] = React.useState<UserActivity[]>([]);
@@ -90,10 +85,10 @@ export default function EditUserPage() {
         if (!userId || typeof userId !== 'string') {
             console.error("Invalid or missing userId:", userId);
             setLoading(false);
-            notFound(); 
+            notFound();
             return;
         }
-        
+
         setLoading(true);
         Promise.all([getUserById(userId as string), getUserActivity(userId as string)])
             .then(([userData, userActivityData]) => {
@@ -121,12 +116,20 @@ export default function EditUserPage() {
                 toast({ variant: "destructive", title: "Hata", description: "Kullanıcı bilgileri yüklenirken bir sorun oluştu." });
             })
             .finally(() => setLoading(false));
-        
+
     }, [userId]);
 
     const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
+             if (file.size > 2 * 1024 * 1024) { // Max 2MB
+                toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 2MB'den küçük bir resim dosyası seçin." });
+                return;
+            }
+            if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type)) {
+                toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG veya GIF formatında bir resim seçin." });
+                return;
+            }
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAvatar(reader.result as string);
@@ -140,14 +143,14 @@ export default function EditUserPage() {
         if (!user || !userId || typeof userId !== 'string') return;
         setIsSaving(true);
         try {
-            const updatedUserData: Partial<User> = { 
-                name, 
-                role, 
-                username, 
-                avatar, 
-                bio, 
-                website, 
-                twitterHandle, 
+            const updatedUserData: Partial<User> = {
+                name,
+                role,
+                username,
+                avatar,
+                bio,
+                website,
+                twitterHandle,
                 linkedinProfile,
                 instagramProfile,
                 facebookProfile,
@@ -169,6 +172,23 @@ export default function EditUserPage() {
                  setFacebookProfile(updatedUser.facebookProfile || '');
                  setYoutubeChannel(updatedUser.youtubeChannel || '');
                  setXProfile(updatedUser.xProfile || '');
+
+                // Update localStorage with new name and avatar for header display
+                if (typeof window !== 'undefined') {
+                    const storedUser = localStorage.getItem('currentUser');
+                    if (storedUser) {
+                        const currentUserData = JSON.parse(storedUser);
+                        if (currentUserData.id === userId) { // Only update if it's the logged-in user
+                             localStorage.setItem('currentUser', JSON.stringify({
+                                ...currentUserData,
+                                name: updatedUser.name,
+                                avatar: updatedUser.avatar
+                            }));
+                            window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+                        }
+                    }
+                }
+
                  toast({
                     title: "Kullanıcı Güncellendi",
                     description: `${updatedUser.name} kullanıcısının bilgileri başarıyla güncellendi.`,
@@ -244,7 +264,7 @@ export default function EditUserPage() {
                 </div>
                  <div className="flex flex-wrap gap-2">
                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                        <Button variant="destructive" disabled={isDeleting || isSaving}>
                             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                         </Button>
                     </AlertDialogTrigger>
@@ -267,15 +287,16 @@ export default function EditUserPage() {
                                 <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col space-y-2 items-center sm:items-start">
-                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isSaving}>
                                         <Upload className="mr-2 h-4 w-4"/> Profil Resmi Yükle
                                     </Button>
-                                    <Input 
+                                    <Input
                                         type="file"
                                         ref={fileInputRef}
                                         onChange={handleAvatarUpload}
                                         className="hidden"
                                         accept="image/png, image/jpeg, image/gif"
+                                        disabled={isSaving}
                                     />
                                     <p className="text-xs text-muted-foreground">PNG, JPG, GIF (Maks. 2MB)</p>
                                 </div>
@@ -284,11 +305,11 @@ export default function EditUserPage() {
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Tam Ad</Label>
-                                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={isSaving}/>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="username">Kullanıcı Adı</Label>
-                                    <Input id="username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} required />
+                                    <Input id="username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} required disabled={isSaving}/>
                                 </div>
                              </div>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -299,7 +320,7 @@ export default function EditUserPage() {
                                 </div>
                                 <div className="space-y-2">
                                 <Label htmlFor="role">Rol</Label>
-                                <Select value={role} onValueChange={setRole} required>
+                                <Select value={role} onValueChange={setRole} required disabled={isSaving}>
                                     <SelectTrigger id="role">
                                         <SelectValue placeholder="Rol seçin" />
                                     </SelectTrigger>
@@ -313,7 +334,7 @@ export default function EditUserPage() {
                              </div>
                              <div className="space-y-2">
                                 <Label htmlFor="bio">Biyografi</Label>
-                                <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Kullanıcı hakkında kısa bilgi..." rows={3}/>
+                                <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Kullanıcı hakkında kısa bilgi..." rows={3} disabled={isSaving}/>
                              </div>
 
                              <Separator />
@@ -321,41 +342,41 @@ export default function EditUserPage() {
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground"/>Web Sitesi</Label>
-                                    <Input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com"/>
+                                    <Input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com" disabled={isSaving}/>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="x-profile" className="flex items-center gap-2"><XIcon className="h-4 w-4 text-muted-foreground"/>X (Twitter)</Label>
                                     <div className="flex items-center">
                                         <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">x.com/</span>
-                                        <Input id="x-profile" value={xProfile} onChange={(e) => setXProfile(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
+                                        <Input id="x-profile" value={xProfile} onChange={(e) => setXProfile(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none" disabled={isSaving}/>
                                     </div>
                                 </div>
                                  <div className="space-y-2">
                                     <Label htmlFor="linkedin" className="flex items-center gap-2"><Linkedin className="h-4 w-4 text-muted-foreground"/>LinkedIn</Label>
                                     <div className="flex items-center">
                                         <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">linkedin.com/in/</span>
-                                        <Input id="linkedin" value={linkedinProfile} onChange={(e) => setLinkedinProfile(e.target.value)} placeholder="profil-url" className="rounded-l-none"/>
+                                        <Input id="linkedin" value={linkedinProfile} onChange={(e) => setLinkedinProfile(e.target.value)} placeholder="profil-url" className="rounded-l-none" disabled={isSaving}/>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="instagram" className="flex items-center gap-2"><Instagram className="h-4 w-4 text-muted-foreground"/>Instagram</Label>
                                     <div className="flex items-center">
                                         <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">instagram.com/</span>
-                                        <Input id="instagram" value={instagramProfile} onChange={(e) => setInstagramProfile(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
+                                        <Input id="instagram" value={instagramProfile} onChange={(e) => setInstagramProfile(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none" disabled={isSaving}/>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="facebook" className="flex items-center gap-2"><Facebook className="h-4 w-4 text-muted-foreground"/>Facebook</Label>
                                      <div className="flex items-center">
                                         <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">facebook.com/</span>
-                                        <Input id="facebook" value={facebookProfile} onChange={(e) => setFacebookProfile(e.target.value)} placeholder="profil.adi" className="rounded-l-none"/>
+                                        <Input id="facebook" value={facebookProfile} onChange={(e) => setFacebookProfile(e.target.value)} placeholder="profil.adi" className="rounded-l-none" disabled={isSaving}/>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="youtube" className="flex items-center gap-2"><Youtube className="h-4 w-4 text-muted-foreground"/>YouTube</Label>
                                      <div className="flex items-center">
                                         <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">youtube.com/</span>
-                                        <Input id="youtube" value={youtubeChannel} onChange={(e) => setYoutubeChannel(e.target.value)} placeholder="@kanaladi veya channel/ID" className="rounded-l-none"/>
+                                        <Input id="youtube" value={youtubeChannel} onChange={(e) => setYoutubeChannel(e.target.value)} placeholder="@kanaladi veya channel/ID" className="rounded-l-none" disabled={isSaving}/>
                                     </div>
                                 </div>
                              </div>
@@ -395,7 +416,7 @@ export default function EditUserPage() {
                              <p className="text-xs text-muted-foreground">Katılma Tarihi: {new Date(user.joinedAt).toLocaleDateString('tr-TR')}</p>
                              <p className="text-xs text-muted-foreground">Son Giriş: {user.lastLogin ? new Date(user.lastLogin).toLocaleString('tr-TR') : '-'}</p>
                              <Separator/>
-                            <Button variant="outline" className="w-full justify-start" onClick={handlePasswordReset}>
+                            <Button variant="outline" className="w-full justify-start" onClick={handlePasswordReset} disabled={isSaving}>
                                <KeyRound className="mr-2 h-4 w-4" /> Şifre Sıfırlama E-postası Gönder
                             </Button>
                               <Button variant="outline" className="w-full justify-start" disabled>
@@ -409,7 +430,7 @@ export default function EditUserPage() {
               <Separator />
              <div className="flex justify-end gap-2">
                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                    <Button variant="destructive" disabled={isDeleting || isSaving}>
                         {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                     </Button>
                 </AlertDialogTrigger>
