@@ -1,3 +1,4 @@
+
 "use client"; // Add "use client" for useState and useEffect
 
 import Link from 'next/link';
@@ -104,43 +105,37 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2"> {/* Reduced margin */}
-          {/* Animated Logo */}
+        <Link href="/" className="mr-6 flex items-center space-x-2">
+          {/* Biology-themed Animated Logo */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-7 w-7 text-primary animate-spin-slow" // Apply animation class
+            className="h-7 w-7 text-primary animate-spin-slow"
           >
-            {/* Outer circle elements representing technology/connections */}
-            <path d="M12 2 L12 6" />
-            <path d="M12 18 L12 22" />
-            <path d="M4.93 4.93 L7.76 7.76" />
-            <path d="M16.24 16.24 L19.07 19.07" />
-            <path d="M2 12 L6 12" />
-            <path d="M18 12 L22 12" />
-            <path d="M4.93 19.07 L7.76 16.24" />
-            <path d="M16.24 7.76 L19.07 4.93" />
-            {/* Inner circle representing biology/core */}
-            <circle cx="12" cy="12" r="4" strokeWidth="1.5" />
-             {/* Inner dot for focus */}
-            <circle cx="12" cy="12" r="1" fill="currentColor"/>
+            <path d="M4 4C4 4 6 12 12 12C18 12 20 20 20 20" />
+            <path d="M4 20C4 20 6 12 12 12C18 12 20 4 20 4" />
+            <path d="M6.5 7.5L9.5 5.5" />
+            <path d="M14.5 18.5L17.5 16.5" />
+            <path d="M6.5 16.5L9.5 18.5" />
+            <path d="M14.5 5.5L17.5 7.5" />
+            <path d="M10 12H14" />
           </svg>
           <span className="font-bold text-lg">TeknoBiyo</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex flex-1 items-center space-x-1"> {/* Reduced space */}
+        <nav className="hidden md:flex flex-1 items-center space-x-1">
           {navItems.map((item) => (
             <Link href={item.href} key={item.href} passHref legacyBehavior>
                  <Button
                     variant="ghost"
-                    className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50" // Added hover background
-                    as="a" // Render as an anchor tag
+                    className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    as="a"
                  >
                    <span className="capitalize">{item.label}</span>
                  </Button>
@@ -148,11 +143,10 @@ const Header = () => {
           ))}
         </nav>
 
-        <div className="flex flex-1 items-center justify-end space-x-2"> {/* Reduced spacing */}
+        <div className="flex flex-1 items-center justify-end space-x-2">
           {/* Search Popover */}
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-              {/* Use Input directly as the trigger for a cleaner look */}
                <div className="relative w-full max-w-xs">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -160,14 +154,14 @@ const Header = () => {
                     placeholder="Ara..."
                     value={searchQuery}
                     onChange={handleSearchChange}
-                    className="pl-9 pr-8 h-9 rounded-full bg-secondary/70 border-transparent focus:bg-background focus:border-border" // Rounded input
-                    onFocus={() => setIsPopoverOpen(true)} // Open on focus
+                    className="pl-9 pr-8 h-9 rounded-full bg-secondary/70 border-transparent focus:bg-background focus:border-border"
+                    onFocus={() => setIsPopoverOpen(true)}
                   />
                   {searchQuery && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute top-1/2 right-1 transform -translate-y-1/2 h-7 w-7 rounded-full" // Position clear button
+                        className="absolute top-1/2 right-1 transform -translate-y-1/2 h-7 w-7 rounded-full"
                         onClick={clearSearch}
                       >
                         <X className="h-4 w-4" />
@@ -176,11 +170,10 @@ const Header = () => {
                </div>
             </PopoverTrigger>
             <PopoverContent
-                className="w-[350px] p-2 mt-1 rounded-lg shadow-lg border border-border/50" // Style popover content
+                className="w-[350px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                 align="end"
-                onOpenAutoFocus={(e) => e.preventDefault()} // Prevent focus stealing
+                onOpenAutoFocus={(e) => e.preventDefault()}
              >
-              {/* Search Results */}
               {isSearching && searchQuery && (
                  <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
               )}
@@ -188,14 +181,14 @@ const Header = () => {
                   <div className="p-4 text-sm text-center text-muted-foreground">"{searchQuery}" için sonuç bulunamadı.</div>
                )}
               {!isSearching && searchResults.length > 0 && searchQuery && (
-                <ScrollArea className="max-h-[300px]"> {/* Limit height */}
+                <ScrollArea className="max-h-[300px]">
                    <ul className="space-y-1">
                      {searchResults.map((result) => (
                         <li key={result.id}>
                             <Link
                                 href={`/articles/${result.id}`}
                                 className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                onClick={closePopover} // Close popover on selection
+                                onClick={closePopover}
                              >
                                <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -222,7 +215,7 @@ const Header = () => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[250px] sm:w-[300px]">
-                <nav className="flex flex-col space-y-2 pt-8"> {/* Reduced space */}
+                <nav className="flex flex-col space-y-2 pt-8">
                   {navItems.map((item) => (
                     <Link href={item.href} key={item.href} passHref legacyBehavior>
                          <Button
@@ -230,7 +223,6 @@ const Header = () => {
                             className="justify-start flex items-center gap-2 text-base w-full"
                              as="a"
                          >
-                            {/* Add icon for Biyoloji Notları */}
                             {item.href === '/biyoloji-notlari' && <BookCopy className="h-4 w-4" />}
                            <span className="capitalize">{item.label}</span>
                          </Button>
