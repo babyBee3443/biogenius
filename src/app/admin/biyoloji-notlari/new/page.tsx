@@ -9,7 +9,8 @@ import { BlockEditor } from "@/components/admin/block-editor";
 import { TemplateSelector, type Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
 import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data';
-import { generateBiologyNote, type GenerateBiologyNoteInput, type GenerateBiologyNoteOutput } from '@/ai/flows/generate-biology-note-flow';
+import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput } from '@/ai/flows/generate-biology-note-flow';
+
 
 import {
   Card,
@@ -51,7 +52,6 @@ interface AiChatMessage {
     id: string;
     type: 'user' | 'ai' | 'error';
     content: string | React.ReactNode;
-    // Removed actions and aiData as AI suggestions will be displayed directly in chat
 }
 
 // --- Main Page Component ---
@@ -91,7 +91,9 @@ export default function NewBiyolojiNotuPage() {
         }
         setLoadingCategories(true);
         getCategories()
-            .then(data => setCategories(data))
+            .then(data => {
+                setCategories(data.filter(cat => cat.id && cat.name)); // Ensure categories have id and name
+            })
             .catch(err => {
                 console.error("Error fetching categories:", err);
                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
@@ -248,7 +250,7 @@ export default function NewBiyolojiNotuPage() {
             return;
         }
 
-        const userInput: GenerateBiologyNoteInput = {
+        const userInput: GenerateBiologyNoteSuggestionInput = {
             topic: aiTopic,
             level: level, // Use the level from the main form
             keywords: aiKeywords,
@@ -259,36 +261,10 @@ export default function NewBiyolojiNotuPage() {
         setIsAiGenerating(true);
 
         try {
-            const aiOutput = await generateBiologyNote(userInput);
-            // Display AI suggestions in the chat panel as structured text
-            const suggestionText = `
-AI tarafından oluşturulan not önerisi:
-
-**Başlık:** ${aiOutput.title}
-
-**Özet:** ${aiOutput.summary}
-
-**Etiketler:** ${aiOutput.tags.join(', ')}
-
-**İçerik Blokları (${aiOutput.contentBlocks.length} adet):**
-${aiOutput.contentBlocks.map((block, index) => {
-    let blockContent = `  ${index + 1}. **${block.type === 'heading' ? `H${block.level}` : block.type.charAt(0).toUpperCase() + block.type.slice(1)}:** `;
-    switch (block.type) {
-        case 'text': blockContent += block.content; break;
-        case 'heading': blockContent += block.content; break;
-        case 'image': blockContent += `URL: ${block.url}, Alt: ${block.alt}${block.caption ? ', Açıklama: ' + block.caption : ''}`; break;
-        case 'video': blockContent += `URL: ${block.url}${block.youtubeId ? ', YouTube ID: ' + block.youtubeId : ''}`; break;
-        case 'quote': blockContent += `"${block.content}"${block.citation ? ' - ' + block.citation : ''}`; break;
-        case 'divider': blockContent += `-Ayırıcı-`; break;
-        default: blockContent += `[Desteklenmeyen Blok Tipi: ${(block as any).type}]`;
-    }
-    return blockContent;
-}).join('\n')}
-            `.trim(); // Use trim to remove leading/trailing whitespace from the template literal
-
+            const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInput);
             setAiMessages(prev => [...prev, {
                 id: Date.now().toString(), type: 'ai',
-                content: suggestionText, // Display as plain text
+                content: aiOutput.suggestionText, // Display the raw text suggestion
             }]);
         } catch (error: any) {
             console.error("AI note generation error:", error);
@@ -297,8 +273,6 @@ ${aiOutput.contentBlocks.map((block, index) => {
             setIsAiGenerating(false);
         }
     };
-
-    // Removed applyAiSuggestionToEditor function as AI output will only be displayed in chat
 
 
     return (
@@ -422,7 +396,7 @@ ${aiOutput.contentBlocks.map((block, index) => {
                     <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-4 flex flex-col">
                         <CardHeader className="p-0 mb-2">
                              <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> AI Not Oluşturucu</CardTitle>
-                             <CardDescription className="text-xs">AI'dan not içeriği oluşturmasını isteyin.</CardDescription>
+                             <CardDescription className="text-xs">AI'dan not içeriği hakkında fikir ve öneri alın.</CardDescription>
                         </CardHeader>
 
                         <div className="space-y-3 flex-grow flex flex-col">
@@ -431,7 +405,6 @@ ${aiOutput.contentBlocks.map((block, index) => {
                                     {aiMessages.map(msg => (
                                         <div key={msg.id} className={`p-3 rounded-lg max-w-[90%] text-sm ${msg.type === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.type === 'ai' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
                                             <div className="whitespace-pre-wrap">{msg.content}</div>
-                                            {/* Removed actions from AI messages */}
                                         </div>
                                     ))}
                                     {isAiGenerating && (
@@ -458,7 +431,7 @@ ${aiOutput.contentBlocks.map((block, index) => {
                                 </div>
                                 <Button type="submit" className="w-full mt-3" disabled={isAiGenerating || !level}>
                                     {isAiGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
-                                    AI ile Not Oluştur
+                                    AI'dan Öneri Al
                                 </Button>
                                 {!level && <p className="text-xs text-destructive text-center mt-1">Not oluşturmak için lütfen formdaki "Seviye" alanını seçin.</p>}
                             </form>
