@@ -73,7 +73,7 @@ export type ContentBlock = z.infer<typeof ContentBlockSchema>;
 
 
 // --- Input and Output Schemas for the Flow ---
-export const GenerateBiologyNoteInputSchema = z.object({
+const GenerateBiologyNoteInputSchema = z.object({
   topic: z.string().describe('The main topic for the biology note (e.g., "Fotosentez", "Hücre Yapısı").'),
   level: z.enum(['Lise 9', 'Lise 10', 'Lise 11', 'Lise 12', 'Genel']).describe('Target audience level for the note.'),
   keywords: z.string().optional().describe('Comma-separated keywords to focus on (e.g., "ATP, kloroplast, ışık reaksiyonları").'),
@@ -81,7 +81,7 @@ export const GenerateBiologyNoteInputSchema = z.object({
 });
 export type GenerateBiologyNoteInput = z.infer<typeof GenerateBiologyNoteInputSchema>;
 
-export const GenerateBiologyNoteOutputSchema = z.object({
+const GenerateBiologyNoteOutputSchema = z.object({
   title: z.string().describe("A clear and concise title for the biology note, reflecting the topic and level."),
   summary: z.string().describe("A brief summary (2-3 sentences) of the note's content, suitable for a quick overview."),
   tags: z.array(z.string()).min(3).max(7).describe("An array of 3 to 7 relevant keywords (tags) for the note, derived from the topic and content."),
@@ -153,3 +153,9 @@ export async function generateBiologyNote(input: GenerateBiologyNoteInput): Prom
   return generateBiologyNoteFlow(input);
 }
 
+// Non-exported Zod schemas:
+// const GenerateBiologyNoteInputSchemaInternal = GenerateBiologyNoteInputSchema;
+// const GenerateBiologyNoteOutputSchemaInternal = GenerateBiologyNoteOutputSchema;
+// const ContentBlockSchemaInternal = ContentBlockSchema;
+// These internal versions are not strictly necessary as the schemas are used directly above,
+// but it's a way to emphasize they are not part of the public API of this 'use server' file.
