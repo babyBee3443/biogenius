@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -6,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea"; // Added for Bio
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2, Upload, Globe, Twitter, Linkedin } from "lucide-react"; // Added new icons
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +25,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  // AlertDialogTrigger, // No longer needed directly for these buttons
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
@@ -53,8 +55,7 @@ export default function EditUserPage() {
     const params = useParams();
     const router = useRouter();
     // Ensure params.id is accessed safely and correctly
-    const userIdFromParams = params?.id;
-    const userId = Array.isArray(userIdFromParams) ? userIdFromParams[0] : userIdFromParams;
+    const userId = React.use(params.id) as string;
 
 
     const [user, setUser] = React.useState<User | null>(null);
@@ -63,6 +64,12 @@ export default function EditUserPage() {
     const [name, setName] = React.useState("");
     const [username, setUsername] = React.useState("");
     const [role, setRole] = React.useState("");
+    const [avatar, setAvatar] = React.useState("");
+    const [bio, setBio] = React.useState("");
+    const [website, setWebsite] = React.useState("");
+    const [twitterHandle, setTwitterHandle] = React.useState("");
+    const [linkedinProfile, setLinkedinProfile] = React.useState("");
+
     const [isSaving, setIsSaving] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
 
@@ -86,6 +93,11 @@ export default function EditUserPage() {
                     setName(userData.name);
                     setUsername(userData.username);
                     setRole(userData.role);
+                    setAvatar(userData.avatar || '');
+                    setBio(userData.bio || '');
+                    setWebsite(userData.website || '');
+                    setTwitterHandle(userData.twitterHandle || '');
+                    setLinkedinProfile(userData.linkedinProfile || '');
                     setActivity(userActivityData);
                 } else {
                     notFound();
@@ -103,12 +115,27 @@ export default function EditUserPage() {
         if (!user || !userId || typeof userId !== 'string') return;
         setIsSaving(true);
         try {
-            const updatedUser = await mockUpdateUser(userId, { name, role, username });
+            const updatedUserData: Partial<User> = { 
+                name, 
+                role, 
+                username, 
+                avatar, 
+                bio, 
+                website, 
+                twitterHandle, 
+                linkedinProfile 
+            };
+            const updatedUser = await mockUpdateUser(userId, updatedUserData);
             if (updatedUser) {
                  setUser(updatedUser);
                  setName(updatedUser.name);
                  setRole(updatedUser.role);
                  setUsername(updatedUser.username);
+                 setAvatar(updatedUser.avatar || '');
+                 setBio(updatedUser.bio || '');
+                 setWebsite(updatedUser.website || '');
+                 setTwitterHandle(updatedUser.twitterHandle || '');
+                 setLinkedinProfile(updatedUser.linkedinProfile || '');
                  toast({
                     title: "Kullanıcı Güncellendi",
                     description: `${updatedUser.name} kullanıcısının bilgileri başarıyla güncellendi.`,
@@ -172,6 +199,7 @@ export default function EditUserPage() {
 
 
     return (
+        <AlertDialog> {/* Wrap with AlertDialog for the trigger to work */}
          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -182,9 +210,11 @@ export default function EditUserPage() {
                     <p className="text-muted-foreground">{user.email}</p>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                    <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
-                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                    </Button>
+                     <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={isDeleting || isSaving}>
+                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                        </Button>
+                    </AlertDialogTrigger>
                     <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                     </Button>
@@ -197,15 +227,22 @@ export default function EditUserPage() {
                         <CardHeader>
                             <CardTitle>Kullanıcı Bilgileri</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                             <div className="flex items-center space-x-4">
-                                <Avatar className="h-16 w-16">
-                                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="user avatar placeholder"/>
+                        <CardContent className="space-y-6"> {/* Increased spacing */}
+                             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                                <Avatar className="h-24 w-24"> {/* Larger Avatar */}
+                                <AvatarImage src={avatar || `https://picsum.photos/seed/${user.username}/128/128`} alt={user.name} data-ai-hint="user avatar placeholder"/>
                                 <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                 </Avatar>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Katılma Tarihi: {new Date(user.joinedAt).toLocaleDateString('tr-TR')}</p>
-                                    <p className="text-sm text-muted-foreground">Son Giriş: {user.lastLogin ? new Date(user.lastLogin).toLocaleString('tr-TR') : '-'}</p>
+                                <div className="flex flex-col space-y-2 items-center sm:items-start">
+                                    <Input 
+                                        id="avatar-url" 
+                                        value={avatar} 
+                                        onChange={(e) => setAvatar(e.target.value)} 
+                                        placeholder="Profil resmi URL'si"
+                                        className="max-w-xs"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Doğrudan URL girin veya yakında Yükle butonu.</p>
+                                    {/* <Button type="button" variant="outline" disabled><Upload className="mr-2 h-4 w-4"/>Resim Yükle (Yakında)</Button> */}
                                 </div>
                             </div>
                              <Separator />
@@ -237,6 +274,33 @@ export default function EditUserPage() {
                                         <SelectItem value="Admin">Admin</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                </div>
+                             </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="bio">Biyografi</Label>
+                                <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Kullanıcı hakkında kısa bilgi..." rows={3}/>
+                             </div>
+
+                             <Separator />
+                             <h3 className="text-base font-medium">Sosyal Medya Bağlantıları</h3>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground"/>Web Sitesi</Label>
+                                    <Input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com"/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="twitter" className="flex items-center gap-2"><Twitter className="h-4 w-4 text-muted-foreground"/>Twitter</Label>
+                                    <div className="flex items-center">
+                                        <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">twitter.com/</span>
+                                        <Input id="twitter" value={twitterHandle} onChange={(e) => setTwitterHandle(e.target.value)} placeholder="kullaniciadi" className="rounded-l-none"/>
+                                    </div>
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="linkedin" className="flex items-center gap-2"><Linkedin className="h-4 w-4 text-muted-foreground"/>LinkedIn</Label>
+                                    <div className="flex items-center">
+                                        <span className="text-muted-foreground text-sm px-3 border border-r-0 rounded-l-md h-10 flex items-center bg-muted">linkedin.com/in/</span>
+                                        <Input id="linkedin" value={linkedinProfile} onChange={(e) => setLinkedinProfile(e.target.value)} placeholder="profil-url" className="rounded-l-none"/>
+                                    </div>
                                 </div>
                              </div>
                         </CardContent>
@@ -272,6 +336,9 @@ export default function EditUserPage() {
                             <CardTitle>Hesap Yönetimi</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                             <p className="text-xs text-muted-foreground">Katılma Tarihi: {new Date(user.joinedAt).toLocaleDateString('tr-TR')}</p>
+                             <p className="text-xs text-muted-foreground">Son Giriş: {user.lastLogin ? new Date(user.lastLogin).toLocaleString('tr-TR') : '-'}</p>
+                             <Separator/>
                             <Button variant="outline" className="w-full justify-start" onClick={handlePasswordReset}>
                                <KeyRound className="mr-2 h-4 w-4" /> Şifre Sıfırlama E-postası Gönder
                             </Button>
@@ -285,16 +352,17 @@ export default function EditUserPage() {
 
               <Separator />
              <div className="flex justify-end gap-2">
-                <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
-                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                </Button>
+                 <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={isDeleting || isSaving}>
+                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                    </Button>
+                </AlertDialogTrigger>
                 <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                 </Button>
              </div>
 
-             <AlertDialog open={isConfirmDeleteDialogOpen} onOpenChange={setIsConfirmDeleteDialogOpen}>
-                <AlertDialogContent>
+             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -307,9 +375,9 @@ export default function EditUserPage() {
                     Evet, Sil
                     </AlertDialogAction>
                 </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            </AlertDialogContent>
          </form>
+        </AlertDialog>
     );
 
 }

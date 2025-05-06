@@ -54,6 +54,10 @@ export interface User {
   joinedAt: string; // ISO Date string
   avatar?: string; // Optional
   lastLogin?: string; // ISO Date string, optional
+  bio?: string; // User's biography
+  website?: string; // User's personal website
+  twitterHandle?: string; // Twitter username (without @)
+  linkedinProfile?: string; // LinkedIn profile URL or username part
 }
 
 
@@ -330,11 +334,12 @@ let defaultMockNotes: NoteData[] = [
 ];
 
 let defaultMockUsers: User[] = [
-  { id: 'u1', name: 'Ali Veli', username: 'aliveli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15T10:00:00Z', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22T10:30:00Z' },
-  { id: 'u2', name: 'Ayşe Kaya', username: 'aysekaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22T11:00:00Z', avatar: 'https://picsum.photos/seed/u2/128/128', lastLogin: '2024-07-21T15:00:00Z' },
+  { id: 'u1', name: 'Ali Veli', username: 'aliveli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15T10:00:00Z', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22T10:30:00Z', bio: 'TeknoBiyo kurucusu ve baş yazarı.', website: 'https://aliveli.dev', twitterHandle: 'aliveli', linkedinProfile: 'aliveli-profil' },
+  { id: 'u2', name: 'Ayşe Kaya', username: 'aysekaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22T11:00:00Z', avatar: 'https://picsum.photos/seed/u2/128/128', lastLogin: '2024-07-21T15:00:00Z', bio: 'Biyoloji ve sağlık alanında uzman editör.' },
   { id: 'u3', name: 'Mehmet Yılmaz', username: 'mehmetyilmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10T12:00:00Z', avatar: 'https://picsum.photos/seed/u3/128/128', lastLogin: '2024-07-20T09:15:00Z' },
   { id: 'u4', name: 'Zeynep Demir', username: 'zeynepdemir', email: 'zeynep.demir@example.com', role: 'User', joinedAt: '2024-07-01T13:00:00Z', avatar: 'https://picsum.photos/seed/u4/128/128', lastLogin: '2024-07-18T11:00:00Z' },
-  { id: 'u5', name: 'Can Öztürk', username: 'canozturk', email: 'can.ozturk@example.com', role: 'Editor', joinedAt: '2024-05-19T14:00:00Z', avatar: 'https://picsum.photos/seed/u5/128/128', lastLogin: '2024-07-19T18:45:00Z' },
+  { id: 'u5', name: 'Can Öztürk', username: 'canozturk', email: 'can.ozturk@example.com', role: 'Editor', joinedAt: '2024-05-19T14:00:00Z', avatar: 'https://picsum.photos/seed/u5/128/128', lastLogin: '2024-07-19T18:45:00Z', bio: 'Teknoloji ve yazılım konularında içerik üreticisi.' },
+  { id: 'user-1746537968395-202eb4', name: 'Giriş Adı', username: 'sirfpubg12', email: 'sirfpubg12@gmail.com', role: 'Admin', joinedAt: '2025-05-06T05:26:08.395Z', avatar: 'https://picsum.photos/seed/avatar1/128/128', lastLogin: '2025-05-06T05:26:08.395Z', bio: 'Yeni kullanıcı bio.', website: 'https://example.com', twitterHandle: 'yenikullanici', linkedinProfile: 'yenikullanici' },
 ];
 
 // --- In-Memory Data Stores with localStorage Persistence ---
@@ -572,7 +577,7 @@ export const getUserById = async (id: string): Promise<User | null> => {
     return user ? JSON.parse(JSON.stringify(user)) : null;
 };
 
-export const createUser = async (data: Omit<User, 'id' | 'joinedAt'>): Promise<User> => {
+export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin'>): Promise<User> => {
     await delay(50);
     loadData();
     // Validate if username or email already exists
@@ -588,6 +593,11 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt'>): Promise<U
         id: `user-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         joinedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(), // Set lastLogin on creation
+        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`, // Default avatar
+        bio: data.bio || '',
+        website: data.website || '',
+        twitterHandle: data.twitterHandle || '',
+        linkedinProfile: data.linkedinProfile || '',
     };
     mockUsers.push(newUser);
     saveData();
@@ -640,5 +650,3 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 
 
 export { loadData as reloadMockData };
-
-    
