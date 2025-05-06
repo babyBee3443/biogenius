@@ -113,10 +113,10 @@ export default function AdminUsersPage() {
           console.log(`[AdminUsersPage/handleDelete] Deletion successful for ${id}. Refetching users...`);
           await fetchUsers(); // Refresh the list
           // Adjust current page if the last item on the page was deleted and it was the only item on that page
-          if (paginatedUsers.length === 1 && currentPage > 1) {
-            console.log(`[AdminUsersPage/handleDelete] Last item on page deleted, moving to page ${currentPage - 1}`);
-            setCurrentPage(currentPage - 1);
-          }
+           if (paginatedUsers.length === 1 && currentPage > 1 && totalPages > 1 && currentPage === totalPages) {
+             console.log(`[AdminUsersPage/handleDelete] Last item on page deleted, moving to page ${currentPage - 1}`);
+             setCurrentPage(currentPage - 1);
+           }
         } else {
           console.error(`[AdminUsersPage/handleDelete] deleteUser(${id}) failed (returned false).`);
           toast({ variant: "destructive", title: "Silme Hatası", description: "Kullanıcı silinemedi." });
@@ -142,7 +142,7 @@ export default function AdminUsersPage() {
          </div>
         <div className="flex gap-2">
             <Button variant="outline" onClick={fetchUsers} disabled={loading || deletingId !== null}>
-                 <RefreshCw className={cn("mr-2 h-4 w-4", (loading || deletingId !== null) && 'animate-spin')} />
+                 <RefreshCw className={cn("mr-2 h-4 w-4", (loading || !!deletingId) && 'animate-spin')} />
                  Yenile
             </Button>
             <Button asChild>
@@ -238,7 +238,7 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{new Date(user.joinedAt).toLocaleDateString('tr-TR')}</TableCell>
                     <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId !== null}>
+                        <Button variant="ghost" size="icon" className="mr-1" asChild disabled={!!deletingId}>
                         <Link href={`/admin/users/edit/${user.id}`}>
                             <UserCog className="h-4 w-4" />
                             <span className="sr-only">Kullanıcıyı Düzenle</span>
@@ -249,7 +249,7 @@ export default function AdminUsersPage() {
                             size="icon"
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleDelete(user.id, user.name)}
-                            disabled={deletingId !== null} // Disable all delete buttons if any delete is in progress
+                            disabled={!!deletingId} // Disable all delete buttons if any delete is in progress
                             aria-label="Kullanıcıyı Sil"
                         >
                             {deletingId === user.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}

@@ -604,19 +604,21 @@ export const deleteUser = async (id: string): Promise<boolean> => {
   loadData();
   console.log(`[mock-data/deleteUser] Attempting to delete user with id: ${id}`);
   const initialLength = mockUsers.length;
-  console.log(`[mock-data/deleteUser] Users before deletion (${initialLength}):`, mockUsers.map(u => u.id));
-  mockUsers = mockUsers.filter(u => {
-    console.log(`[mock-data/deleteUser] Checking user ${u.id} against ${id}`);
-    return u.id !== id;
-  });
+  console.log(`[mock-data/deleteUser] Users before deletion (${initialLength}):`, JSON.stringify(mockUsers.map(u => u.id)));
+  
+  const usersBefore = [...mockUsers]; // Create a copy for comparison
+  mockUsers = mockUsers.filter(u => u.id !== id);
+  
   const success = mockUsers.length < initialLength;
-  console.log(`[mock-data/deleteUser] Users after filtering (${mockUsers.length}):`, mockUsers.map(u => u.id));
+  
+  console.log(`[mock-data/deleteUser] Users after filtering (${mockUsers.length}):`, JSON.stringify(mockUsers.map(u => u.id)));
   console.log(`[mock-data/deleteUser] Deletion success: ${success}`);
+  
   if (success) {
     console.log(`[mock-data/deleteUser] Saving updated user list to localStorage.`);
     saveData();
   } else {
-    console.warn(`[mock-data/deleteUser] User with id ${id} not found or no changes made.`);
+    console.warn(`[mock-data/deleteUser] User with id ${id} not found or no changes made. Users before: ${JSON.stringify(usersBefore.map(u=>u.id))}`);
   }
   return success;
 };
