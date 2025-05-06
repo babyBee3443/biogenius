@@ -14,13 +14,10 @@ import {
   SidebarInset,
   SidebarGroup,
   SidebarGroupLabel,
-  // SidebarGroupContent, // This was correctly removed in a previous step, ensuring it stays removed.
 } from '@/components/ui/sidebar';
 import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-// import { ThemeToggle } from '@/components/theme-toggle'; // Removed as per user request
-// import { Card, CardContent } from '@/components/ui/card'; // This was unused
 
 export const metadata: Metadata = {
   title: 'TeknoBiyo Admin',
@@ -35,32 +32,35 @@ export default function AdminLayout({
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="items-center gap-2">
+        <SidebarHeader className="flex items-center justify-center p-2"> {/* Centered the logo */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5" // Adjusted from 2 to 1.5 for a slightly thinner look
+            strokeWidth="1.5" 
             strokeLinecap="round"
             strokeLinejoin="round"
             className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
           >
-            {/* More biology-themed paths - e.g. a stylized leaf or DNA strand */}
-            <path d="M12 22A10 10 0 0 0 12 2" />
-            <path d="M12 2a10 10 0 0 0-7.07 17.07" />
-            <path d="M12 2a10 10 0 0 1 7.07 17.07" />
-            <path d="M2 12A10 10 0 0 0 12 22" />
-            <path d="M22 12a10 10 0 0 0-10 10" />
-            <path d="M17.07 7.07A5 5 0 0 0 12 4.07" />
-            <path d="M7.07 7.07A5 5 0 0 1 12 4.07" />
-            <path d="M4.07 12A5 5 0 0 0 7.07 17.07" />
-            <path d="M19.93 12a5 5 0 0 1-2.93 4.93" />
+            <path d="M4 4C4 4 6 12 12 12C18 12 20 20 20 20" />
+            <path d="M4 20C4 20 6 12 12 12C18 12 20 4 20 4" />
+            <path d="M6.5 7.5L9.5 5.5" />
+            <path d="M14.5 18.5L17.5 16.5" />
+            <path d="M6.5 16.5L9.5 18.5" />
+            <path d="M14.5 5.5L17.5 7.5" />
+            <path d="M10 12H14" />
           </svg>
-          <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">
+          {/* TeknoBiyo text moved out of here */}
+        </SidebarHeader>
+
+        {/* Moved TeknoBiyo text here, below the logo and above the menu */}
+        <div className="py-2 text-center group-data-[collapsible=icon]:hidden">
+          <span className="font-bold text-lg">
             TeknoBiyo
           </span>
-        </SidebarHeader>
+        </div>
+
         <SidebarContent className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
@@ -73,7 +73,6 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarGroup className="p-0">
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
-              {/* <SidebarGroupContent> - This component is not defined and was removed. The content is directly in SidebarMenu. */}
                 <SidebarMenu>
                     <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Tüm Makaleler">
@@ -124,12 +123,10 @@ export default function AdminLayout({
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-             {/* </SidebarGroupContent> */}
             </SidebarGroup>
 
             <SidebarGroup className="p-0">
                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Yönetim</SidebarGroupLabel>
-               {/* <SidebarGroupContent> */}
                  <SidebarMenu>
                     <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Kullanıcılar">
@@ -148,12 +145,10 @@ export default function AdminLayout({
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                  </SidebarMenu>
-               {/* </SidebarGroupContent> */}
             </SidebarGroup>
 
              <SidebarGroup className="p-0">
                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
-               {/* <SidebarGroupContent> */}
                  <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Genel Ayarlar">
@@ -172,7 +167,6 @@ export default function AdminLayout({
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                  </SidebarMenu>
-              {/* </SidebarGroupContent> */}
              </SidebarGroup>
 
           </SidebarMenu>
@@ -180,7 +174,6 @@ export default function AdminLayout({
         <SidebarFooter className="p-2">
            <SidebarGroup className="p-0">
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Hesap</SidebarGroupLabel>
-              {/* <SidebarGroupContent> */}
                  <SidebarMenu>
                    <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Profil">
@@ -202,7 +195,6 @@ export default function AdminLayout({
                      </SidebarMenuButton>
                    </SidebarMenuItem>
                  </SidebarMenu>
-               {/* </SidebarGroupContent> */}
            </SidebarGroup>
         </SidebarFooter>
       </Sidebar>
@@ -218,8 +210,6 @@ export default function AdminLayout({
              </Button>
            </div>
          </header>
-         {/* Adjusted padding: pt-16 (h-14 for header + 0.5rem extra) ensures content starts below the header. */}
-         {/* On medium screens and up, the padding will be pt-[calc(3.5rem+1.5rem)] = pt-20 */}
          <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]">
             {children}
          </main>
