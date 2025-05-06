@@ -19,37 +19,37 @@ const BaseBlockSchema = z.object({
 });
 
 const TextBlockSchema = BaseBlockSchema.extend({
-  type: z.enum(['text']),
+  type: z.literal('text'),
   content: z.string().describe("Text content. Use Markdown-like syntax for bold (**text**), italic (*text*), and newlines for paragraphs."),
 });
 
 const HeadingBlockSchema = BaseBlockSchema.extend({
-  type: z.enum(['heading']),
+  type: z.literal('heading'),
   level: z.number().min(2).max(4).describe("Heading level (2-4). H2 for main sections, H3-H4 for sub-sections within the note."),
   content: z.string().describe("Heading text content."),
 });
 
 const ImageBlockSchema = BaseBlockSchema.extend({
-  type: z.enum(['image']),
-  url: z.string().url().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
+  type: z.literal('image'),
+  url: z.string().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
   alt: z.string().describe("Alternative text for the image, describing its content for accessibility and SEO."),
   caption: z.string().optional().describe("Optional caption for the image, providing context or a short explanation."),
 });
 
 const VideoBlockSchema = BaseBlockSchema.extend({
-  type: z.enum(['video']),
-  url: z.string().url().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
+  type: z.literal('video'),
+  url: z.string().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
   youtubeId: z.string().optional().nullable().describe("The YouTube video ID, extracted from the URL if it's a YouTube link. (e.g., for 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', the ID is 'dQw4w9WgXcQ')."),
 });
 
 const QuoteBlockSchema = BaseBlockSchema.extend({
-  type: z.enum(['quote']),
+  type: z.literal('quote'),
   content: z.string().describe("The quote text. This should be a concise and impactful statement related to the topic."),
   citation: z.string().optional().describe("Optional citation for the quote (e.g., author, source)."),
 });
 
 const DividerBlockSchema = BaseBlockSchema.extend({
-  type: z.enum(['divider']),
+  type: z.literal('divider'),
   // No specific fields for divider, it's just a visual separator.
 });
 
@@ -152,3 +152,4 @@ const generateBiologyNoteFlow = ai.defineFlow(
 export async function generateBiologyNote(input: GenerateBiologyNoteInput): Promise<GenerateBiologyNoteOutput> {
   return generateBiologyNoteFlow(input);
 }
+
