@@ -19,56 +19,49 @@ const BaseBlockSchema = z.object({
 });
 
 const TextBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('text'),
+  type: z.string().describe("The type of the block, must be 'text' for this block type."),
   content: z.string().describe("Text content. Use Markdown-like syntax for bold (**text**), italic (*text*), and newlines for paragraphs."),
 });
 
 const HeadingBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('heading'),
+  type: z.string().describe("The type of the block, must be 'heading' for this block type."),
   level: z.number().min(2).max(4).describe("Heading level (2-4). H2 for main sections, H3-H4 for sub-sections within the note."),
   content: z.string().describe("Heading text content."),
 });
 
 const ImageBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('image'),
-  url: z.string().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
+  type: z.string().describe("The type of the block, must be 'image' for this block type."),
+  url: z.string().url().describe("URL of a relevant image. If a specific image isn't known, use a placeholder like 'https://picsum.photos/seed/ai-placeholder/800/400'. Provide a descriptive seed like 'ai-cell-division' or 'ai-photosynthesis-diagram' in the picsum URL if using a placeholder."),
   alt: z.string().describe("Alternative text for the image, describing its content for accessibility and SEO."),
   caption: z.string().optional().describe("Optional caption for the image, providing context or a short explanation."),
 });
 
 const VideoBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('video'),
-  url: z.string().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
+  type: z.string().describe("The type of the block, must be 'video' for this block type."),
+  url: z.string().url().describe("URL of a relevant YouTube video. Try to find a short, explanatory video if possible."),
   youtubeId: z.string().optional().nullable().describe("The YouTube video ID, extracted from the URL if it's a YouTube link. (e.g., for 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', the ID is 'dQw4w9WgXcQ')."),
 });
 
 const QuoteBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('quote'),
+  type: z.string().describe("The type of the block, must be 'quote' for this block type."),
   content: z.string().describe("The quote text. This should be a concise and impactful statement related to the topic."),
   citation: z.string().optional().describe("Optional citation for the quote (e.g., author, source)."),
 });
 
 const DividerBlockSchema = BaseBlockSchema.extend({
-  type: z.literal('divider'),
+  type: z.string().describe("The type of the block, must be 'divider' for this block type."),
   // No specific fields for divider, it's just a visual separator.
 });
 
-// For now, AI will focus on simpler blocks. Section blocks can be added by the user manually.
-// const SectionBlockSchema = BaseBlockSchema.extend({
-//   type: z.literal('section'),
-//   sectionType: z.string().describe("Type of the section, e.g., 'custom-text'. For this task, primarily use 'custom-text'."),
-//   settings: z.record(z.any()).describe("Settings specific to the sectionType. For 'custom-text', include a 'content' key with HTML string for the text."),
-// });
 
-const ContentBlockSchema = z.discriminatedUnion("type", [
+const ContentBlockSchema = z.union([
   TextBlockSchema,
   HeadingBlockSchema,
   ImageBlockSchema,
   VideoBlockSchema,
   QuoteBlockSchema,
   DividerBlockSchema,
-  // SectionBlockSchema, // Keep it simple for now
-]).describe("A content block for the biology note. Ensure a logical flow and variety of block types to make the note engaging.");
+]).describe("A content block for the biology note. Ensure a logical flow and variety of block types to make the note engaging. The 'type' field must be one of 'text', 'heading', 'image', 'video', 'quote', or 'divider'. Include only the fields relevant to the specified 'type'.");
 export type ContentBlock = z.infer<typeof ContentBlockSchema>;
 
 
@@ -85,7 +78,7 @@ const GenerateBiologyNoteOutputSchema = z.object({
   title: z.string().describe("A clear and concise title for the biology note, reflecting the topic and level."),
   summary: z.string().describe("A brief summary (2-3 sentences) of the note's content, suitable for a quick overview."),
   tags: z.array(z.string()).min(3).max(7).describe("An array of 3 to 7 relevant keywords (tags) for the note, derived from the topic and content."),
-  contentBlocks: z.array(ContentBlockSchema).min(3).describe("An array of at least 3 content blocks (headings, text, images, etc.) that form the main body of the note. The 'id' for each block will be handled by the client, so you can use placeholders like 'ai-block-1', 'ai-block-2', etc."),
+  contentBlocks: z.array(ContentBlockSchema).min(3).describe("An array of at least 3 content blocks that form the main body of the note. The 'id' for each block will be handled by the client, so you can use placeholders like 'ai-block-1', 'ai-block-2', etc. Each block must have a 'type' field ('text', 'heading', 'image', 'video', 'quote', or 'divider') and only the relevant fields for that type."),
 });
 export type GenerateBiologyNoteOutput = z.infer<typeof GenerateBiologyNoteOutputSchema>;
 
@@ -109,18 +102,20 @@ const biologyNotePrompt = ai.definePrompt({
     2.  **Summary**: A short (2-3 sentences) summary of the note.
     3.  **Tags**: An array of 3-7 relevant keywords.
     4.  **Content Blocks**: An array of at least 3 content blocks. These blocks should follow the structure of the 'ContentBlock' schema provided.
-        *   Use a variety of block types (text, heading, image, video, quote, divider) to make the note engaging and easy to understand.
-        *   For headings, use H2 for main sections and H3/H4 for sub-sections.
-        *   For text blocks, use clear and concise language. You can use Markdown-like syntax for **bold** and *italic* text. Newlines will be treated as paragraph breaks.
-        *   For image blocks:
-            *   Provide a relevant \`url\`. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making sure the 'seed' is descriptive (e.g., 'ai-cell-division', 'ai-dna-structure').
+        *   Each block MUST have a 'type' field, which must be one of: 'text', 'heading', 'image', 'video', 'quote', or 'divider'.
+        *   Based on the 'type', include ONLY the relevant fields for that block type. For example, a 'text' block should only have 'type' and 'content'. An 'image' block should have 'type', 'url', 'alt', and optionally 'caption'.
+        *   Use a variety of block types to make the note engaging and easy to understand.
+        *   For 'heading' blocks, use H2 for main sections (level: 2) and H3/H4 for sub-sections (level: 3 or 4).
+        *   For 'text' blocks, use clear and concise language. You can use Markdown-like syntax for **bold** and *italic* text. Newlines will be treated as paragraph breaks.
+        *   For 'image' blocks:
+            *   Provide a relevant \`url\`. If a specific image is not known, use a placeholder like "https://picsum.photos/seed/ai-photosynthesis-diagram/800/400", making the 'seed' descriptive (e.g., 'ai-cell-division', 'ai-dna-structure'). The URL must be a valid URL format.
             *   Provide a descriptive \`alt\` text.
             *   Optionally, add a \`caption\`.
-        *   For video blocks:
-            *   Provide a relevant YouTube video \`url\`.
+        *   For 'video' blocks:
+            *   Provide a relevant YouTube video \`url\`. The URL must be a valid URL format.
             *   Extract and provide the \`youtubeId\`.
-        *   For quote blocks, provide the quote content and an optional citation.
-        *   Use divider blocks to visually separate distinct sections.
+        *   For 'quote' blocks, provide the quote content and an optional citation.
+        *   Use 'divider' blocks to visually separate distinct sections. A 'divider' block only needs a 'type' field set to 'divider'.
         *   Ensure the content is accurate, well-structured, and appropriate for the specified 'level'.
         *   Block 'id's will be generated by the client, so the AI can provide placeholder IDs like 'ai-block-1', 'ai-block-2', or omit them.
     
@@ -141,9 +136,6 @@ const generateBiologyNoteFlow = ai.defineFlow(
     if (!output) {
       throw new Error("AI did not return an output for biology note generation.");
     }
-    // Ensure placeholder IDs if AI doesn't provide them, or standardize them
-    // For now, we assume the client will handle ID generation on block creation.
-    // If AI provides IDs, they might be used as a hint or ignored.
     return output;
   }
 );
@@ -152,4 +144,3 @@ const generateBiologyNoteFlow = ai.defineFlow(
 export async function generateBiologyNote(input: GenerateBiologyNoteInput): Promise<GenerateBiologyNoteOutput> {
   return generateBiologyNoteFlow(input);
 }
-
