@@ -55,7 +55,7 @@ export default function AdminLayout({
         </SidebarHeader>
 
         {/* Moved TeknoBiyo text here, below the logo and above the menu */}
-        <div className="py-2 text-center group-data-[collapsible=icon]:hidden">
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden"> {/* Increased py-2 to py-4 */}
           <span className="font-bold text-lg">
             TeknoBiyo
           </span>
@@ -217,3 +217,4 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
+
