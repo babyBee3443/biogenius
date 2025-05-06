@@ -32,7 +32,7 @@ export default function AdminLayout({
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex items-center justify-center p-2"> {/* Centered the logo */}
+        <SidebarHeader className="flex items-center justify-center p-4"> {/* Changed p-2 to p-4 */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
