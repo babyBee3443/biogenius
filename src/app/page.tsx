@@ -8,10 +8,17 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
 import { ArrowRight } from "lucide-react";
-import Hero from "@/components/hero"; // Import the Hero component
+// import Hero from "@/components/hero"; // Import the Hero component - Will be dynamically imported
 import { cn } from '@/lib/utils'; // Import cn for conditional classes
 import { getArticles, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
 import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import dynamic from 'next/dynamic';
+
+const Hero = dynamic(() => import('@/components/hero'), {
+  loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
+  ssr: false // Consider if Hero needs SSR; if not, false can improve client performance
+});
+
 
 // Define the text parts and their styles
 const titleParts = [
@@ -94,7 +101,7 @@ export default function Home() {
         <div className="space-y-16">
              {/* Title Skeleton */}
             <Skeleton className="h-16 w-3/4 mx-auto mb-8" />
-            {/* Hero Skeleton */}
+            {/* Hero Skeleton is handled by dynamic import's loading state */}
             <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />
              {/* Featured Articles Skeletons */}
              <section>
@@ -163,7 +170,7 @@ export default function Home() {
         <h2 className="text-3xl font-bold mb-8">Öne Çıkanlar</h2>
         {featuredArticles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredArticles.map((article) => (
+            {featuredArticles.map((article, index) => (
                 <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group">
                 <CardHeader className="p-0 relative">
                     <Image
@@ -172,7 +179,7 @@ export default function Home() {
                     width={600}
                     height={400}
                     className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-                    priority={featuredArticles.indexOf(article) < 3}
+                    priority={index < 3} // Prioritize first few featured images
                     data-ai-hint="technology biology abstract"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -236,6 +243,7 @@ export default function Home() {
                         height={400}
                         className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                         data-ai-hint="recent abstract data"
+                        loading="lazy" // Lazy load recent articles images
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </CardHeader>

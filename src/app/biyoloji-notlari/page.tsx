@@ -174,6 +174,7 @@ export default function BiyolojiNotlariPage() {
                            height={250}
                            className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
                            data-ai-hint="biology concept abstract"
+                           loading="lazy" // Lazy load note images
                          />
                        </CardHeader>
                    )}

@@ -120,6 +120,7 @@ export default function IletisimPage() {
               layout="fill"
               objectFit="cover"
               data-ai-hint="map location city"
+              loading="lazy" // Lazy load the map image
             />
              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                 <p className="text-white text-lg font-semibold bg-black/50 px-4 py-2 rounded">Harita Alanı (Placeholder)</p>

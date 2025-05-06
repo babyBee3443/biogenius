@@ -28,6 +28,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             height={450} // Adjusted height
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="article content image"
+            loading="lazy" // Lazy load content images
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -66,6 +67,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                    loading="lazy" // Lazy load iframes
                 ></iframe>
             </div>
         );
@@ -181,7 +183,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 width={1200}
                 height={600}
                 className="w-full h-auto object-cover"
-                priority
+                priority // Prioritize the main article image
                 data-ai-hint="article main image"
             />
           </div>
@@ -217,6 +219,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                                          objectFit="cover"
                                          className="transition-transform duration-300 group-hover:scale-105"
                                          data-ai-hint="related article abstract"
+                                         loading="lazy" // Lazy load related article images
                                      />
                                  </div>
                              )}

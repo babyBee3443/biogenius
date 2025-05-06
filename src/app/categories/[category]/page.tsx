@@ -37,7 +37,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Increased gap */}
-          {articles.map((article) => (
+          {articles.map((article, index) => (
              <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group"> {/* Subtle shadow, ease transition, group for hover */}
                <CardHeader className="p-0 relative">
                  <Image
@@ -47,6 +47,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                    height={400}
                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" // Slight zoom on hover
                    data-ai-hint="category article abstract"
+                   priority={index < 3} // Prioritize first 3 images
+                   loading={index >=3 ? "lazy" : undefined} // Lazy load images after the first 3
                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                </CardHeader>

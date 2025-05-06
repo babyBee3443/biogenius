@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Tag } from 'lucide-react';
 import { getNoteById, getNotes, type NoteData } from '@/lib/mock-data'; // Import note data functions
 import type { Block } from '@/components/admin/template-selector';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Import Card
 
@@ -28,6 +28,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             height={400}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="biology diagram illustration" // Added hint
+            loading="lazy" // Lazy load content images
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -65,6 +66,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                    loading="lazy" // Lazy load iframes
                 ></iframe>
             </div>
         );
@@ -155,7 +157,7 @@ export default async function NotePage({ params }: NotePageProps) {
                 width={800}
                 height={400}
                 className="w-full h-auto object-cover"
-                priority
+                priority // Prioritize the main note image
                 data-ai-hint="biology note header image"
             />
           </div>

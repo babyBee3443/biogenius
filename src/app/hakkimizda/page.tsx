@@ -31,6 +31,7 @@ export default function HakkimizdaPage() {
             objectFit="cover"
             className="transition-transform duration-500 hover:scale-105"
             data-ai-hint="teamwork collaboration office"
+            priority // Prioritize this image as it's likely LCP
           />
         </div>
       </section>

@@ -124,7 +124,7 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
             quality={85}
             className="filter brightness-50 dark:brightness-[0.4]" // Darken image for text contrast
             data-ai-hint="technology biology abstract background"
-            priority // Load the first image eagerly
+            priority={currentIndex === 0} // Prioritize the first (or currently visible) image
           />
           {/* Gradient overlay for better text readability */}
            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
