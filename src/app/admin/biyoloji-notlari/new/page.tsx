@@ -251,24 +251,34 @@ export default function NewBiyolojiNotuPage() {
             return;
         }
 
+        // Gather current form field values to pass to AI
+        const currentFormData = {
+            currentTitle: title,
+            currentSummary: summary,
+            currentTags: tags,
+            currentCategory: category,
+            currentLevel: level,
+            // Add other relevant fields from your form if needed
+        };
+
         const userInput: GenerateBiologyNoteSuggestionInput = {
             topic: aiTopic,
             level: level, // Use the level from the main form
             keywords: aiKeywords,
             outline: aiOutline,
+            currentFormData: currentFormData, // Pass current form data
         };
 
-        // Include existing template field data in the user message for AI context
         let userMessage = `Konu: ${aiTopic}`;
         if (aiKeywords) userMessage += `, Anahtar Kelimeler: ${aiKeywords}`;
         if (aiOutline) userMessage += `, Taslak: ${aiOutline}`;
         
         userMessage += `\n\nMevcut Form Alanları (bunları dikkate alarak öneri ver):`;
-        if (title) userMessage += `\n- Başlık: ${title}`;
-        if (summary) userMessage += `\n- Özet: ${summary}`;
-        if (tags.length > 0) userMessage += `\n- Etiketler: ${tags.join(', ')}`;
-        if (category) userMessage += `\n- Kategori: ${category}`;
-        if (level) userMessage += `\n- Seviye: ${level}`;
+        if (currentFormData.currentTitle) userMessage += `\n- Başlık: ${currentFormData.currentTitle}`;
+        if (currentFormData.currentSummary) userMessage += `\n- Özet: ${currentFormData.currentSummary}`;
+        if (currentFormData.currentTags.length > 0) userMessage += `\n- Etiketler: ${currentFormData.currentTags.join(', ')}`;
+        if (currentFormData.currentCategory) userMessage += `\n- Kategori: ${currentFormData.currentCategory}`;
+        if (currentFormData.currentLevel) userMessage += `\n- Seviye: ${currentFormData.currentLevel}`;
 
 
         setAiMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: userMessage }]);
