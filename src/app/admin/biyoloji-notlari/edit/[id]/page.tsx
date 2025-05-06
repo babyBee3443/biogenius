@@ -389,7 +389,7 @@ export default function EditBiyolojiNotuPage() {
                                     <Select value={category} onValueChange={(value) => setCategory(value)} required disabled={loading}>
                                         <SelectTrigger id="category"><SelectValue placeholder="Kategori seçin" /></SelectTrigger>
                                         <SelectContent>
-                                            {categories.length === 0 && <SelectItem value="" disabled>Yükleniyor...</SelectItem>}
+                                            {categories.length === 0 && <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>}
                                             {categories.map(cat => (
                                                 <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                             ))}
@@ -459,3 +459,4 @@ export default function EditBiyolojiNotuPage() {
         </div>
     );
 }
+

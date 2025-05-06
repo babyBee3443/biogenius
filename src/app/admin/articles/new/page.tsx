@@ -386,7 +386,7 @@ export default function NewArticlePage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                              {loadingCategories ? (
-                                                <SelectItem value="" disabled>Yükleniyor...</SelectItem>
+                                                <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
                                              ) : (
                                                 categories.map(cat => (
                                                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
@@ -600,3 +600,4 @@ export default function NewArticlePage() {
         </div>
     );
 }
+
