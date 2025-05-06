@@ -2,18 +2,30 @@
 "use client";
 
 import * as React from "react";
-import { notFound, useParams } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation'; // Added useRouter
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, CheckSquare, Square } from "lucide-react";
+import { ArrowLeft, Save, Trash2, CheckSquare, Square, Loader2 } from "lucide-react"; // Added Loader2
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 // Mock Data - Replace with actual API calls
 interface Role {
@@ -28,21 +40,37 @@ interface PermissionCategory {
     permissions: { id: string; description: string }[];
 }
 
+// In-memory store for roles (simulating a backend)
+let mockRoles: Role[] = [
+    {
+        id: 'admin', name: 'Admin', description: 'Tam yetkili yönetici', permissions: ['Dashboard Görüntüleme', 'Ayarları Görüntüleme', 'Ayarları Düzenleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme/Silme', 'Kullanıcı Düzenleme', 'Rolleri Yönetme', 'Yorumları Yönetme', 'Medya Yönetimi', 'Site Ayarlarını Yönetme', 'Sayfaları Yönetme', 'İstatistikleri Görüntüleme', 'Raporlama', 'Güvenlik Ayarları', 'Entegrasyon Yönetimi', 'E-posta Ayarları', 'Tema Ayarları', 'Menü Yönetimi', 'Dil Yönetimi', 'Yedekleme/Kurtarma', 'İş Akışı Yönetimi', 'Sistem Güncelleme']
+    },
+    {
+        id: 'editor', name: 'Editör', description: 'İçerik düzenleme yetkisine sahip', permissions: ['Dashboard Görüntüleme', 'Ayarları Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Yorumları Yönetme', 'Medya Yönetimi', 'Sayfaları Görüntüleme', 'Sayfa Düzenleme', 'İçerik Takvimini Görüntüleme', 'SEO Ayarlarını Düzenleme (Makale)']
+    },
+    {
+        id: 'yazar', name: 'Yazar', description: 'Sadece içerik oluşturabilir', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Sayfaları Görüntüleme', 'Medya Yükleme (Kendi içeriği için)']
+    }
+];
+
 const getRoleById = async (id: string): Promise<Role | null> => {
     // await new Promise(resolve => setTimeout(resolve, 300)); // Removed delay
-    const rolesData: Role[] = [
-        {
-            id: 'admin', name: 'Admin', description: 'Tam yetkili yönetici', permissions: ['Dashboard Görüntüleme', 'Ayarları Görüntüleme', 'Ayarları Düzenleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme/Silme', 'Kullanıcı Düzenleme', 'Rolleri Yönetme', 'Yorumları Yönetme', 'Medya Yönetimi', 'Site Ayarlarını Yönetme', 'Sayfaları Yönetme', 'İstatistikleri Görüntüleme', 'Raporlama', 'Güvenlik Ayarları', 'Entegrasyon Yönetimi', 'E-posta Ayarları', 'Tema Ayarları', 'Menü Yönetimi', 'Dil Yönetimi', 'Yedekleme/Kurtarma', 'İş Akışı Yönetimi', 'Sistem Güncelleme']
-        },
-        {
-            id: 'editor', name: 'Editör', description: 'İçerik düzenleme yetkisine sahip', permissions: ['Dashboard Görüntüleme', 'Ayarları Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Yorumları Yönetme', 'Medya Yönetimi', 'Sayfaları Görüntüleme', 'Sayfa Düzenleme', 'İçerik Takvimini Görüntüleme', 'SEO Ayarlarını Düzenleme (Makale)']
-        },
-        {
-            id: 'yazar', name: 'Yazar', description: 'Sadece içerik oluşturabilir', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Sayfaları Görüntüleme', 'Medya Yükleme (Kendi içeriği için)']
-        }
-    ];
-    return rolesData.find(role => role.id === id) || null;
+    return mockRoles.find(role => role.id === id) || null;
 };
+
+const updateRole = async (id: string, data: Partial<Omit<Role, 'id'>>): Promise<Role | null> => {
+    const roleIndex = mockRoles.findIndex(role => role.id === id);
+    if (roleIndex === -1) return null;
+    mockRoles[roleIndex] = { ...mockRoles[roleIndex], ...data };
+    return { ...mockRoles[roleIndex] };
+};
+
+const deleteRole = async (id: string): Promise<boolean> => {
+    const initialLength = mockRoles.length;
+    mockRoles = mockRoles.filter(role => role.id !== id);
+    return mockRoles.length < initialLength;
+};
+
 
 const getAllPermissions = async (): Promise<PermissionCategory[]> => {
     // await new Promise(resolve => setTimeout(resolve, 100)); // Removed delay
@@ -109,17 +137,23 @@ const getAllPermissions = async (): Promise<PermissionCategory[]> => {
 
 export default function EditRolePage() {
     const params = useParams();
-    const roleId = React.use(params.id) as string;
+    const roleId = params.id as string; // Correctly access params.id
+    const router = useRouter();
 
     const [role, setRole] = React.useState<Role | null>(null);
     const [allPermissions, setAllPermissions] = React.useState<PermissionCategory[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [isSaving, setIsSaving] = React.useState(false);
+    const [isDeleting, setIsDeleting] = React.useState(false);
+
+    // Form states
     const [name, setName] = React.useState("");
     const [description, setDescription] = React.useState("");
     const [selectedPermissions, setSelectedPermissions] = React.useState<Set<string>>(new Set());
 
     React.useEffect(() => {
         if (roleId) {
+            setLoading(true);
             Promise.all([getRoleById(roleId), getAllPermissions()])
                 .then(([roleData, permissionsData]) => {
                     if (roleData) {
@@ -175,39 +209,65 @@ export default function EditRolePage() {
         return 'indeterminate';
      };
 
-    const handleSave = () => {
-        const updatedRoleData = {
-            id: roleId,
-            name,
-            description,
-            permissions: Array.from(selectedPermissions),
-        };
-        console.log("Updating role:", updatedRoleData);
-        // TODO: Implement actual API call to update the role
-        toast({
-            title: "Rol Güncellendi",
-            description: `"${name}" rolü başarıyla güncellendi.`,
-        });
-         // Refetch or update local state if necessary
-        if(role) setRole({...role, name, description, permissions: updatedRoleData.permissions });
+    const handleSave = async () => {
+        if (!name.trim()) {
+            toast({ variant: "destructive", title: "Eksik Bilgi", description: "Rol adı boş olamaz." });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            const updatedRoleData = {
+                name,
+                description,
+                permissions: Array.from(selectedPermissions),
+            };
+            const result = await updateRole(roleId, updatedRoleData);
+            if (result) {
+                setRole(result);
+                toast({
+                    title: "Rol Güncellendi",
+                    description: `"${name}" rolü başarıyla güncellendi.`,
+                });
+            } else {
+                toast({ variant: "destructive", title: "Güncelleme Hatası", description: "Rol güncellenemedi." });
+            }
+        } catch (error) {
+            console.error("Error updating role:", error);
+            toast({ variant: "destructive", title: "Güncelleme Hatası", description: "Rol güncellenirken bir hata oluştu." });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleDelete = () => {
-        if (window.confirm(`"${name}" rolünü silmek istediğinizden emin misiniz? Bu işlem, bu role sahip kullanıcıları etkileyebilir ve geri alınamaz.`)) {
-            console.log("Deleting role:", roleId);
-            // TODO: Implement actual API call to delete the role
-             toast({
-                 variant: "destructive",
-                 title: "Rol Silindi",
-                 description: `"${name}" rolü silindi.`,
-            });
-            // TODO: Redirect to roles list page
-            // router.push('/admin/roles');
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            const success = await deleteRole(roleId);
+            if (success) {
+                 toast({
+                     variant: "destructive",
+                     title: "Rol Silindi",
+                     description: `"${name}" rolü silindi.`,
+                });
+                router.push('/admin/roles');
+            } else {
+                toast({ variant: "destructive", title: "Silme Hatası", description: "Rol silinemedi." });
+            }
+        } catch (error) {
+            console.error("Error deleting role:", error);
+            toast({ variant: "destructive", title: "Silme Hatası", description: "Rol silinirken bir hata oluştu." });
+        } finally {
+            setIsDeleting(false);
         }
     };
 
     if (loading) {
-        return <div className="flex justify-center items-center h-64">Rol bilgileri yükleniyor...</div>;
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                Rol bilgileri yükleniyor...
+            </div>
+        );
     }
 
     if (!role) {
@@ -215,7 +275,7 @@ export default function EditRolePage() {
     }
 
     return (
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+        <form onSubmit={(e) => {e.preventDefault(); handleSave();}} className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <Button variant="outline" size="sm" asChild className="mb-4">
@@ -225,11 +285,29 @@ export default function EditRolePage() {
                     <p className="text-muted-foreground">Rol bilgilerini ve atanmış izinleri yönetin.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button variant="destructive" onClick={handleDelete}>
-                        <Trash2 className="mr-2 h-4 w-4" /> Rolü Sil
-                    </Button>
-                    <Button onClick={handleSave}>
-                        <Save className="mr-2 h-4 w-4" /> Değişiklikleri Kaydet
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={isDeleting || isSaving}>
+                                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Rolü Sil
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    "{name}" rolünü silmek üzeresiniz. Bu işlem, bu role sahip kullanıcıları etkileyebilir ve geri alınamaz.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>İptal</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className={cn(buttonVariants({ variant: "destructive" }))}>
+                                    Evet, Sil
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <Button type="submit" disabled={isSaving || isDeleting}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                     </Button>
                 </div>
             </div>
@@ -297,12 +375,30 @@ export default function EditRolePage() {
             </Card>
 
             <Separator />
-            <div className="flex justify-end gap-2">
-                 <Button variant="destructive" onClick={handleDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Rolü Sil
-                </Button>
-                <Button onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" /> Değişiklikleri Kaydet
+             <div className="flex justify-end gap-2">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" type="button" disabled={isDeleting || isSaving}>
+                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Rolü Sil
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                "{name}" rolünü silmek üzeresiniz. Bu işlem, bu role sahip kullanıcıları etkileyebilir ve geri alınamaz.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>İptal</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className={cn(buttonVariants({ variant: "destructive" }))}>
+                                Evet, Sil
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <Button type="submit" disabled={isSaving || isDeleting}>
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                 </Button>
             </div>
         </form>
