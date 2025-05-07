@@ -8,30 +8,44 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Eye, LayoutGrid } from "lucide-react"; // Added Eye for preview, LayoutGrid for Section
+import { ArrowLeft, Save, Eye, LayoutGrid, Layers } from "lucide-react"; // Added Eye for preview, LayoutGrid for Section, Layers for remove template
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor"; // Import BlockEditor
-import type { Block } from "@/components/admin/template-selector"; // Import Block type
+import { TemplateSelector, type Block } from "@/components/admin/template-selector"; // Import Block type and TemplateSelector
 import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
 import { Textarea } from "@/components/ui/textarea"; // Import Textarea for SEO Description
+import { createPage, type PageData, generateSlug as generateSlugUtil } from "@/lib/mock-data"; // Import page CRUD functions
 
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 
 export default function NewPage() {
     const router = useRouter();
     const [title, setTitle] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [blocks, setBlocks] = React.useState<Block[]>([
-        { id: `block-${Date.now()}`, type: 'text', content: '' }, // Start with an empty text block
-    ]);
+    const [blocks, setBlocks] = React.useState<Block[]>([]); // Start empty, will be populated by default or template
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
+    const [saving, setSaving] = React.useState(false);
+    const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
+    const [templateApplied, setTemplateApplied] = React.useState(false);
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+
+
+    const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
+
+    React.useEffect(() => {
+        if (blocks.length === 0) {
+            setBlocks([createDefaultBlock()]);
+        }
+    }, [blocks.length]);
 
 
     // Basic slug generation (same as article editor)
-    const generateSlug = (text: string) => {
+    const handleSlugGeneration = (text: string) => {
         return text
             .toLowerCase()
             .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
@@ -42,7 +56,7 @@ export default function NewPage() {
     // Auto-generate slug from title
      React.useEffect(() => {
          if (title) {
-             setSlug(generateSlug(title));
+             setSlug(handleSlugGeneration(title));
          } else {
              setSlug(""); // Clear slug if title is empty
          }
@@ -70,23 +84,27 @@ export default function NewPage() {
      // --- Block Handlers ---
      const handleAddBlock = (type: Block['type']) => {
         const newBlock: Block = {
-            id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            id: generateBlockId(),
             type: type,
             ...(type === 'text' && { content: '' }),
             ...(type === 'heading' && { level: 2, content: '' }),
             ...(type === 'image' && { url: '', alt: '', caption: '' }),
             ...(type === 'gallery' && { images: [] }),
-            ...(type === 'video' && { url: '' }),
+            ...(type === 'video' && { url: '', youtubeId: '' }),
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
-            ...(type === 'section' && { sectionType: 'custom-text', settings: {} }), // Add section block default
+            ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
-        setBlocks([...blocks, newBlock]);
+        setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
+        setSelectedBlockId(newBlock.id);
+        setTemplateApplied(false);
      };
 
      const handleDeleteBlock = (id: string) => {
         setBlocks(blocks.filter(block => block.id !== id));
+        if (selectedBlockId === id) setSelectedBlockId(null);
+        setTemplateApplied(false);
      };
 
      const handleUpdateBlock = (updatedBlock: Block) => {
@@ -99,43 +117,123 @@ export default function NewPage() {
 
      const handleReorderBlocks = (reorderedBlocks: Block[]) => {
         setBlocks(reorderedBlocks);
+        setTemplateApplied(false);
      };
+
+     const handleBlockSelect = (id: string | null) => {
+        setSelectedBlockId(id);
+    };
      // --- End Block Handlers ---
 
-    const handleSave = () => {
+     // --- Template Handlers ---
+     const handleTemplateSelect = (templateBlocks: Block[]) => {
+        const newBlocks = templateBlocks.map(block => ({
+            ...block,
+            id: generateBlockId()
+        }));
+        setBlocks(newBlocks);
+        setTemplateApplied(true);
+        setIsTemplateSelectorOpen(false);
+        toast({ title: "Şablon Uygulandı", description: "Seçilen sayfa şablonu başarıyla uygulandı." });
+    };
+
+    const handleRemoveTemplate = () => {
+        if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
+            setBlocks([createDefaultBlock()]);
+            setTemplateApplied(false);
+            setSelectedBlockId(null);
+            toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
+        }
+    };
+    // --- End Template Handlers ---
+
+
+    const handleSave = async () => {
         if (!title || !slug) {
             toast({ variant: "destructive", title: "Hata", description: "Sayfa başlığı ve URL metni zorunludur." });
             return;
         }
-        // TODO: Implement actual API call to save the new page structure including blocks and SEO
-        const newPageData = { title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl };
-        console.log("Saving new page:", newPageData);
-        toast({
-            title: "Sayfa Oluşturuldu",
-            description: `"${title}" başlıklı sayfa taslak olarak kaydedildi.`,
-        });
-        // TODO: Redirect to the edit page for the newly created page or back to list
-        // Example: router.push(`/admin/pages/edit/${newlyCreatedPageId}`);
-        router.push('/admin/pages');
+        setSaving(true);
+        const newPageData: Omit<PageData, 'id' | 'createdAt' | 'updatedAt'> = {
+            title,
+            slug,
+            blocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
+            seoTitle: seoTitle || title,
+            seoDescription,
+            keywords,
+            canonicalUrl,
+            // imageUrl can be set if there's a dedicated field for it
+        };
+
+        try {
+            const createdPage = await createPage(newPageData);
+            if (createdPage) {
+                toast({
+                    title: "Sayfa Oluşturuldu",
+                    description: `"${createdPage.title}" başlıklı sayfa başarıyla oluşturuldu.`,
+                });
+                router.push(`/admin/pages/edit/${createdPage.id}`);
+            } else {
+                toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Sayfa oluşturulamadı." });
+                setSaving(false);
+            }
+        } catch (error: any) {
+            console.error("Error creating page:", error);
+            toast({ variant: "destructive", title: "Oluşturma Hatası", description: error.message || "Sayfa oluşturulurken bir sorun oluştu." });
+            setSaving(false);
+        }
     };
 
      // --- Preview Handler ---
      const handlePreview = () => {
-        const previewData = {
-            id: 'preview', // Temporary ID for preview
-            title,
-            description: seoDescription || '',
-            imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/new-page-preview/1200/600',
+        if (typeof window === 'undefined') return;
+
+        const previewData: Partial<PageData> & { previewType: 'page' } = {
+            previewType: 'page',
+            id: 'preview_new_page',
+            title: title || 'Başlıksız Sayfa',
+            slug: slug || handleSlugGeneration(title),
             blocks,
+            seoTitle: seoTitle || title,
+            seoDescription: seoDescription || '',
+            keywords: keywords || [],
+            canonicalUrl: canonicalUrl || '',
+            imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/new-page-preview/1200/600',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         };
-         try {
-             localStorage.setItem('articlePreviewData', JSON.stringify(previewData));
-             window.open('/admin/preview', '_blank');
-         } catch (error) {
-             console.error("Error saving preview data:", error);
-             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi kaydedilemedi." });
-         }
-     };
+
+        console.log(`[NewPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[NewPage/handlePreview] Preview Data:`, previewData);
+
+        try {
+            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
+            console.log(`[NewPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
+
+            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            if (!storedData) throw new Error("Verification failed: No data found in localStorage.");
+            const parsed = JSON.parse(storedData);
+            if (!parsed || parsed.previewType !== 'page') throw new Error("Verification failed: Invalid data structure.");
+            console.log("[NewPage/handlePreview] Verification SUCCESS");
+
+            const previewUrl = `/admin/preview`;
+            console.log(`[NewPage/handlePreview] Opening preview window with URL: ${previewUrl}`);
+
+            setTimeout(() => {
+                const newWindow = window.open(previewUrl, '_blank');
+                if (!newWindow) {
+                    console.error("[NewPage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                    toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Pop-up engelleyiciyi kontrol edin.", duration: 10000 });
+                } else {
+                    console.log("[NewPage/handlePreview] Preview window opened successfully.");
+                }
+            }, 150);
+
+        } catch (error: any) {
+            console.error("[NewPage/handlePreview] Error during preview process:", error);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: error.message, duration: 10000 });
+        }
+    };
 
     return (
         <div className="flex flex-col h-full">
@@ -146,10 +244,13 @@ export default function NewPage() {
                  </Button>
                 <h1 className="text-xl font-semibold">Yeni Sayfa Oluştur</h1>
                 <div className="flex items-center gap-2">
-                     <Button variant="outline" size="sm" onClick={handlePreview}>
+                     <Button variant="outline" size="sm" onClick={() => setIsTemplateSelectorOpen(true)}>
+                        <LayoutGrid className="mr-2 h-4 w-4" /> Şablon Seç
+                     </Button>
+                     <Button variant="outline" size="sm" onClick={handlePreview} disabled={saving}>
                         <Eye className="mr-2 h-4 w-4" /> Önizle
                      </Button>
-                     <Button size="sm" onClick={handleSave} disabled={!title || !slug}>
+                     <Button size="sm" onClick={handleSave} disabled={!title || !slug || saving}>
                         <Save className="mr-2 h-4 w-4" /> Kaydet
                      </Button>
                  </div>
@@ -180,7 +281,7 @@ export default function NewPage() {
                                 <Input
                                     id="page-slug"
                                     value={slug}
-                                    onChange={(e) => setSlug(generateSlug(e.target.value))} // Allow manual adjustment
+                                    onChange={(e) => setSlug(handleSlugGeneration(e.target.value))} // Allow manual adjustment
                                     placeholder="Sayfa URL'si"
                                     required
                                 />
@@ -198,12 +299,12 @@ export default function NewPage() {
                        onDeleteBlock={handleDeleteBlock}
                        onUpdateBlock={handleUpdateBlock}
                        onReorderBlocks={handleReorderBlocks}
-                       selectedBlockId={null} // Add selectedBlockId prop
-                       onBlockSelect={() => {}} // Add onBlockSelect prop
+                       selectedBlockId={selectedBlockId}
+                       onBlockSelect={handleBlockSelect}
                      />
                  </div>
 
-                  {/* Right Sidebar (SEO) */}
+                  {/* Right Sidebar (SEO & Actions) */}
                  <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
                       <Card>
                             <CardHeader>
@@ -266,13 +367,32 @@ export default function NewPage() {
                               title={seoTitle || title}
                               description={seoDescription || ''}
                               slug={slug}
-                              category="sayfa"
+                              category="sayfa" // Generic category for pages
                           />
                        </div>
+
+                       {/* Actions */}
+                       {templateApplied && (
+                            <Button
+                                variant="outline"
+                                className="w-full text-destructive border-destructive/50 hover:bg-destructive/10"
+                                onClick={handleRemoveTemplate}
+                                disabled={saving}
+                            >
+                                <Layers className="mr-2 h-4 w-4" /> Şablonu Kaldır
+                            </Button>
+                        )}
                  </aside>
             </div>
+
+             {/* Template Selector Modal */}
+             <TemplateSelector
+                isOpen={isTemplateSelectorOpen}
+                onClose={() => setIsTemplateSelectorOpen(false)}
+                onSelectTemplateBlocks={handleTemplateSelect}
+                blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))}
+                templateTypeFilter="page" // Filter for page templates
+            />
         </div>
     );
 }
-
-    

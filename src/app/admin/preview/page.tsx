@@ -2,19 +2,18 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from 'next/navigation';
+// import { useSearchParams } from 'next/navigation'; // No longer needed due to fixed key
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Eye, Video as VideoIcon, Loader2, AlertTriangle, Tag, BookCopy } from 'lucide-react'; // Added Tag, BookCopy
+import { ArrowLeft, Eye, Loader2, AlertTriangle, Tag, BookCopy } from 'lucide-react';
 import type { Block } from '@/components/admin/template-selector';
-import type { ArticleData, NoteData } from '@/lib/mock-data'; // Import both types
-import { Badge } from '@/components/ui/badge'; // Import Badge
-import { Separator } from '@/components/ui/separator'; // Import Separator
+import type { ArticleData, NoteData, PageData as PageDataType } from '@/lib/mock-data'; // Import PageData as PageDataType
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import PagePreviewRenderer from "@/components/admin/page-preview-renderer"; // For rendering page blocks
 
 // --- Block Rendering Components (Simplified versions for preview) ---
-// ... (Keep the existing Block Rendering Components: TextBlockRenderer, HeadingBlockRenderer, etc.) ...
-
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
   <div dangerouslySetInnerHTML={{ __html: block.content?.replace(/\n/g, '<br />') || '<p class="italic text-muted-foreground">[Boş Metin Bloğu]</p>' }} />
 );
@@ -81,24 +80,36 @@ const PlaceholderBlockRenderer: React.FC<{ type: string }> = ({ type }) => (
   </div>
 );
 
+const SectionBlockRenderer: React.FC<{ block: Extract<Block, { type: 'section' }> }> = ({ block }) => {
+    // Basic rendering for section type for preview
+    // In a real app, this would be more complex, rendering based on block.sectionType and block.settings
+    return (
+        <div className="my-6 p-4 border border-dashed border-muted-foreground/50 rounded-md bg-muted/20">
+            <p className="text-sm font-semibold text-muted-foreground">[Bölüm: {block.sectionType || 'Bilinmeyen'}]</p>
+            {block.settings?.title && <h3 className="text-lg font-medium mt-1">{block.settings.title}</h3>}
+            {block.sectionType === 'custom-text' && block.settings?.content && (
+                <div className="prose dark:prose-invert max-w-none mt-2" dangerouslySetInnerHTML={{ __html: block.settings.content }} />
+            )}
+            {/* Add more specific rendering for other section types if needed for preview */}
+            <pre className="text-xs bg-black/10 dark:bg-white/10 p-2 rounded mt-2 overflow-x-auto">
+                Ayarlar: {JSON.stringify(block.settings, null, 2)}
+            </pre>
+        </div>
+    );
+};
+
 // Function to render a single block
 const renderBlock = (block: Block) => {
     switch (block.type) {
-        case 'text':
-            return <TextBlockRenderer key={block.id} block={block} />;
-        case 'heading':
-            return <HeadingBlockRenderer key={block.id} block={block} />;
-        case 'image':
-            return <ImageBlockRenderer key={block.id} block={block} />;
-        case 'quote':
-            return <QuoteBlockRenderer key={block.id} block={block} />;
-         case 'video':
-             return <VideoBlockRenderer key={block.id} block={block} />;
-        case 'divider':
-            return <DividerBlockRenderer key={block.id} block={block} />;
+        case 'text': return <TextBlockRenderer key={block.id} block={block} />;
+        case 'heading': return <HeadingBlockRenderer key={block.id} block={block} />;
+        case 'image': return <ImageBlockRenderer key={block.id} block={block} />;
+        case 'quote': return <QuoteBlockRenderer key={block.id} block={block} />;
+        case 'video': return <VideoBlockRenderer key={block.id} block={block} />;
+        case 'divider': return <DividerBlockRenderer key={block.id} block={block} />;
+        case 'section': return <SectionBlockRenderer key={block.id} block={block} />;
         case 'gallery':
         case 'code':
-        case 'section':
         default:
             return <PlaceholderBlockRenderer key={block.id} type={block.type} />;
     }
@@ -106,15 +117,19 @@ const renderBlock = (block: Block) => {
 
 
 // --- Data Types for Preview ---
-type PreviewData = (Partial<ArticleData> & { previewType?: 'article' }) | (Partial<NoteData> & { previewType: 'note' });
+// Combined type for preview data, identified by previewType
+type CombinedPreviewData = (Partial<ArticleData> & { previewType: 'article' }) |
+                           (Partial<NoteData> & { previewType: 'note' }) |
+                           (Partial<PageDataType> & { previewType: 'page' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Use the fixed key
 
-export default function ArticlePreviewPage() {
-  const [previewData, setPreviewData] = React.useState<PreviewData | null>(null);
+const PREVIEW_STORAGE_KEY = 'preview_data';
+
+export default function PreviewPage() {
+  const [previewData, setPreviewData] = React.useState<CombinedPreviewData | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams(); // No longer using searchParams for the key
 
   React.useEffect(() => {
     let isMounted = true;
@@ -122,13 +137,15 @@ export default function ArticlePreviewPage() {
 
     if (typeof window === 'undefined') {
       console.log("[PreviewPage] Running on server, skipping localStorage logic.");
-      setIsLoading(false);
+      if(isMounted) setIsLoading(false);
       return;
     }
     console.log("[PreviewPage] Running on client.");
 
     const loadPreview = () => {
         if (!isMounted) return;
+        setIsLoading(true); // Start loading
+        setError(null); // Reset error
 
         console.log(`[PreviewPage] Attempting to load data from localStorage with key: ${PREVIEW_STORAGE_KEY}`);
         try {
@@ -136,10 +153,10 @@ export default function ArticlePreviewPage() {
 
             if (storedData) {
                 console.log(`[PreviewPage] Found data in localStorage. Length: ${storedData.length}.`);
-                let parsedData;
+                let parsedData: CombinedPreviewData;
                 try {
-                    parsedData = JSON.parse(storedData);
-                    console.log("[PreviewPage] Parsed data successfully.");
+                    parsedData = JSON.parse(storedData) as CombinedPreviewData; // Type assertion
+                    console.log("[PreviewPage] Parsed data successfully:", parsedData);
 
                     if (!parsedData || typeof parsedData !== 'object' || Object.keys(parsedData).length === 0) {
                          const errorMsg = `Geçersiz veya boş önizleme verisi yapısı.`;
@@ -147,20 +164,24 @@ export default function ArticlePreviewPage() {
                          if (isMounted) setError(errorMsg);
                          return;
                     }
-                    // Basic validation based on expected type (article or note)
-                     if ((!parsedData.previewType || parsedData.previewType === 'article') && typeof parsedData.title === 'string' && Array.isArray(parsedData.blocks)) {
-                        console.log("[PreviewPage] Data appears to be valid article/general data.");
-                        if (isMounted) setPreviewData(parsedData);
-                    } else if (parsedData.previewType === 'note' && typeof parsedData.title === 'string' && Array.isArray(parsedData.contentBlocks)) {
-                        // Remap contentBlocks to blocks for consistent rendering
-                        const noteData = { ...parsedData, blocks: parsedData.contentBlocks };
-                        console.log("[PreviewPage] Data appears to be valid note data. Remapped contentBlocks.");
-                        if (isMounted) setPreviewData(noteData);
-                    } else {
-                         const errorMsg = `Önizleme verisi beklenen yapıda değil (eksik title, blocks/contentBlocks veya geçersiz previewType).`;
+                    // Validate based on previewType
+                     if (!parsedData.previewType || !['article', 'note', 'page'].includes(parsedData.previewType)) {
+                         const errorMsg = `Önizleme verisi geçersiz 'previewType' içeriyor: ${parsedData.previewType}.`;
                          console.error("[PreviewPage]", errorMsg, parsedData);
                          if (isMounted) setError(errorMsg);
+                         return;
+                     }
+
+                    // Basic validation for common fields
+                    if (typeof parsedData.title !== 'string' || !Array.isArray(parsedData.blocks)) {
+                         const errorMsg = `Önizleme verisi beklenen yapıda değil (eksik title veya blocks).`;
+                         console.error("[PreviewPage]", errorMsg, parsedData);
+                         if (isMounted) setError(errorMsg);
+                         return;
                     }
+
+                    console.log("[PreviewPage] Data appears to be valid.");
+                    if (isMounted) setPreviewData(parsedData);
 
                 } catch (parseError: any) {
                     console.error("[PreviewPage] JSON parse error:", parseError);
@@ -187,7 +208,7 @@ export default function ArticlePreviewPage() {
       console.log("[PreviewPage] Component unmounted.");
     };
 
-  }, []);
+  }, []); // Removed searchParams from dependency as key is fixed
 
    if (isLoading) {
      console.log("[PreviewPage] Rendering loading state.");
@@ -217,7 +238,7 @@ export default function ArticlePreviewPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-destructive mb-4">Önizleme Hatası</h1>
-            <p className="text-muted-foreground mb-6">Önizleme verisi yüklenemedi (veri null).</p>
+            <p className="text-muted-foreground mb-6">Önizleme verisi yüklenemedi (veri null). Veri yapısını veya anahtarı kontrol edin.</p>
             <Button onClick={() => window.close()} variant="outline">Sekmeyi Kapat</Button>
         </div>
      );
@@ -225,14 +246,12 @@ export default function ArticlePreviewPage() {
 
     console.log("[PreviewPage] Rendering preview for:", previewData.title, "Type:", previewData.previewType);
 
-    // Determine if it's an article or note based on previewType or structure
-    const isNote = previewData.previewType === 'note';
-    const isArticle = !isNote; // Assume article if not explicitly note
-
     const commonData = {
         title: previewData.title || "[Başlık Yok]",
         blocks: previewData.blocks || [],
-        imageUrl: (isArticle ? (previewData as Partial<ArticleData>).mainImageUrl : (previewData as Partial<NoteData>).imageUrl) || null,
+        imageUrl: (previewData.previewType === 'article' ? (previewData as Partial<ArticleData>).mainImageUrl :
+                   previewData.previewType === 'note' ? (previewData as Partial<NoteData>).imageUrl :
+                   previewData.previewType === 'page' ? (previewData as Partial<PageDataType>).imageUrl : null) || null,
         createdAt: previewData.createdAt,
     };
 
@@ -246,7 +265,7 @@ export default function ArticlePreviewPage() {
             </Button>
         </div>
 
-        {isArticle && (
+        {previewData.previewType === 'article' && (
              <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
                 <header className="mb-10">
                      <span className={`text-sm font-medium mb-3 inline-block tracking-wide uppercase ${ (previewData as Partial<ArticleData>).category === 'Teknoloji' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
@@ -271,7 +290,6 @@ export default function ArticlePreviewPage() {
                     {commonData.blocks.length > 0 ? commonData.blocks.map(renderBlock) : <p className="text-muted-foreground italic">(İçerik Bölümü Yok)</p>}
                  </div>
                  <div className="mt-16 border-t border-border/50 pt-10 space-y-10">
-                    {/* Article specific footer elements */}
                     <div><h2 className="text-2xl font-semibold mb-4">İlgili Makaleler (Placeholder)</h2><p className="text-muted-foreground text-sm">...</p></div>
                     <div><h2 className="text-2xl font-semibold mb-4">Paylaş (Placeholder)</h2><div className="flex space-x-3">...</div></div>
                     <div><h2 className="text-2xl font-semibold mb-4">Yorumlar (Placeholder)</h2><p className="text-muted-foreground text-sm">...</p></div>
@@ -279,10 +297,10 @@ export default function ArticlePreviewPage() {
             </article>
          )}
 
-        {isNote && (
+        {previewData.previewType === 'note' && (
              <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
                  <header className="mb-8">
-                     <Link href="/biyoloji-notlari" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center mb-2"><ArrowLeft className="mr-1 h-3 w-3" /> Biyoloji Notlarına Dön</Link>
+                     {/* <Link href="/biyoloji-notlari" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center mb-2"><ArrowLeft className="mr-1 h-3 w-3" /> Biyoloji Notlarına Dön</Link> */}
                      <h1 className="text-3xl md:text-4xl font-bold mb-3 leading-tight flex items-center gap-2"><BookCopy className="h-7 w-7 text-green-600"/> {commonData.title}</h1>
                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
                          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">{(previewData as Partial<NoteData>).category || '[Kategori]'}</Badge>
@@ -307,9 +325,19 @@ export default function ArticlePreviewPage() {
                     {commonData.blocks.length > 0 ? commonData.blocks.map(renderBlock) : <p className="text-muted-foreground italic">(İçerik Bölümü Yok)</p>}
                   </div>
                    <Separator className="my-12"/>
-                  {/* Note specific footer elements */}
                    <div><h2 className="text-2xl font-semibold mb-4">İlgili Notlar (Placeholder)</h2><p className="text-muted-foreground text-sm">...</p></div>
             </article>
+         )}
+
+         {previewData.previewType === 'page' && (
+             <div className="container py-8"> {/* Basic container for page preview */}
+                <PagePreviewRenderer
+                    pageData={previewData as PageDataType} // Cast to PageDataType
+                    selectedBlockId={null} // No block selection in this simple preview
+                    onBlockSelect={() => {}}
+                    isPreview={true} // Indicate it's a preview context
+                />
+            </div>
          )}
     </div>
   );

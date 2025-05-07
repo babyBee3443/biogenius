@@ -19,15 +19,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog" // AlertDialogTrigger removed as it's handled in loop
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Eye } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
-import type { ArticleData } from '@/lib/mock-data';
+import type { ArticleData, NoteData, Template as TemplateDefinition } from '@/lib/mock-data'; // Import Template as TemplateDefinition
+import { allMockTemplates } from "@/lib/mock-data"; // Import allMockTemplates
 
 // --- Block Types (Should match the editor's block types) ---
 export type Block =
@@ -41,20 +41,6 @@ export type Block =
   | { id: string; type: 'divider' }
   | { id: string; type: 'section'; sectionType: string; settings: Record<string, any> };
 
-// Define Template Structure
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  previewImageUrl: string;
-  blocks: Block[];
-  type: 'article' | 'note'; // Add type property
-  category?: 'Teknoloji' | 'Biyoloji'; // Make category optional for general templates
-  seoTitle?: string;
-  seoDescription?: string;
-  keywords?: string[];
-  excerpt?: string;
-}
 
 interface TemplateSelectorProps {
   isOpen: boolean;
@@ -63,275 +49,12 @@ interface TemplateSelectorProps {
   onSelectTemplate?: (content: string) => void; // Keep for potential backward compatibility if needed
   onSelectTemplateBlocks: (blocks: Block[]) => void;
   blocksCurrentlyExist: boolean; // Indicates if there are blocks in the editor
-  templateTypeFilter?: 'article' | 'note'; // Optional filter
+  templateTypeFilter?: 'article' | 'note' | 'page'; // Optional filter
 }
 
 
-// --- Mock Templates (Using Block Structure) ---
-// Ensure each template has unique content, topics, images, etc.
-const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-const allTemplates: Template[] = [
-  {
-    id: 'standard-article',
-    name: 'Standart Makale',
-    description: 'Giriş, ana görsel, alt başlıklar ve sonuç bölümü içeren temel makale düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template-std-ai/300/200',
-    type: 'article', // Type specified
-    category: 'Teknoloji',
-    excerpt: 'Yapay zeka etiği ve toplumsal etkileri üzerine odaklanan standart bir makale yapısı.',
-    seoTitle: 'Yapay Zeka Etiği ve Toplumsal Sorumluluklar',
-    seoDescription: 'Standart makale şablonu ile yapay zeka etiği, önyargılar ve gelecek perspektifleri.',
-    keywords: ['yapay zeka', 'etik', 'toplum', 'sorumluluk', 'önyargı'],
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'Yapay Zeka Etiği: Teknoloji ve Toplum Dengesi' },
-      { id: generateId(), type: 'text', content: 'Yapay zeka (AI) hayatımızı dönüştürürken, beraberinde önemli etik soruları ve toplumsal sorumlulukları da getiriyor. Bu makalede, AI etiğinin temel ilkelerini ve karşılaşılan zorlukları inceleyeceğiz.' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-ai-ethics-img/800/400', alt: 'Yapay Zeka ve Etik Sembolü', caption: 'AI geliştirirken etik değerleri gözetmek.' },
-      { id: generateId(), type: 'text', content: 'AI sistemlerinin karar alma süreçlerindeki **şeffaflık**, **hesap verebilirlik** ve **adalet** gibi ilkeler, etik tartışmaların merkezinde yer alıyor. Algoritmik önyargılar, veri gizliliği ve otonom sistemlerin sorumluluğu gibi konular acil çözümler gerektiriyor.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Algoritmik Önyargıların Tehlikeleri' },
-      { id: generateId(), type: 'text', content: 'AI modelleri, eğitildikleri verilerdeki mevcut toplumsal önyargıları yansıtabilir ve hatta güçlendirebilir. Bu durum, işe alım süreçlerinden kredi başvurularına kadar birçok alanda ayrımcılığa yol açabilir. Önyargısız veri setleri oluşturmak ve adil algoritmalar geliştirmek kritik önem taşımaktadır.' },
-       { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=ABd2-6hnwAI', youtubeId: 'ABd2-6hnwAI' }, // Relevant video on AI ethics
-      { id: generateId(), type: 'heading', level: 2, content: 'Geleceğe Yönelik Adımlar' },
-      { id: generateId(), type: 'text', content: 'Yapay zeka etiği konusunda küresel standartların oluşturulması, multidisipliner yaklaşımların benimsenmesi ve kamuoyu bilincinin artırılması gerekiyor. Teknoloji geliştiricileri, politika yapıcılar ve toplum olarak birlikte çalışarak AI\'ın insanlık yararına kullanılmasını sağlamalıyız.' },
-      { id: generateId(), type: 'quote', content: 'Etik olmayan bir yapay zeka, insanlığın karşılaştığı en büyük tehditlerden biri olabilir.', citation: 'Stephen Hawking (uyarlanmıştır)' },
-      { id: generateId(), type: 'text', content: 'Sonuç olarak, yapay zeka etiği, teknolojinin geleceğini şekillendirecek en önemli tartışma alanlarından biridir ve sürekli dikkat gerektirir.' },
-    ]
-  },
-   {
-    id: 'listicle',
-    name: 'Listeleme Makalesi',
-    description: 'Belirli bir konuda numaralı veya madde işaretli öneriler/bilgiler sunan format.',
-    previewImageUrl: 'https://picsum.photos/seed/template-list-brain/300/200',
-    type: 'article', // Type specified
-    category: 'Biyoloji',
-    excerpt: 'Beyin sağlığınızı korumak ve geliştirmek için bilimsel temelli 7 basit yöntemi listeleyen bir şablon.',
-    seoTitle: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem',
-    seoDescription: 'Listeleme makalesi şablonu ile beyin sağlığını destekleyen alışkanlıklar ve ipuçları.',
-    keywords: ['beyin sağlığı', 'hafıza', 'nöroloji', 'bilişsel fonksiyon', 'sağlıklı yaşam'],
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem' },
-        { id: generateId(), type: 'text', content: 'Yaş aldıkça bilişsel fonksiyonlarımızı korumak ve beyin sağlığımızı optimize etmek hepimizin hedefi. İşte bilimsel araştırmalarla desteklenen 7 etkili yöntem:' },
-        { id: generateId(), type: 'heading', level: 2, content: '1. Zihinsel Olarak Aktif Kalın' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-puzzle-img/600/300', alt: 'Yapboz Yapan Kişi', caption: 'Yeni şeyler öğrenmek ve bulmacalar çözmek beyni uyarır.' },
-        { id: generateId(), type: 'text', content: 'Okumak, yazmak, yeni bir dil veya müzik aleti öğrenmek, strateji oyunları oynamak gibi zihinsel aktiviteler, beyin hücreleri arasındaki bağlantıları güçlendirir ve bilişsel rezervinizi artırır.' },
-        { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: '2. Fiziksel Egzersizi İhmal Etmeyin' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-running-img/600/300', alt: 'Koşan Kişi', caption: 'Aerobik egzersiz beyne giden kan akışını artırır.' },
-        { id: generateId(), type: 'text', content: 'Düzenli fiziksel aktivite, beyne oksijen ve besin taşıyan kan akışını iyileştirir. Hafıza ve öğrenme ile ilişkili beyin bölgelerinde yeni hücrelerin büyümesini teşvik edebilir.' },
-         { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: '3. Sağlıklı ve Dengeli Beslenin' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-food-img/600/300', alt: 'Beyin Dostu Besinler (Balık, Yemiş, Sebze)', caption:'Omega-3, antioksidanlar ve vitaminler önemlidir.' },
-        { id: generateId(), type: 'text', content: 'Özellikle Akdeniz diyeti gibi, meyve, sebze, tam tahıllar, balık ve sağlıklı yağlar açısından zengin beslenme düzenleri beyin sağlığı ile ilişkilendirilmiştir.' },
-         { id: generateId(), type: 'divider'},
-         { id: generateId(), type: 'heading', level: 2, content: `4. Kaliteli Uyku Uyuyun` },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-sleep-img/600/300', alt: 'Uyuyan Kişi', caption: 'Uyku, öğrenmeyi pekiştirir ve beyni temizler.' },
-         { id: generateId(), type: 'text', content: 'Uyku sırasında beyin, gün içinde öğrenilen bilgileri pekiştirir ve zararlı toksinleri temizler. Her gece 7-8 saat kesintisiz ve kaliteli uyku hedefleyin.' },
-         { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: `5. Sosyal Bağlantıları Koruyun` },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-social-img/600/300', alt: 'Sohbet Eden Arkadaşlar', caption: 'Sosyal etkileşim beyin sağlığını destekler.' },
-        { id: generateId(), type: 'text', content: 'Güçlü sosyal ilişkiler, stresi azaltmaya ve beyin sağlığını korumaya yardımcı olabilir. Aile ve arkadaşlarla zaman geçirmek, sosyal aktivitelere katılmak önemlidir.' },
-         { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: `6. Stresi Etkili Yönetin` },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-yoga-img/600/300', alt: 'Yoga Yapan Kişi', caption: 'Meditasyon ve rahatlama teknikleri stresi azaltır.' },
-        { id: generateId(), type: 'text', content: 'Kronik stres, beyin hücrelerine zarar verebilir ve hafızayı olumsuz etkileyebilir. Meditasyon, yoga, doğa yürüyüşleri gibi rahatlama teknikleri stresi yönetmenize yardımcı olabilir.' },
-         { id: generateId(), type: 'divider'},
-        { id: generateId(), type: 'heading', level: 2, content: `7. Kronik Hastalıkları Kontrol Altında Tutun` },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-doctor-img/600/300', alt: 'Doktor ve Hasta', caption: 'Sağlık kontrollerinizi ihmal etmeyin.' },
-        { id: generateId(), type: 'text', content: 'Yüksek tansiyon, diyabet, yüksek kolesterol gibi kronik sağlık sorunları beyin sağlığını olumsuz etkileyebilir. Bu hastalıkları doktorunuzun önerileri doğrultusunda kontrol altında tutmak önemlidir.' },
-        { id: generateId(), type: 'text', content: 'Bu yöntemleri yaşam tarzınıza entegre ederek beyin sağlığınızı koruyabilir ve bilişsel yeteneklerinizi uzun yıllar boyunca sürdürebilirsiniz.'},
-    ]
-  },
-  {
-    id: 'image-gallery',
-    name: 'Görsel Galerisi',
-    description: 'Görsellerin ön planda olduğu, açıklamalı ve tematik galeri düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/template-gallery-space/300/200',
-    type: 'article', // Type specified
-    category: 'Teknoloji',
-    excerpt: 'James Webb Uzay Teleskobu tarafından çekilen nefes kesici uzay fotoğraflarından oluşan bir galeri.',
-    seoTitle: 'James Webb Teleskobu Harikaları: Uzay Galerisi',
-    seoDescription: 'Görsel galerisi şablonu ile James Webb Uzay Teleskobu\'nun çektiği en iyi fotoğraflar.',
-    keywords: ['james webb', 'uzay', 'teleskop', 'galaksi', 'nebula', 'astronomi'],
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'James Webb Uzay Teleskobu ile Evrenin Derinlikleri' },
-        { id: generateId(), type: 'text', content: 'James Webb Uzay Teleskobu (JWST), evrenin şimdiye kadar görülmemiş detaylarını gözler önüne seriyor. İşte bu güçlü teleskop tarafından yakalanan en büyüleyici görüntülerden bazıları:' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-carina-img/800/500', alt: 'Karina Nebulası', caption: 'Görsel 1: Karina Nebulası\'nın "Kozmik Uçurumları". Yıldız oluşum bölgelerini inanılmaz ayrıntılarla gösteriyor.' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-stephan-img/800/500', alt: 'Stephan Beşlisi', caption: 'Görsel 2: Stephan Beşlisi galaksi grubu. Galaksilerin etkileşimini ve birleşmesini gözlemliyoruz.' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-ring-img/800/500', alt: 'Güney Halka Nebulası', caption: 'Görsel 3: Güney Halka Nebulası. Ölmekte olan bir yıldızın etrafındaki gaz ve toz bulutları.' },
-         { id: generateId(), type: 'divider' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-jwst-phantom-img/800/500', alt: 'Hayalet Galaksi (M74)', caption: 'Görsel 4: Hayalet Galaksi (M74). Galaksinin kızılötesi ışıkta görünen spiral kollarındaki gaz ve toz yapıları.' },
-        { id: generateId(), type: 'text', content: 'JWST, kızılötesi gözlem yetenekleri sayesinde evrenin ilk zamanlarına ışık tutuyor ve yıldızların, galaksilerin oluşumu hakkındaki bilgilerimizi derinleştiriyor.' },
-    ]
-  },
-  {
-    id: 'faq-article',
-    name: 'SSS Makalesi',
-    description: 'Belirli bir konudaki sıkça sorulan sorulara net cevaplar veren format.',
-    previewImageUrl: 'https://picsum.photos/seed/template-faq-solar/300/200',
-    type: 'article', // Type specified
-    category: 'Teknoloji',
-    excerpt: 'Ev tipi güneş enerjisi sistemleri hakkında merak edilen temel sorular ve yanıtları.',
-    seoTitle: 'Ev Tipi Güneş Enerjisi Sistemleri Hakkında SSS',
-    seoDescription: 'SSS makalesi şablonu ile evler için güneş paneli kurulumu, maliyeti ve faydaları hakkında sıkça sorulan sorular.',
-    keywords: ['güneş enerjisi', 'güneş paneli', 'ev', 'çatı tipi ges', 'yenilenebilir enerji', 'sss'],
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Ev Tipi Güneş Enerjisi Sistemleri Hakkında Sıkça Sorulan Sorular' },
-        { id: generateId(), type: 'text', content: 'Evinizin çatısına güneş paneli kurmayı mı düşünüyorsunuz? Bu süreçle ilgili aklınıza takılabilecek yaygın soruları ve cevaplarını sizin için derledik.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: Güneş paneli sistemi kurmak ne kadar maliyetli?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Maliyet, sistemin büyüklüğüne (kurulu güç), kullanılan panel ve invertör markasına, kurulumun yapılacağı çatının özelliklerine ve bulunduğunuz bölgeye göre değişiklik gösterir. Ortalama bir konut için maliyet [ortalama maliyet aralığı] arasında değişebilir, ancak uzun vadede elektrik faturalarından tasarruf sağlayarak kendini amorti edebilir.' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: Sistem ne kadar elektrik üretir ve ihtiyacımı karşılar mı?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Üretilen elektrik miktarı, panel sayısı, güneşlenme süresi, panellerin açısı ve verimliliği gibi faktörlere bağlıdır. Kurulum öncesi yapılan keşif ve analizlerle, evinizin yıllık enerji tüketimine uygun bir sistem tasarlanır. Çoğu durumda, sistem yıllık tüketimin önemli bir kısmını veya tamamını karşılayabilir.' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: Devlet teşvikleri veya destekleri var mı?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Türkiye\'de ev tipi güneş enerjisi sistemleri için çeşitli devlet teşvikleri, mahsuplaşma (net metering) imkanları ve uygun kredi olanakları bulunmaktadır. Güncel teşvikler için Enerji ve Tabii Kaynaklar Bakanlığı veya ilgili dağıtım şirketinin web sitelerini takip etmek önemlidir.' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Soru 4: Panellerin ömrü ne kadar ve bakımı nasıl yapılır?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Kaliteli güneş panellerinin genellikle 25-30 yıl performans garantisi bulunur. Bakımları oldukça basittir; genellikle yılda birkaç kez yüzeylerinin temizlenmesi yeterlidir. İnvertör gibi diğer bileşenlerin ömrü daha kısa olabilir ve belirli aralıklarla kontrol veya değişim gerektirebilir.' },
-         { id: generateId(), type: 'divider' },
-         { id: generateId(), type: 'heading', level: 2, content: 'Soru 5: Hava bulutlu veya yağmurlu olduğunda sistem çalışır mı?' },
-         { id: generateId(), type: 'text', content: '**Cevap:** Evet, güneş panelleri doğrudan güneş ışığı olmadan da (düşük seviyede de olsa) elektrik üretebilirler. Ancak üretim miktarı güneşlenme yoğunluğuna bağlı olarak azalır. Şebeke bağlantılı sistemlerde, üretimin yetersiz kaldığı durumlarda elektrik şebekeden çekilir.' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'text', content: 'Daha detaylı bilgi ve kişiye özel teklifler için yetkili güneş enerjisi firmaları ile iletişime geçebilirsiniz.' },
-    ]
-  },
-  {
-    id: 'how-to-guide',
-    name: 'Nasıl Yapılır Rehberi',
-    description: 'Belirli bir işlemi adım adım anlatan, öğretici içerikler için ideal.',
-    previewImageUrl: 'https://picsum.photos/seed/template-howto-plant/300/200',
-    type: 'article', // Type specified
-    category: 'Biyoloji',
-    excerpt: 'Evde kolayca mikro yeşillik yetiştirmek için adım adım pratik bir rehber.',
-    seoTitle: 'Evde Mikro Yeşillik Nasıl Yetiştirilir? Adım Adım Rehber',
-    seoDescription: 'Nasıl yapılır rehberi şablonu ile evde kendi mikro yeşilliklerinizi yetiştirmenin kolay yolu.',
-    keywords: ['mikro yeşillik', 'evde tarım', 'nasıl yapılır', 'sağlıklı beslenme', 'bahçecilik'],
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Evde Mikro Yeşillik Nasıl Yetiştirilir? Adım Adım Rehber' },
-        { id: generateId(), type: 'text', content: 'Mikro yeşillikler, genç sebze ve otların filizleridir ve besin değerleri oldukça yüksektir. Evde kolayca yetiştirebilir ve salatalarınıza, sandviçlerinize lezzet katabilirsiniz. İşte basit adımlar:' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Gerekli Malzemeler' },
-        { id: generateId(), type: 'text', content: '- Sığ bir tepsi veya kap (drenaj delikli veya deliksiz olabilir)\n- Yetiştirme ortamı (torf, kokopit veya özel mikro yeşillik toprağı)\n- Mikro yeşillik tohumları (roka, turp, brokoli, ayçiçeği vb.)\n- Sprey şişesi (su püskürtmek için)\n- Makas (hasat için)' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 1: Yetiştirme Ortamını Hazırlayın' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-soil-img/600/350', alt: 'Tepsiye Toprak Yayma', caption:'Toprağı nemlendirin ve düzleştirin.' },
-        { id: generateId(), type: 'text', content: 'Tepsiyi yaklaşık 2-3 cm kalınlığında yetiştirme ortamı ile doldurun. Toprağı hafifçe bastırın ve sprey şişesiyle iyice nemlendirin, ancak çamurlaşmamasına dikkat edin.' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 2: Tohumları Ekin' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-seeds-img/600/350', alt: 'Toprağa Tohum Serpme', caption:'Tohumları yüzeye eşit şekilde serpin.' },
-        { id: generateId(), type: 'text', content: 'Tohumları nemli toprağın yüzeyine eşit bir şekilde serpin. Tohumların birbirine çok yakın olmamasına özen gösterin. Üzerlerini çok ince bir tabaka toprakla kapatabilir veya açık bırakabilirsiniz (tohum türüne bağlı).' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 3: Çimlenme Süreci' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-cover-img/600/350', alt: 'Tepsiyi Kapatma', caption:'İlk birkaç gün karanlık ve nemli tutun.' },
-        { id: generateId(), type: 'text', content: 'Tepsiyi başka bir tepsiyle veya karanlık bir bezle kapatarak tohumların çimlenmesini teşvik edin. Bu aşamada ışığa ihtiyaçları yoktur. Toprağın nemli kalması için günde bir veya iki kez kontrol edip su püskürtün. Genellikle 2-4 gün içinde çimlenme başlar.' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 4: Işığa Çıkarma ve Büyütme' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-light-img/600/350', alt: 'Filizleri Işığa Koyma', caption:'Çimlenen filizleri aydınlık bir yere alın.' },
-        { id: generateId(), type: 'text', content: 'Filizler görünmeye başlayınca tepsiyi aydınlık bir yere (doğrudan güneş ışığı almayan) veya bir bitki yetiştirme lambasının altına alın. Toprağı nemli tutmaya devam edin.' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Adım 5: Hasat' },
-         { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-plant-harvest-img/600/350', alt: 'Mikro Yeşillik Hasadı', caption:'İlk gerçek yapraklar çıktığında hasat edin.' },
-        { id: generateId(), type: 'text', content: 'Mikro yeşillikler genellikle 7-14 gün içinde hasat edilebilir hale gelir. İlk gerçek yaprak çifti tamamen açıldığında, temiz bir makasla toprağın hemen üzerinden kesin. Yıkayıp hemen tüketebilir veya buzdolabında birkaç gün saklayabilirsiniz. Afiyet olsun!' },
-    ]
-  },
-   {
-    id: 'interview-article',
-    name: 'Röportaj Makalesi',
-    description: 'Bir uzmanla yapılan söyleşiyi soru-cevap formatında detaylı bir şekilde sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/template-interview-neuro/300/200',
-    type: 'article', // Type specified
-    category: 'Biyoloji',
-    excerpt: 'Nörobilim uzmanı Dr. Elif Aydın ile beyin plastisitesi ve öğrenme üzerine bir röportaj.',
-    seoTitle: 'Röportaj: Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme',
-    seoDescription: 'Röportaj makalesi şablonu ile nörobilim uzmanı Dr. Elif Aydın\'ın beyin esnekliği ve öğrenme süreçleri hakkındaki görüşleri.',
-    keywords: ['nörobilim', 'plastisite', 'beyin', 'öğrenme', 'hafıza', 'röportaj'],
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme Üzerine Söyleşi' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif-aydin-img/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Nörobilim Uzmanı' },
-        { id: generateId(), type: 'text', content: 'Beynimizin yaşam boyu değişme ve adapte olma yeteneği olan nöroplastisite, öğrenme ve hafıza süreçlerimizin temelini oluşturuyor. Bu büyüleyici konuyu, alanın önde gelen isimlerinden Nörobilim Uzmanı Dr. Elif Aydın ile konuştuk.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Nöroplastisite Tam Olarak Nedir?' },
-        { id: generateId(), type: 'text', content: '**Soru:** Hocam, nöroplastisite kavramını basitçe nasıl açıklarsınız?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Nöroplastisite, beynin yapısını ve fonksiyonunu deneyimlere, öğrenmeye ve hatta yaralanmalara yanıt olarak değiştirme yeteneğidir. Yani beynimiz sabit bir yapı değil, sürekli olarak yeniden şekillenebilen dinamik bir organdır. Yeni sinirsel bağlantılar kurabilir, mevcut bağlantıları güçlendirebilir veya zayıflatabilir.' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Öğrenme ve Hafıza ile İlişkisi' },
-        { id: generateId(), type: 'text', content: '**Soru:** Öğrenme sürecinde nöroplastisitenin rolü nedir?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Öğrenme, aslında nöroplastisitenin bir sonucudur. Yeni bir bilgi veya beceri öğrendiğimizde, beynimizdeki nöronlar arasındaki bağlantılar (sinapslar) değişir. Tekrar ve pratikle bu bağlantılar güçlenir ve bilgi kalıcı hale gelir. Hafıza da benzer şekilde, bu sinaptik değişikliklerin korunmasıyla oluşur.' },
-        { id: generateId(), type: 'quote', content: "Beyin, kullanıldıkça gelişen bir kas gibidir.", citation:"Dr. Elif Aydın" },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Plastisiteyi Nasıl Geliştirebiliriz?' },
-        { id: generateId(), type: 'text', content: '**Soru:** Günlük hayatta beyin plastisitesini desteklemek için neler yapabiliriz?' },
-        { id: generateId(), type: 'text', content: '**Cevap:** Birkaç önemli faktör var: Sürekli yeni şeyler öğrenmeye açık olmak, zihinsel olarak zorlayıcı aktivitelerle meşgul olmak (bulmaca çözmek, yeni bir dil öğrenmek gibi), düzenli fiziksel egzersiz yapmak, kaliteli uyku uyumak ve sağlıklı beslenmek. Ayrıca, sosyal etkileşim ve stresi yönetmek de beyin sağlığı ve plastisitesi için önemlidir.' },
-         { id: generateId(), type: 'divider' },
-         { id: generateId(), type: 'heading', level: 2, content: 'Yaşlanma ve Plastisite' },
-         { id: generateId(), type: 'text', content: '**Soru:** Yaş ilerledikçe beyin plastisitesi azalır mı?' },
-         { id: generateId(), type: 'text', content: '**Cevap:** Evet, yaşla birlikte plastisite yeteneğinde bir miktar azalma olabilir, ancak beyin hiçbir zaman değişme yeteneğini tamamen kaybetmez. Yaşam boyu öğrenme ve yukarıda saydığım sağlıklı yaşam alışkanlıkları, yaşlılıkta bile bilişsel fonksiyonların korunmasına ve plastisitenin desteklenmesine yardımcı olabilir.' },
-         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'text', content: 'Dr. Elif Aydın\'a beyin plastisitesi konusundaki değerli bilgileri paylaştığı için teşekkür ediyoruz. Beynimizin bu inanılmaz uyum yeteneği, sürekli gelişim ve öğrenme için bize büyük bir potansiyel sunuyor.' },
-    ]
-  },
-    // --- Note Templates ---
-   {
-    id: 'note-basic-concept',
-    name: 'Temel Kavram Notu',
-    description: 'Bir biyoloji kavramını açıklayan, tanım ve anahtar noktaları içeren basit not düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/note-concept-dna/300/200',
-    type: 'note', // Type specified
-    blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: '[Kavram Adı]' },
-        { id: generateId(), type: 'text', content: '**Tanım:** [Kavramın kısa ve net tanımı buraya gelecek.]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Anahtar Noktalar' },
-        { id: generateId(), type: 'text', content: '- [Anahtar nokta 1]\n- [Anahtar nokta 2]\n- [Anahtar nokta 3]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-concept-placeholder/600/300', alt: 'Kavramla İlgili Görsel', caption:'[Görsel açıklaması]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Örnek/İlişkili Konular' },
-        { id: generateId(), type: 'text', content: '[Kavramın anlaşıldığı bir örnek veya ilişkili diğer konular.]' },
-    ]
-   },
-   {
-    id: 'note-process-steps',
-    name: 'Süreç Adımları Notu',
-    description: 'Biyolojik bir süreci (örn. fotosentez, mitoz) adım adım açıklayan not düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/note-process-mitosis/300/200',
-    type: 'note', // Type specified
-    blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: '[Süreç Adı]' },
-        { id: generateId(), type: 'text', content: '[Sürecin genel bir özeti veya amacı.]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [Adımın Adı]' },
-        { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-process-step1/500/250', alt: 'Adım 1 Görseli', caption:'[Adım 1 ile ilgili görsel]' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [Adımın Adı]' },
-        { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-process-step2/500/250', alt: 'Adım 2 Görseli', caption:'[Adım 2 ile ilgili görsel]' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 3, content: '[... Diğer Adımlar ...]' },
-        { id: generateId(), type: 'text', content: '[Sürecin sonucu veya önemi.]' },
-    ]
-   },
-    {
-    id: 'note-comparison',
-    name: 'Karşılaştırma Notu',
-    description: 'İki veya daha fazla biyolojik kavramı/yapıyı karşılaştıran not düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/note-compare-cells/300/200',
-    type: 'note', // Type specified
-    blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: '[Kavram 1] ve [Kavram 2] Karşılaştırması' },
-        { id: generateId(), type: 'text', content: '[Karşılaştırılan kavramların kısa bir tanıtımı.]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Benzerlikler' },
-        { id: generateId(), type: 'text', content: '- [Benzerlik 1]\n- [Benzerlik 2]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Farklılıklar' },
-        // Simple text-based table structure
-        { id: generateId(), type: 'text', content: '**Özellik** | **[Kavram 1]** | **[Kavram 2]**' },
-        { id: generateId(), type: 'text', content: '---|---|---' }, // Markdown table separator
-        { id: generateId(), type: 'text', content: '[Farklılık 1] | [Kavram 1 Açıklama] | [Kavram 2 Açıklama]' },
-        { id: generateId(), type: 'text', content: '[Farklılık 2] | [Kavram 1 Açıklama] | [Kavram 2 Açıklama]' },
-        { id: generateId(), type: 'quote', content: '[Karşılaştırma ile ilgili önemli bir not veya özet.]', citation:'' },
-    ]
-   },
-];
-
 // --- Helper Functions ---
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Use the fixed key
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 // Function to convert block structure to HTML (basic implementation for backward compatibility)
 // NOTE: This function is deprecated and might not fully represent complex block types.
@@ -402,6 +125,7 @@ const blocksToHtml = (blocks: Block[]): string => {
     return html;
 };
 
+const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
 export function TemplateSelector({
   isOpen,
@@ -411,10 +135,10 @@ export function TemplateSelector({
   blocksCurrentlyExist,
   templateTypeFilter // Added filter prop
 }: TemplateSelectorProps) {
-    const [selectedTemplate, setSelectedTemplate] = React.useState<Template | null>(null);
+    const [selectedTemplate, setSelectedTemplate] = React.useState<TemplateDefinition | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
 
-    const handleSelectClick = (template: Template) => {
+    const handleSelectClick = (template: TemplateDefinition) => {
         setSelectedTemplate(template);
         if (blocksCurrentlyExist) {
             setIsConfirmOpen(true);
@@ -423,7 +147,7 @@ export function TemplateSelector({
         }
     };
 
-    const applyTemplate = (templateToApply: Template | null) => {
+    const applyTemplate = (templateToApply: TemplateDefinition | null) => {
         if (!templateToApply) return;
 
         const newBlocks = templateToApply.blocks.map(block => ({
@@ -443,14 +167,15 @@ export function TemplateSelector({
     };
 
      // Handler for template preview - pass the specific template's data
-    const handlePreview = (template: Template) => {
+    const handlePreview = (template: TemplateDefinition) => {
         if (typeof window === 'undefined') return;
 
         // Adjust preview data based on template type
-        let previewData: Partial<ArticleData> | Record<string, any> = {
+        let previewData: Partial<ArticleData | NoteData | any> & { previewType: string } = { // Use 'any' for pageData part for now
             id: `preview-${template.id}`,
             title: template.seoTitle || template.name,
             blocks: template.blocks,
+            previewType: template.type, // Set previewType from template
             // Common fields
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -460,7 +185,6 @@ export function TemplateSelector({
         if (template.type === 'article') {
             previewData = {
                 ...previewData,
-                previewType: 'article', // Add identifier for article
                 excerpt: template.excerpt || template.description,
                 category: template.category || 'Teknoloji',
                 status: 'Yayınlandı',
@@ -475,13 +199,20 @@ export function TemplateSelector({
         } else if (template.type === 'note') {
              previewData = {
                  ...previewData,
-                 previewType: 'note', // Add identifier for note
-                 category: template.category || 'Genel', // Example default category for notes
-                 level: 'Lise 9', // Example default level
-                 tags: template.keywords || [], // Use keywords as tags for notes
+                 category: template.category || 'Genel',
+                 level: 'Lise 9',
+                 tags: template.keywords || [],
                  summary: template.excerpt || template.description,
                  imageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
              };
+        } else if (template.type === 'page') {
+            previewData = {
+                ...previewData,
+                // Add page-specific fields if any for previewData, or keep generic
+                seoTitle: template.seoTitle || template.name,
+                seoDescription: template.seoDescription || template.description,
+                imageUrl: template.previewImageUrl, // Use preview image as a general image for page
+            };
         }
 
         console.log(`[TemplateSelector/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
@@ -497,9 +228,7 @@ export function TemplateSelector({
                  throw new Error("Verification failed: Data not found or empty in localStorage immediately after set.");
             }
             const parsed = JSON.parse(stored);
-             // More specific check based on type
-            if (template.type === 'article' && parsed.previewType !== 'article') throw new Error("Verification failed: Stored data is not article type.");
-            if (template.type === 'note' && parsed.previewType !== 'note') throw new Error("Verification failed: Stored data is not note type.");
+            if (parsed.previewType !== template.type) throw new Error(`Verification failed: Stored data type (${parsed.previewType}) does not match template type (${template.type}).`);
 
             console.log("[TemplateSelector/handlePreview] Verification SUCCESS.");
 
@@ -524,8 +253,13 @@ export function TemplateSelector({
 
     // Filter templates based on the provided type
     const filteredTemplates = templateTypeFilter
-        ? allTemplates.filter(t => t.type === templateTypeFilter)
-        : allTemplates;
+        ? allMockTemplates.filter(t => t.type === templateTypeFilter)
+        : allMockTemplates;
+
+    let dialogTitle = "Şablon Seç";
+    if (templateTypeFilter === 'article') dialogTitle = "Makale Şablonu Seç";
+    else if (templateTypeFilter === 'note') dialogTitle = "Not Şablonu Seç";
+    else if (templateTypeFilter === 'page') dialogTitle = "Sayfa Şablonu Seç";
 
 
     return (
@@ -533,7 +267,7 @@ export function TemplateSelector({
             <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
                 <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>{templateTypeFilter === 'note' ? 'Not Şablonu Seç' : 'Makale Şablonu Seç'}</DialogTitle>
+                        <DialogTitle>{dialogTitle}</DialogTitle>
                         <DialogDescription>
                             İçeriğinizi oluşturmaya başlamak için hazır bir şablon seçin.
                             {blocksCurrentlyExist && <span className="text-destructive font-medium"> Şablon içeriği mevcut içeriğinizin üzerine yazılabilir (onayınızla).</span>}
@@ -541,7 +275,7 @@ export function TemplateSelector({
                     </DialogHeader>
                     <ScrollArea className="flex-grow w-full rounded-md border my-4">
                         <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
-                            {filteredTemplates.map((template) => ( // Use filteredTemplates
+                            {filteredTemplates.map((template) => (
                                 <Card key={template.id} className="flex flex-col">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-base">{template.name}</CardTitle>
@@ -563,27 +297,28 @@ export function TemplateSelector({
                                                   <Eye className="mr-2 h-4 w-4" />
                                                  Önizle
                                              </Button>
-                                             <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={(open) => { if (!open) setSelectedTemplate(null); setIsConfirmOpen(open); }}>
-                                                <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                                    {/* Added onClick to AlertDialogTrigger to handle the initial click */}
-                                                    <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Düzenleyicide zaten içerik bulunuyor. "{selectedTemplate?.name}" şablonunu uygulamak mevcut içeriği silecektir.
-                                                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel onClick={() => setSelectedTemplate(null)}>İptal</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
-                                                            Evet, Üzerine Yaz
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                             {/* Wrap the "Seç" button and its AlertDialog inside a single parent for proper event handling */}
+                                            <div>
+                                                <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={(open) => { if (!open) setSelectedTemplate(null); setIsConfirmOpen(open); }}>
+                                                    {/* The Button that triggers the AlertDialog is now outside, handled by handleSelectClick */}
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Düzenleyicide zaten içerik bulunuyor. "{selectedTemplate?.name}" şablonunu uygulamak mevcut içeriği silecektir.
+                                                                Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel onClick={() => { setIsConfirmOpen(false); setSelectedTemplate(null); }}>İptal</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
+                                                                Evet, Üzerine Yaz
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                                 <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
