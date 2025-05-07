@@ -64,12 +64,22 @@ export interface User {
   xProfile?: string; // X (Twitter) profile URL or username part
 }
 
+// --- Role Data Structure ---
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[]; // Array of permission IDs/names
+  userCount: number; // How many users have this role
+}
+
 
 // --- localStorage Setup ---
 const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles';
 const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes';
 const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories';
-const USER_STORAGE_KEY = 'teknobiyo_mock_users'; // New key for users
+const USER_STORAGE_KEY = 'teknobiyo_mock_users';
+const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles'; // New key for roles
 
 // --- Initial Mock Data ---
 let defaultMockCategories: Category[] = [
@@ -346,11 +356,51 @@ let defaultMockUsers: User[] = [
   { id: 'user-1746537968395-202eb4', name: 'Giriş Adı', username: 'sirfpubg12', email: 'sirfpubg12@gmail.com', role: 'Admin', joinedAt: '2025-05-06T05:26:08.395Z', avatar: 'https://picsum.photos/seed/avatar1/128/128', lastLogin: '2025-05-06T05:26:08.395Z', bio: 'Yeni kullanıcı bio.', website: 'https://example.com', twitterHandle: 'yenikullanici', linkedinProfile: 'yenikullanici', instagramProfile: 'newuser_insta', facebookProfile: 'newuserfb', youtubeChannel: 'newuseryoutube', xProfile: 'newuser_x' },
 ];
 
+let defaultMockRoles: Role[] = [
+  {
+    id: 'admin',
+    name: 'Admin',
+    description: 'Tam sistem erişimine sahip yönetici.',
+    permissions: [
+      'Dashboard Görüntüleme',
+      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme',
+      'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme',
+      'Kategorileri Yönetme',
+      'Sayfaları Yönetme',
+      'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme',
+      'Rolleri Yönetme',
+      'Ayarları Görüntüleme', 'Menü Yönetimi',
+    ],
+    userCount: 1,
+  },
+  {
+    id: 'editor',
+    name: 'Editor',
+    description: 'İçerik oluşturma ve düzenleme yetkisine sahip.',
+    permissions: [
+      'Dashboard Görüntüleme',
+      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme',
+      'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme',
+      'Kategorileri Yönetme',
+    ],
+    userCount: 2,
+  },
+  {
+    id: 'user',
+    name: 'User',
+    description: 'Standart kullanıcı, içerik görüntüleme ve yorum yapma.',
+    permissions: [],
+    userCount: 2,
+  },
+];
+
+
 // --- In-Memory Data Stores with localStorage Persistence ---
 let mockArticles: ArticleData[] = [];
 let mockNotes: NoteData[] = [];
 let mockCategories: Category[] = [];
-let mockUsers: User[] = []; // New store for users
+let mockUsers: User[] = [];
+let mockRoles: Role[] = [];
 
 const loadData = () => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
@@ -366,17 +416,22 @@ const loadData = () => {
         const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
         mockUsers = storedUsers ? JSON.parse(storedUsers) : defaultMockUsers;
 
-        // Ensure data is saved if it wasn't in localStorage initially
+        const storedRoles = localStorage.getItem(ROLE_STORAGE_KEY);
+        mockRoles = storedRoles ? JSON.parse(storedRoles) : defaultMockRoles;
+
+
         if (!storedCategories) localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
         if (!storedArticles) localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
         if (!storedNotes) localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
         if (!storedUsers) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
+        if (!storedRoles) localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
 
     } else {
         mockCategories = defaultMockCategories;
         mockArticles = defaultMockArticles;
         mockNotes = defaultMockNotes;
         mockUsers = defaultMockUsers;
+        mockRoles = defaultMockRoles;
     }
 };
 
@@ -386,7 +441,8 @@ const saveData = () => {
             localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
             localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers)); // Save users
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
         } catch (error) {
             console.error("Error saving data to localStorage:", error);
         }
@@ -657,4 +713,117 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 };
 
 
+// --- Role CRUD Functions ---
+export const getRoles = async (): Promise<Role[]> => {
+  await delay(10);
+  loadData();
+  return JSON.parse(JSON.stringify(mockRoles));
+};
+
+export const getRoleById = async (id: string): Promise<Role | null> => {
+  await delay(10);
+  loadData();
+  const role = mockRoles.find(r => r.id === id);
+  return role ? JSON.parse(JSON.stringify(role)) : null;
+};
+
+export const createRole = async (data: Omit<Role, 'id' | 'userCount'>): Promise<Role> => {
+  await delay(50);
+  loadData();
+  if (mockRoles.some(r => r.name.toLowerCase() === data.name.toLowerCase())) {
+    throw new Error(`"${data.name}" adında bir rol zaten mevcut.`);
+  }
+  const newRole: Role = {
+    ...data,
+    id: generateSlug(data.name) + '-' + Date.now().toString(36),
+    userCount: 0,
+  };
+  mockRoles.push(newRole);
+  saveData();
+  return JSON.parse(JSON.stringify(newRole));
+};
+
+export const updateRole = async (id: string, data: Partial<Omit<Role, 'id' | 'userCount'>>): Promise<Role | null> => {
+  await delay(50);
+  loadData();
+  const roleIndex = mockRoles.findIndex(r => r.id === id);
+  if (roleIndex === -1) return null;
+  if (data.name && data.name !== mockRoles[roleIndex].name && mockRoles.some(r => r.name.toLowerCase() === data.name!.toLowerCase())) {
+    throw new Error(`"${data.name}" adında başka bir rol zaten mevcut.`);
+  }
+  const updatedRole = { ...mockRoles[roleIndex], ...data };
+  mockRoles[roleIndex] = updatedRole;
+  saveData();
+  return JSON.parse(JSON.stringify(updatedRole));
+};
+
+export const deleteRole = async (id: string): Promise<boolean> => {
+  await delay(80);
+  loadData();
+  const roleToDelete = mockRoles.find(r => r.id === id);
+  if (!roleToDelete) return false;
+
+  const initialLength = mockRoles.length;
+  mockRoles = mockRoles.filter(r => r.id !== id);
+  const success = mockRoles.length < initialLength;
+
+  if (success) {
+    // Optionally update users who had this role
+    mockUsers = mockUsers.map(user => user.role === roleToDelete.name || user.role === roleToDelete.id ? { ...user, role: 'User' } : user); // Reassign to 'User' role
+    saveData();
+  }
+  return success;
+};
+
+// --- Permissions Data ---
+export interface Permission {
+  id: string;
+  description: string;
+}
+export interface PermissionCategory {
+  name: string;
+  permissions: Permission[];
+}
+export const getAllPermissions = async (): Promise<PermissionCategory[]> => {
+    await delay(5);
+    return [
+        {
+            name: 'Genel Yönetim',
+            permissions: [
+                { id: 'Dashboard Görüntüleme', description: 'Yönetici gösterge panelini görüntüleyebilir.' },
+                { id: 'Ayarları Görüntüleme', description: 'Site genel ayarlarını görüntüleyebilir ve değiştirebilir.' },
+                { id: 'Menü Yönetimi', description: 'Site navigasyon menülerini yönetebilir.' },
+            ],
+        },
+        {
+            name: 'İçerik Yönetimi',
+            permissions: [
+                { id: 'Makaleleri Görüntüleme', description: 'Tüm makaleleri listeleyebilir ve görüntüleyebilir.' },
+                { id: 'Makale Oluşturma', description: 'Yeni makaleler oluşturabilir.' },
+                { id: 'Makale Düzenleme', description: 'Mevcut makaleleri düzenleyebilir.' },
+                { id: 'Makale Silme', description: 'Makaleleri silebilir.' },
+                { id: 'Biyoloji Notlarını Görüntüleme', description: 'Tüm biyoloji notlarını listeleyebilir ve görüntüleyebilir.' },
+                { id: 'Yeni Biyoloji Notu Ekleme', description: 'Yeni biyoloji notları oluşturabilir.' },
+                { id: 'Biyoloji Notlarını Düzenleme', description: 'Mevcut biyoloji notlarını düzenleyebilir.' },
+                { id: 'Biyoloji Notlarını Silme', description: 'Biyoloji notlarını silebilir.' },
+                { id: 'Kategorileri Yönetme', description: 'İçerik kategorilerini oluşturabilir, düzenleyebilir ve silebilir.' },
+                { id: 'Sayfaları Yönetme', description: 'Site sayfalarını (Hakkımızda, İletişim vb.) yönetebilir.' },
+            ],
+        },
+        {
+            name: 'Kullanıcı Yönetimi',
+            permissions: [
+                { id: 'Kullanıcıları Görüntüleme', description: 'Tüm kullanıcıları listeleyebilir.' },
+                { id: 'Kullanıcı Ekleme', description: 'Yeni kullanıcılar oluşturabilir.' },
+                { id: 'Kullanıcı Düzenleme', description: 'Kullanıcı bilgilerini ve rollerini düzenleyebilir.' },
+                { id: 'Kullanıcı Silme', description: 'Kullanıcıları silebilir.' },
+                { id: 'Rolleri Yönetme', description: 'Kullanıcı rollerini ve bu rollere atanmış izinleri yönetebilir.' },
+            ],
+        },
+        // Add more categories and permissions as needed
+    ];
+};
+
+
 export { loadData as reloadMockData };
+
