@@ -156,6 +156,7 @@ export default function AdminLayout({
             <path d="M14.5 5.5L17.5 7.5" />
             <path d="M10 12H14" />
           </svg>
+          <span className="font-bold text-lg ml-2 group-data-[collapsible=icon]:hidden">TeknoBiyo</span>
         </SidebarHeader>
 
         {/* Welcome User Section */}
@@ -329,14 +330,7 @@ export default function AdminLayout({
                         </button>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
-                   <SidebarMenuItem>
-                     <SidebarMenuButton asChild tooltip="Siteyi Görüntüle">
-                        <Link href="/" target="_blank">
-                           <Home />
-                           <span>Siteyi Görüntüle</span>
-                        </Link>
-                     </SidebarMenuButton>
-                   </SidebarMenuItem>
+                   {/* "Siteyi Görüntüle" button removed from here */}
                  </SidebarMenu>
            </SidebarGroup>
         </SidebarFooter>
@@ -362,3 +356,4 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
+

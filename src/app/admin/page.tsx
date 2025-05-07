@@ -24,6 +24,7 @@ import {
   RefreshCw, // Verileri Yenile
   Activity, // Activity Icon
   Loader2, // Loader Icon
+  Home, // Home icon for "Siteyi Görüntüle"
 } from "lucide-react";
 import {
   Table,
@@ -148,9 +149,16 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">İstatistikler</h1>
-        <Button variant="outline" onClick={fetchData} disabled={loading}>
-           <RefreshCw className="mr-2 h-4 w-4" /> Verileri Yenile
-        </Button>
+        <div className="flex gap-2">
+            <Button variant="outline" onClick={fetchData} disabled={loading}>
+               <RefreshCw className="mr-2 h-4 w-4" /> Verileri Yenile
+            </Button>
+            <Button variant="outline" asChild>
+                <Link href="/" target="_blank">
+                    <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
+                </Link>
+            </Button>
+        </div>
       </div>
 
       {/* Top Row Stats Cards */}
