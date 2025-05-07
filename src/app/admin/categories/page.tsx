@@ -31,6 +31,9 @@ import {
 } from "@/components/ui/dialog";
 import { type Category, getCategories, addCategory, updateCategory, deleteCategory } from "@/lib/mock-data"; // Import category functions
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button"; // Ensure this is imported if not already
+import { usePermissions } from "@/hooks/usePermissions";
+import { useRouter } from "next/navigation";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = React.useState<Category[]>([]);
@@ -42,6 +45,8 @@ export default function AdminCategoriesPage() {
   const [editCategoryName, setEditCategoryName] = React.useState("");
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const router = useRouter();
 
   const fetchCategories = React.useCallback(async () => {
     setLoading(true);
@@ -59,8 +64,15 @@ export default function AdminCategoriesPage() {
   }, []);
 
   React.useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    if (!permissionsLoading && !hasPermission('Kategorileri Yönetme')) {
+        toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Kategori yönetimi sayfasına erişim yetkiniz yok." });
+        router.push('/admin');
+        return;
+    }
+    if (!permissionsLoading && hasPermission('Kategorileri Yönetme')) {
+        fetchCategories();
+    }
+  }, [fetchCategories, permissionsLoading, hasPermission, router]);
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
@@ -77,9 +89,9 @@ export default function AdminCategoriesPage() {
       } else {
         toast({ variant: "destructive", title: "Ekleme Hatası", description: "Kategori eklenemedi." });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding category:", error);
-      toast({ variant: "destructive", title: "Ekleme Hatası", description: "Kategori eklenirken bir hata oluştu." });
+      toast({ variant: "destructive", title: "Ekleme Hatası", description: error.message || "Kategori eklenirken bir hata oluştu." });
     } finally {
       setIsAdding(false);
     }
@@ -124,13 +136,22 @@ export default function AdminCategoriesPage() {
        } else {
          toast({ variant: "destructive", title: "Güncelleme Hatası", description: "Kategori güncellenemedi." });
        }
-     } catch (error) {
+     } catch (error: any) {
        console.error("Error updating category:", error);
-       toast({ variant: "destructive", title: "Güncelleme Hatası", description: "Kategori güncellenirken bir hata oluştu." });
+       toast({ variant: "destructive", title: "Güncelleme Hatası", description: error.message || "Kategori güncellenirken bir hata oluştu." });
      } finally {
        setIsUpdating(false);
      }
    };
+
+  if (permissionsLoading || loading) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+            Yükleniyor...
+        </div>
+    );
+  }
 
 
   return (
@@ -238,7 +259,7 @@ export default function AdminCategoriesPage() {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+                            {deletingId === category.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                             <span className="sr-only">Sil</span>
                           </Button>
                         </AlertDialogTrigger>
@@ -271,5 +292,3 @@ export default function AdminCategoriesPage() {
     </div>
   );
 }
-
-import { buttonVariants } from "@/components/ui/button"; // Ensure this is imported if not already

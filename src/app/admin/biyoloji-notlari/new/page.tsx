@@ -12,6 +12,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data';
 import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput, type AiBlockStructure as GenerateNoteAiBlockStructure } from '@/ai/flows/generate-biology-note-flow';
 import { biologyChat, type BiologyChatInput, type BiologyChatOutput, type ChatMessage as AiDirectChatMessageDef } from '@/ai/flows/biology-chat-flow';
+import { usePermissions } from "@/hooks/usePermissions";
 
 
 import {
@@ -64,6 +65,7 @@ type AiDirectChatMessage = AiDirectChatMessageDef;
 // --- Main Page Component ---
 export default function NewBiyolojiNotuPage() {
     const router = useRouter();
+    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
     // --- State ---
     const [saving, setSaving] = React.useState(false);
@@ -100,6 +102,12 @@ export default function NewBiyolojiNotuPage() {
 
 
     React.useEffect(() => {
+        if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) { // Assuming specific permission
+          toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni biyoloji notu oluşturma yetkiniz yok." });
+          router.push('/admin/biyoloji-notlari');
+          return;
+        }
+
         if (blocks.length === 0) {
             setBlocks([createDefaultBlock()]);
         }
@@ -113,7 +121,7 @@ export default function NewBiyolojiNotuPage() {
                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
             })
             .finally(() => setLoadingCategories(false));
-    }, []);
+    }, [permissionsLoading, hasPermission, router, blocks.length]);
 
     const debouncedSetSlug = useDebouncedCallback((newTitle: string) => {
         if (newTitle) setSlug(generateSlug(newTitle));
@@ -392,6 +400,15 @@ export default function NewBiyolojiNotuPage() {
         }
     };
 
+    if (permissionsLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                Yükleniyor...
+            </div>
+        );
+    }
+
 
     return (
         <div className="flex flex-col h-full">
@@ -452,7 +469,9 @@ export default function NewBiyolojiNotuPage() {
                                                         ))
                                                      )}
                                                       <Separator />
-                                                      <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                                      {hasPermission('Kategorileri Yönetme') && (
+                                                        <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                                      )}
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -623,5 +642,3 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
-
-    

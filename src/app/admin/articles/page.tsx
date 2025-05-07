@@ -28,6 +28,18 @@ import Link from "next/link";
 import { toast } from "@/hooks/use-toast"; // Import toast
 import { getArticles, deleteArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including categories
 import { cn } from "@/lib/utils"; // Import cn utility
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useRouter } from "next/navigation";
 
 const getStatusVariant = (status: ArticleData['status']): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
@@ -58,15 +70,19 @@ export default function AdminArticlesPage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null); // Track deleting state
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
+  const [articleToDelete, setArticleToDelete] = React.useState<{ id: string; title: string } | null>(null);
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const router = useRouter();
 
   // Filters
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedStatuses, setSelectedStatuses] = React.useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]); // Filter by category name
 
-  // TODO: Implement state for sorting and pagination
-  const currentPage = 1; // Example
-  const totalPages = 1; // Example
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 5;
 
 
   const fetchArticlesAndCategories = React.useCallback(async () => {
@@ -103,41 +119,55 @@ export default function AdminArticlesPage() {
   }, [searchTerm, selectedStatuses, selectedCategories]); // Add filter dependencies
 
   React.useEffect(() => {
-    fetchArticlesAndCategories();
-  }, [fetchArticlesAndCategories]); // Fetch data on mount and when dependencies change
+    if (!permissionsLoading && !hasPermission('Makaleleri Görüntüleme')) {
+      toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Bu sayfayı görüntüleme yetkiniz yok." });
+      router.push('/admin');
+      return;
+    }
+    if (!permissionsLoading && hasPermission('Makaleleri Görüntüleme')) {
+        fetchArticlesAndCategories();
+    }
+  }, [fetchArticlesAndCategories, permissionsLoading, hasPermission, router]);
 
-   const handleDelete = async (id: string, title: string) => {
-     console.log(`[handleDelete] Attempting to delete article: ${id} (${title})`);
-     if (window.confirm(`"${title}" başlıklı makaleyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-         console.log(`[handleDelete] User confirmed deletion for: ${id}`);
-         setDeletingId(id); // Indicate deletion in progress for this row
-         try {
-             console.log(`[handleDelete] Calling deleteArticle(${id})`);
-             const success = await deleteArticle(id);
-             console.log(`[handleDelete] deleteArticle(${id}) returned: ${success}`);
-             if (success) {
-                 toast({
-                     variant: "default", // Changed variant for visual distinction
-                     title: "Makale Silindi",
-                     description: `"${title}" başlıklı makale başarıyla silindi.`,
-                 });
-                 console.log(`[handleDelete] Deletion successful for ${id}. Refetching articles...`);
-                 // Refetch articles after successful deletion to update the list
-                 await fetchArticlesAndCategories(); // Use await to ensure fetch completes before resetting deletingId
-                 console.log(`[handleDelete] Article list refetched after deleting ${id}.`);
-             } else {
-                 console.error(`[handleDelete] deleteArticle(${id}) failed.`);
-                 toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinemedi." });
-                 setDeletingId(null); // Reset on failure as well
+  const handleDeleteInitiate = (id: string, title: string) => {
+    setArticleToDelete({ id, title });
+    setIsConfirmDeleteDialogOpen(true);
+  };
+
+   const confirmDelete = async () => {
+     if (!articleToDelete) return;
+     const { id, title } = articleToDelete;
+
+     console.log(`[handleDelete] User confirmed deletion for: ${id}`);
+     setDeletingId(id);
+     setIsConfirmDeleteDialogOpen(false);
+     try {
+         console.log(`[handleDelete] Calling deleteArticle(${id})`);
+         const success = await deleteArticle(id);
+         console.log(`[handleDelete] deleteArticle(${id}) returned: ${success}`);
+         if (success) {
+             toast({
+                 variant: "default", // Changed variant for visual distinction
+                 title: "Makale Silindi",
+                 description: `"${title}" başlıklı makale başarıyla silindi.`,
+             });
+             console.log(`[handleDelete] Deletion successful for ${id}. Refetching articles...`);
+             await fetchArticlesAndCategories(); // Use await to ensure fetch completes before resetting deletingId
+              // Adjust current page if the last item on a page was deleted
+             if (paginatedArticles.length === 1 && currentPage > 1 && totalPages > 1 && currentPage === totalPages) {
+                 setCurrentPage(currentPage - 1);
              }
-         } catch (error) {
-             console.error(`[handleDelete] Error during deletion of ${id}:`, error);
-             toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinirken bir hata oluştu." });
-             setDeletingId(null); // Reset on error
+             console.log(`[handleDelete] Article list refetched after deleting ${id}.`);
+         } else {
+             console.error(`[handleDelete] deleteArticle(${id}) failed.`);
+             toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinemedi." });
          }
-         // Removed finally block for deletingId reset - handled within try/catch now
-     } else {
-        console.log(`[handleDelete] User cancelled deletion for: ${id}`);
+     } catch (error) {
+         console.error(`[handleDelete] Error during deletion of ${id}:`, error);
+         toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinirken bir hata oluştu." });
+     } finally {
+         setDeletingId(null); // Reset on failure as well
+         setArticleToDelete(null);
      }
    };
 
@@ -148,6 +178,7 @@ export default function AdminArticlesPage() {
            ? prev.filter(s => s !== status)
            : [...prev, status]
        );
+       setCurrentPage(1);
    };
 
    const handleCategoryFilterChange = (categoryName: string) => {
@@ -156,10 +187,34 @@ export default function AdminArticlesPage() {
            ? prev.filter(c => c !== categoryName)
            : [...prev, categoryName]
        );
+       setCurrentPage(1);
    };
+
+   const filteredArticles = articles.filter(article =>
+    (article.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (selectedStatuses.length === 0 || selectedStatuses.includes(article.status)) &&
+    (selectedCategories.length === 0 || selectedCategories.includes(article.category))
+  );
+
+  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
+  const paginatedArticles = filteredArticles.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+
+  if (permissionsLoading || loading) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+            Yükleniyor...
+        </div>
+    );
+  }
 
 
   return (
+    <AlertDialog open={isConfirmDeleteDialogOpen} onOpenChange={setIsConfirmDeleteDialogOpen}>
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -167,15 +222,17 @@ export default function AdminArticlesPage() {
             <p className="text-muted-foreground">Mevcut makaleleri görüntüleyin, düzenleyin veya silin.</p>
         </div>
         <div className="flex gap-2">
-             <Button variant="outline" onClick={fetchArticlesAndCategories} disabled={loading}>
-                 <RefreshCw className={cn("mr-2 h-4 w-4", loading && 'animate-spin')} />
+             <Button variant="outline" onClick={fetchArticlesAndCategories} disabled={loading || deletingId !== null}>
+                 <RefreshCw className={cn("mr-2 h-4 w-4", (loading || !!deletingId) && 'animate-spin')} />
                  Yenile
              </Button>
-             <Button asChild>
-               <Link href="/admin/articles/new">
-                 <PlusCircle className="mr-2 h-4 w-4" /> Yeni Makale Ekle
-               </Link>
-             </Button>
+             {hasPermission('Makale Oluşturma') && (
+                <Button asChild>
+                <Link href="/admin/articles/new">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Yeni Makale Ekle
+                </Link>
+                </Button>
+             )}
          </div>
       </div>
 
@@ -189,7 +246,7 @@ export default function AdminArticlesPage() {
                     placeholder="Makale başlığında ara..."
                     className="flex-1"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
                  />
                  <div className="flex gap-2">
                     {/* Status Filter Dropdown */}
@@ -233,7 +290,9 @@ export default function AdminArticlesPage() {
                                  </DropdownMenuCheckboxItem>
                              ))}
                               <DropdownMenuSeparator />
-                              <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                              {hasPermission('Kategorileri Yönetme') && (
+                                <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                              )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                     {/* Sort Dropdown (Placeholder) */}
@@ -266,7 +325,7 @@ export default function AdminArticlesPage() {
              </div>
           ) : error ? (
              <div className="text-center py-10 text-destructive">{error}</div>
-          ) : articles.length === 0 ? (
+          ) : paginatedArticles.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground">
                   {searchTerm || selectedStatuses.length > 0 || selectedCategories.length > 0
                     ? `Arama kriterlerine uygun makale bulunamadı.`
@@ -285,7 +344,7 @@ export default function AdminArticlesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {articles.map((article) => (
+                {paginatedArticles.map((article) => (
                   <TableRow key={article.id} className={cn(deletingId === article.id && 'opacity-50 pointer-events-none')}>
                     <TableCell className="font-medium">
                       <Link href={`/admin/articles/edit/${article.id}`} className="hover:underline">
@@ -309,27 +368,31 @@ export default function AdminArticlesPage() {
                     </TableCell>
                     <TableCell>{article.createdAt ? new Date(article.createdAt).toLocaleDateString('tr-TR') : '-'}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId === article.id}>
-                        <Link href={`/admin/articles/edit/${article.id}`}>
-                          <FilePenLine className="h-4 w-4" />
-                          <span className="sr-only">Düzenle</span>
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(article.id, article.title)}
-                        disabled={deletingId === article.id}
-                        aria-label="Sil"
-                      >
-                        {deletingId === article.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
+                        {hasPermission('Makale Düzenleme') && (
+                            <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId === article.id}>
+                                <Link href={`/admin/articles/edit/${article.id}`}>
+                                <FilePenLine className="h-4 w-4" />
+                                <span className="sr-only">Düzenle</span>
+                                </Link>
+                            </Button>
                         )}
-                        <span className="sr-only">Sil</span>
-                      </Button>
+                        {hasPermission('Makale Silme') && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteInitiate(article.id, article.title)}
+                                disabled={deletingId === article.id}
+                                aria-label="Sil"
+                            >
+                                {deletingId === article.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                <Trash2 className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">Sil</span>
+                            </Button>
+                        )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -338,17 +401,26 @@ export default function AdminArticlesPage() {
           )}
         </CardContent>
          {/* Pagination (Only show if not loading, no error, and there are articles) */}
-         {!loading && !error && articles.length > 0 && (
+         {totalPages > 1 && !loading && !error && paginatedArticles.length > 0 && (
              <CardContent>
                  <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious href={currentPage > 1 ? `/admin/articles?page=${currentPage - 1}` : '#'} aria-disabled={currentPage <= 1} />
+                        <PaginationPrevious
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); setCurrentPage(prev => Math.max(1, prev - 1)); }}
+                            aria-disabled={currentPage <= 1}
+                            className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                        />
                     </PaginationItem>
                     {/* Dynamically generate page numbers based on totalPages */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
                         <PaginationItem key={pageNumber}>
-                          <PaginationLink href={`/admin/articles?page=${pageNumber}`} isActive={currentPage === pageNumber}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); setCurrentPage(pageNumber); }}
+                            isActive={currentPage === pageNumber}
+                          >
                             {pageNumber}
                           </PaginationLink>
                         </PaginationItem>
@@ -356,7 +428,12 @@ export default function AdminArticlesPage() {
                     {/* Add Ellipsis if needed */}
                      {totalPages > 5 && currentPage < totalPages - 2 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
                     <PaginationItem>
-                      <PaginationNext href={currentPage < totalPages ? `/admin/articles?page=${currentPage + 1}` : '#'} aria-disabled={currentPage >= totalPages} />
+                        <PaginationNext
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); setCurrentPage(prev => Math.min(totalPages, prev + 1)); }}
+                            aria-disabled={currentPage >= totalPages}
+                            className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
@@ -364,5 +441,20 @@ export default function AdminArticlesPage() {
          )}
       </Card>
     </div>
+    <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+          <AlertDialogDescription>
+            "{articleToDelete?.title}" başlıklı makaleyi silmek üzeresiniz. Bu işlem geri alınamaz.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => { setIsConfirmDeleteDialogOpen(false); setArticleToDelete(null);}}>İptal</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDelete}>
+            Evet, Sil
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -9,8 +9,9 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+import { useDebouncedCallback } from 'use-debounce';
 import { createArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including getCategories
+import { usePermissions } from "@/hooks/usePermissions"; // Import usePermissions
 
 
 import {
@@ -51,6 +52,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 
 export default function NewArticlePage() {
     const router = useRouter(); // Initialize router
+    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
     // --- State ---
     const [saving, setSaving] = React.useState(false); // Added saving state
@@ -82,6 +84,12 @@ export default function NewArticlePage() {
 
      // Effect to set default block and load categories only on client side after mount
      React.useEffect(() => {
+        if (!permissionsLoading && !hasPermission('Makale Oluşturma')) {
+          toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni makale oluşturma yetkiniz yok." });
+          router.push('/admin/articles');
+          return;
+        }
+
         if (blocks.length === 0) {
             setBlocks([createDefaultBlock()]);
         }
@@ -95,7 +103,7 @@ export default function NewArticlePage() {
             })
             .finally(() => setLoadingCategories(false));
 
-     }, []); // Empty dependency array ensures this runs only once on mount
+     }, [permissionsLoading, hasPermission, router, blocks.length]); // Add blocks.length to ensure default block is set
 
     // --- Handlers ---
 
@@ -348,6 +356,15 @@ export default function NewArticlePage() {
         }
     };
 
+    if (permissionsLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                Yükleniyor...
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col h-full">
             {/* Top Bar */}
@@ -394,7 +411,9 @@ export default function NewArticlePage() {
                                              )}
                                              {/* TODO: Add link/button to manage categories */}
                                              <Separator />
-                                             <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                             {hasPermission('Kategorileri Yönetme') && (
+                                                <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                             )}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -596,8 +615,8 @@ export default function NewArticlePage() {
                  onClose={() => setIsTemplateSelectorOpen(false)}
                  onSelectTemplateBlocks={handleTemplateSelect}
                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))} // Check if blocks have actual content
+                 templateTypeFilter="article"
              />
         </div>
     );
 }
-

@@ -10,6 +10,7 @@ import { BlockEditor } from "@/components/admin/block-editor";
 import type { Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
 import { getNoteById, updateNote, deleteNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data'; // Import getCategories
+import { usePermissions } from "@/hooks/usePermissions";
 
 import {
   Card,
@@ -42,6 +43,7 @@ export default function EditBiyolojiNotuPage() {
     const router = useRouter();
     const params = useParams();
     const noteId = React.use(params.id) as string; // Use React.use for simpler param access
+    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
     // --- State ---
     const [noteData, setNoteData] = React.useState<NoteData | null>(null);
@@ -64,6 +66,11 @@ export default function EditBiyolojiNotuPage() {
     // --- Data Fetching ---
     React.useEffect(() => {
         let isMounted = true;
+        if (!permissionsLoading && !hasPermission('Biyoloji Notlarını Düzenleme')) { // Assuming a specific permission
+            toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Bu notu düzenleme yetkiniz yok." });
+            router.push('/admin/biyoloji-notlari');
+            return;
+        }
 
         const fetchData = async () => {
             if (!noteId) {
@@ -115,11 +122,13 @@ export default function EditBiyolojiNotuPage() {
                 }
              }
         };
+        if (!permissionsLoading && hasPermission('Biyoloji Notlarını Düzenleme')) {
+            fetchData();
+        }
 
-        fetchData();
 
         return () => { isMounted = false };
-    }, [noteId]);
+    }, [noteId, permissionsLoading, hasPermission, router]);
 
     // Auto-update slug when title changes (debounced, respects manual changes)
      const debouncedSetSlug = useDebouncedCallback((newTitle: string, originalTitle: string, currentSlug: string) => {
@@ -321,7 +330,7 @@ export default function EditBiyolojiNotuPage() {
 
      // --- Rendering ---
 
-    if (loading) {
+    if (loading || permissionsLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
                 <Loader2 className="mr-2 h-8 w-8 animate-spin" />
@@ -350,7 +359,7 @@ export default function EditBiyolojiNotuPage() {
                      <BookCopy className="h-6 w-6 text-green-600"/> {noteData ? `Notu Düzenle` : 'Yeni Not'}
                 </h1>
                 <div className="flex items-center gap-2">
-                     {noteData && (
+                     {noteData && hasPermission('Biyoloji Notlarını Silme') && ( // Assuming specific permission
                         <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
@@ -394,7 +403,9 @@ export default function EditBiyolojiNotuPage() {
                                                 <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                             ))}
                                              <Separator />
-                                             <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                             {hasPermission('Kategorileri Yönetme') && (
+                                                <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                             )}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -459,4 +470,3 @@ export default function EditBiyolojiNotuPage() {
         </div>
     );
 }
-

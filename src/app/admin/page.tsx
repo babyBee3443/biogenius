@@ -1,4 +1,5 @@
 
+"use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ import {
   AlertTriangle, // Hata Oranı
   RefreshCw, // Verileri Yenile
   Activity, // Activity Icon
+  Loader2, // Loader Icon
 } from "lucide-react";
 import {
   Table,
@@ -32,25 +34,14 @@ import {
   TableRow,
 } from "@/components/ui/table"; // For lists
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // For user list
+import { getArticles, getUsers, type ArticleData, type User } from "@/lib/mock-data"; // Update imports
+import * as React from "react";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 
 // --- Mock Data Fetching Functions ---
-// TODO: Replace these with actual API calls to your backend/database (e.g., Firestore)
-
-// Simulate fetching total article count
-async function getTotalArticleCount(): Promise<number> {
-  // await new Promise(resolve => setTimeout(resolve, 150)); // Removed delay
-  // Replace with: const snapshot = await getDocs(collection(db, 'articles')); return snapshot.size;
-  return 8; // Mock value
-}
-
-// Simulate fetching total user count
-async function getTotalUserCount(): Promise<number> {
-  // await new Promise(resolve => setTimeout(resolve, 200)); // Removed delay
-  // Replace with: const snapshot = await getDocs(collection(db, 'users')); return snapshot.size;
-  return 5; // Mock value
-}
-
 // Simulate fetching total comment count
 async function getTotalCommentCount(): Promise<number> {
   // await new Promise(resolve => setTimeout(resolve, 250)); // Removed delay
@@ -58,44 +49,6 @@ async function getTotalCommentCount(): Promise<number> {
   return 12; // Mock value
 }
 
-interface Article {
-  id: string;
-  title: string;
-  category: string;
-  // Add views or other metric for 'popularity' if available
-}
-// Simulate fetching recent/popular articles
-async function getRecentArticles(limit: number = 5): Promise<Article[]> {
-   // await new Promise(resolve => setTimeout(resolve, 300)); // Removed delay
-   // Replace with actual query, potentially ordering by creation date or view count
-   return [
-     { id: '1', title: 'Yapay Zeka Devrimi', category: 'Teknoloji' },
-     { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
-     { id: '7', title: 'Nöral Ağlar ve Derin Öğrenme', category: 'Teknoloji' },
-     { id: '8', title: 'Kanser İmmünoterapisi', category: 'Biyoloji' },
-     { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
-   ].slice(0, limit);
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  lastLogin: string; // Use this to sort for 'active'
-}
-// Simulate fetching recent/active users
-async function getActiveUsers(limit: number = 5): Promise<User[]> {
-   // await new Promise(resolve => setTimeout(resolve, 350)); // Removed delay
-    // Replace with actual query, potentially ordering by last login date
-   return [
-     { id: 'u1', name: 'Ali Veli', email: 'ali.veli@example.com', avatar: 'https://picsum.photos/seed/u1/32/32', lastLogin: '2024-07-22 10:30' },
-     { id: 'u2', name: 'Ayşe Kaya', email: 'ayse.kaya@example.com', avatar: 'https://picsum.photos/seed/u2/32/32', lastLogin: '2024-07-21 15:00' },
-     { id: 'u3', name: 'Mehmet Yılmaz', email: 'mehmet.yilmaz@example.com', avatar: 'https://picsum.photos/seed/u3/32/32', lastLogin: '2024-07-20 09:15' },
-     { id: 'u5', name: 'Can Öztürk', email: 'can.ozturk@example.com', avatar: 'https://picsum.photos/seed/u5/32/32', lastLogin: '2024-07-19 18:45' },
-     { id: 'u4', name: 'Zeynep Demir', email: 'zeynep.demir@example.com', avatar: 'https://picsum.photos/seed/u4/32/32', lastLogin: '2024-07-18 11:00' },
-   ].sort((a, b) => new Date(b.lastLogin).getTime() - new Date(a.lastLogin).getTime()).slice(0, limit); // Simple sort by date string
-}
 
 // --- Placeholder Components ---
 const PlaceholderChart = ({ height = 'h-72' }: { height?: string }) => (
@@ -105,21 +58,68 @@ const PlaceholderChart = ({ height = 'h-72' }: { height?: string }) => (
 );
 
 
-export default async function AdminDashboard() {
-  // Fetch data (parallel fetching)
-  const [
-      totalArticles,
-      totalUsers,
-      totalComments,
-      recentArticles,
-      activeUsers
-  ] = await Promise.all([
-      getTotalArticleCount(),
-      getTotalUserCount(),
-      getTotalCommentCount(),
-      getRecentArticles(),
-      getActiveUsers()
-  ]);
+export default function AdminDashboard() {
+  const [totalArticles, setTotalArticles] = React.useState(0);
+  const [totalUsers, setTotalUsers] = React.useState(0);
+  const [totalComments, setTotalComments] = React.useState(0);
+  const [recentArticles, setRecentArticles] = React.useState<ArticleData[]>([]);
+  const [activeUsers, setActiveUsers] = React.useState<User[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const router = useRouter();
+
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const [
+        articlesData,
+        usersData,
+        commentsData,
+      ] = await Promise.all([
+        getArticles(),
+        getUsers(),
+        getTotalCommentCount(),
+      ]);
+
+      setTotalArticles(articlesData.length);
+      setTotalUsers(usersData.length);
+      setTotalComments(commentsData);
+
+      // Filter and sort for recent articles
+      setRecentArticles(
+        articlesData
+          .filter(a => a.status === 'Yayınlandı')
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5)
+      );
+
+      // Filter and sort for active users (by lastLogin)
+      setActiveUsers(
+        usersData
+          .filter(u => u.lastLogin)
+          .sort((a, b) => new Date(b.lastLogin!).getTime() - new Date(a.lastLogin!).getTime())
+          .slice(0, 5)
+      );
+
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast({ variant: "destructive", title: "Veri Yükleme Hatası", description: "Gösterge paneli verileri yüklenemedi."})
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!permissionsLoading && !hasPermission('Dashboard Görüntüleme')) {
+        toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Gösterge panelini görüntüleme yetkiniz yok." });
+        router.push('/admin/profile'); // Redirect to a safe page like profile
+        return;
+    }
+    if (!permissionsLoading && hasPermission('Dashboard Görüntüleme')) {
+        fetchData();
+    }
+  }, [fetchData, permissionsLoading, hasPermission, router]);
+
 
   // --- Data for placeholders that require real analytics ---
   // These values would come from an analytics service or more complex backend tracking
@@ -133,14 +133,23 @@ export default async function AdminDashboard() {
   const subscriberConversionRate = "0.00%"; // Placeholder
   const errorRate = "0.00%"; // Placeholder
 
+  if (loading || permissionsLoading) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+            Gösterge Paneli Yükleniyor...
+        </div>
+    );
+  }
+
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">İstatistikler</h1>
-        {/* TODO: Implement refresh functionality if needed */}
-        <Button variant="outline" disabled>
-           <RefreshCw className="mr-2 h-4 w-4" /> Verileri Yenile (Yakında)
+        <Button variant="outline" onClick={fetchData} disabled={loading}>
+           <RefreshCw className="mr-2 h-4 w-4" /> Verileri Yenile
         </Button>
       </div>
 
@@ -172,14 +181,14 @@ export default async function AdminDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tekil Ziyaretçi</CardTitle>
+            <CardTitle className="text-sm font-medium">Toplam Kullanıcı</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{uniqueVisitors}</div>
-            <p className="text-xs text-muted-foreground">
-              (Gerçek analitik verisi gerekiyor)
-            </p>
+            <div className="text-2xl font-bold">{totalUsers}</div>
+             <Link href="/admin/users" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+               Kullanıcıları yönet
+             </Link>
           </CardContent>
         </Card>
          <Card>
@@ -277,11 +286,11 @@ export default async function AdminDashboard() {
        <div className="grid gap-6 lg:grid-cols-3">
            <Card className="lg:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-base font-semibold">Son Eklenen/Popüler Makaleler</CardTitle>
+                    <CardTitle className="text-base font-semibold">Son Eklenen Makaleler</CardTitle>
                      <TrendingUp className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <CardDescription className="mb-4 -mt-2">En son eklenen veya en çok görüntülenen makaleler</CardDescription>
+                    <CardDescription className="mb-4 -mt-2">En son yayınlanan makaleler.</CardDescription>
                     {recentArticles.length > 0 ? (
                          <Table>
                             <TableHeader>
@@ -327,7 +336,7 @@ export default async function AdminDashboard() {
                                 <div key={user.id} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={user.avatar} alt={user.name} />
+                                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="user avatar placeholder" />
                                             <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div>
@@ -335,7 +344,7 @@ export default async function AdminDashboard() {
                                              <p className="text-xs text-muted-foreground">{user.email}</p>
                                         </div>
                                     </div>
-                                     <p className="text-xs text-muted-foreground">{new Date(user.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                     <p className="text-xs text-muted-foreground">{user.lastLogin ? new Date(user.lastLogin).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '-'}</p>
                                 </div>
                              ))}
                          </div>
@@ -403,7 +412,6 @@ export default async function AdminDashboard() {
                 </Card>
             </div>
         </div>
-
     </div>
   );
 }

@@ -10,101 +10,41 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Square, CheckSquare } from "lucide-react";
+import { ArrowLeft, Save, Square, CheckSquare, Loader2 } from "lucide-react"; // Added Loader2
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-
-// Mock Data - Replace with actual API calls
-interface PermissionCategory {
-    name: string;
-    permissions: { id: string; description: string }[];
-}
-
-const getAllPermissions = async (): Promise<PermissionCategory[]> => {
-    // await new Promise(resolve => setTimeout(resolve, 100)); // Removed delay
-    // Reusing the same structure as edit page
-    return [
-        {
-            name: "Genel", permissions: [{ id: "Dashboard Görüntüleme", description: "Ana gösterge panelini görüntüleme." }],
-        },
-        {
-            name: "Makaleler", permissions: [
-                { id: "Makaleleri Görüntüleme", description: "Tüm veya belirli makaleleri listeleme ve okuma." },
-                { id: "Makale Oluşturma", description: "Yeni makale taslağı oluşturma." },
-                { id: "Makale Düzenleme", description: "Mevcut makaleleri düzenleme." },
-                { id: "Makale Silme", description: "Makaleleri kalıcı olarak silme." },
-                { id: "Makale Yayınlama", description: "Makaleleri yayına alma veya yayından kaldırma." },
-                { id: "SEO Ayarlarını Düzenleme (Makale)", description: "Makalelere özel SEO bilgilerini düzenleme." },
-                { id: "İçerik Takvimini Görüntüleme", description: "Yayınlanacak içerik takvimini görme." },
-            ],
-        },
-        {
-            name: "Sayfalar", permissions: [
-                 { id: "Sayfaları Görüntüleme", description: "Statik sayfaları (Hakkında vb.) görüntüleme." },
-                 { id: "Sayfa Düzenleme", description: "Statik sayfaların içeriğini düzenleme." },
-                 { id: "Sayfa Oluşturma/Silme", description: "Yeni statik sayfalar oluşturma veya silme." },
-                 { id: "Menü Yönetimi", description: "Site navigasyon menülerini düzenleme."},
-            ],
-        },
-         {
-            name: "Kullanıcılar ve Roller", permissions: [
-                { id: "Kullanıcıları Görüntüleme", description: "Kullanıcı listesini görüntüleme." },
-                { id: "Kullanıcı Ekleme/Silme", description: "Yeni kullanıcı ekleme veya mevcutları silme." },
-                { id: "Kullanıcı Düzenleme", description: "Kullanıcı profillerini ve rollerini düzenleme." },
-                { id: "Rolleri Yönetme", description: "Kullanıcı rollerini ve izinlerini oluşturma, düzenleme, silme." },
-            ],
-        },
-        {
-            name: "Ayarlar", permissions: [
-                 { id: "Ayarları Görüntüleme", description: "Genel site ayarlarını görüntüleme." },
-                 { id: "Ayarları Düzenleme", description: "Genel site ayarlarını değiştirme." },
-                 { id: "Güvenlik Ayarları", description: "Güvenlik ile ilgili ayarları yönetme."},
-                 { id: "Entegrasyon Yönetimi", description: "Üçüncü parti servis entegrasyonlarını yönetme."},
-                 { id: "E-posta Ayarları", description: "Sistem e-posta ayarlarını yönetme."},
-                 { id: "Tema Ayarları", description: "Site görünüm ve tema ayarlarını yönetme."},
-                 { id: "Dil Yönetimi", description: "Site dil ve çeviri ayarlarını yönetme."},
-                 { id: "Yedekleme/Kurtarma", description: "Site yedekleme ve geri yükleme işlemlerini yapma."},
-            ],
-        },
-         {
-            name: "Medya ve Yorumlar", permissions: [
-                 { id: "Medya Yönetimi", description: "Medya kütüphanesini yönetme (yükleme, silme, düzenleme)." },
-                 { id: "Medya Yükleme (Kendi içeriği için)", description: "Sadece kendi oluşturduğu içerikler için medya yükleme."},
-                 { id: "Yorumları Yönetme", description: "Makale yorumlarını onaylama, silme, düzenleme." },
-            ],
-        },
-         {
-            name: "İstatistik ve Diğer", permissions: [
-                 { id: "İstatistikleri Görüntüleme", description: "Site analiz ve istatistiklerini görüntüleme." },
-                 { id: "Raporlama", description: "Özel raporlar oluşturma ve görüntüleme." },
-                 { id: "İş Akışı Yönetimi", description: "İçerik onay süreçlerini yönetme."},
-                 { id: "Sistem Güncelleme", description: "Site yazılımını güncelleme."},
-            ],
-        },
-    ];
-};
-
+import { type PermissionCategory, getAllPermissions as mockGetAllPermissions, createRole as mockCreateRole } from '@/lib/mock-data'; // Use mock functions
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function NewRolePage() {
     const router = useRouter();
+    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
     const [allPermissions, setAllPermissions] = React.useState<PermissionCategory[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [isSaving, setIsSaving] = React.useState(false);
     const [name, setName] = React.useState("");
     const [description, setDescription] = React.useState("");
     const [selectedPermissions, setSelectedPermissions] = React.useState<Set<string>>(new Set());
 
     React.useEffect(() => {
-        getAllPermissions()
-            .then(permissionsData => {
-                setAllPermissions(permissionsData);
-            })
-            .catch(error => {
-                console.error("Error fetching permissions:", error);
-                toast({ variant: "destructive", title: "Hata", description: "İzin listesi yüklenirken bir sorun oluştu." });
-            })
-            .finally(() => setLoading(false));
-    }, []);
+        if (!permissionsLoading && !hasPermission('Rolleri Yönetme')) {
+            toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni rol oluşturma yetkiniz yok." });
+            router.push('/admin');
+            return;
+        }
+        if (!permissionsLoading && hasPermission('Rolleri Yönetme')) {
+            mockGetAllPermissions()
+                .then(permissionsData => {
+                    setAllPermissions(permissionsData);
+                })
+                .catch(error => {
+                    console.error("Error fetching permissions:", error);
+                    toast({ variant: "destructive", title: "Hata", description: "İzin listesi yüklenirken bir sorun oluştu." });
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [permissionsLoading, hasPermission, router]);
 
      const handlePermissionChange = (permissionId: string, checked: boolean | 'indeterminate') => {
         setSelectedPermissions(prev => {
@@ -141,31 +81,48 @@ export default function NewRolePage() {
         return 'indeterminate';
      };
 
-    const handleSave = () => {
-        // Generate a unique ID for the new role (replace with actual backend ID generation)
-        const newRoleId = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-        const newRoleData = {
-            id: newRoleId,
-            name,
-            description,
-            permissions: Array.from(selectedPermissions),
-        };
-        console.log("Creating new role:", newRoleData);
-        // TODO: Implement actual API call to create the new role
-        toast({
-            title: "Rol Oluşturuldu",
-            description: `"${name}" rolü başarıyla oluşturuldu.`,
-        });
-        // Redirect to the roles list page or the edit page of the new role
-        router.push('/admin/roles');
+    const handleSave = async () => {
+        if (!name.trim()) {
+            toast({ variant: "destructive", title: "Eksik Bilgi", description: "Rol adı boş olamaz." });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            const newRoleData = {
+                name,
+                description,
+                permissions: Array.from(selectedPermissions),
+                userCount: 0, // New roles typically start with 0 users
+            };
+            const newRole = await mockCreateRole(newRoleData); // Use mock function
+            if (newRole) {
+                toast({
+                    title: "Rol Oluşturuldu",
+                    description: `"${name}" rolü başarıyla oluşturuldu.`,
+                });
+                router.push('/admin/roles');
+            } else {
+                toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Rol oluşturulamadı." });
+            }
+        } catch (error: any) {
+             console.error("Error creating role:", error);
+             toast({ variant: "destructive", title: "Oluşturma Hatası", description: error.message || "Rol oluşturulurken bir hata oluştu." });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    if (loading) {
-        return <div className="flex justify-center items-center h-64">İzinler yükleniyor...</div>;
+    if (loading || permissionsLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                Yükleniyor...
+            </div>
+        );
     }
 
     return (
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+        <form onSubmit={(e) => {e.preventDefault(); handleSave();}} className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <Button variant="outline" size="sm" asChild className="mb-4">
@@ -174,8 +131,9 @@ export default function NewRolePage() {
                     <h1 className="text-3xl font-bold">Yeni Rol Oluştur</h1>
                     <p className="text-muted-foreground">Yeni bir kullanıcı rolü tanımlayın ve izinlerini ayarlayın.</p>
                 </div>
-                <Button onClick={handleSave} disabled={!name}> {/* Disable save if name is empty */}
-                    <Save className="mr-2 h-4 w-4" /> Rolü Kaydet
+                <Button type="submit" disabled={!name || isSaving}>
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Rolü Kaydet
                 </Button>
             </div>
 
@@ -255,8 +213,9 @@ export default function NewRolePage() {
 
             <Separator />
             <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={!name}>
-                    <Save className="mr-2 h-4 w-4" /> Rolü Kaydet
+                <Button type="submit" disabled={!name || isSaving}>
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Rolü Kaydet
                 </Button>
             </div>
         </form>

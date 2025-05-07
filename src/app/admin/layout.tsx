@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout'; // Import the new hook
 import { toast } from '@/hooks/use-toast';
+import { usePermissions } from '@/hooks/usePermissions'; // Import usePermissions hook
 
 // Metadata cannot be dynamic in client components this way.
 // export const metadata: Metadata = {
@@ -45,15 +46,16 @@ export default function AdminLayout({
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const router = useRouter();
+  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(); // Use the hook
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
     if (typeof window !== 'undefined') {
       // Load User Data
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
+      const storedUserString = localStorage.getItem('currentUser');
+      if (storedUserString) {
         try {
-          const userData = JSON.parse(storedUser);
+          const userData = JSON.parse(storedUserString);
           setCurrentUserName(userData.name || "Kullanıcı");
           setCurrentUserAvatar(userData.avatar || "https://picsum.photos/seed/default-avatar/32/32");
         } catch (e) {
@@ -134,7 +136,7 @@ export default function AdminLayout({
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex items-center justify-center p-4 mt-4">
+        <SidebarHeader className="flex items-center justify-center p-4 mt-2"> {/* Reduced mt-4 to mt-2 */}
           {/* Logo SVG */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -157,123 +159,151 @@ export default function AdminLayout({
         </SidebarHeader>
 
         {/* Welcome User Section */}
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-2">
-          <span className="font-semibold text-md text-muted-foreground">
+        <div className="py-2 text-center group-data-[collapsible=icon]:hidden"> {/* Reduced py-4 to py-2 */}
+          <span className="font-semibold text-sm text-muted-foreground"> {/* Reduced text-md to text-sm */}
             Hoşgeldiniz
           </span>
-          <span className="block font-bold text-lg mt-1">
+          <span className="block font-bold text-md mt-0.5"> {/* Reduced text-lg to text-md, mt-1 to mt-0.5 */}
             {currentUserName}
           </span>
         </div>
 
         <SidebarContent className="p-2">
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Gösterge Paneli">
-                <Link href="/admin">
-                  <LayoutDashboard />
-                  <span>Gösterge Paneli</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarGroup className="p-0">
-              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Tüm Makaleler">
-                        <Link href="/admin/articles">
-                        <Newspaper />
-                        <span>Makaleler</span>
-                        </Link>
-                    </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Yeni Makale Ekle">
-                            <Link href="/admin/articles/new">
-                            <PlusCircle />
-                            <span>Yeni Makale</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Biyoloji Notları">
-                            <Link href="/admin/biyoloji-notlari">
-                            <BookCopy />
-                            <span>Biyoloji Notları</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Yeni Biyoloji Notu Ekle">
-                            <Link href="/admin/biyoloji-notlari/new">
-                            <PlusCircle />
-                            <span>Yeni Not Ekle</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Kategoriler">
-                            <Link href="/admin/categories">
-                            <Tag />
-                            <span>Kategoriler</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Sayfa Yönetimi">
-                            <Link href="/admin/pages">
-                            <Layers />
-                            <span>Sayfa Yönetimi</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarGroup>
+            {hasPermission('Dashboard Görüntüleme') && (
+                <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Gösterge Paneli">
+                    <Link href="/admin">
+                    <LayoutDashboard />
+                    <span>Gösterge Paneli</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
+            
+            {(hasPermission('Makaleleri Görüntüleme') || hasPermission('Makale Oluşturma') || hasPermission('Biyoloji Notlarını Görüntüleme') || hasPermission('Yeni Biyoloji Notu Ekleme') || hasPermission('Kategorileri Yönetme') || hasPermission('Sayfaları Yönetme')) && (
+                <SidebarGroup className="p-0">
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {hasPermission('Makaleleri Görüntüleme') && (
+                            <SidebarMenuItem>
+                            <SidebarMenuButton asChild tooltip="Tüm Makaleler">
+                                <Link href="/admin/articles">
+                                <Newspaper />
+                                <span>Makaleler</span>
+                                </Link>
+                            </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Makale Oluşturma') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Yeni Makale Ekle">
+                                    <Link href="/admin/articles/new">
+                                    <PlusCircle />
+                                    <span>Yeni Makale</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Biyoloji Notlarını Görüntüleme') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Biyoloji Notları">
+                                    <Link href="/admin/biyoloji-notlari">
+                                    <BookCopy />
+                                    <span>Biyoloji Notları</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Yeni Biyoloji Notu Ekleme') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Yeni Biyoloji Notu Ekle">
+                                    <Link href="/admin/biyoloji-notlari/new">
+                                    <PlusCircle />
+                                    <span>Yeni Not Ekle</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Kategorileri Yönetme') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Kategoriler">
+                                    <Link href="/admin/categories">
+                                    <Tag />
+                                    <span>Kategoriler</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Sayfaları Yönetme') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Sayfa Yönetimi">
+                                    <Link href="/admin/pages">
+                                    <Layers />
+                                    <span>Sayfa Yönetimi</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                    </SidebarMenu>
+                </SidebarGroup>
+            )}
 
-            <SidebarGroup className="p-0">
-               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Yönetim</SidebarGroupLabel>
-                 <SidebarMenu>
-                    <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Kullanıcılar">
-                        <Link href="/admin/users">
-                        <Users />
-                        <span>Kullanıcılar</span>
-                        </Link>
-                    </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Roller">
-                            <Link href="/admin/roles">
-                            <ShieldCheck />
-                            <span>Roller</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                 </SidebarMenu>
-            </SidebarGroup>
+            {(hasPermission('Kullanıcıları Görüntüleme') || hasPermission('Rolleri Yönetme')) && (
+                <SidebarGroup className="p-0">
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Yönetim</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {hasPermission('Kullanıcıları Görüntüleme') && (
+                            <SidebarMenuItem>
+                            <SidebarMenuButton asChild tooltip="Kullanıcılar">
+                                <Link href="/admin/users">
+                                <Users />
+                                <span>Kullanıcılar</span>
+                                </Link>
+                            </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Rolleri Yönetme') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Roller">
+                                    <Link href="/admin/roles">
+                                    <ShieldCheck />
+                                    <span>Roller</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                    </SidebarMenu>
+                </SidebarGroup>
+            )}
 
-             <SidebarGroup className="p-0">
-               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
-                 <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Genel Ayarlar">
-                            <Link href="/admin/settings">
-                            <Settings />
-                            <span>Genel Ayarlar</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Menü Yönetimi">
-                            <Link href="/admin/settings/navigation">
-                            <MenuSquare />
-                            <span>Menü Yönetimi</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                 </SidebarMenu>
-             </SidebarGroup>
-
+            {(hasPermission('Ayarları Görüntüleme') || hasPermission('Menü Yönetimi')) && (
+                <SidebarGroup className="p-0">
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {hasPermission('Ayarları Görüntüleme') && ( // Assuming 'Ayarları Görüntüleme' is the permission for general settings
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Genel Ayarlar">
+                                    <Link href="/admin/settings">
+                                    <Settings />
+                                    <span>Genel Ayarlar</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Menü Yönetimi') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Menü Yönetimi">
+                                    <Link href="/admin/settings/navigation">
+                                    <MenuSquare />
+                                    <span>Menü Yönetimi</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                    </SidebarMenu>
+                </SidebarGroup>
+            )}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-2">
@@ -326,7 +356,7 @@ export default function AdminLayout({
            </div>
          </header>
          <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.16)+theme(spacing.6))] md:pt-[calc(theme(spacing.16)+theme(spacing.6))]">
-            {children}
+            {permissionsLoading ? <div>İzinler yükleniyor...</div> : children}
          </main>
       </SidebarInset>
     </SidebarProvider>
