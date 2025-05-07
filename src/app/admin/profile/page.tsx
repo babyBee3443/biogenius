@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -10,8 +11,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon } from 'lucide-react';
-import { getUserById, updateUser, type User } from '@/lib/mock-data';
+import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon, Newspaper, BookCopy, Eye } from 'lucide-react'; // Added icons for stats
+import { getUserById, updateUser, type User, getArticles, getNotes, type ArticleData, type NoteData } from '@/lib/mock-data';
+
+interface UserContentStats {
+    articlesCount: number;
+    notesCount: number;
+    totalArticleViews: number; // Placeholder for now
+    totalNoteViews: number; // Placeholder for now
+}
 
 export default function AdminProfilePage() {
   const router = useRouter(); // Keep for potential future use
@@ -21,6 +29,13 @@ export default function AdminProfilePage() {
   const [loading, setLoading] = React.useState(true);
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
   const [isSavingPassword, setIsSavingPassword] = React.useState(false);
+  const [contentStats, setContentStats] = React.useState<UserContentStats>({
+    articlesCount: 0,
+    notesCount: 0,
+    totalArticleViews: 0,
+    totalNoteViews: 0,
+  });
+
 
   // Form States
   const [fullName, setFullName] = React.useState("");
@@ -51,7 +66,6 @@ export default function AdminProfilePage() {
           if (storedUser && storedUser.id) {
             setUserId(storedUser.id);
           } else {
-            // console.error("User ID not found in stored currentUser object."); // Removed this line
             toast({ variant: "destructive", title: "Hata", description: "Oturum bilgileri bulunamadı. Lütfen tekrar giriş yapın." });
             router.push('/login'); // Redirect to login if no valid user ID
           }
@@ -71,30 +85,48 @@ export default function AdminProfilePage() {
   React.useEffect(() => {
     if (userId) {
       setLoading(true);
-      getUserById(userId)
-        .then(data => {
-          if (data) {
-            setUser(data);
-            setFullName(data.name || "");
-            setUsername(data.username || "");
-            setEmail(data.email || "");
-            setBio(data.bio || "");
-            setWebsite(data.website || "");
-            setTwitterHandle(data.twitterHandle || "");
-            setLinkedinProfile(data.linkedinProfile || "");
-            setInstagramProfile(data.instagramProfile || "");
-            setFacebookProfile(data.facebookProfile || "");
-            setYoutubeChannel(data.youtubeChannel || "");
-            setXProfile(data.xProfile || "");
-            setAvatarUrl(data.avatar || "https://picsum.photos/seed/default-avatar/128/128");
+      Promise.all([
+        getUserById(userId),
+        getArticles(),
+        getNotes()
+      ]).then(([userData, allArticles, allNotes]) => {
+          if (userData) {
+            setUser(userData);
+            setFullName(userData.name || "");
+            setUsername(userData.username || "");
+            setEmail(userData.email || "");
+            setBio(userData.bio || "");
+            setWebsite(userData.website || "");
+            setTwitterHandle(userData.twitterHandle || "");
+            setLinkedinProfile(userData.linkedinProfile || "");
+            setInstagramProfile(userData.instagramProfile || "");
+            setFacebookProfile(userData.facebookProfile || "");
+            setYoutubeChannel(userData.youtubeChannel || "");
+            setXProfile(userData.xProfile || "");
+            setAvatarUrl(userData.avatar || "https://picsum.photos/seed/default-avatar/128/128");
+
+            // Calculate content stats
+            const userArticles = allArticles.filter(article => article.authorId === userId);
+            const userNotes = allNotes.filter(note => note.authorId === userId);
+            // Mock views for now
+            const totalArticleViews = userArticles.reduce((sum, _) => sum + Math.floor(Math.random() * 500) + 50, 0);
+            const totalNoteViews = userNotes.reduce((sum, _) => sum + Math.floor(Math.random() * 200) + 20, 0);
+
+            setContentStats({
+                articlesCount: userArticles.length,
+                notesCount: userNotes.length,
+                totalArticleViews,
+                totalNoteViews,
+            });
+
           } else {
             toast({ variant: "destructive", title: "Hata", description: "Kullanıcı profili bulunamadı." });
             // Potentially redirect or show a "not found" state within the profile page
           }
         })
         .catch(err => {
-          console.error("Error fetching user profile:", err);
-          toast({ variant: "destructive", title: "Hata", description: "Profil yüklenirken bir sorun oluştu." });
+          console.error("Error fetching user profile or content:", err);
+          toast({ variant: "destructive", title: "Hata", description: "Profil veya içerik bilgileri yüklenirken bir sorun oluştu." });
         })
         .finally(() => setLoading(false));
     }
@@ -353,6 +385,48 @@ export default function AdminProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* User Content Statistics */}
+        <Card>
+            <CardHeader>
+                <CardTitle>İçerik İstatistikleri</CardTitle>
+                <CardDescription>Bu kullanıcının oluşturduğu içeriklerin genel özeti.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="bg-secondary/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Newspaper className="h-4 w-4 text-primary" />
+                            Toplam Makale
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{contentStats.articlesCount}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Toplam Görüntülenme: {contentStats.totalArticleViews.toLocaleString()} (simüle)
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-secondary/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <BookCopy className="h-4 w-4 text-green-600" />
+                            Toplam Biyoloji Notu
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{contentStats.notesCount}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Toplam Görüntülenme: {contentStats.totalNoteViews.toLocaleString()} (simüle)
+                        </p>
+                    </CardContent>
+                </Card>
+                 {/* Add more detailed stats or links to user's content if needed */}
+            </CardContent>
+        </Card>
+
     </div>
   );
 }
+
+    

@@ -40,6 +40,7 @@ export interface NoteData {
     contentBlocks: Block[];
     relatedNotes?: string[];
     imageUrl?: string | null;
+    authorId: string; // Added authorId
     createdAt: string;
     updatedAt: string;
 }
@@ -83,10 +84,13 @@ const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles'; // New key for roles
 
 // --- Initial Mock Data ---
 let defaultMockCategories: Category[] = [
-    { id: 'teknoloji', name: 'Teknoloji' },
+    { id: 'teknoloji', name: 'Teknolojij' }, // Corrected typo for Teknoloji category
     { id: 'biyoloji', name: 'Biyoloji' },
     { id: 'hücre-biyolojisi', name: 'Hücre Biyolojisi' },
     { id: 'genetik', name: 'Genetik' },
+    { id: 'ekoloji', name: 'Ekoloji' },
+    { id: 'insan-anatomisi', name: 'İnsan Anatomisi' },
+    { id: 'bitki-biyolojisi', name: 'Bitki Biyolojisi' },
 ];
 
 let defaultMockArticles: ArticleData[] = [
@@ -111,7 +115,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: true,
         keywords: ['ai', 'makine öğrenimi', 'yapay zeka'],
         canonicalUrl: '',
-        authorId: 'mock-admin',
+        authorId: 'u1', // Ali Veli
         createdAt: '2024-07-20T10:00:00Z',
         updatedAt: '2024-07-25T14:30:00Z',
     },
@@ -134,7 +138,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: false,
         keywords: ['crispr', 'genetik', 'biyoteknoloji'],
         canonicalUrl: '',
-        authorId: 'mock-editor',
+        authorId: 'u2', // Ayşe Kaya
         createdAt: '2024-07-19T11:00:00Z',
         updatedAt: '2024-07-24T09:15:00Z',
     },
@@ -158,7 +162,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: true,
         keywords: ['mikrobiyom', 'bağırsak', 'sağlık', 'bakteri', 'probiyotik'],
         canonicalUrl: '',
-        authorId: 'mock-editor',
+        authorId: 'u2', // Ayşe Kaya
         createdAt: '2024-07-21T08:00:00Z',
         updatedAt: '2024-07-26T10:00:00Z',
     },
@@ -177,7 +181,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: false,
         keywords: ['blockchain', 'kripto', 'dağıtık defter'],
         canonicalUrl: '',
-        authorId: 'mock-admin',
+        authorId: 'u1', // Ali Veli
         createdAt: '2024-06-15T14:00:00Z',
         updatedAt: '2024-07-01T10:00:00Z',
     },
@@ -196,7 +200,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: false,
         keywords: ['kuantum', 'hesaplama', 'kübit'],
         canonicalUrl: '',
-        authorId: 'mock-admin',
+        authorId: 'u1', // Ali Veli
         createdAt: '2024-07-18T09:00:00Z',
         updatedAt: '2024-07-18T09:00:00Z',
     },
@@ -215,7 +219,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: false,
         keywords: ['sentetik biyoloji', 'mühendislik', 'dna'],
         canonicalUrl: '',
-        authorId: 'mock-editor',
+        authorId: 'u2', // Ayşe Kaya
         createdAt: '2024-07-17T13:00:00Z',
         updatedAt: '2024-07-23T11:00:00Z',
     },
@@ -234,7 +238,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: false,
         keywords: ['nöral ağ', 'derin öğrenme', 'yapay zeka', 'makine öğrenimi'],
         canonicalUrl: '',
-        authorId: 'mock-admin',
+        authorId: 'u1', // Ali Veli
         createdAt: '2024-07-22T15:00:00Z',
         updatedAt: '2024-07-22T15:00:00Z',
     },
@@ -253,7 +257,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: true,
         keywords: ['kanser', 'immünoterapi', 'bağışıklık sistemi', 'tedavi'],
         canonicalUrl: '',
-        authorId: 'mock-editor',
+        authorId: 'u2', // Ayşe Kaya
         createdAt: '2024-07-16T10:00:00Z',
         updatedAt: '2024-07-26T09:30:00Z',
     },
@@ -274,7 +278,7 @@ let defaultMockArticles: ArticleData[] = [
         isHero: false,
         keywords: [],
         canonicalUrl: '',
-        authorId: 'mock-admin',
+        authorId: 'u1', // Ali Veli
         createdAt: '2025-05-04T20:48:22.265Z',
         updatedAt: '2025-05-04T20:48:22.265Z'
     },
@@ -303,6 +307,7 @@ let defaultMockNotes: NoteData[] = [
             { id: 'nb5', type: 'text', content: '- **Madde Alışverişi:** Hücrenin ihtiyaç duyduğu maddelerin alınmasını ve atıkların uzaklaştırılmasını sağlar (pasif taşıma, aktif taşıma, endositoz, ekzositoz).\n- **Hücreyi Koruma ve Şekil Verme:** Hücreyi dış ortamdan ayırır ve desteklik sağlar.\n- **Hücre Tanıma:** Zar yüzeyindeki glikoproteinler ve glikolipitler, hücrelerin birbirini tanımasında rol oynar.\n- **Sinyal İletimi:** Hücreler arası iletişimde görev alır.' },
         ],
         imageUrl: 'https://picsum.photos/seed/note-membrane/400/250',
+        authorId: 'u1', // Ali Veli
         createdAt: '2024-07-28T10:00:00Z',
         updatedAt: '2024-07-28T11:00:00Z',
     },
@@ -322,10 +327,11 @@ let defaultMockNotes: NoteData[] = [
             { id: 'nm5', type: 'text', content: 'Mitokondri, **oksijenli solunumun** gerçekleştiği yerdir. Besin molekülleri (glikoz gibi) oksijen kullanılarak parçalanır ve bu süreçte açığa çıkan enerji, hücrenin kullanabileceği enerji formu olan **ATP**\'ye (Adenozin Trifosfat) dönüştürülür. Bu nedenle mitokondriye "hücrenin enerji santrali" denir.' },
         ],
         imageUrl: 'https://picsum.photos/seed/note-mitochondria/400/250',
+        authorId: 'u2', // Ayşe Kaya
         createdAt: '2024-07-27T14:00:00Z',
         updatedAt: '2024-07-27T15:30:00Z',
     },
-        {
+    {
         id: 'note-dna-replikasyonu',
         title: 'DNA Replikasyonu (Eşlenmesi)',
         slug: 'dna-replikasyonu-eslenmesi',
@@ -342,9 +348,47 @@ let defaultMockNotes: NoteData[] = [
             { id: 'ndr6', type: 'text', content: 'Replikasyon, hücre bölünmesi öncesinde gerçekleşir ve genetik bilginin yeni hücrelere aktarılmasını sağlar.' },
         ],
         imageUrl: 'https://picsum.photos/seed/note-dna/400/250',
+        authorId: 'u1', // Ali Veli
         createdAt: '2024-07-29T09:00:00Z',
         updatedAt: '2024-07-29T09:30:00Z',
     },
+    {
+        id: 'note-protein-sentezi',
+        title: 'Protein Sentezi: Transkripsiyon ve Translasyon',
+        slug: 'protein-sentezi-transkripsiyon-translasyon',
+        category: 'Genetik',
+        level: 'Lise 12',
+        tags: ['protein sentezi', 'transkripsiyon', 'translasyon', 'mRNA', 'tRNA', 'ribozom'],
+        summary: 'Protein sentezinin iki ana aşaması olan transkripsiyon (yazılım) ve translasyon (okuma) süreçlerini açıklar.',
+        contentBlocks: [
+            { id: 'nps1', type: 'heading', level: 2, content: 'Transkripsiyon (Yazılım)' },
+            { id: 'nps2', type: 'text', content: 'DNA\'daki genetik bilginin mRNA\'ya (mesajcı RNA) kopyalanmasıdır. Çekirdekte (ökaryotlarda) veya sitoplazmada (prokaryotlarda) gerçekleşir.' },
+            { id: 'nps3', type: 'heading', level: 2, content: 'Translasyon (Okuma)' },
+            { id: 'nps4', type: 'text', content: 'mRNA\'daki genetik kodun ribozomlarda okunarak amino asit dizisine (polipeptit) çevrilmesidir. Sitoplazmada ribozomlarda gerçekleşir. tRNA\'lar (taşıyıcı RNA) uygun amino asitleri ribozoma taşır.' },
+        ],
+        imageUrl: 'https://picsum.photos/seed/note-protein/400/250',
+        authorId: 'u1', // Ali Veli
+        createdAt: '2024-08-01T11:00:00Z',
+        updatedAt: '2024-08-01T11:30:00Z',
+    },
+    {
+        id: 'note-ekosistem',
+        title: 'Ekosistem ve Temel Kavramlar',
+        slug: 'ekosistem-temel-kavramlar',
+        category: 'Ekoloji',
+        level: 'Lise 10',
+        tags: ['ekosistem', 'biyotik faktörler', 'abiyotik faktörler', 'besin zinciri', 'popülasyon'],
+        summary: 'Ekosistemin tanımı, biyotik ve abiyotik faktörler, besin zinciri, popülasyon gibi temel ekolojik kavramları içerir.',
+        contentBlocks: [
+            { id: 'ne1', type: 'heading', level: 2, content: 'Ekosistem Nedir?' },
+            { id: 'ne2', type: 'text', content: 'Belirli bir alanda yaşayan canlılar (biyotik faktörler) ile bu canlıları çevreleyen cansız ortam (abiyotik faktörler) arasındaki etkileşimlerin oluşturduğu bütündür.' },
+             { id: 'ne3', type: 'image', url: 'https://picsum.photos/seed/ecosystem-overview/600/300', alt: 'Ekosistem Örneği', caption: 'Bir orman ekosistemi, canlı ve cansız öğeleri içerir.' },
+        ],
+        imageUrl: 'https://picsum.photos/seed/note-ecosystem/400/250',
+        authorId: 'u2', // Ayşe Kaya
+        createdAt: '2024-08-02T15:00:00Z',
+        updatedAt: '2024-08-02T15:45:00Z',
+    }
 ];
 
 let defaultMockUsers: User[] = [
@@ -353,7 +397,7 @@ let defaultMockUsers: User[] = [
   { id: 'u3', name: 'Mehmet Yılmaz', username: 'mehmetyilmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10T12:00:00Z', avatar: 'https://picsum.photos/seed/u3/128/128', lastLogin: '2024-07-20T09:15:00Z' },
   { id: 'u4', name: 'Zeynep Demir', username: 'zeynepdemir', email: 'zeynep.demir@example.com', role: 'User', joinedAt: '2024-07-01T13:00:00Z', avatar: 'https://picsum.photos/seed/u4/128/128', lastLogin: '2024-07-18T11:00:00Z' },
   { id: 'u5', name: 'Can Öztürk', username: 'canozturk', email: 'can.ozturk@example.com', role: 'Editor', joinedAt: '2024-05-19T14:00:00Z', avatar: 'https://picsum.photos/seed/u5/128/128', lastLogin: '2024-07-19T18:45:00Z', bio: 'Teknoloji ve yazılım konularında içerik üreticisi.', youtubeChannel: 'canozturktech', xProfile: 'canozturk_x' },
-  { id: 'user-1746537968395-202eb4', name: 'Giriş Adı', username: 'sirfpubg12', email: 'sirfpubg12@gmail.com', role: 'Admin', joinedAt: '2025-05-06T05:26:08.395Z', avatar: 'https://picsum.photos/seed/avatar1/128/128', lastLogin: '2025-05-06T05:26:08.395Z', bio: 'Yeni kullanıcı bio.', website: 'https://example.com', twitterHandle: 'yenikullanici', linkedinProfile: 'yenikullanici', instagramProfile: 'newuser_insta', facebookProfile: 'newuserfb', youtubeChannel: 'newuseryoutube', xProfile: 'newuser_x' },
+  { id: 'user-1746537968395-202eb4', name: 'Gökhan Ermiş', username: 'gokhanermis', email: 'gokhanermis@example.com', role: 'Admin', joinedAt: '2025-05-06T05:26:08.395Z', avatar: 'https://picsum.photos/seed/gokhanermis/128/128', lastLogin: '2025-05-06T05:26:08.395Z', bio: 'Yeni kullanıcı bio.', website: 'https://example.com', twitterHandle: 'gokhanermis', linkedinProfile: 'gokhanermis', instagramProfile: 'gokhanermis_insta', facebookProfile: 'gokhanermisfb', youtubeChannel: 'gokhanermisyoutube', xProfile: 'gokhanermis_x' },
 ];
 
 let defaultMockRoles: Role[] = [
@@ -371,7 +415,7 @@ let defaultMockRoles: Role[] = [
       'Rolleri Yönetme',
       'Ayarları Görüntüleme', 'Menü Yönetimi',
     ],
-    userCount: 1,
+    userCount: 2, // Updated count
   },
   {
     id: 'editor',
@@ -827,3 +871,5 @@ export const getAllPermissions = async (): Promise<PermissionCategory[]> => {
 
 export { loadData as reloadMockData };
 
+
+    
