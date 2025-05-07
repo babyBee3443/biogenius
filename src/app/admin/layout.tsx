@@ -23,12 +23,18 @@ import {
 import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home } from 'lucide-react'; // Added Home icon
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout'; // Import the new hook
+import { toast } from '@/hooks/use-toast';
 
 // Metadata cannot be dynamic in client components this way.
 // export const metadata: Metadata = {
 //   title: 'TeknoBiyo Admin',
 //   description: 'TeknoBiyo Yönetim Paneli',
 // };
+
+const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
+const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
+
 
 export default function AdminLayout({
   children,
@@ -37,10 +43,13 @@ export default function AdminLayout({
 }) {
   const [currentUserName, setCurrentUserName] = React.useState("Kullanıcı");
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
+  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const router = useRouter();
 
-  const loadUserData = () => {
+
+  const loadUserDataAndSettings = React.useCallback(() => {
     if (typeof window !== 'undefined') {
+      // Load User Data
       const storedUser = localStorage.getItem('currentUser');
       if (storedUser) {
         try {
@@ -53,31 +62,74 @@ export default function AdminLayout({
           setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
         }
       } else {
-        // If no user in localStorage, potentially redirect to login or set defaults
-        setCurrentUserName("Kullanıcı");
-        setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
+        // If no user in localStorage, redirect to login
+        toast({ variant: "destructive", title: "Oturum Yok", description: "Lütfen giriş yapın." });
+        router.push('/login');
+        return; // Exit early if not logged in
+      }
+
+      // Load Session Timeout Setting
+      const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
+      if (storedTimeout) {
+        const timeoutValue = parseInt(storedTimeout, 10);
+        if (!isNaN(timeoutValue) && timeoutValue > 0) {
+          setSessionTimeoutMinutes(timeoutValue);
+        } else {
+          setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
+        }
+      } else {
+        setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-  };
+  }, [router]);
+
 
   React.useEffect(() => {
     // Set document title (alternative for metadata in client components)
     document.title = 'TeknoBiyo Admin';
-    loadUserData(); // Load user data on initial mount
+    loadUserDataAndSettings(); // Load user data and settings on initial mount
 
-    // Listen for custom event to update user data
-    window.addEventListener('currentUserUpdated', loadUserData);
-    return () => {
-      window.removeEventListener('currentUserUpdated', loadUserData);
+    // Listen for custom event to update user data or settings
+    const handleStorageChange = () => {
+        console.log("Storage change detected, reloading user data and settings.");
+        loadUserDataAndSettings();
     };
-  }, []);
 
-  const handleLogout = () => {
+    window.addEventListener('currentUserUpdated', loadUserDataAndSettings);
+    window.addEventListener('storage', handleStorageChange); // Listen for direct localStorage changes from other tabs/windows
+    window.addEventListener('sessionTimeoutChanged', loadUserDataAndSettings); // Custom event for timeout setting change
+
+
+    return () => {
+      window.removeEventListener('currentUserUpdated', loadUserDataAndSettings);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('sessionTimeoutChanged', loadUserDataAndSettings);
+    };
+  }, [loadUserDataAndSettings]);
+
+  const handleLogout = React.useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
+      // Optionally remove other admin-specific session data
     }
+    toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.push('/login');
-  };
+  }, [router]);
+
+
+  // Idle Timeout Logic
+  const handleIdle = React.useCallback(() => {
+    toast({
+        variant: "destructive",
+        title: "Oturum Zaman Aşımı",
+        description: "Uzun süre işlem yapmadığınız için oturumunuz sonlandırıldı. Lütfen tekrar giriş yapın.",
+        duration: 7000, // Show for 7 seconds
+    });
+    handleLogout();
+  }, [handleLogout]);
+
+  useIdleTimeout({ onIdle: handleIdle, idleTimeInMinutes: sessionTimeoutMinutes });
+
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -105,7 +157,7 @@ export default function AdminLayout({
         </SidebarHeader>
 
         {/* Welcome User Section */}
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden"> {/* Removed mt-2 */}
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-2">
           <span className="font-semibold text-md text-muted-foreground">
             Hoşgeldiniz
           </span>
@@ -273,7 +325,7 @@ export default function AdminLayout({
             </Link>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(3.5rem+1rem)] md:pt-[calc(3.5rem+1.5rem)]"> {/* Adjusted top padding */}
+         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.16)+theme(spacing.6))] md:pt-[calc(theme(spacing.16)+theme(spacing.6))]">
             {children}
          </main>
       </SidebarInset>

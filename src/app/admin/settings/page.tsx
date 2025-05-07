@@ -1,18 +1,59 @@
 
+"use client"; // Required for useState, useEffect, event handlers
+
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea"; // Added Textarea
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Added Tabs
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { MenuSquare, Palette, Shield, Plug, Mail } from "lucide-react"; // Added icons
+import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer } from "lucide-react"; // Added Timer icon
+import { toast } from "@/hooks/use-toast";
 
+const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
+const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
 
 export default function AdminSettingsPage() {
+  const [siteName, setSiteName] = React.useState("TeknoBiyo");
+  const [siteDescription, setSiteDescription] = React.useState("Teknoloji ve Biyoloji Makaleleri");
+  const [siteUrl, setSiteUrl] = React.useState("https://teknobiyo.example.com");
+  const [adminEmail, setAdminEmail] = React.useState("admin@example.com");
+  const [maintenanceMode, setMaintenanceMode] = React.useState(false);
+  const [sessionTimeout, setSessionTimeout] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
+
+  // Load existing settings on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
+      if (storedTimeout) {
+        const timeoutValue = parseInt(storedTimeout, 10);
+        if (!isNaN(timeoutValue) && timeoutValue > 0) {
+          setSessionTimeout(timeoutValue);
+        }
+      }
+      // TODO: Load other settings from localStorage or a settings service if they were saved
+    }
+  }, []);
+
+
+  const handleGeneralSettingsSave = () => {
+    // TODO: Implement saving of general settings (siteName, siteDescription, etc.)
+    // For now, we'll focus on saving the session timeout.
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(SESSION_TIMEOUT_KEY, sessionTimeout.toString());
+        // Dispatch a custom event to notify AdminLayout about the change
+        window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
+    }
+    toast({ title: "Ayarlar Kaydedildi", description: "Genel ayarlar başarıyla güncellendi." });
+    console.log("Genel ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout });
+  };
+
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Ayarlar</h1>
@@ -38,28 +79,49 @@ export default function AdminSettingsPage() {
                     <CardContent className="space-y-6"> {/* Increased spacing */}
                         <div className="space-y-2">
                             <Label htmlFor="site-name">Site Adı</Label>
-                            <Input id="site-name" defaultValue="TeknoBiyo" />
+                            <Input id="site-name" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="site-description">Site Açıklaması</Label>
-                            <Textarea id="site-description" defaultValue="Teknoloji ve Biyoloji Makaleleri" placeholder="Siteniz için kısa bir açıklama girin..." />
+                            <Textarea id="site-description" value={siteDescription} onChange={(e) => setSiteDescription(e.target.value)} placeholder="Siteniz için kısa bir açıklama girin..." />
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="site-url">Site URL</Label>
-                            <Input id="site-url" type="url" defaultValue="https://teknobiyo.example.com" />
+                            <Input id="site-url" type="url" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="admin-email">Yönetici E-postası</Label>
-                            <Input id="admin-email" type="email" defaultValue="admin@example.com" />
+                            <Input id="admin-email" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
                             <p className="text-xs text-muted-foreground">Önemli sistem bildirimleri bu adrese gönderilir.</p>
                          </div>
                         <div className="flex items-center space-x-3"> {/* Adjusted spacing */}
-                            <Switch id="maintenance-mode" />
+                            <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
                             <Label htmlFor="maintenance-mode" className="cursor-pointer">Bakım Modu Aktif</Label>
+                        </div>
+                        <Separator />
+                        {/* Session Timeout Setting */}
+                        <div className="space-y-2">
+                            <Label htmlFor="session-timeout" className="flex items-center gap-2">
+                                <Timer className="h-4 w-4"/>
+                                Oturum Zaman Aşımı (dakika)
+                            </Label>
+                            <Input
+                                id="session-timeout"
+                                type="number"
+                                min="1"
+                                max="120" // Example max
+                                value={sessionTimeout}
+                                onChange={(e) => setSessionTimeout(Math.max(1, parseInt(e.target.value, 10) || DEFAULT_SESSION_TIMEOUT_MINUTES))}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Belirtilen süre (dakika cinsinden) işlem yapılmadığında yönetici oturumu otomatik olarak sonlandırılır. (Min: 1, Maks: 120)
+                            </p>
                         </div>
                          <Separator />
                         <div className="flex justify-end">
-                            <Button>Genel Ayarları Kaydet</Button>
+                            <Button onClick={handleGeneralSettingsSave}>
+                                <Save className="mr-2 h-4 w-4"/> Genel Ayarları Kaydet
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -145,11 +207,6 @@ export default function AdminSettingsPage() {
                                 </p>
                              </div>
                             <Switch id="enable-mfa" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="session-timeout">Oturum Zaman Aşımı (dakika)</Label>
-                            <Input id="session-timeout" type="number" min="5" max="120" defaultValue={30} />
-                             <p className="text-xs text-muted-foreground">Belirtilen süre işlem yapılmadığında kullanıcı oturumu sonlandırılır.</p>
                         </div>
                         <div className="space-y-2">
                              <Label htmlFor="allowed-ips">İzin Verilen IP Adresleri</Label>
