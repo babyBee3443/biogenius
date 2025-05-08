@@ -1,3 +1,4 @@
+
 "use client"; // Add "use client" for useState and useEffect
 
 import type { Metadata } from 'next';
@@ -25,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout'; // Import the new hook
 import { toast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions'; // Import usePermissions hook
+import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
@@ -76,7 +78,7 @@ export default function AdminLayout({
       }
       setUserLoaded(true); // Mark user data loading as complete
     }
-  }, [setSessionTimeoutMinutes]); // Removed router from dependencies as it caused too many re-renders.
+  }, []); // Removed router from dependencies as it caused too many re-renders.
 
 
   React.useEffect(() => {
@@ -363,6 +365,7 @@ export default function AdminLayout({
                     <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
                 </Link>
             </Button>
+            <ThemeToggle /> 
             <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
               <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">
