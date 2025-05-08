@@ -150,7 +150,7 @@ let defaultMockArticles: ArticleData[] = [
         seoTitle: 'Gen Düzenleme Teknolojileri | TeknoBiyo',
         seoDescription: 'CRISPR ve diğer gen düzenleme araçlarının bilim ve tıp üzerindeki etkileri.',
         slug: 'gen-duzenleme-teknolojileri',
-        isFeatured: false,
+        isFeatured: true, // Changed to true to appear in featured
         isHero: false,
         keywords: ['crispr', 'genetik', 'biyoteknoloji'],
         canonicalUrl: '',
@@ -207,12 +207,12 @@ let defaultMockArticles: ArticleData[] = [
         excerpt: 'Hesaplamanın geleceği...',
         blocks: [],
         category: 'Teknoloji',
-        status: 'Taslak',
+        status: 'Yayınlandı',
         mainImageUrl: 'https://picsum.photos/seed/quantum/600/400',
         seoTitle: 'Kuantum Bilgisayarlar | TeknoBiyo',
         seoDescription: 'Kuantum mekaniği prensiplerini kullanan yeni nesil hesaplama makineleri.',
         slug: 'kuantum-bilgisayarlar',
-        isFeatured: false,
+        isFeatured: true, // Changed to true
         isHero: false,
         keywords: ['kuantum', 'hesaplama', 'kübit'],
         canonicalUrl: '',
@@ -596,7 +596,41 @@ const defaultPageTemplates: Template[] = [
         { id: generateId(), type: 'quote', content: 'Müşteri yorumu veya ürün hakkında etkileyici bir söz.', citation: 'Memnun Müşteri' },
         { id: generateId(), type: 'section', sectionType: 'call-to-action', settings: { title: 'Hemen Denemeye Başlayın!', buttonText: 'Satın Al / Kaydol', descriptionText: '[Kısa bir teşvik edici açıklama.]' } },
     ]
-  }
+  },
+  {
+    id: 'page-blog-index',
+    name: 'Blog Anasayfası',
+    description: 'Blog yazılarını listeleyen ve kategorilere ayıran sayfa.',
+    previewImageUrl: 'https://picsum.photos/seed/page-blog/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Blog' },
+      { id: generateId(), type: 'text', content: 'Teknoloji ve biyoloji dünyasından en son haberler, analizler ve ilginç bilgiler.' },
+      { id: generateId(), type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkan Yazılar', count: 2 } },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Tüm Yazılar' },
+      { id: generateId(), type: 'section', sectionType: 'article-list', settings: { count: 10, showPagination: true, showCategoryFilter: true } },
+    ]
+  },
+  {
+    id: 'page-career',
+    name: 'Kariyer Sayfası',
+    description: 'Açık pozisyonları listeleyen ve şirket kültürünü tanıtan sayfa.',
+    previewImageUrl: 'https://picsum.photos/seed/page-career/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo\'da Kariyer' },
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/career-team/1000/400', alt: 'TeknoBiyo Ekibi', caption: 'Birlikte büyüyen bir ekibiz.' },
+      { id: generateId(), type: 'text', content: 'Dinamik ve yenilikçi bir ortamda kariyerinize yön vermek ister misiniz? TeknoBiyo olarak, teknoloji ve biyolojiye tutkuyla bağlı yetenekleri aramızda görmekten mutluluk duyarız.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Neden TeknoBiyo?' },
+      { id: generateId(), type: 'text', content: '- Sürekli öğrenme ve gelişim fırsatları.\n- İlham verici ve işbirlikçi bir çalışma ortamı.\n- Sektörde fark yaratan projelerde yer alma şansı.\n- Rekabetçi maaş ve yan haklar.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Açık Pozisyonlar' },
+      { id: generateId(), type: 'section', sectionType: 'job-listings', settings: {} }, // Bu sectionType'ın render edilmesi gerekir
+      { id: generateId(), type: 'text', content: 'Şu anda açık bir pozisyonumuz bulunmuyorsa bile, genel başvurularınızı [e-posta adresi] adresine gönderebilirsiniz.' },
+    ]
+  },
 ];
 
 
@@ -758,6 +792,7 @@ export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 
     const updatedArticle = {
         ...mockArticles[articleIndex],
         ...data,
+        isHero: data.isHero ?? mockArticles[articleIndex].isHero, // Ensure isHero persists if not in data
         updatedAt: new Date().toISOString(),
     };
     mockArticles[articleIndex] = updatedArticle;
@@ -1145,7 +1180,7 @@ export const createPage = async (data: Omit<PageData, 'id' | 'createdAt' | 'upda
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-    if (mockPages.some(p => p.slug === newPage.slug)) {
+    if (mockPages.some(p => p.slug === newPage.slug && p.id !== newPage.id)) { // Check if slug exists for OTHER pages
         throw new Error(`"${newPage.slug}" URL metni ile başka bir sayfa zaten mevcut.`);
     }
     mockPages.push(newPage);
@@ -1160,11 +1195,14 @@ export const updatePage = async (id: string, data: Partial<Omit<PageData, 'id' |
     if (pageIndex === -1) return null;
 
     const existingPage = mockPages[pageIndex];
-    const updatedSlug = data.slug ? generateSlug(data.slug) : existingPage.slug;
-
-    if (data.slug && updatedSlug !== existingPage.slug && mockPages.some(p => p.slug === updatedSlug && p.id !== id)) {
-        throw new Error(`"${updatedSlug}" URL metni ile başka bir sayfa zaten mevcut.`);
+    let updatedSlug = existingPage.slug;
+    if (data.slug && data.slug !== existingPage.slug) { // If slug is being changed
+        updatedSlug = generateSlug(data.slug);
+        if (mockPages.some(p => p.slug === updatedSlug && p.id !== id)) {
+            throw new Error(`"${updatedSlug}" URL metni ile başka bir sayfa zaten mevcut.`);
+        }
     }
+
 
     const updatedPage = {
         ...existingPage,
@@ -1455,5 +1493,4 @@ export const allMockTemplates: Template[] = [
 // Export loadData function for potential manual reloading if needed elsewhere
 export { loadData };
 
-    
     
