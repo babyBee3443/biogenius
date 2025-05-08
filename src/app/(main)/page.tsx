@@ -1,4 +1,5 @@
 
+
 "use client"; 
 
 import * as React from 'react';
@@ -229,7 +230,7 @@ export default function Home() {
             {(part.text.toLowerCase() === "teknoloji" || part.text.toLowerCase() === "biyolojinin") && (
                 <motion.span
                     className={cn(
-                        "absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70 dark:via-white/20",
+                        "absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70 dark:via-transparent",
                         "pointer-events-none" 
                     )}
                     style={{
@@ -271,3 +272,4 @@ export default function Home() {
     </div>
   );
 }
+
