@@ -31,7 +31,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function EditRolePage() {
     const params = useParams();
-    const roleId = params.id as string;
+    const resolvedParams = React.use(params); // Use React.use() here
+    const roleId = resolvedParams.id as string;
     const router = useRouter();
     const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 

@@ -51,7 +51,8 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = params.id as string; // Correctly access params.id
+    const resolvedParams = React.use(params); // Use React.use() here
+    const articleId = resolvedParams.id as string; 
 
     // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);

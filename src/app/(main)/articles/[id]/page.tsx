@@ -1,3 +1,4 @@
+
 "use client"; // Make this a client component
 
 import * as React from 'react';
@@ -116,11 +117,10 @@ function createMarkup(htmlContent: string) {
     return { __html: sanitizedHtml };
 }
 
-// Removed generateStaticParams as it cannot be used in a Client Component.
-// This page will now be dynamically rendered.
 
 export default function ArticlePage({ params }: ArticlePageProps) {
-  const articleId = params.id;
+  const resolvedParams = React.use(params); // Unwrap params using React.use()
+  const articleId = resolvedParams.id;
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
