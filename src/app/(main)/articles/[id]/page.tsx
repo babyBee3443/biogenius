@@ -116,15 +116,8 @@ function createMarkup(htmlContent: string) {
     return { __html: sanitizedHtml };
 }
 
-// generateStaticParams can remain as is for public, published articles.
-// Next.js will attempt to render other paths dynamically if not found here.
-export async function generateStaticParams() {
-  const articles = await getArticles();
-  return articles
-      .filter(article => article.status === 'Yayınlandı')
-      .map((article) => ({ id: article.id }));
-}
-
+// Removed generateStaticParams as it cannot be used in a Client Component.
+// This page will now be dynamically rendered.
 
 export default function ArticlePage({ params }: ArticlePageProps) {
   const articleId = params.id;
