@@ -19,7 +19,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home } from 'lucide-react'; // Added Home icon
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home, Loader2 } from 'lucide-react'; // Added Home icon and Loader2
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout'; // Import the new hook
@@ -37,13 +37,15 @@ export default function AdminLayout({
 }) {
   const [currentUserName, setCurrentUserName] = React.useState("Kullanıcı");
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
-  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // Added for profile link
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
+  const [userLoaded, setUserLoaded] = React.useState(false); // New state for loading user data
   const router = useRouter();
   const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions();
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
+    console.log("[AdminLayout] loadUserDataAndSettings called");
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
       if (storedUserString) {
@@ -51,24 +53,18 @@ export default function AdminLayout({
           const userData = JSON.parse(storedUserString);
           setCurrentUserName(userData.name || "Kullanıcı");
           setCurrentUserAvatar(userData.avatar || "https://picsum.photos/seed/default-avatar/32/32");
-          setCurrentUserId(userData.id || null); // Store user ID
+          setCurrentUserId(userData.id || null);
+          console.log("[AdminLayout] User data loaded from localStorage:", userData.id, userData.name);
         } catch (e) {
           console.error("Error parsing user data from localStorage in AdminLayout", e);
           setCurrentUserName("Kullanıcı");
           setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
           setCurrentUserId(null);
-          // If parsing fails, consider it a logout or corrupted data
           localStorage.removeItem('currentUser');
-          // router.push('/login'); // Optionally redirect
         }
       } else {
-        // No user in localStorage, redirect to login if not already on login page
-        // This check prevents redirect loops if already on /login or public pages
-        if (!window.location.pathname.startsWith('/login')) {
-          toast({ variant: "destructive", title: "Oturum Yok", description: "Lütfen giriş yapın." });
-          router.push('/login');
-        }
-        return;
+        setCurrentUserId(null); // Ensure userId is null if no user in storage
+        console.log("[AdminLayout] No currentUser in localStorage.");
       }
 
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
@@ -78,8 +74,9 @@ export default function AdminLayout({
       } else {
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
+      setUserLoaded(true); // Mark user data loading as complete
     }
-  }, [router, setSessionTimeoutMinutes]);
+  }, [setSessionTimeoutMinutes]); // Removed router from dependencies as it caused too many re-renders.
 
 
   React.useEffect(() => {
@@ -89,17 +86,25 @@ export default function AdminLayout({
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
+            setUserLoaded(false); // Reset loading state before reloading
             loadUserDataAndSettings();
         }
     };
     
+    // Event for same-tab updates (e.g., login, profile update)
+    const handleCurrentUserUpdated = () => {
+        console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
+        setUserLoaded(false);
+        loadUserDataAndSettings();
+    };
+    
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('currentUserUpdated', loadUserDataAndSettings);
+    window.addEventListener('currentUserUpdated', handleCurrentUserUpdated);
     window.addEventListener('sessionTimeoutChanged', loadUserDataAndSettings);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('currentUserUpdated', loadUserDataAndSettings);
+      window.removeEventListener('currentUserUpdated', handleCurrentUserUpdated);
       window.removeEventListener('sessionTimeoutChanged', loadUserDataAndSettings);
     };
   }, [loadUserDataAndSettings]);
@@ -108,15 +113,35 @@ export default function AdminLayout({
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
     }
-    setCurrentUserName("Kullanıcı"); // Reset state
+    setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null);
+    setUserLoaded(true); // User state is now known (logged out)
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.push('/login');
   }, [router]);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
+
+  // Redirect to login if user data is loaded and no user is found
+  React.useEffect(() => {
+    if (userLoaded && !currentUserId && !window.location.pathname.startsWith('/login')) {
+        console.log("[AdminLayout] User not found after loading, redirecting to login.");
+        toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
+        router.push('/login');
+    }
+  }, [userLoaded, currentUserId, router]);
+
+
+  if (!userLoaded || permissionsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Yönetim paneli yükleniyor...</p>
+      </div>
+    );
+  }
 
 
   return (
@@ -146,7 +171,7 @@ export default function AdminLayout({
         </SidebarHeader>
 
         <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-0">
-             <span className="block font-semibold text-sm text-muted-foreground"> {/* Adjusted margin-top */}
+             <span className="block font-semibold text-sm text-muted-foreground">
                 Hoşgeldiniz
             </span>
           <span className="block font-bold text-md mt-0.5">
@@ -349,7 +374,7 @@ export default function AdminLayout({
            </div>
          </header>
          <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)+theme(spacing.6))] md:pt-[calc(theme(spacing.14)+theme(spacing.6))]">
-            {permissionsLoading ? <div>İzinler yükleniyor...</div> : children}
+            {children}
          </main>
       </SidebarInset>
     </SidebarProvider>
