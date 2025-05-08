@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy } from 'lucide-react'; // Added BookCopy icon
+import { Menu, Search, X, BookCopy, UserShield } from 'lucide-react'; // Added BookCopy and UserShield icons
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet components
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Import Popover
 import { Input } from '@/components/ui/input'; // Import Input
@@ -46,6 +46,7 @@ const Header = () => {
   const [searchResults, setSearchResults] = React.useState<ArticleStub[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false); // Control popover state
+  const [isAdminOrEditor, setIsAdminOrEditor] = React.useState(false);
 
 
   // Debounce search input
@@ -66,6 +67,29 @@ const Header = () => {
       clearTimeout(handler);
     };
   }, [searchQuery]);
+
+  // Check for admin/editor role on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user && (user.role === 'Admin' || user.role === 'Editor')) {
+            setIsAdminOrEditor(true);
+          } else {
+            setIsAdminOrEditor(false);
+          }
+        } catch (e) {
+          console.error("Error parsing current user from localStorage", e);
+          setIsAdminOrEditor(false);
+        }
+      } else {
+        setIsAdminOrEditor(false);
+      }
+    }
+  }, []);
+
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -205,6 +229,16 @@ const Header = () => {
 
           <ThemeToggle />
 
+          {isAdminOrEditor && (
+            <Button variant="outline" size="sm" asChild className="ml-2">
+              <Link href="/admin">
+                <UserShield className="mr-2 h-4 w-4" />
+                Admin Paneli
+              </Link>
+            </Button>
+          )}
+
+
           {/* Mobile Navigation */}
           <div className="md:hidden">
             <Sheet>
@@ -228,6 +262,14 @@ const Header = () => {
                          </Button>
                      </Link>
                   ))}
+                  {isAdminOrEditor && (
+                    <Button variant="outline" asChild className="mt-4">
+                        <Link href="/admin">
+                            <UserShield className="mr-2 h-4 w-4" />
+                            Admin Paneli
+                        </Link>
+                    </Button>
+                   )}
                 </nav>
               </SheetContent>
             </Sheet>
