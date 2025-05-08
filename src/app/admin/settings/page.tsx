@@ -1,4 +1,3 @@
-
 "use client"; // Required for useState, useEffect, event handlers
 
 import * as React from "react";
@@ -12,9 +11,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download } from "lucide-react"; // Added Timer and Download icons
+import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle } from "lucide-react"; // Added UploadCloud, AlertTriangle
 import { toast } from "@/hooks/use-toast";
-import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY } from '@/lib/mock-data'; // Import storage keys
+import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, loadInitialData as reloadMockData } from '@/lib/mock-data'; // Import storage keys and reloadMockData
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
@@ -27,6 +36,12 @@ export default function AdminSettingsPage() {
   const [maintenanceMode, setMaintenanceMode] = React.useState(false);
   const [sessionTimeout, setSessionTimeout] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const [exporting, setExporting] = React.useState(false);
+  const [importing, setImporting] = React.useState(false);
+  const [isImportConfirmOpen, setIsImportConfirmOpen] = React.useState(false);
+  const [fileToImport, setFileToImport] = React.useState<File | null>(null);
+
+  const importFileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   // Load existing settings on mount
   React.useEffect(() => {
@@ -104,8 +119,74 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleImportFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/json') {
+        toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen .json uzantılı bir dosya seçin." });
+        return;
+      }
+      setFileToImport(file);
+      setIsImportConfirmOpen(true); // Open confirmation dialog
+    }
+  };
+
+  const confirmImportData = () => {
+    if (!fileToImport || typeof window === 'undefined') return;
+    setIsImportConfirmOpen(false);
+    setImporting(true);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importedData = JSON.parse(content);
+
+        // Basic validation for expected keys
+        const requiredKeys = ['articles', 'notes', 'categories', 'users', 'roles', 'pages'];
+        const missingKeys = requiredKeys.filter(key => !(key in importedData));
+
+        if (missingKeys.length > 0) {
+          toast({ variant: "destructive", title: "İçe Aktarma Hatası", description: `Dosyada eksik alanlar var: ${missingKeys.join(', ')}. Lütfen geçerli bir yedek dosyası seçin.` });
+          setImporting(false);
+          return;
+        }
+        
+        // Store imported data into localStorage
+        localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(importedData.articles || []));
+        localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(importedData.notes || []));
+        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(importedData.categories || []));
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(importedData.users || []));
+        localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(importedData.roles || []));
+        localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(importedData.pages || []));
+
+        // Reload mock data from updated localStorage
+        reloadMockData(); 
+
+        toast({ title: "Veri İçe Aktarıldı", description: "Veriler başarıyla içe aktarıldı. Değişikliklerin yansıması için sayfa yenilenebilir." });
+        // Optionally, force a reload or redirect to refresh application state
+        // window.location.reload(); 
+      } catch (error) {
+        console.error("Error importing data:", error);
+        toast({ variant: "destructive", title: "İçe Aktarma Hatası", description: "Veriler içe aktarılırken bir sorun oluştu. Dosya formatını kontrol edin." });
+      } finally {
+        setImporting(false);
+        setFileToImport(null);
+        if (importFileInputRef.current) {
+          importFileInputRef.current.value = ""; // Reset file input
+        }
+      }
+    };
+    reader.onerror = () => {
+        toast({ variant: "destructive", title: "Dosya Okuma Hatası", description: "Dosya okunurken bir sorun oluştu." });
+        setImporting(false);
+        setFileToImport(null);
+    }
+    reader.readAsText(fileToImport);
+  };
 
   return (
+    <>
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Ayarlar</h1>
       <p className="text-muted-foreground">Site yapılandırmasını ve tercihlerini yönetin.</p>
@@ -169,17 +250,33 @@ export default function AdminSettingsPage() {
                             </p>
                         </div>
                         <Separator />
-                        {/* Data Export Section */}
+                        {/* Data Management Section */}
                         <div>
                             <h3 className="text-md font-medium mb-2">Veri Yönetimi</h3>
                             <p className="text-sm text-muted-foreground mb-3">
-                                Sitedeki tüm makale, not, kategori, kullanıcı ve rol verilerini JSON formatında bilgisayarınıza yedekleyebilirsiniz.
-                                Bu dosya daha sonra siteyi geri yüklemek için kullanılabilir (İçe aktarma özelliği yakında eklenecektir).
+                                Site verilerini JSON formatında yedekleyebilir veya daha önce aldığınız bir yedeği geri yükleyebilirsiniz.
                             </p>
-                            <Button onClick={handleExportData} variant="outline" disabled={exporting}>
-                                <Download className="mr-2 h-4 w-4" />
-                                {exporting ? "Veriler Dışa Aktarılıyor..." : "Tüm Verileri Dışa Aktar"}
-                            </Button>
+                            <div className="flex flex-wrap gap-3">
+                                <Button onClick={handleExportData} variant="outline" disabled={exporting}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    {exporting ? "Veriler Dışa Aktarılıyor..." : "Tüm Verileri Dışa Aktar"}
+                                </Button>
+                                <Button onClick={() => importFileInputRef.current?.click()} variant="outline" disabled={importing}>
+                                    <UploadCloud className="mr-2 h-4 w-4" />
+                                    {importing ? "Veriler İçe Aktarılıyor..." : "Veri İçe Aktar (.json)"}
+                                </Button>
+                                <Input 
+                                    type="file" 
+                                    className="hidden" 
+                                    ref={importFileInputRef} 
+                                    onChange={handleImportFileSelect} 
+                                    accept=".json"
+                                />
+                            </div>
+                             <p className="text-xs text-muted-foreground mt-2">
+                                <AlertTriangle className="inline h-3 w-3 mr-1 text-destructive" />
+                                İçe aktarma işlemi mevcut tüm verilerin üzerine yazacaktır. Lütfen dikkatli olun ve işlem öncesi yedek aldığınızdan emin olun.
+                            </p>
                         </div>
                          <Separator />
                         <div className="flex justify-end">
@@ -396,7 +493,26 @@ export default function AdminSettingsPage() {
             </TabsContent>
 
         </Tabs>
-
     </div>
+    <AlertDialog open={isImportConfirmOpen} onOpenChange={setIsImportConfirmOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Veri İçe Aktarmayı Onayla</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Bu işlem, seçtiğiniz dosyadan gelen verilerle mevcut tüm verilerin üzerine yazacaktır. Bu işlem geri alınamaz.
+                    Devam etmeden önce mevcut verilerinizin bir yedeğini aldığınızdan emin olun.
+                    Devam etmek istediğinize emin misiniz?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => { setFileToImport(null); if(importFileInputRef.current) importFileInputRef.current.value = ""; }}>İptal</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmImportData}>
+                    Evet, İçe Aktar
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
+

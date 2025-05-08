@@ -674,7 +674,7 @@ let mockUsers: User[] = [];
 let mockRoles: Role[] = [];
 
 // Ensure data is loaded once when the module is first imported
-const loadInitialData = () => {
+export const loadInitialData = () => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         const storedCategories = localStorage.getItem(CATEGORY_STORAGE_KEY);
         mockCategories = storedCategories ? JSON.parse(storedCategories) : defaultMockCategories;
