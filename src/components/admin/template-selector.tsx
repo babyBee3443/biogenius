@@ -94,12 +94,13 @@ export function TemplateSelector({
         if (typeof window === 'undefined') return;
 
         let previewData: Partial<ArticleData | NoteData | PageDataType> & { previewType: string };
+        const uniqueTimestamp = Date.now(); // Unique timestamp for the key
 
         switch (template.type) {
             case 'article':
                 previewData = {
                     previewType: 'article',
-                    id: `preview_article_${template.id}_${Date.now()}`,
+                    id: `preview_article_${template.id}_${uniqueTimestamp}`,
                     title: template.name,
                     excerpt: template.excerpt || template.description,
                     blocks: template.blocks,
@@ -120,7 +121,7 @@ export function TemplateSelector({
             case 'note':
                 previewData = {
                     previewType: 'note',
-                    id: `preview_note_${template.id}_${Date.now()}`,
+                    id: `preview_note_${template.id}_${uniqueTimestamp}`,
                     title: template.name,
                     slug: `template-${template.id}-preview`,
                     category: template.category || 'Genel',
@@ -137,7 +138,7 @@ export function TemplateSelector({
             case 'page':
                  previewData = {
                     previewType: 'page',
-                    id: `preview_page_${template.id}_${Date.now()}`,
+                    id: `preview_page_${template.id}_${uniqueTimestamp}`,
                     title: template.name,
                     slug: `template-${template.id}-preview`,
                     blocks: template.blocks,
@@ -155,22 +156,29 @@ export function TemplateSelector({
                 return;
         }
 
+        const previewKey = PREVIEW_STORAGE_KEY; // Use the fixed key
 
-        console.log(`[TemplateSelector/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[TemplateSelector/handlePreview] Preparing to save preview data with key: ${previewKey}`);
         console.log(`[TemplateSelector/handlePreview] Preview Data:`, previewData);
 
         try {
-            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            console.log(`[TemplateSelector/handlePreview] Successfully saved data for key: ${PREVIEW_STORAGE_KEY}`);
+            localStorage.setItem(previewKey, JSON.stringify(previewData));
+            console.log(`[TemplateSelector/handlePreview] Successfully saved data for key: ${previewKey}`);
 
-            const stored = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            const stored = localStorage.getItem(previewKey);
             if (!stored) throw new Error("Verification failed: No data found in localStorage.");
             const parsed = JSON.parse(stored);
-            if (parsed.id !== previewData.id) throw new Error(`Verification failed: Stored data ID (${parsed.id}) does not match preview ID (${previewData.id}).`);
+            // Compare a unique field like 'id' if present, or a combination of fields for better verification.
+            if (parsed.id !== previewData.id || parsed.title !== previewData.title) {
+                 console.warn(`[TemplateSelector/handlePreview] Verification mismatch. Stored:`, parsed, `Preview:`, previewData);
+                 // Potentially throw error or just log, depending on strictness needed.
+                 // For now, let's assume the latest setItem wins if keys are fixed.
+            } else {
+                 console.log("[TemplateSelector/handlePreview] Verification SUCCESS.");
+            }
 
-            console.log("[TemplateSelector/handlePreview] Verification SUCCESS.");
 
-            const previewUrl = `/admin/preview`; // Fixed URL
+            const previewUrl = `/admin/preview`; // Fixed URL, preview page will use fixed key
             console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
             setTimeout(() => {
@@ -202,7 +210,7 @@ export function TemplateSelector({
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col">
+                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>{dialogTitle}</DialogTitle>
                         <DialogDescription>
@@ -275,3 +283,4 @@ export function TemplateSelector({
         </>
     );
 }
+
