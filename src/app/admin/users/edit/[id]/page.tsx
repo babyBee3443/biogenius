@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -60,9 +59,9 @@ interface UserContentStats {
 
 export default function EditUserPage() {
     const params = useParams();
-    const resolvedParams = React.use(params); // Use React.use() here
-    const userId = resolvedParams.id as string;
+    const userId = params.id as string;
     const router = useRouter();
+
 
     const [user, setUser] = React.useState<User | null>(null);
     const [activity, setActivity] = React.useState<UserActivity[]>([]);
@@ -295,7 +294,7 @@ export default function EditUserPage() {
                 </div>
                  <div className="flex flex-wrap gap-2">
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isDeleting || isSaving}>
+                        <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
                             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                         </Button>
                     </AlertDialogTrigger>
@@ -480,7 +479,7 @@ export default function EditUserPage() {
               <Separator />
              <div className="flex justify-end gap-2 mt-6">
                  <AlertDialogTrigger asChild>
-                     <Button variant="destructive" disabled={isDeleting || isSaving}>
+                     <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
                         {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                      </Button>
                  </AlertDialogTrigger>
@@ -508,4 +507,3 @@ export default function EditUserPage() {
     );
 
 }
-

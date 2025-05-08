@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -42,8 +41,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key
 export default function EditBiyolojiNotuPage() {
     const router = useRouter();
     const params = useParams();
-    const resolvedParams = React.use(params); // Use React.use() here
-    const noteId = resolvedParams.id as string; 
+    const noteId = params.id as string; 
     const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
     // --- State ---
@@ -471,4 +469,3 @@ export default function EditBiyolojiNotuPage() {
         </div>
     );
 }
-

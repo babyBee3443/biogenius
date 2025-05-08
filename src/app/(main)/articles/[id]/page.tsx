@@ -1,8 +1,7 @@
-
 "use client"; // Make this a client component
 
 import * as React from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation'; // Import useParams
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -106,11 +105,12 @@ const renderBlock = (block: Block) => {
     }
 };
 
-interface ArticlePageProps {
-  params: {
-    id: string;
-  };
-}
+// No longer need ArticlePageProps as params is accessed directly
+// interface ArticlePageProps {
+//   params: {
+//     id: string;
+//   };
+// }
 
 function createMarkup(htmlContent: string) {
     const sanitizedHtml = htmlContent?.replace(/<script.*?>.*?<\/script>/gi, '') || '';
@@ -118,9 +118,9 @@ function createMarkup(htmlContent: string) {
 }
 
 
-export default function ArticlePage({ params }: ArticlePageProps) {
-  const resolvedParams = React.use(params); // Unwrap params using React.use()
-  const articleId = resolvedParams.id;
+export default function ArticlePage() { // Removed params from props
+  const params = useParams(); // Get params using the hook
+  const articleId = params.id as string; // Access id directly
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);

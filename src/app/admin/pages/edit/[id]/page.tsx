@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -20,96 +19,17 @@ import SeoPreview from "@/components/admin/seo-preview";
 import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-
-// --- Types ---
-interface HeroSettings {
-    enabled: boolean;
-    articleSource: 'latest' | 'featured';
-    intervalSeconds: number;
-    maxArticles: number;
-}
-
-interface PageData {
-    id: string;
-    title: string;
-    slug: string;
-    blocks: Block[];
-    seoTitle?: string;
-    seoDescription?: string;
-    keywords?: string[];
-    canonicalUrl?: string;
-    imageUrl?: string;
-    settings?: Record<string, any>;
-    heroSettings?: HeroSettings; // Add heroSettings
-}
-
-// --- Mock Data ---
-// Updated mock function to include heroSettings for homepage
-const getPageById = async (id: string): Promise<PageData | null> => {
-    const pages: PageData[] = [
-        {
-            id: 'anasayfa',
-            title: 'Anasayfa',
-            slug: '',
-            blocks: [
-                // Structural blocks (hidden in editor preview)
-                { id: 'hpb-welcome', type: 'heading', level: 1, content: 'TeknoBiyo\'ya Hoş Geldiniz!' },
-                { id: 'hpb-intro', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' },
-                // Visual sections
-                { id: 'hp-section-featured', type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkanlar', count: 3 } },
-                { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler', techButtonLabel: 'Teknoloji', bioButtonLabel: 'Biyoloji'} },
-                { id: 'hp-section-recent', type: 'section', sectionType: 'recent-articles', settings: { title: 'En Son Eklenenler', count: 3 } },
-                { id: 'hp-section-custom-text', type: 'section', sectionType: 'custom-text', settings: { content: '<p>Bu alana <strong>özel metin</strong> veya HTML ekleyebilirsiniz.</p>' } },
-            ],
-            seoTitle: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
-            seoDescription: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
-            imageUrl: 'https://picsum.photos/seed/homepage/1200/600',
-            settings: {},
-            heroSettings: { // Default Hero Settings for Homepage
-                enabled: true,
-                articleSource: 'featured', // Show featured articles by default
-                intervalSeconds: 5,
-                maxArticles: 3,
-            }
-        },
-        {
-            id: 'hakkimizda',
-            title: 'Hakkımızda',
-            slug: 'hakkimizda',
-            blocks: [
-                { id: 'ab1', type: 'heading', level: 2, content: 'Biz Kimiz?' },
-                { id: 'ab2', type: 'text', content: 'TeknoBiyo, teknoloji ve biyoloji dünyalarının kesişim noktasında yer alan, meraklı zihinler için hazırlanmış bir bilgi platformudur...' },
-                { id: 'ab3', type: 'image', url: 'https://picsum.photos/seed/teamwork/800/600', alt: 'Ekip Çalışması', caption: 'Vizyonumuz' },
-            ],
-            seoTitle: 'Hakkımızda | TeknoBiyo',
-            seoDescription: 'TeknoBiyo\'nun arkasındaki vizyonu, misyonu ve değerleri keşfedin.',
-            imageUrl: 'https://picsum.photos/seed/teamwork/1200/600'
-        },
-        {
-            id: 'iletisim',
-            title: 'İletişim',
-            slug: 'iletisim',
-            blocks: [
-                { id: 'cb1', type: 'heading', level: 2, content: 'Bizimle İletişime Geçin' },
-                { id: 'cb2', type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşın.' },
-                { id: 'cb-form', type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@teknobiyo.example.com' } },
-            ],
-            seoTitle: 'İletişim | TeknoBiyo',
-            seoDescription: 'TeknoBiyo ile iletişime geçin. Sorularınız ve önerileriniz için buradayız.',
-             imageUrl: 'https://picsum.photos/seed/contactus/1200/600'
-        },
-    ];
-    return pages.find(page => page.id === id) || null;
-};
+import type { PageData as PageDataType, HeroSettings as HeroSettingsType } from "@/lib/mock-data"; // Renamed for clarity
+import { getPageById as fetchPageById, updatePage } from "@/lib/mock-data"; // Import actual functions
 
 
+// --- Main Page Component ---
 export default function EditPage() {
     const router = useRouter();
     const params = useParams();
-    const resolvedParams = React.use(params); // Use React.use() here
-    const pageId = resolvedParams.id as string;
+    const pageId = params.id as string;
 
-    const [pageData, setPageData] = React.useState<PageData | null>(null);
+    const [pageData, setPageData] = React.useState<PageDataType | null>(null);
     const [loading, setLoading] = React.useState(true);
     const [title, setTitle] = React.useState("");
     const [slug, setSlug] = React.useState("");
@@ -122,18 +42,16 @@ export default function EditPage() {
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
     const [editorView, setEditorView] = React.useState<'editor' | 'seo'>('editor');
 
-    // --- State for Hero Settings ---
-    const [heroSettings, setHeroSettings] = React.useState<HeroSettings>({
+    const [heroSettings, setHeroSettings] = React.useState<HeroSettingsType>({
         enabled: true,
         articleSource: 'latest',
         intervalSeconds: 5,
         maxArticles: 3,
     });
-    // ---
 
     React.useEffect(() => {
         if (pageId) {
-            getPageById(pageId)
+            fetchPageById(pageId)
                 .then(data => {
                     if (data) {
                         setPageData(data);
@@ -144,7 +62,7 @@ export default function EditPage() {
                         setSeoDescription(data.seoDescription || '');
                         setKeywords(data.keywords || []);
                         setCanonicalUrl(data.canonicalUrl || '');
-                        if (data.heroSettings) { // Load hero settings if available
+                        if (data.heroSettings) {
                             setHeroSettings(data.heroSettings);
                         }
                     } else {
@@ -160,8 +78,7 @@ export default function EditPage() {
         }
     }, [pageId]);
 
-    // Slug generation
-    const generateSlug = (text: string) => {
+    const generateSlugUtil = (text: string) => {
         return text
             .toLowerCase()
             .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
@@ -169,23 +86,20 @@ export default function EditPage() {
             .replace(/\s+/g, '-').replace(/-+/g, '-');
     };
 
-    // Auto-update slug when title changes (if slug is empty or matches old title slug)
     React.useEffect(() => {
         if (title && pageData && title !== pageData.title) {
-             if (!slug || slug === generateSlug(pageData.title)) {
-                 setSlug(generateSlug(title));
+             if (!slug || slug === generateSlugUtil(pageData.title)) {
+                 setSlug(generateSlugUtil(title));
             }
         }
      }, [title, pageData, slug]);
 
-    // Auto-update SEO title if empty
      React.useEffect(() => {
         if (title && !seoTitle && pageData && title !== pageData.title) {
             setSeoTitle(title);
         }
      }, [title, seoTitle, pageData]);
 
-     // Auto-update SEO description if empty (use first text block if available)
      React.useEffect(() => {
         if (blocks.length > 0 && !seoDescription && pageData) {
             const firstTextBlock = blocks.find(b => b.type === 'text') as Extract<Block, { type: 'text' }> | undefined;
@@ -197,7 +111,6 @@ export default function EditPage() {
      }, [blocks, seoDescription, pageData]);
 
 
-    // --- Block Handlers ---
     const handleAddBlock = (type: Block['type']) => {
         const newBlock: Block = {
             id: `block-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -245,21 +158,17 @@ export default function EditPage() {
              setEditorView('editor');
         }
     };
-    // --- End Block Handlers ---
 
-    // --- Hero Settings Handlers ---
-    const handleHeroSettingChange = <K extends keyof HeroSettings>(key: K, value: HeroSettings[K]) => {
+    const handleHeroSettingChange = <K extends keyof HeroSettingsType>(key: K, value: HeroSettingsType[K]) => {
         setHeroSettings(prev => ({ ...prev, [key]: value }));
     };
-    // ---
 
-    const handleSave = () => {
+    const handleSave = async () => {
          if (!title) {
             toast({ variant: "destructive", title: "Hata", description: "Sayfa başlığı zorunludur." });
             return;
         }
-        const saveData = {
-            pageId,
+        const saveData: Partial<Omit<PageDataType, 'id' | 'createdAt' | 'updatedAt'>> = {
             title,
             slug,
             blocks,
@@ -267,15 +176,25 @@ export default function EditPage() {
             seoDescription,
             keywords,
             canonicalUrl,
-            ...(pageId === 'anasayfa' && { heroSettings }), // Only include heroSettings for homepage
+            status: pageData?.status || 'Taslak', // Preserve existing status or default
+            ...(pageId === 'anasayfa' && { heroSettings }),
         };
-        console.log("Updating page:", saveData);
-        // TODO: Implement actual API call to save the page data
-        toast({
-            title: "Sayfa Güncellendi",
-            description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,
-        });
-        if(pageData) setPageData({...pageData, title, slug, blocks, seoTitle, seoDescription, keywords, canonicalUrl, ...(pageId === 'anasayfa' && { heroSettings }) });
+        
+        try {
+            const updated = await updatePage(pageId, saveData);
+            if (updated) {
+                setPageData(updated); // Update local state with response
+                toast({
+                    title: "Sayfa Güncellendi",
+                    description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,
+                });
+            } else {
+                 toast({ variant: "destructive", title: "Hata", description: "Sayfa güncellenemedi." });
+            }
+        } catch (error: any) {
+            console.error("Error updating page:", error);
+            toast({ variant: "destructive", title: "Hata", description: `Sayfa güncellenirken bir sorun oluştu: ${error.message}` });
+        }
     };
 
      const handleDelete = () => {
@@ -295,8 +214,7 @@ export default function EditPage() {
         }
     };
 
-    // --- Preview Data for Renderer ---
-    const currentPreviewData: PageData = React.useMemo(() => ({
+    const currentPreviewData: PageDataType = React.useMemo(() => ({
         id: pageId || 'preview',
         title: title,
         slug: slug,
@@ -305,8 +223,13 @@ export default function EditPage() {
         seoDescription: seoDescription,
         imageUrl: pageData?.imageUrl || (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/page-preview/1200/600',
         settings: pageData?.settings || {},
-        ...(pageId === 'anasayfa' && { heroSettings }), // Pass current hero settings for homepage preview
-    }), [pageId, title, slug, blocks, seoTitle, seoDescription, pageData, keywords, canonicalUrl, heroSettings]); // Add heroSettings dependency
+        heroSettings: pageId === 'anasayfa' ? heroSettings : undefined,
+        status: pageData?.status || 'Taslak',
+        createdAt: pageData?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        keywords: keywords,
+        canonicalUrl: canonicalUrl,
+    }), [pageId, title, slug, blocks, seoTitle, seoDescription, pageData, keywords, canonicalUrl, heroSettings]);
 
 
     const getPreviewSizeClass = () => {
@@ -328,10 +251,8 @@ export default function EditPage() {
 
 
     return (
-         // Removed overflow-hidden from outer div to allow ScrollArea to manage scrolling
         <div className="flex flex-col h-screen">
-             {/* Top Bar */}
-             <div className="flex items-center justify-between px-4 py-2 border-b bg-card sticky top-0 z-20 h-14 flex-shrink-0"> {/* Ensure top bar doesn't shrink */}
+             <div className="flex items-center justify-between px-4 py-2 border-b bg-card sticky top-0 z-20 h-14 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" asChild>
                         <Link href="/admin/pages"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
@@ -356,7 +277,6 @@ export default function EditPage() {
                      {pageData.title}
                  </h1>
                  <div className="flex items-center gap-2">
-                     {/* Preview Device Toggles */}
                      <Button
                         variant={previewDevice === 'desktop' ? 'secondary' : 'ghost'}
                         size="icon"
@@ -397,11 +317,8 @@ export default function EditPage() {
                  </div>
             </div>
 
-            {/* Main Content Area (Editor/SEO + Preview) */}
-             {/* Use flex-1 and overflow-hidden on the container of the two panes */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Pane (Editor or SEO) - Use ScrollArea */}
-                 <ScrollArea className="flex-shrink-0 border-r w-[500px] h-full"> {/* Increased fixed width */}
+                 <ScrollArea className="flex-shrink-0 border-r w-[500px] h-full"> 
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -425,7 +342,7 @@ export default function EditPage() {
                                             <Input
                                                 id="page-slug"
                                                 value={slug}
-                                                onChange={(e) => setSlug(generateSlug(e.target.value))}
+                                                onChange={(e) => setSlug(generateSlugUtil(e.target.value))}
                                                 disabled={pageId === 'anasayfa'}
                                                 placeholder={pageId === 'anasayfa' ? "(Anasayfa)" : "sayfa-url"}
                                             />
@@ -436,7 +353,7 @@ export default function EditPage() {
                                     </CardContent>
                                 </Card>
 
-                                {pageId === 'anasayfa' && ( // Show Hero Settings only for homepage
+                                {pageId === 'anasayfa' && (
                                      <Card>
                                          <CardHeader>
                                              <CardTitle className="flex items-center gap-2"><Film className="h-5 w-5" /> Hero Bölümü Ayarları</CardTitle>
@@ -452,7 +369,7 @@ export default function EditPage() {
                                                  />
                                              </div>
                                               <Separator />
-                                             {heroSettings.enabled && ( // Show other settings only if enabled
+                                             {heroSettings.enabled && ( 
                                                  <>
                                                      <div className="space-y-2">
                                                          <Label htmlFor="hero-source">Gösterilecek Makaleler</Label>
@@ -501,7 +418,6 @@ export default function EditPage() {
 
                                 <Separator />
 
-                                {/* Block Editor Section */}
                                  <BlockEditor
                                    blocks={blocks}
                                    onAddBlock={handleAddBlock}
@@ -578,20 +494,16 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                  {/* Right Preview Pane - Takes remaining space and handles its own overflow */}
-                   <div className="flex-1 bg-muted/30 p-4 overflow-auto flex flex-col items-center justify-start relative"> {/* Allow overflow */}
+                   <div className="flex-1 bg-muted/30 p-4 overflow-auto flex flex-col items-center justify-start relative"> 
                      <div className={cn(
-                         "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative w-full h-full max-w-full max-h-full", // Make it take full space of its container
-                         // Remove device-specific size classes to let it fill
-                         // getPreviewSizeClass()
+                         "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative w-full h-full max-w-full max-h-full",
                      )}>
-                       {/* Scale the preview content based on device selection */}
                         <div className={cn(
                              "transition-transform duration-300 ease-in-out origin-top",
                              {
-                                 'scale-[0.5] w-[750px] h-[1334px] mx-auto': previewDevice === 'mobile', // Scale down and set fixed size based on ratio
-                                 'scale-[0.7] w-[1097px] h-[1463px] mx-auto': previewDevice === 'tablet', // Scale down and set fixed size based on ratio
-                                 'scale-100 w-full h-full': previewDevice === 'desktop', // No scaling for desktop
+                                 'scale-[0.5] w-[750px] h-[1334px] mx-auto': previewDevice === 'mobile',
+                                 'scale-[0.7] w-[1097px] h-[1463px] mx-auto': previewDevice === 'tablet', 
+                                 'scale-100 w-full h-full': previewDevice === 'desktop', 
                              }
                         )}>
                            <PagePreviewRenderer
@@ -608,4 +520,3 @@ export default function EditPage() {
         </div>
     );
 }
-
