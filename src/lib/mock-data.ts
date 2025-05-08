@@ -1,4 +1,3 @@
-
 import type { Block } from "@/components/admin/template-selector";
 
 // --- Category Data Structure ---
@@ -14,7 +13,7 @@ export interface ArticleData {
     excerpt?: string;
     blocks: Block[];
     category: string;
-    status: 'Taslak' | 'İncelemede' | 'Yayınlandı' | 'Arşivlendi';
+    status: 'Taslak' | 'İncelemede' | 'Hazır' | 'Yayınlandı' | 'Arşivlendi'; // Added "Hazır"
     mainImageUrl: string | null;
     seoTitle?: string;
     seoDescription?: string;
@@ -41,6 +40,7 @@ export interface NoteData {
     relatedNotes?: string[];
     imageUrl?: string | null;
     authorId: string; // Added authorId
+    status: 'Taslak' | 'İncelemede' | 'Hazır' | 'Yayınlandı' | 'Arşivlendi'; // Added status to NoteData
     createdAt: string;
     updatedAt: string;
 }
@@ -145,12 +145,12 @@ let defaultMockArticles: ArticleData[] = [
              { id: 'g3', type: 'text', content: 'Bu sistem, bakterilerin doğal savunma mekanizmasından esinlenilmiştir...' },
         ],
         category: 'Biyoloji',
-        status: 'Yayınlandı',
+        status: 'Hazır', // Example of "Hazır" status
         mainImageUrl: 'https://picsum.photos/seed/crispr/600/400',
         seoTitle: 'Gen Düzenleme Teknolojileri | TeknoBiyo',
         seoDescription: 'CRISPR ve diğer gen düzenleme araçlarının bilim ve tıp üzerindeki etkileri.',
         slug: 'gen-duzenleme-teknolojileri',
-        isFeatured: true, // Changed to true to appear in featured
+        isFeatured: true, 
         isHero: false,
         keywords: ['crispr', 'genetik', 'biyoteknoloji'],
         canonicalUrl: '',
@@ -212,7 +212,7 @@ let defaultMockArticles: ArticleData[] = [
         seoTitle: 'Kuantum Bilgisayarlar | TeknoBiyo',
         seoDescription: 'Kuantum mekaniği prensiplerini kullanan yeni nesil hesaplama makineleri.',
         slug: 'kuantum-bilgisayarlar',
-        isFeatured: true, // Changed to true
+        isFeatured: true, 
         isHero: false,
         keywords: ['kuantum', 'hesaplama', 'kübit'],
         canonicalUrl: '',
@@ -324,6 +324,7 @@ let defaultMockNotes: NoteData[] = [
         ],
         imageUrl: 'https://picsum.photos/seed/note-membrane/400/250',
         authorId: 'u1', // Ali Veli
+        status: 'Yayınlandı',
         createdAt: '2024-07-28T10:00:00Z',
         updatedAt: '2024-07-28T11:00:00Z',
     },
@@ -344,6 +345,7 @@ let defaultMockNotes: NoteData[] = [
         ],
         imageUrl: 'https://picsum.photos/seed/note-mitochondria/400/250',
         authorId: 'u2', // Ayşe Kaya
+        status: 'Hazır',
         createdAt: '2024-07-27T14:00:00Z',
         updatedAt: '2024-07-27T15:30:00Z',
     },
@@ -365,6 +367,7 @@ let defaultMockNotes: NoteData[] = [
         ],
         imageUrl: 'https://picsum.photos/seed/note-dna/400/250',
         authorId: 'u1', // Ali Veli
+        status: 'Yayınlandı',
         createdAt: '2024-07-29T09:00:00Z',
         updatedAt: '2024-07-29T09:30:00Z',
     },
@@ -384,6 +387,7 @@ let defaultMockNotes: NoteData[] = [
         ],
         imageUrl: 'https://picsum.photos/seed/note-protein/400/250',
         authorId: 'u1', // Ali Veli
+        status: 'Taslak',
         createdAt: '2024-08-01T11:00:00Z',
         updatedAt: '2024-08-01T11:30:00Z',
     },
@@ -402,6 +406,7 @@ let defaultMockNotes: NoteData[] = [
         ],
         imageUrl: 'https://picsum.photos/seed/note-ecosystem/400/250',
         authorId: 'u2', // Ayşe Kaya
+        status: 'Yayınlandı',
         createdAt: '2024-08-02T15:00:00Z',
         updatedAt: '2024-08-02T15:45:00Z',
     }
@@ -423,13 +428,13 @@ let defaultMockRoles: Role[] = [
     description: 'Tam sistem erişimine sahip yönetici.',
     permissions: [
       'Dashboard Görüntüleme',
-      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme',
+      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Hazır İçeriği Görüntüleme',
       'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme',
       'Kategorileri Yönetme',
       'Sayfaları Yönetme',
       'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme',
       'Rolleri Yönetme',
-      'Ayarları Görüntüleme', 'Menü Yönetimi',
+      'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'
     ],
     userCount: 2, // Updated count
   },
@@ -439,9 +444,9 @@ let defaultMockRoles: Role[] = [
     description: 'İçerik oluşturma ve düzenleme yetkisine sahip.',
     permissions: [
       'Dashboard Görüntüleme',
-      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme',
+      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Hazır İçeriği Görüntüleme',
       'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme',
-      'Kategorileri Yönetme',
+      'Kategorileri Yönetme', 'Kullanım Kılavuzunu Görüntüleme'
     ],
     userCount: 2,
   },
@@ -449,7 +454,7 @@ let defaultMockRoles: Role[] = [
     id: 'user',
     name: 'User',
     description: 'Standart kullanıcı, içerik görüntüleme ve yorum yapma.',
-    permissions: [],
+    permissions: ['Kullanım Kılavuzunu Görüntüleme'],
     userCount: 2,
   },
 ];
@@ -631,6 +636,30 @@ const defaultPageTemplates: Template[] = [
       { id: generateId(), type: 'text', content: 'Şu anda açık bir pozisyonumuz bulunmuyorsa bile, genel başvurularınızı [e-posta adresi] adresine gönderebilirsiniz.' },
     ]
   },
+  { // User Guide Page Template
+    id: 'page-user-guide',
+    name: 'Kullanım Kılavuzu',
+    description: 'Sitenin veya uygulamanın nasıl kullanılacağını açıklayan detaylı bir kılavuz sayfası.',
+    previewImageUrl: 'https://picsum.photos/seed/page-guide/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: '[Platform Adı] Kullanım Kılavuzu' },
+      { id: generateId(), type: 'text', content: 'Bu kılavuz, [Platform Adı] platformunu etkili bir şekilde kullanmanıza yardımcı olmak için tasarlanmıştır. Aşağıdaki bölümlerde sıkça ihtiyaç duyacağınız bilgilere ve özelliklere ulaşabilirsiniz.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 1: Başlarken' },
+      { id: generateId(), type: 'text', content: '- Hesap Oluşturma ve Giriş Yapma\n- Profil Ayarları\n- Gösterge Paneline Genel Bakış' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 2: İçerik Yönetimi' },
+      { id: generateId(), type: 'text', content: '- Yeni Makale/Not Oluşturma\n- Zengin Metin Editörü Kullanımı\n- Medya Yükleme ve Yönetimi\n- Kategori ve Etiket Ekleme\n- Yayınlama Süreci' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 3: Kullanıcı Yönetimi (Adminler İçin)' },
+      { id: generateId(), type: 'text', content: '- Yeni Kullanıcı Ekleme\n- Rol ve İzin Yönetimi\n- Kullanıcı Aktivitelerini İzleme' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Sıkça Sorulan Sorular (SSS)' },
+      { id: generateId(), type: 'text', content: '**Soru:** [Yaygın bir soru örneği]\n**Cevap:** [Soruya ait cevap]' },
+      { id: generateId(), type: 'text', content: 'Daha fazla yardıma ihtiyacınız olursa, lütfen destek ekibimizle iletişime geçin.' },
+    ]
+  }
 ];
 
 
@@ -913,7 +942,7 @@ export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'jo
     loadData();
     const userIndex = mockUsers.findIndex(u => u.id === id);
     if (userIndex === -1) return null;
-    
+
     // If username is being updated, check for uniqueness
     if (data.username && data.username !== mockUsers[userIndex].username && mockUsers.some(u => u.username === data.username && u.id !== id)) {
         throw new Error(`Kullanıcı adı "${data.username}" zaten mevcut.`);
@@ -934,15 +963,15 @@ export const deleteUser = async (id: string): Promise<boolean> => {
   console.log(`[mock-data/deleteUser] Attempting to delete user with id: ${id}`);
   const initialLength = mockUsers.length;
   console.log(`[mock-data/deleteUser] Users before deletion (${initialLength}):`, JSON.stringify(mockUsers.map(u => u.id)));
-  
+
   const usersBefore = [...mockUsers]; // Create a copy for comparison
   mockUsers = mockUsers.filter(u => u.id !== id);
-  
+
   const success = mockUsers.length < initialLength;
-  
+
   console.log(`[mock-data/deleteUser] Users after filtering (${mockUsers.length}):`, JSON.stringify(mockUsers.map(u => u.id)));
   console.log(`[mock-data/deleteUser] Deletion success: ${success}`);
-  
+
   if (success) {
     console.log(`[mock-data/deleteUser] Saving updated user list to localStorage.`);
     saveData();
@@ -1033,6 +1062,7 @@ export const getAllPermissions = async (): Promise<PermissionCategory[]> => {
                 { id: 'Dashboard Görüntüleme', description: 'Yönetici gösterge panelini görüntüleyebilir.' },
                 { id: 'Ayarları Görüntüleme', description: 'Site genel ayarlarını görüntüleyebilir ve değiştirebilir.' },
                 { id: 'Menü Yönetimi', description: 'Site navigasyon menülerini yönetebilir.' },
+                { id: 'Kullanım Kılavuzunu Görüntüleme', description: 'Admin paneli kullanım kılavuzunu görüntüleyebilir.' },
             ],
         },
         {
@@ -1042,6 +1072,7 @@ export const getAllPermissions = async (): Promise<PermissionCategory[]> => {
                 { id: 'Makale Oluşturma', description: 'Yeni makaleler oluşturabilir.' },
                 { id: 'Makale Düzenleme', description: 'Mevcut makaleleri düzenleyebilir.' },
                 { id: 'Makale Silme', description: 'Makaleleri silebilir.' },
+                { id: 'Hazır İçeriği Görüntüleme', description: '"Hazır" durumundaki makale ve notları ana sitede görüntüleyebilir.' },
                 { id: 'Biyoloji Notlarını Görüntüleme', description: 'Tüm biyoloji notlarını listeleyebilir ve görüntüleyebilir.' },
                 { id: 'Yeni Biyoloji Notu Ekleme', description: 'Yeni biyoloji notları oluşturabilir.' },
                 { id: 'Biyoloji Notlarını Düzenleme', description: 'Mevcut biyoloji notlarını düzenleyebilir.' },
@@ -1082,6 +1113,7 @@ export interface PageData {
         intervalSeconds: number;
         maxArticles: number;
     };
+    status: 'Taslak' | 'Hazır' | 'Yayınlandı'; // Status for pages
     createdAt: string;
     updatedAt: string;
 }
@@ -1104,6 +1136,7 @@ let defaultMockPages: PageData[] = [
         seoDescription: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
         imageUrl: 'https://picsum.photos/seed/homepage-main/1200/600',
         heroSettings: { enabled: true, articleSource: 'featured', intervalSeconds: 5, maxArticles: 3 },
+        status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -1119,6 +1152,7 @@ let defaultMockPages: PageData[] = [
         seoTitle: 'Hakkımızda | TeknoBiyo',
         seoDescription: 'TeknoBiyo\'nun arkasındaki vizyonu, misyonu ve değerleri keşfedin.',
         imageUrl: 'https://picsum.photos/seed/aboutus-main/1200/600',
+        status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -1134,9 +1168,38 @@ let defaultMockPages: PageData[] = [
         seoTitle: 'İletişim | TeknoBiyo',
         seoDescription: 'TeknoBiyo ile iletişime geçin. Sorularınız ve önerileriniz için buradayız.',
         imageUrl: 'https://picsum.photos/seed/contactus-main/1200/600',
+        status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
+     { // User Guide Page
+        id: 'kullanim-kilavuzu',
+        title: 'Kullanım Kılavuzu',
+        slug: 'kullanim-kilavuzu', // Accessible by admin/editor
+        blocks: [
+            { id: 'kg1', type: 'heading', level: 1, content: 'TeknoBiyo Yönetim Paneli Kullanım Kılavuzu' },
+            { id: 'kg2', type: 'text', content: 'Bu kılavuz, TeknoBiyo yönetim panelini etkili bir şekilde kullanmanıza yardımcı olmak için tasarlanmıştır.' },
+            { id: 'kg3', type: 'heading', level: 2, content: '1. Giriş ve Gösterge Paneli' },
+            { id: 'kg4', type: 'text', content: '- **Giriş Yapma:** Kullanıcı adı/e-posta ve şifrenizle giriş yapın.\n- **Gösterge Paneli:** Sitenizin genel istatistiklerini ve son aktiviteleri görüntüler.' },
+            { id: 'kg5', type: 'heading', level: 2, content: '2. Makale Yönetimi' },
+            { id: 'kg6', type: 'text', content: '- **Yeni Makale Ekleme:** "Yeni Makale Ekle" butonuna tıklayın. Başlık, kategori, içerik blokları ve SEO ayarlarını doldurun.\n- **Makale Düzenleme:** Listeden bir makale seçip düzenleme ikonuna tıklayın.\n- **Durum Yönetimi:** Makaleleri "Taslak", "İncelemede", "Hazır" (Admin/Editör önizlemesi için) veya "Yayınlandı" olarak ayarlayabilirsiniz.\n- **Öne Çıkarma/Hero:** Makaleleri anasayfada öne çıkarmak veya Hero bölümünde göstermek için ilgili seçenekleri işaretleyin.' },
+             { id: 'kg7', type: 'image', url: 'https://picsum.photos/seed/admin-guide-article/800/400', alt: 'Makale Düzenleme Ekranı', caption: 'Makale düzenleme arayüzü.' },
+            { id: 'kg8', type: 'heading', level: 2, content: '3. Biyoloji Notları Yönetimi' },
+            { id: 'kg9', type: 'text', content: '- Makale yönetimine benzer şekilde biyoloji notları oluşturabilir, düzenleyebilirsiniz ve yayınlayabilirsiniz.\n- **AI Yardımcı:** Not oluştururken AI\'dan konuyla ilgili fikir ve taslak önerileri alabilirsiniz.' },
+            { id: 'kg10', type: 'heading', level: 2, content: '4. Sayfa Yönetimi' },
+            { id: 'kg11', type: 'text', content: '- "Anasayfa", "Hakkımızda" gibi statik sayfaların içeriklerini ve yapılarını düzenleyebilirsiniz.\n- **Canlı Önizleme:** Yaptığınız değişiklikleri sağ panelde anlık olarak görebilirsiniz.' },
+            { id: 'kg12', type: 'heading', level: 2, content: '5. Kullanıcı ve Rol Yönetimi' },
+            { id: 'kg13', type: 'text', content: '- Yeni kullanıcılar ekleyebilir, mevcut kullanıcıların bilgilerini ve rollerini düzenleyebilirsiniz.\n- Farklı kullanıcı rolleri (Admin, Editör, Kullanıcı) oluşturup bu rollere özel izinler atayabilirsiniz.' },
+            { id: 'kg14', type: 'heading', level: 2, content: 'İpuçları' },
+            { id: 'kg15', type: 'text', content: '- **Önizleme:** Değişikliklerinizi kaydetmeden veya yayınlamadan önce "Önizle" butonunu kullanarak nasıl görüneceğini kontrol edin.\n- **SEO:** Makale ve sayfalarınızın SEO ayarlarını (başlık, açıklama, anahtar kelimeler) doldurarak arama motorlarında daha iyi sıralamalar elde edebilirsiniz.\n- **Kategoriler ve Etiketler:** İçeriklerinizi düzenli tutmak ve kullanıcıların kolayca bulmasını sağlamak için kategorileri ve etiketleri etkili kullanın.' },
+        ],
+        seoTitle: 'Kullanım Kılavuzu | TeknoBiyo Admin',
+        seoDescription: 'TeknoBiyo yönetim panelinin nasıl kullanılacağına dair rehber.',
+        imageUrl: 'https://picsum.photos/seed/user-guide-main/1200/600',
+        status: 'Hazır', // Only visible to Admin/Editor
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    }
 ];
 let mockPages: PageData[] = [];
 
@@ -1177,6 +1240,7 @@ export const createPage = async (data: Omit<PageData, 'id' | 'createdAt' | 'upda
         ...data,
         id: generateSlug(data.title) + '-' + Date.now().toString(36),
         slug: generateSlug(data.slug || data.title),
+        status: data.status || 'Taslak', // Default to Taslak
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
@@ -1218,6 +1282,7 @@ export const updatePage = async (id: string, data: Partial<Omit<PageData, 'id' |
 export const deletePage = async (id: string): Promise<boolean> => {
     await delay(80);
     loadPageData();
+    if (id === 'anasayfa' || id === 'kullanim-kilavuzu') return false; // Prevent deletion of critical pages
     const initialLength = mockPages.length;
     mockPages = mockPages.filter(p => p.id !== id);
     const success = mockPages.length < initialLength;
