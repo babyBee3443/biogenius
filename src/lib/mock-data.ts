@@ -1,3 +1,4 @@
+
 import type { Block } from "@/components/admin/template-selector";
 
 // --- Category Data Structure ---
@@ -92,11 +93,13 @@ export interface Template {
 
 
 // --- localStorage Setup ---
-const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles';
-const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes';
-const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories';
-const USER_STORAGE_KEY = 'teknobiyo_mock_users';
-const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles'; // New key for roles
+export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles';
+export const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes';
+export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories';
+export const USER_STORAGE_KEY = 'teknobiyo_mock_users';
+export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles';
+export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages';
+
 
 // --- Initial Mock Data ---
 let defaultMockCategories: Category[] = [
@@ -670,7 +673,8 @@ let mockCategories: Category[] = [];
 let mockUsers: User[] = [];
 let mockRoles: Role[] = [];
 
-const loadData = () => {
+// Ensure data is loaded once when the module is first imported
+const loadInitialData = () => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         const storedCategories = localStorage.getItem(CATEGORY_STORAGE_KEY);
         mockCategories = storedCategories ? JSON.parse(storedCategories) : defaultMockCategories;
@@ -711,13 +715,15 @@ const saveData = () => {
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
             localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
+            localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages)); // Save pages
         } catch (error) {
             console.error("Error saving data to localStorage:", error);
         }
     }
 };
 
-loadData();
+loadInitialData();
+
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -733,13 +739,13 @@ export const generateSlug = (text: string) => {
 // --- Category CRUD ---
 export const getCategories = async (): Promise<Category[]> => {
     await delay(5);
-    loadData();
+    loadInitialData();
     return JSON.parse(JSON.stringify(mockCategories));
 };
 
 export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category> => {
     await delay(30);
-    loadData();
+    loadInitialData();
     const newCategory: Category = {
         ...data,
         id: generateSlug(data.name) + '-' + Date.now().toString(36),
@@ -754,7 +760,7 @@ export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category>
 
 export const updateCategory = async (id: string, data: Partial<Omit<Category, 'id'>>): Promise<Category | null> => {
     await delay(30);
-    loadData();
+    loadInitialData();
     const categoryIndex = mockCategories.findIndex(cat => cat.id === id);
     if (categoryIndex === -1) return null;
     if (data.name && mockCategories.some(cat => cat.id !== id && cat.name.toLowerCase() === data.name!.toLowerCase())) {
@@ -768,7 +774,7 @@ export const updateCategory = async (id: string, data: Partial<Omit<Category, 'i
 
 export const deleteCategory = async (id: string): Promise<boolean> => {
     await delay(50);
-    loadData();
+    loadInitialData();
     const categoryToDelete = mockCategories.find(cat => cat.id === id);
     if (!categoryToDelete) return false;
 
@@ -787,20 +793,20 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
 // --- Article CRUD ---
 export const getArticles = async (): Promise<ArticleData[]> => {
     await delay(10);
-    loadData();
+    loadInitialData();
     return JSON.parse(JSON.stringify(mockArticles));
 };
 
 export const getArticleById = async (id: string): Promise<ArticleData | null> => {
     await delay(10);
-    loadData();
+    loadInitialData();
     const article = mockArticles.find(article => article.id === id);
     return article ? JSON.parse(JSON.stringify(article)) : null;
 };
 
 export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'>): Promise<ArticleData> => {
     await delay(50);
-    loadData();
+    loadInitialData();
     const newArticle: ArticleData = {
         ...data,
         isHero: data.isHero ?? false,
@@ -815,7 +821,7 @@ export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' |
 
 export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 'id' | 'createdAt'>>): Promise<ArticleData | null> => {
     await delay(50);
-    loadData();
+    loadInitialData();
     const articleIndex = mockArticles.findIndex(article => article.id === id);
     if (articleIndex === -1) return null;
     const updatedArticle = {
@@ -831,7 +837,7 @@ export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 
 
 export const deleteArticle = async (id: string): Promise<boolean> => {
     await delay(80);
-    loadData();
+    loadInitialData();
     const initialLength = mockArticles.length;
     mockArticles = mockArticles.filter(article => article.id !== id);
     const success = mockArticles.length < initialLength;
@@ -842,23 +848,25 @@ export const deleteArticle = async (id: string): Promise<boolean> => {
 // --- Note CRUD ---
 export const getNotes = async (): Promise<NoteData[]> => {
     await delay(10);
-    loadData();
+    loadInitialData();
     return JSON.parse(JSON.stringify(mockNotes));
 };
 
 export const getNoteById = async (id: string): Promise<NoteData | null> => {
     await delay(10);
-    loadData();
+    loadInitialData();
     const note = mockNotes.find(note => note.id === id);
     return note ? JSON.parse(JSON.stringify(note)) : null;
 };
 
 export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt'>): Promise<NoteData> => {
     await delay(50);
-    loadData();
+    loadInitialData();
     const newNote: NoteData = {
         ...data,
         id: `note-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
+        status: data.status || 'Taslak',
+        authorId: data.authorId || 'u1', // Default author if not provided
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
@@ -869,7 +877,7 @@ export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'upda
 
 export const updateNote = async (id: string, data: Partial<Omit<NoteData, 'id' | 'createdAt'>>): Promise<NoteData | null> => {
     await delay(50);
-    loadData();
+    loadInitialData();
     const noteIndex = mockNotes.findIndex(note => note.id === id);
     if (noteIndex === -1) return null;
     const updatedNote = {
@@ -884,7 +892,7 @@ export const updateNote = async (id: string, data: Partial<Omit<NoteData, 'id' |
 
 export const deleteNote = async (id: string): Promise<boolean> => {
     await delay(80);
-    loadData();
+    loadInitialData();
     const initialLength = mockNotes.length;
     mockNotes = mockNotes.filter(note => note.id !== id);
     const success = mockNotes.length < initialLength;
@@ -895,20 +903,20 @@ export const deleteNote = async (id: string): Promise<boolean> => {
 // --- User CRUD Functions ---
 export const getUsers = async (): Promise<User[]> => {
     await delay(10);
-    loadData();
+    loadInitialData();
     return JSON.parse(JSON.stringify(mockUsers));
 };
 
 export const getUserById = async (id: string): Promise<User | null> => {
     await delay(10);
-    loadData();
+    loadInitialData();
     const user = mockUsers.find(u => u.id === id);
     return user ? JSON.parse(JSON.stringify(user)) : null;
 };
 
 export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin'>): Promise<User> => {
     await delay(50);
-    loadData();
+    loadInitialData();
     // Validate if username or email already exists
     if (mockUsers.some(u => u.username === data.username)) {
         throw new Error(`Kullanıcı adı "${data.username}" zaten mevcut.`);
@@ -939,7 +947,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
 
 export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'joinedAt' | 'email'>>): Promise<User | null> => {
     await delay(50);
-    loadData();
+    loadInitialData();
     const userIndex = mockUsers.findIndex(u => u.id === id);
     if (userIndex === -1) return null;
 
@@ -959,7 +967,7 @@ export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'jo
 
 export const deleteUser = async (id: string): Promise<boolean> => {
   await delay(80);
-  loadData();
+  loadInitialData();
   console.log(`[mock-data/deleteUser] Attempting to delete user with id: ${id}`);
   const initialLength = mockUsers.length;
   console.log(`[mock-data/deleteUser] Users before deletion (${initialLength}):`, JSON.stringify(mockUsers.map(u => u.id)));
@@ -985,20 +993,20 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 // --- Role CRUD Functions ---
 export const getRoles = async (): Promise<Role[]> => {
   await delay(10);
-  loadData();
+  loadInitialData();
   return JSON.parse(JSON.stringify(mockRoles));
 };
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
   await delay(10);
-  loadData();
+  loadInitialData();
   const role = mockRoles.find(r => r.id === id);
   return role ? JSON.parse(JSON.stringify(role)) : null;
 };
 
 export const createRole = async (data: Omit<Role, 'id' | 'userCount'>): Promise<Role> => {
   await delay(50);
-  loadData();
+  loadInitialData();
   if (mockRoles.some(r => r.name.toLowerCase() === data.name.toLowerCase())) {
     throw new Error(`"${data.name}" adında bir rol zaten mevcut.`);
   }
@@ -1014,7 +1022,7 @@ export const createRole = async (data: Omit<Role, 'id' | 'userCount'>): Promise<
 
 export const updateRole = async (id: string, data: Partial<Omit<Role, 'id' | 'userCount'>>): Promise<Role | null> => {
   await delay(50);
-  loadData();
+  loadInitialData();
   const roleIndex = mockRoles.findIndex(r => r.id === id);
   if (roleIndex === -1) return null;
   if (data.name && data.name !== mockRoles[roleIndex].name && mockRoles.some(r => r.name.toLowerCase() === data.name!.toLowerCase())) {
@@ -1028,7 +1036,7 @@ export const updateRole = async (id: string, data: Partial<Omit<Role, 'id' | 'us
 
 export const deleteRole = async (id: string): Promise<boolean> => {
   await delay(80);
-  loadData();
+  loadInitialData();
   const roleToDelete = mockRoles.find(r => r.id === id);
   if (!roleToDelete) return false;
 
@@ -1118,7 +1126,7 @@ export interface PageData {
     updatedAt: string;
 }
 
-const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages';
+
 let defaultMockPages: PageData[] = [
     {
         id: 'anasayfa',
@@ -1556,6 +1564,6 @@ export const allMockTemplates: Template[] = [
 
 
 // Export loadData function for potential manual reloading if needed elsewhere
-export { loadData };
+export { loadInitialData };
 
     

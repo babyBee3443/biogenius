@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer } from "lucide-react"; // Added Timer icon
+import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download } from "lucide-react"; // Added Timer and Download icons
 import { toast } from "@/hooks/use-toast";
+import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY } from '@/lib/mock-data'; // Import storage keys
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
@@ -25,6 +26,7 @@ export default function AdminSettingsPage() {
   const [adminEmail, setAdminEmail] = React.useState("admin@example.com");
   const [maintenanceMode, setMaintenanceMode] = React.useState(false);
   const [sessionTimeout, setSessionTimeout] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
+  const [exporting, setExporting] = React.useState(false);
 
   // Load existing settings on mount
   React.useEffect(() => {
@@ -53,6 +55,55 @@ export default function AdminSettingsPage() {
     console.log("Genel ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout });
   };
 
+  const handleExportData = () => {
+    if (typeof window === 'undefined') return;
+    setExporting(true);
+    try {
+      const allData: Record<string, any> = {};
+      const dataKeys = {
+        articles: ARTICLE_STORAGE_KEY,
+        notes: NOTE_STORAGE_KEY,
+        categories: CATEGORY_STORAGE_KEY,
+        users: USER_STORAGE_KEY,
+        roles: ROLE_STORAGE_KEY,
+        pages: PAGE_STORAGE_KEY,
+      };
+
+      for (const [key, storageKey] of Object.entries(dataKeys)) {
+        const storedItem = localStorage.getItem(storageKey);
+        if (storedItem) {
+          try {
+            allData[key] = JSON.parse(storedItem);
+          } catch (e) {
+            console.warn(`Could not parse ${key} from localStorage:`, e);
+            allData[key] = []; // Default to empty array if parsing fails
+          }
+        } else {
+          allData[key] = []; // Default to empty array if not found
+        }
+      }
+
+      const jsonString = JSON.stringify(allData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const date = new Date().toISOString().slice(0, 10);
+      a.download = `teknobiyo_data_${date}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Veri Dışa Aktarıldı", description: "Tüm uygulama verileri başarıyla bilgisayarınıza indirildi." });
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({ variant: "destructive", title: "Dışa Aktarma Hatası", description: "Veriler dışa aktarılırken bir sorun oluştu." });
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -60,7 +111,7 @@ export default function AdminSettingsPage() {
       <p className="text-muted-foreground">Site yapılandırmasını ve tercihlerini yönetin.</p>
 
         <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6"> {/* Adjusted grid for more tabs */}
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6"> {/* Adjusted grid for more tabs */}
                 <TabsTrigger value="general">Genel</TabsTrigger>
                 <TabsTrigger value="navigation">Navigasyon</TabsTrigger> {/* Changed Appearance to Navigation */}
                 <TabsTrigger value="appearance">Görünüm</TabsTrigger>
@@ -116,6 +167,19 @@ export default function AdminSettingsPage() {
                             <p className="text-xs text-muted-foreground">
                                 Belirtilen süre (dakika cinsinden) işlem yapılmadığında yönetici oturumu otomatik olarak sonlandırılır. (Min: 1, Maks: 120)
                             </p>
+                        </div>
+                        <Separator />
+                        {/* Data Export Section */}
+                        <div>
+                            <h3 className="text-md font-medium mb-2">Veri Yönetimi</h3>
+                            <p className="text-sm text-muted-foreground mb-3">
+                                Sitedeki tüm makale, not, kategori, kullanıcı ve rol verilerini JSON formatında bilgisayarınıza yedekleyebilirsiniz.
+                                Bu dosya daha sonra siteyi geri yüklemek için kullanılabilir (İçe aktarma özelliği yakında eklenecektir).
+                            </p>
+                            <Button onClick={handleExportData} variant="outline" disabled={exporting}>
+                                <Download className="mr-2 h-4 w-4" />
+                                {exporting ? "Veriler Dışa Aktarılıyor..." : "Tüm Verileri Dışa Aktar"}
+                            </Button>
                         </div>
                          <Separator />
                         <div className="flex justify-end">
