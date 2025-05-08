@@ -230,7 +230,7 @@ export default function Home() {
             {(part.text.toLowerCase() === "teknoloji" || part.text.toLowerCase() === "biyolojinin") && (
                 <motion.span
                     className={cn(
-                        "absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70 dark:via-transparent",
+                        "absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70 dark:via-primary/20 dark:opacity-50",
                         "pointer-events-none" 
                     )}
                     style={{
@@ -272,4 +272,3 @@ export default function Home() {
     </div>
   );
 }
-
