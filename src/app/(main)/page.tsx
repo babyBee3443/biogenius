@@ -227,25 +227,7 @@ export default function Home() {
                 {char === ' ' ? '\u00A0' : char}
               </motion.span>
             ))}
-            {(part.text.toLowerCase() === "teknoloji" || part.text.toLowerCase() === "biyolojinin") && (
-                <motion.span
-                    className={cn(
-                        "absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70 dark:via-primary/20 dark:opacity-50",
-                        "pointer-events-none" 
-                    )}
-                    style={{
-                        backgroundSize: '200% 100%',
-                    }}
-                    initial={{ backgroundPosition: '-200% 0' }}
-                    animate={{ backgroundPosition: ['-200% 0', '200% 0'] }}
-                    transition={{
-                        duration: 2.5, 
-                        ease: "linear",
-                        repeat: Infinity,
-                        delay: partIndex * 0.5 + 0.5, 
-                    }}
-                 />
-            )}
+            {/* Removed the background sheen animation span here */}
           </span>
         ))}
       </motion.h1>
