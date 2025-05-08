@@ -416,6 +416,7 @@ let defaultMockNotes: NoteData[] = [
 ];
 
 let defaultMockUsers: User[] = [
+  { id: 'superadmin', name: 'Super Admin', username: 'superadmin', email: 'superadmin@teknobiyo.example.com', role: 'Admin', joinedAt: '2024-01-01T00:00:00Z', avatar: 'https://picsum.photos/seed/superadmin/128/128', lastLogin: new Date().toISOString(), bio: 'Sistem Yöneticisi.', xProfile: 'teknobiyo_admin' },
   { id: 'u1', name: 'Ali Veli', username: 'aliveli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15T10:00:00Z', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22T10:30:00Z', bio: 'TeknoBiyo kurucusu ve baş yazarı.', website: 'https://aliveli.dev', twitterHandle: 'aliveli', linkedinProfile: 'aliveli-profil', instagramProfile: 'aliveli_insta', facebookProfile: 'alivelifb', youtubeChannel: 'aliveliyoutube', xProfile: 'aliveli_x' },
   { id: 'u2', name: 'Ayşe Kaya', username: 'aysekaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22T11:00:00Z', avatar: 'https://picsum.photos/seed/u2/128/128', lastLogin: '2024-07-21T15:00:00Z', bio: 'Biyoloji ve sağlık alanında uzman editör.', instagramProfile: 'aysekaya_insta', xProfile: 'aysekaya_x' },
   { id: 'u3', name: 'Mehmet Yılmaz', username: 'mehmetyilmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10T12:00:00Z', avatar: 'https://picsum.photos/seed/u3/128/128', lastLogin: '2024-07-20T09:15:00Z' },
@@ -439,7 +440,7 @@ let defaultMockRoles: Role[] = [
       'Rolleri Yönetme',
       'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'
     ],
-    userCount: 2, // Updated count
+    userCount: 3, // Updated count
   },
   {
     id: 'editor',
@@ -1563,7 +1564,7 @@ export const allMockTemplates: Template[] = [
 ];
 
 
-// Export loadData function for potential manual reloading if needed elsewhere
-export { loadInitialData };
+// Export loadData function for potential manual reloading if needed elsewhere (optional)
+export { loadInitialData as reloadMockData };
 
     
