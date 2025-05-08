@@ -74,12 +74,12 @@ export default function AdminLayout({
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
         const timeoutValue = parseInt(storedTimeout, 10);
-        setSessionTimeout(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
+        setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
       } else {
-        setSessionTimeout(DEFAULT_SESSION_TIMEOUT_MINUTES);
+        setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-  }, [router]);
+  }, [router, setSessionTimeoutMinutes]);
 
 
   React.useEffect(() => {
@@ -146,12 +146,9 @@ export default function AdminLayout({
         </SidebarHeader>
 
         <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-0">
-             <span className="block font-bold text-lg mt-1.5"> {/* Adjusted margin-top */}
-                TeknoBiyo
+             <span className="block font-semibold text-sm text-muted-foreground"> {/* Adjusted margin-top */}
+                Hoşgeldiniz
             </span>
-          <span className="font-semibold text-sm text-muted-foreground">
-            Hoşgeldiniz
-          </span>
           <span className="block font-bold text-md mt-0.5">
             {currentUserName}
           </span>
@@ -313,7 +310,7 @@ export default function AdminLayout({
                      <SidebarMenuButton asChild tooltip="Profil">
                         <Link href={currentUserId ? `/admin/profile` : '/login'}>
                           <Avatar className="size-5">
-                            <AvatarImage src={currentUserAvatar} alt={currentUserName} />
+                            <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
                             <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <span>{currentUserName}</span>
@@ -344,7 +341,7 @@ export default function AdminLayout({
             <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
               <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">
-                    <AvatarImage src={currentUserAvatar} alt={currentUserName} />
+                    <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
                     <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                   </Avatar>
               </Button>
