@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including getCategories
+import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data'; // Import mock data functions including getCategories
 import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
 
 import {
@@ -51,7 +51,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = params.id as string; 
+    const articleId = params.id as string; // Correctly access params.id
 
     // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
@@ -146,23 +146,15 @@ export default function EditArticlePage() {
     }, [articleId]); // Only run when articleId changes
 
      // --- Handlers ---
-     const generateSlug = (text: string) => {
-        return text
-            .toLowerCase()
-            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-            .replace(/[^a-z0-9 -]/g, '')
-            .replace(/\s+/g, '-').replace(/-+/g, '-');
-    };
-
      // Auto-update slug when title changes (debounced, respects manual changes)
      const debouncedSetSlug = useDebouncedCallback((newTitle: string, originalTitle: string, currentSlug: string) => {
          if (newTitle && newTitle !== originalTitle) {
              // Check if slug is empty OR if slug matches the slug generated from the *original* title
-             if (!currentSlug || currentSlug === generateSlug(originalTitle)) {
-                 setSlug(generateSlug(newTitle));
+             if (!currentSlug || currentSlug === generateSlugUtil(originalTitle)) {
+                 setSlug(generateSlugUtil(newTitle));
              }
          } else if (newTitle && !currentSlug) { // Generate slug if title exists but slug is empty
-            setSlug(generateSlug(newTitle));
+            setSlug(generateSlugUtil(newTitle));
          }
      }, 500); // 500ms delay
 
@@ -170,7 +162,7 @@ export default function EditArticlePage() {
          if (articleData) { // Only run if articleData is loaded
              debouncedSetSlug(title, articleData.title, slug);
          } else if (title && !slug) { // Handle initial slug generation for potentially new articles (though this is edit page)
-            setSlug(generateSlug(title));
+            setSlug(generateSlugUtil(title));
          }
      }, [title, articleData, slug, debouncedSetSlug]);
 
@@ -235,7 +227,7 @@ export default function EditArticlePage() {
 
     const handleSave = async (publish: boolean = false) => {
         // Determine the status to save based on the 'publish' flag and current status
-        let finalStatus = status; 
+        let finalStatus = status;
 
         if (publish && status !== 'Yayınlandı') {
             finalStatus = "Yayınlandı";
@@ -263,18 +255,18 @@ export default function EditArticlePage() {
             return;
         }
 
-         const currentData: Partial<ArticleData> = { 
+         const currentData: Partial<ArticleData> = {
             title,
             excerpt: excerpt || "",
-            category, 
-            status: finalStatus, 
+            category,
+            status: finalStatus,
             mainImageUrl: mainImageUrl || null,
             isFeatured,
-            isHero, 
-            slug: slug, 
+            isHero,
+            slug: slug,
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
-            blocks: blocks.length > 0 ? blocks : [createDefaultBlock()], 
+            blocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
         };
@@ -289,11 +281,11 @@ export default function EditArticlePage() {
                  setArticleData(updatedArticle);
                  setTitle(updatedArticle.title);
                  setExcerpt(updatedArticle.excerpt || '');
-                 setCategory(updatedArticle.category); 
-                 setStatus(updatedArticle.status); 
+                 setCategory(updatedArticle.category);
+                 setStatus(updatedArticle.status);
                  setMainImageUrl(updatedArticle.mainImageUrl || "");
                  setIsFeatured(updatedArticle.isFeatured);
-                 setIsHero(updatedArticle.isHero); 
+                 setIsHero(updatedArticle.isHero);
                  setBlocks(updatedArticle.blocks && updatedArticle.blocks.length > 0 ? updatedArticle.blocks : [createDefaultBlock()]);
                  setSeoTitle(updatedArticle.seoTitle || '');
                  setSeoDescription(updatedArticle.seoDescription || '');
@@ -348,7 +340,7 @@ export default function EditArticlePage() {
             id: generateBlockId()
         }));
         setBlocks(newBlocks);
-        setTemplateApplied(true); 
+        setTemplateApplied(true);
         setIsTemplateSelectorOpen(false);
         toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
      };
@@ -364,7 +356,7 @@ export default function EditArticlePage() {
 
 
     const handlePreview = () => {
-        if (typeof window === 'undefined') return; 
+        if (typeof window === 'undefined') return;
 
         if (!category) {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
@@ -373,10 +365,10 @@ export default function EditArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: articleId || 'preview_edit', 
+            id: articleId || 'preview_edit',
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
-            category: category, 
+            category: category,
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
             status: status,
@@ -386,13 +378,13 @@ export default function EditArticlePage() {
             createdAt: articleData?.createdAt || new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            slug: slug || generateSlug(title),
+            slug: slug || generateSlugUtil(title),
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
 
         console.log(`[EditArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[EditArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2)); 
+        console.log(`[EditArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2));
 
 
         try {
@@ -442,7 +434,7 @@ export default function EditArticlePage() {
                  } else {
                       console.log("[EditArticlePage/handlePreview] Preview window opened successfully after delay.");
                  }
-            }, 250); 
+            }, 250);
 
         } catch (error: any) {
             console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
@@ -463,13 +455,13 @@ export default function EditArticlePage() {
 
      // --- Revert to Draft or Ready Handler ---
      const handleRevertToDraftOrReady = () => {
-        setStatus('Taslak'); 
-        handleSave(false); 
+        setStatus('Taslak');
+        handleSave(false);
      };
 
       const handleMarkAsReady = () => {
         setStatus('Hazır');
-        handleSave(false); 
+        handleSave(false);
     };
 
 
@@ -488,7 +480,7 @@ export default function EditArticlePage() {
          return <div className="text-center py-10 text-destructive">{error}</div>;
     }
 
-    if (!articleData && !loading) { 
+    if (!articleData && !loading) {
          return <div className="text-center py-10">Makale bulunamadı veya yüklenemedi.</div>;
     }
 
@@ -504,7 +496,7 @@ export default function EditArticlePage() {
                     {articleData ? `Makaleyi Düzenle` : 'Yeni Makale'}
                 </h1>
                 <div className="flex items-center gap-2">
-                     {articleData && ( 
+                     {articleData && (
                         <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
@@ -534,7 +526,7 @@ export default function EditArticlePage() {
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
-                                     <Select value={category} onValueChange={(value) => setCategory(value)} required> 
+                                     <Select value={category} onValueChange={(value) => setCategory(value)} required>
                                          <SelectTrigger id="category">
                                              <SelectValue placeholder="Kategori seçin" />
                                          </SelectTrigger>
@@ -563,7 +555,7 @@ export default function EditArticlePage() {
                                      </div>
                                  )}
                              </div>
-                             <div className="flex items-center gap-4 pt-2"> 
+                             <div className="flex items-center gap-4 pt-2">
                                  <div className="flex items-center space-x-2">
                                      <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
                                      <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
@@ -645,7 +637,7 @@ export default function EditArticlePage() {
                                              <Input
                                                  id="slug"
                                                  value={slug}
-                                                 onChange={(e) => setSlug(generateSlug(e.target.value))}
+                                                 onChange={(e) => setSlug(generateSlugUtil(e.target.value))}
                                                  placeholder="makale-basligi-url"
                                                  required
                                              />
@@ -679,7 +671,7 @@ export default function EditArticlePage() {
                                               title={seoTitle || title}
                                               description={seoDescription || excerpt}
                                               slug={slug}
-                                              category={category || "kategori"} 
+                                              category={category || "kategori"}
                                           />
                                       </div>
                                  </CardContent>
@@ -759,12 +751,12 @@ export default function EditArticlePage() {
                                <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving || !slug}> 
+                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving || !slug}>
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 Kaydet
                              </Button>
                              {status !== 'Yayınlandı' && (
-                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving || !slug}> 
+                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving || !slug}>
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                      Yayınla
                                  </Button>
@@ -804,10 +796,9 @@ export default function EditArticlePage() {
                   isOpen={isTemplateSelectorOpen}
                   onClose={() => setIsTemplateSelectorOpen(false)}
                   onSelectTemplateBlocks={handleTemplateSelect}
-                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))} 
+                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))}
                   templateTypeFilter="article"
               />
          </div>
     );
 }
-
