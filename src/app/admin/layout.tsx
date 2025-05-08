@@ -136,31 +136,35 @@ export default function AdminLayout({
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex items-center justify-center p-4 mt-2"> {/* Reduced mt-4 to mt-2 */}
+        <SidebarHeader className="flex flex-col items-center justify-center p-4 mt-2"> {/* Reduced mt-4 to mt-2, added flex-col */}
           {/* Logo SVG */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
-          >
-            <path d="M4 4C4 4 6 12 12 12C18 12 20 20 20 20" />
-            <path d="M4 20C4 20 6 12 12 12C18 12 20 4 20 4" />
-            <path d="M6.5 7.5L9.5 5.5" />
-            <path d="M14.5 18.5L17.5 16.5" />
-            <path d="M6.5 16.5L9.5 18.5" />
-            <path d="M14.5 5.5L17.5 7.5" />
-            <path d="M10 12H14" />
-          </svg>
-          <span className="font-bold text-lg ml-2 group-data-[collapsible=icon]:hidden">TeknoBiyo</span>
+          <Link href="/admin" className="flex flex-col items-center group" title="Gösterge Paneline Git">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
+            >
+                <path d="M4 4C4 4 6 12 12 12C18 12 20 20 20 20" />
+                <path d="M4 20C4 20 6 12 12 12C18 12 20 4 20 4" />
+                <path d="M6.5 7.5L9.5 5.5" />
+                <path d="M14.5 18.5L17.5 16.5" />
+                <path d="M6.5 16.5L9.5 18.5" />
+                <path d="M14.5 5.5L17.5 7.5" />
+                <path d="M10 12H14" />
+            </svg>
+            <span className="font-bold text-lg mt-1.5 group-data-[collapsible=icon]:hidden"> {/* Increased margin-top slightly */}
+                TeknoBiyo
+            </span>
+          </Link>
         </SidebarHeader>
 
         {/* Welcome User Section */}
-        <div className="py-2 text-center group-data-[collapsible=icon]:hidden"> {/* Reduced py-4 to py-2 */}
+        <div className="py-2 text-center group-data-[collapsible=icon]:hidden mt-2"> {/* Added mt-2 for spacing */}
           <span className="font-semibold text-sm text-muted-foreground"> {/* Reduced text-md to text-sm */}
             Hoşgeldiniz
           </span>
@@ -313,7 +317,7 @@ export default function AdminLayout({
                  <SidebarMenu>
                    <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Profil">
-                        <Link href="/admin/profile">
+                        <Link href={`/admin/profile`}> {/* Dynamically link to current user's profile */}
                           <Avatar className="size-5">
                             <AvatarImage src={currentUserAvatar} alt={currentUserName} />
                             <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
@@ -330,7 +334,6 @@ export default function AdminLayout({
                         </button>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
-                   {/* "Siteyi Görüntüle" button removed from here */}
                  </SidebarMenu>
            </SidebarGroup>
         </SidebarFooter>
@@ -339,7 +342,12 @@ export default function AdminLayout({
          <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:justify-end">
            <SidebarTrigger className="md:hidden" />
            <div className="flex items-center gap-2">
-            <Link href="/admin/profile" passHref>
+            <Button variant="outline" asChild size="sm">
+                <Link href="/" target="_blank">
+                    <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
+                </Link>
+            </Button>
+            <Link href={`/admin/profile`} passHref>
               <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">
                     <AvatarImage src={currentUserAvatar} alt={currentUserName} />
@@ -349,11 +357,10 @@ export default function AdminLayout({
             </Link>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.16)+theme(spacing.6))] md:pt-[calc(theme(spacing.16)+theme(spacing.6))]">
+         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)+theme(spacing.6))] md:pt-[calc(theme(spacing.14)+theme(spacing.6))]"> {/* Adjusted padding-top */}
             {permissionsLoading ? <div>İzinler yükleniyor...</div> : children}
          </main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
-

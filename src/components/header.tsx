@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, UserShield } from 'lucide-react'; // Added BookCopy and UserShield icons
+import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react'; // Replaced UserShield with ShieldCheck
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet components
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Import Popover
 import { Input } from '@/components/ui/input'; // Import Input
@@ -47,6 +47,55 @@ const Header = () => {
   const [isSearching, setIsSearching] = React.useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false); // Control popover state
   const [isAdminOrEditor, setIsAdminOrEditor] = React.useState(false);
+  const [isMounted, setIsMounted] = React.useState(false); // To prevent hydration errors
+
+
+  React.useEffect(() => {
+    setIsMounted(true); // Component has mounted
+    // Check for admin/editor role on mount
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user && (user.role === 'Admin' || user.role === 'Editor')) {
+            setIsAdminOrEditor(true);
+          } else {
+            setIsAdminOrEditor(false);
+          }
+        } catch (e) {
+          console.error("Error parsing current user from localStorage", e);
+          setIsAdminOrEditor(false);
+        }
+      } else {
+        setIsAdminOrEditor(false);
+      }
+
+      // Listen for changes to currentUser in localStorage
+      const handleStorageChange = () => {
+        const updatedStoredUser = localStorage.getItem('currentUser');
+        if (updatedStoredUser) {
+            try {
+                const user = JSON.parse(updatedStoredUser);
+                setIsAdminOrEditor(user && (user.role === 'Admin' || user.role === 'Editor'));
+            } catch (e) {
+                setIsAdminOrEditor(false);
+            }
+        } else {
+            setIsAdminOrEditor(false);
+        }
+      };
+      window.addEventListener('storage', handleStorageChange);
+      // Also listen for custom event if login page dispatches it
+      window.addEventListener('currentUserUpdated', handleStorageChange);
+
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('currentUserUpdated', handleStorageChange);
+      };
+    }
+  }, []);
 
 
   // Debounce search input
@@ -67,28 +116,6 @@ const Header = () => {
       clearTimeout(handler);
     };
   }, [searchQuery]);
-
-  // Check for admin/editor role on mount
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          if (user && (user.role === 'Admin' || user.role === 'Editor')) {
-            setIsAdminOrEditor(true);
-          } else {
-            setIsAdminOrEditor(false);
-          }
-        } catch (e) {
-          console.error("Error parsing current user from localStorage", e);
-          setIsAdminOrEditor(false);
-        }
-      } else {
-        setIsAdminOrEditor(false);
-      }
-    }
-  }, []);
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,10 +256,10 @@ const Header = () => {
 
           <ThemeToggle />
 
-          {isAdminOrEditor && (
+          {isMounted && isAdminOrEditor && ( // Only render Admin Panel button if mounted and user is admin/editor
             <Button variant="outline" size="sm" asChild className="ml-2">
               <Link href="/admin">
-                <UserShield className="mr-2 h-4 w-4" />
+                <ShieldCheck className="mr-2 h-4 w-4" />
                 Admin Paneli
               </Link>
             </Button>
@@ -262,10 +289,10 @@ const Header = () => {
                          </Button>
                      </Link>
                   ))}
-                  {isAdminOrEditor && (
+                  {isMounted && isAdminOrEditor && ( // Only render Admin Panel button if mounted and user is admin/editor
                     <Button variant="outline" asChild className="mt-4">
                         <Link href="/admin">
-                            <UserShield className="mr-2 h-4 w-4" />
+                            <ShieldCheck className="mr-2 h-4 w-4" />
                             Admin Paneli
                         </Link>
                     </Button>
