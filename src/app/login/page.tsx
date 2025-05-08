@@ -62,7 +62,6 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    // Simulate API call / User fetching
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     try {
@@ -75,40 +74,14 @@ export default function LoginPage() {
                 (user.username && user.username.toLowerCase() === lowercasedInput)
         );
 
-        // For mock purposes, any password for a found user is accepted
-        // In a real app, you'd compare a hashed password.
-        if (foundUser && password) {
-            // Store the entire foundUser object (or necessary parts including ID) in localStorage
+        if (foundUser && password) { // For mock, accept any password if user is found
             if (typeof window !== 'undefined') {
                 localStorage.setItem('currentUser', JSON.stringify(foundUser));
-                 // Dispatch an event to notify other components (like Header/Layout) of user change
-                window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+                window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify other components/tabs
             }
             toast({
                 title: 'Giriş Başarılı!',
                 description: `${foundUser.name}, admin paneline yönlendiriliyorsunuz...`,
-            });
-            router.push('/admin');
-        } else if (
-          (emailOrUsername.toLowerCase() === 'admin@teknobiyo.com' || emailOrUsername.toLowerCase() === 'admin') &&
-          password === 'password123' // Default admin credentials
-        ) {
-           const defaultAdminUser: UserData = {
-                id: 'admin-default', // A specific ID for the default admin
-                name: 'Admin User',
-                username: 'admin',
-                email: 'admin@teknobiyo.com',
-                role: 'Admin',
-                joinedAt: new Date().toISOString(),
-                avatar: 'https://picsum.photos/seed/admin-avatar/32/32'
-           };
-           if (typeof window !== 'undefined') {
-                localStorage.setItem('currentUser', JSON.stringify(defaultAdminUser));
-                window.dispatchEvent(new CustomEvent('currentUserUpdated'));
-            }
-           toast({
-                title: 'Giriş Başarılı! (Varsayılan Admin)',
-                description: 'Admin paneline yönlendiriliyorsunuz...',
             });
             router.push('/admin');
         } else {

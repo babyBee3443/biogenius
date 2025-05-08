@@ -1,4 +1,3 @@
-
 "use client"; // Add "use client" for useState and useEffect
 
 import type { Metadata } from 'next';
@@ -27,12 +26,6 @@ import { useIdleTimeout } from '@/hooks/useIdleTimeout'; // Import the new hook
 import { toast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions'; // Import usePermissions hook
 
-// Metadata cannot be dynamic in client components this way.
-// export const metadata: Metadata = {
-//   title: 'TeknoBiyo Admin',
-//   description: 'TeknoBiyo Yönetim Paneli',
-// };
-
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
 
@@ -44,67 +37,69 @@ export default function AdminLayout({
 }) {
   const [currentUserName, setCurrentUserName] = React.useState("Kullanıcı");
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // Added for profile link
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const router = useRouter();
-  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(); // Use the hook
+  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions();
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
     if (typeof window !== 'undefined') {
-      // Load User Data
       const storedUserString = localStorage.getItem('currentUser');
       if (storedUserString) {
         try {
           const userData = JSON.parse(storedUserString);
           setCurrentUserName(userData.name || "Kullanıcı");
           setCurrentUserAvatar(userData.avatar || "https://picsum.photos/seed/default-avatar/32/32");
+          setCurrentUserId(userData.id || null); // Store user ID
         } catch (e) {
-          console.error("Error parsing user data from localStorage", e);
-          setCurrentUserName("Kullanıcı"); // Fallback
+          console.error("Error parsing user data from localStorage in AdminLayout", e);
+          setCurrentUserName("Kullanıcı");
           setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
+          setCurrentUserId(null);
+          // If parsing fails, consider it a logout or corrupted data
+          localStorage.removeItem('currentUser');
+          // router.push('/login'); // Optionally redirect
         }
       } else {
-        // If no user in localStorage, redirect to login
-        toast({ variant: "destructive", title: "Oturum Yok", description: "Lütfen giriş yapın." });
-        router.push('/login');
-        return; // Exit early if not logged in
+        // No user in localStorage, redirect to login if not already on login page
+        // This check prevents redirect loops if already on /login or public pages
+        if (!window.location.pathname.startsWith('/login')) {
+          toast({ variant: "destructive", title: "Oturum Yok", description: "Lütfen giriş yapın." });
+          router.push('/login');
+        }
+        return;
       }
 
-      // Load Session Timeout Setting
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
         const timeoutValue = parseInt(storedTimeout, 10);
-        if (!isNaN(timeoutValue) && timeoutValue > 0) {
-          setSessionTimeoutMinutes(timeoutValue);
-        } else {
-          setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
-        }
+        setSessionTimeout(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
       } else {
-        setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
+        setSessionTimeout(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
   }, [router]);
 
 
   React.useEffect(() => {
-    // Set document title (alternative for metadata in client components)
     document.title = 'TeknoBiyo Admin';
-    loadUserDataAndSettings(); // Load user data and settings on initial mount
+    loadUserDataAndSettings();
 
-    // Listen for custom event to update user data or settings
-    const handleStorageChange = () => {
-        console.log("Storage change detected, reloading user data and settings.");
-        loadUserDataAndSettings();
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
+            console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
+            loadUserDataAndSettings();
+        }
     };
-
+    
+    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('currentUserUpdated', loadUserDataAndSettings);
-    window.addEventListener('storage', handleStorageChange); // Listen for direct localStorage changes from other tabs/windows
-    window.addEventListener('sessionTimeoutChanged', loadUserDataAndSettings); // Custom event for timeout setting change
-
+    window.addEventListener('sessionTimeoutChanged', loadUserDataAndSettings);
 
     return () => {
-      window.removeEventListener('currentUserUpdated', loadUserDataAndSettings);
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('currentUserUpdated', loadUserDataAndSettings);
       window.removeEventListener('sessionTimeoutChanged', loadUserDataAndSettings);
     };
   }, [loadUserDataAndSettings]);
@@ -112,32 +107,22 @@ export default function AdminLayout({
   const handleLogout = React.useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
-      // Optionally remove other admin-specific session data
     }
+    setCurrentUserName("Kullanıcı"); // Reset state
+    setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
+    setCurrentUserId(null);
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.push('/login');
   }, [router]);
 
 
-  // Idle Timeout Logic
-  const handleIdle = React.useCallback(() => {
-    toast({
-        variant: "destructive",
-        title: "Oturum Zaman Aşımı",
-        description: "Uzun süre işlem yapmadığınız için oturumunuz sonlandırıldı. Lütfen tekrar giriş yapın.",
-        duration: 7000, // Show for 7 seconds
-    });
-    handleLogout();
-  }, [handleLogout]);
-
-  useIdleTimeout({ onIdle: handleIdle, idleTimeInMinutes: sessionTimeoutMinutes });
+  useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
 
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex flex-col items-center justify-center p-4 mt-2"> {/* Reduced mt-4 to mt-2, added flex-col */}
-          {/* Logo SVG */}
+        <SidebarHeader className="flex flex-col items-center justify-center p-4 mt-2">
           <Link href="/admin" className="flex flex-col items-center group" title="Gösterge Paneline Git">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -157,18 +142,17 @@ export default function AdminLayout({
                 <path d="M14.5 5.5L17.5 7.5" />
                 <path d="M10 12H14" />
             </svg>
-            <span className="font-bold text-lg mt-1.5 group-data-[collapsible=icon]:hidden"> {/* Increased margin-top slightly */}
-                TeknoBiyo
-            </span>
           </Link>
         </SidebarHeader>
 
-        {/* Welcome User Section */}
-        <div className="py-2 text-center group-data-[collapsible=icon]:hidden mt-2"> {/* Added mt-2 for spacing */}
-          <span className="font-semibold text-sm text-muted-foreground"> {/* Reduced text-md to text-sm */}
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-0">
+             <span className="block font-bold text-lg mt-1.5"> {/* Adjusted margin-top */}
+                TeknoBiyo
+            </span>
+          <span className="font-semibold text-sm text-muted-foreground">
             Hoşgeldiniz
           </span>
-          <span className="block font-bold text-md mt-0.5"> {/* Reduced text-lg to text-md, mt-1 to mt-0.5 */}
+          <span className="block font-bold text-md mt-0.5">
             {currentUserName}
           </span>
         </div>
@@ -286,7 +270,7 @@ export default function AdminLayout({
                 <SidebarGroup className="p-0">
                 <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
                     <SidebarMenu>
-                        {hasPermission('Ayarları Görüntüleme') && ( // Assuming 'Ayarları Görüntüleme' is the permission for general settings
+                        {hasPermission('Ayarları Görüntüleme') && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild tooltip="Genel Ayarlar">
                                     <Link href="/admin/settings">
@@ -309,6 +293,16 @@ export default function AdminLayout({
                     </SidebarMenu>
                 </SidebarGroup>
             )}
+            {hasPermission('Kullanım Kılavuzunu Görüntüleme') && (
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Kullanım Kılavuzu">
+                        <Link href="/admin/pages/edit/kullanim-kilavuzu"> {/* Direct link to the guide page */}
+                           <Layers /> {/* Using Layers as a generic icon for now */}
+                           <span>Kullanım Kılavuzu</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-2">
@@ -317,7 +311,7 @@ export default function AdminLayout({
                  <SidebarMenu>
                    <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Profil">
-                        <Link href={`/admin/profile`}> {/* Dynamically link to current user's profile */}
+                        <Link href={currentUserId ? `/admin/profile` : '/login'}>
                           <Avatar className="size-5">
                             <AvatarImage src={currentUserAvatar} alt={currentUserName} />
                             <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
@@ -347,7 +341,7 @@ export default function AdminLayout({
                     <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
                 </Link>
             </Button>
-            <Link href={`/admin/profile`} passHref>
+            <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
               <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">
                     <AvatarImage src={currentUserAvatar} alt={currentUserName} />
@@ -357,7 +351,7 @@ export default function AdminLayout({
             </Link>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)+theme(spacing.6))] md:pt-[calc(theme(spacing.14)+theme(spacing.6))]"> {/* Adjusted padding-top */}
+         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)+theme(spacing.6))] md:pt-[calc(theme(spacing.14)+theme(spacing.6))]">
             {permissionsLoading ? <div>İzinler yükleniyor...</div> : children}
          </main>
       </SidebarInset>

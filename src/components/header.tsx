@@ -1,4 +1,3 @@
-
 "use client"; // Add "use client" for useState and useEffect
 
 import Link from 'next/link';
@@ -21,8 +20,6 @@ interface ArticleStub {
 
 // Mock search function - replace with actual API call
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
-  // Simulate API delay
-  // await new Promise(resolve => setTimeout(resolve, 300)); // Removed delay
   if (!query) return [];
   const mockData: ArticleStub[] = [
     { id: '1', title: 'Yapay Zeka Devrimi', category: 'Teknoloji' },
@@ -37,7 +34,7 @@ const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   return mockData.filter(article =>
     article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.category.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 5); // Limit results
+  ).slice(0, 5);
 };
 
 
@@ -45,62 +42,51 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<ArticleStub[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
-  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false); // Control popover state
+  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
   const [isAdminOrEditor, setIsAdminOrEditor] = React.useState(false);
-  const [isMounted, setIsMounted] = React.useState(false); // To prevent hydration errors
+  const [isMounted, setIsMounted] = React.useState(false);
 
 
-  React.useEffect(() => {
-    setIsMounted(true); // Component has mounted
-    // Check for admin/editor role on mount
+  const checkAdminStatus = React.useCallback(() => {
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('currentUser');
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          if (user && (user.role === 'Admin' || user.role === 'Editor')) {
-            setIsAdminOrEditor(true);
-          } else {
-            setIsAdminOrEditor(false);
-          }
+          setIsAdminOrEditor(user && (user.role === 'Admin' || user.role === 'Editor'));
         } catch (e) {
-          console.error("Error parsing current user from localStorage", e);
+          console.error("Error parsing current user from localStorage in Header", e);
           setIsAdminOrEditor(false);
         }
       } else {
         setIsAdminOrEditor(false);
       }
-
-      // Listen for changes to currentUser in localStorage
-      const handleStorageChange = () => {
-        const updatedStoredUser = localStorage.getItem('currentUser');
-        if (updatedStoredUser) {
-            try {
-                const user = JSON.parse(updatedStoredUser);
-                setIsAdminOrEditor(user && (user.role === 'Admin' || user.role === 'Editor'));
-            } catch (e) {
-                setIsAdminOrEditor(false);
-            }
-        } else {
-            setIsAdminOrEditor(false);
-        }
-      };
-      window.addEventListener('storage', handleStorageChange);
-      // Also listen for custom event if login page dispatches it
-      window.addEventListener('currentUserUpdated', handleStorageChange);
-
-
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        window.removeEventListener('currentUserUpdated', handleStorageChange);
-      };
     }
   }, []);
 
-
-  // Debounce search input
   React.useEffect(() => {
-    setIsPopoverOpen(searchQuery.length > 0); // Open popover when typing starts
+    setIsMounted(true);
+    checkAdminStatus(); // Initial check
+
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'currentUser') {
+            console.log("Header: 'currentUser' changed in localStorage (another tab), checking admin status.");
+            checkAdminStatus();
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('currentUserUpdated', checkAdminStatus); // Listen for same-tab updates
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('currentUserUpdated', checkAdminStatus);
+    };
+  }, [checkAdminStatus]);
+
+
+  React.useEffect(() => {
+    setIsPopoverOpen(searchQuery.length > 0);
     const handler = setTimeout(async () => {
       if (searchQuery.length > 1) {
         setIsSearching(true);
@@ -110,7 +96,7 @@ const Header = () => {
       } else {
         setSearchResults([]);
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -125,12 +111,12 @@ const Header = () => {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
-    setIsPopoverOpen(false); // Close popover on clear
+    setIsPopoverOpen(false);
   };
 
    const closePopover = () => {
     setIsPopoverOpen(false);
-    setSearchQuery(''); // Optionally clear search on close
+    setSearchQuery('');
     setSearchResults([]);
   }
 
@@ -139,7 +125,7 @@ const Header = () => {
     { href: "/", label: "Anasayfa" },
     { href: "/categories/teknoloji", label: "Teknoloji" },
     { href: "/categories/biyoloji", label: "Biyoloji" },
-    { href: "/biyoloji-notlari", label: "Biyoloji Notları" }, // Added Biyoloji Notları link
+    { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
   ];
@@ -147,7 +133,7 @@ const Header = () => {
   const getCategoryClass = (category: string): string => {
      switch (category) {
         case 'Teknoloji': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
-        case 'Biyoloji': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+        case 'Biyoloji': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
         default: return 'bg-muted text-muted-foreground';
     }
   }
@@ -157,7 +143,6 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          {/* Biology-themed Animated Logo */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -179,7 +164,6 @@ const Header = () => {
           <span className="font-bold text-lg">TeknoBiyo</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex flex-1 items-center space-x-1">
           {navItems.map((item) => (
             <Link href={item.href} key={item.href} passHref legacyBehavior>
@@ -195,7 +179,6 @@ const Header = () => {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
-          {/* Search Popover */}
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
                <div className="relative w-full max-w-xs">
@@ -256,7 +239,7 @@ const Header = () => {
 
           <ThemeToggle />
 
-          {isMounted && isAdminOrEditor && ( // Only render Admin Panel button if mounted and user is admin/editor
+          {isMounted && isAdminOrEditor && (
             <Button variant="outline" size="sm" asChild className="ml-2">
               <Link href="/admin">
                 <ShieldCheck className="mr-2 h-4 w-4" />
@@ -266,7 +249,6 @@ const Header = () => {
           )}
 
 
-          {/* Mobile Navigation */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -289,7 +271,7 @@ const Header = () => {
                          </Button>
                      </Link>
                   ))}
-                  {isMounted && isAdminOrEditor && ( // Only render Admin Panel button if mounted and user is admin/editor
+                  {isMounted && isAdminOrEditor && (
                     <Button variant="outline" asChild className="mt-4">
                         <Link href="/admin">
                             <ShieldCheck className="mr-2 h-4 w-4" />
