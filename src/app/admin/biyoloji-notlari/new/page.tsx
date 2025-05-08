@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -235,16 +234,30 @@ export default function NewBiyolojiNotuPage() {
         };
 
         console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[NewBiyolojiNotuPage/handlePreview] Preview Data:`, previewData);
+        console.log(`[NewBiyolojiNotuPage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2));
 
         try {
-            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
+            const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                 console.error("[NewBiyolojiNotuPage/handlePreview] Error: Stringified preview data is empty or null.");
+                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                 return;
+            }
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[NewBiyolojiNotuPage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+
 
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            if (!storedData) throw new Error("Verification failed: No data found in localStorage.");
+            if (!storedData || storedData === 'null' || storedData === 'undefined') {
+                 console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
+                 throw new Error("Verification failed: No data found in localStorage.");
+            }
             const parsed = JSON.parse(storedData);
-            if (!parsed || parsed.previewType !== 'note') throw new Error("Verification failed: Invalid data structure.");
+            if (!parsed || parsed.previewType !== 'note') {
+                console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: Invalid data structure or previewType. Parsed:`, parsed);
+                throw new Error("Verification failed: Invalid data structure.");
+            }
             console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS");
 
             const previewUrl = `/admin/preview`; // Single, fixed preview URL
@@ -258,7 +271,7 @@ export default function NewBiyolojiNotuPage() {
                 } else {
                     console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened successfully.");
                 }
-            }, 150);
+            }, 250); // Increased delay
 
         } catch (error: any) {
             console.error("[NewBiyolojiNotuPage/handlePreview] Error during preview process:", error);
@@ -400,15 +413,6 @@ export default function NewBiyolojiNotuPage() {
         }
     };
 
-    if (permissionsLoading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-                Yükleniyor...
-            </div>
-        );
-    }
-
 
     return (
         <div className="flex flex-col h-full">
@@ -469,9 +473,7 @@ export default function NewBiyolojiNotuPage() {
                                                         ))
                                                      )}
                                                       <Separator />
-                                                      {hasPermission('Kategorileri Yönetme') && (
-                                                        <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
-                                                      )}
+                                                      <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
                                                 </SelectContent>
                                             </Select>
                                         </div>

@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -279,11 +278,12 @@ export default function NewArticlePage() {
             return;
         }
 
-        const previewData: Partial<ArticleData> = {
+        const previewData: Partial<ArticleData> & { previewType: 'article' } = {
+            previewType: 'article',
             id: 'preview_new', // Use a distinct ID for new article preview
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
-            category: category, // Category is a string
+            category: category, // Category is string
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
             isFeatured: isFeatured,
@@ -299,18 +299,25 @@ export default function NewArticlePage() {
         };
 
         console.log(`[NewArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[NewArticlePage/handlePreview] Preview Data:`, previewData); // Log the data being saved
+        console.log(`[NewArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2)); // Log the data being saved in a readable format
 
         try {
             const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                console.error("[NewArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
+                toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                return;
+            }
             console.log(`[NewArticlePage/handlePreview] Stringified data length: ${stringifiedData.length}`);
 
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
-            console.log(`[NewArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[NewArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0, 200) + "..." : "NULL");
+
 
              // --- Verification Steps ---
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-             if (storedData) {
+             if (storedData && storedData !== 'null' && storedData !== 'undefined') {
                  console.log(`[NewArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage. Length: ${storedData.length}`);
                  try {
                     const parsed = JSON.parse(storedData);
@@ -320,8 +327,8 @@ export default function NewArticlePage() {
                       throw new Error(`Verification failed: Data for key ${PREVIEW_STORAGE_KEY} is not valid JSON: ${parseError.message}`);
                  }
              } else {
-                  console.error(`[NewArticlePage/handlePreview] Verification 1 FAILED: No data found for key ${PREVIEW_STORAGE_KEY}.`);
-                  throw new Error(`Verification failed: No data found for key ${PREVIEW_STORAGE_KEY}.`);
+                  console.error(`[NewArticlePage/handlePreview] Verification 1 FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
+                  throw new Error(`Verification failed: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}.`);
              }
              // --- End Verification Steps ---
 
@@ -343,7 +350,7 @@ export default function NewArticlePage() {
                 } else {
                      console.log("[NewArticlePage/handlePreview] Preview window opened successfully after delay.");
                 }
-            }, 150); // 150ms delay
+            }, 250); // Increased delay slightly
 
         } catch (error: any) {
             console.error("[NewArticlePage/handlePreview] Error during preview process:", error);
@@ -614,9 +621,10 @@ export default function NewArticlePage() {
                  isOpen={isTemplateSelectorOpen}
                  onClose={() => setIsTemplateSelectorOpen(false)}
                  onSelectTemplateBlocks={handleTemplateSelect}
-                 blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))} // Check if blocks have actual content
+                 blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))}
                  templateTypeFilter="article"
              />
         </div>
     );
 }
+

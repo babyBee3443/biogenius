@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -379,7 +378,8 @@ export default function EditArticlePage() {
             return;
         }
 
-        const previewData: Partial<ArticleData> = {
+        const previewData: Partial<ArticleData> & { previewType: 'article' } = {
+            previewType: 'article',
             id: articleId || 'preview_edit', // Use 'preview_edit' for existing article edits
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
@@ -399,18 +399,26 @@ export default function EditArticlePage() {
         };
 
         console.log(`[EditArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[EditArticlePage/handlePreview] Preview Data:`, previewData); // Log the data being saved
+        console.log(`[EditArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2)); // Log readable JSON
+
 
         try {
             const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                console.error("[EditArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
+                toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                return;
+            }
             console.log(`[EditArticlePage/handlePreview] Stringified data length: ${stringifiedData.length}`);
 
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
-            console.log(`[EditArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[EditArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0, 200) + "..." : "NULL");
+
 
             // --- Verification Steps ---
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            if (storedData) {
+            if (storedData && storedData !== 'null' && storedData !== 'undefined') {
                 console.log(`[EditArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage. Length: ${storedData.length}`);
                 try {
                     const parsed = JSON.parse(storedData);
@@ -420,8 +428,8 @@ export default function EditArticlePage() {
                      throw new Error(`Verification failed: Data for key ${PREVIEW_STORAGE_KEY} is not valid JSON: ${parseError.message}`);
                 }
             } else {
-                console.error(`[EditArticlePage/handlePreview] Verification 1 FAILED: No data found for key ${PREVIEW_STORAGE_KEY}.`);
-                throw new Error(`Verification failed: No data found for key ${PREVIEW_STORAGE_KEY}.`);
+                console.error(`[EditArticlePage/handlePreview] Verification 1 FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
+                throw new Error(`Verification failed: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}.`);
             }
             // --- End Verification Steps ---
 
@@ -443,7 +451,7 @@ export default function EditArticlePage() {
                  } else {
                       console.log("[EditArticlePage/handlePreview] Preview window opened successfully after delay.");
                  }
-            }, 150); // 150ms delay
+            }, 250); // Increased delay slightly
 
         } catch (error: any) {
             console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
