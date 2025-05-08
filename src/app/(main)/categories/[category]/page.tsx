@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from "lucide-react"; // Added icons
 import { getArticles, type ArticleData } from '@/lib/mock-data'; // Import real data fetching
+import { ArticleCard } from '@/components/article-card'; // Import ArticleCard
 
 interface CategoryPageProps {
   params: {
@@ -39,32 +40,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Increased gap */}
           {articles.map((article, index) => (
-             <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group"> {/* Subtle shadow, ease transition, group for hover */}
-               <CardHeader className="p-0 relative">
-                 <Image
-                   src={article.mainImageUrl || 'https://picsum.photos/seed/placeholder-cat/600/400'} // Fallback image
-                   alt={article.title}
-                   width={600}
-                   height={400}
-                   className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" // Slight zoom on hover
-                   data-ai-hint="category article abstract"
-                   priority={index < 3} // Prioritize first 3 images
-                   loading={index >=3 ? "lazy" : undefined} // Lazy load images after the first 3
-                 />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-               </CardHeader>
-               <CardContent className="p-6 flex flex-col flex-grow"> {/* Increased padding */}
-                 <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle>
-                 <CardDescription className="text-muted-foreground mb-5 flex-grow line-clamp-3">{article.excerpt}</CardDescription> {/* Limit excerpt lines */}
-                 <div className="mt-auto flex justify-end items-center"> {/* Aligned button to the right */}
-                    <Button asChild variant="link" className="p-0 h-auto text-primary hover:text-primary/80 transition-colors">
-                       <Link href={`/articles/${article.id}`} className="flex items-center">
-                          Devamını Oku <ArrowRight className="ml-1 h-4 w-4" />
-                        </Link>
-                    </Button>
-                 </div>
-               </CardContent>
-             </Card>
+            <ArticleCard 
+              key={article.id} 
+              article={article} 
+              priority={index < 3}
+              imageHint="category article abstract"
+            />
           ))}
         </div>
       )}

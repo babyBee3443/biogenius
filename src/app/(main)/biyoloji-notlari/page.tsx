@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { NoteCard } from '@/components/note-card'; // Import the new NoteCard
 
 export default function BiyolojiNotlariPage() {
   const [allNotes, setAllNotes] = React.useState<NoteData[]>([]);
@@ -164,36 +165,7 @@ export default function BiyolojiNotlariPage() {
         // Display Filtered Notes
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredNotes.map((note) => (
-             <Link key={note.id} href={`/biyoloji-notlari/${note.slug}`} className="block group">
-                <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col h-full">
-                   {note.imageUrl && (
-                       <CardHeader className="p-0 relative">
-                         <Image
-                           src={note.imageUrl}
-                           alt={note.title}
-                           width={400}
-                           height={250}
-                           className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
-                           data-ai-hint="biology concept abstract"
-                           loading="lazy" // Lazy load note images
-                         />
-                       </CardHeader>
-                   )}
-                   <CardContent className="p-5 flex flex-col flex-grow">
-                     <CardTitle className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">{note.title}</CardTitle>
-                      <div className="mb-3 space-x-1">
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">{note.category}</Badge>
-                        <Badge variant="outline" className="text-xs">{note.level}</Badge>
-                      </div>
-                     <CardDescription className="text-sm text-muted-foreground mb-4 flex-grow line-clamp-3">{note.summary}</CardDescription>
-                     <div className="mt-auto flex justify-end items-center">
-                        <Button variant="link" size="sm" className="p-0 h-auto text-primary hover:text-primary/80 transition-colors">
-                           Detayları Gör <ArrowRight className="ml-1 h-4 w-4" />
-                        </Button>
-                     </div>
-                   </CardContent>
-                 </Card>
-             </Link>
+             <NoteCard key={note.id} note={note} />
           ))}
         </div>
       )}

@@ -9,6 +9,7 @@ import type { Block } from '@/components/admin/template-selector';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Import Card
+import { NoteCard } from '@/components/note-card'; // Import NoteCard
 
 // --- Block Rendering Components (Copied from [id]/page.tsx, simplified) ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -186,15 +187,7 @@ export default async function NotePage({ params }: NotePageProps) {
              <h2 className="text-2xl font-semibold mb-6">İlgili Notlar</h2>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                  {relatedNotes.map(relNote => (
-                     <Link key={relNote.id} href={`/biyoloji-notlari/${relNote.slug}`} className="block group">
-                        <Card className="h-full flex flex-col overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-border/40 hover:border-primary/30">
-                             <CardContent className="p-4 flex-grow">
-                                <Badge variant="secondary" size="sm" className="mb-2 text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">{relNote.category}</Badge>
-                                 <h3 className="font-semibold text-base mb-1 group-hover:text-primary transition-colors">{relNote.title}</h3>
-                                 <p className="text-xs text-muted-foreground line-clamp-2">{relNote.summary}</p>
-                             </CardContent>
-                        </Card>
-                     </Link>
+                    <NoteCard key={relNote.id} note={relNote} imageHint="related note biology"/>
                  ))}
              </div>
            </div>

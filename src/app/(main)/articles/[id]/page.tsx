@@ -8,6 +8,7 @@ import { getArticleById, getArticles, type ArticleData } from '@/lib/mock-data';
 import type { Block } from '@/components/admin/template-selector'; // Import Block type
 import { Card, CardContent } from '@/components/ui/card'; // Import Card components
 import { cn } from '@/lib/utils'; // Import cn
+import { ArticleCard } from '@/components/article-card'; // Import ArticleCard
 
 // --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -208,27 +209,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
              <h2 className="text-2xl font-semibold mb-6">İlgili Makaleler</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {relatedArticles.map(relArticle => (
-                     <Link key={relArticle.id} href={`/articles/${relArticle.id}`} className="block group">
-                        <Card className="h-full flex flex-col overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                             {relArticle.mainImageUrl && (
-                                 <div className="relative h-40 overflow-hidden">
-                                    <Image
-                                         src={relArticle.mainImageUrl}
-                                         alt={relArticle.title}
-                                         layout="fill"
-                                         objectFit="cover"
-                                         className="transition-transform duration-300 group-hover:scale-105"
-                                         data-ai-hint="related article abstract"
-                                         loading="lazy" // Lazy load related article images
-                                     />
-                                 </div>
-                             )}
-                             <CardContent className="p-4 flex-grow">
-                                 <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">{relArticle.title}</h3>
-                                 <p className="text-sm text-muted-foreground line-clamp-2">{relArticle.excerpt}</p>
-                             </CardContent>
-                        </Card>
-                     </Link>
+                   <ArticleCard 
+                     key={relArticle.id} 
+                     article={relArticle} 
+                     imageLoading="lazy"
+                     imageHint="related article abstract"
+                   />
                  ))}
              </div>
            </div>
