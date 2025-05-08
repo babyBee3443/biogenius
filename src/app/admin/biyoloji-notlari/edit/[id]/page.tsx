@@ -42,7 +42,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key
 export default function EditBiyolojiNotuPage() {
     const router = useRouter();
     const params = useParams();
-    const noteId = React.use(params.id) as string; // Use React.use for simpler param access
+    const noteId = params.id as string; 
     const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
     // --- State ---
@@ -470,3 +470,4 @@ export default function EditBiyolojiNotuPage() {
         </div>
     );
 }
+

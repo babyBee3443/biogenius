@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -10,11 +11,11 @@ import { Textarea } from "@/components/ui/textarea"; // Added for Bio
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2, Upload, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon } from "lucide-react"; // Added new icons for social media
+import { ArrowLeft, Save, Trash2, KeyRound, Activity, Loader2, Upload, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon, Newspaper, BookCopy } from "lucide-react"; // Added new icons for social media & content stats
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { getUserById, updateUser as mockUpdateUser, deleteUser as mockDeleteUser, type User } from '@/lib/mock-data';
+import { getUserById, updateUser as mockUpdateUser, deleteUser as mockDeleteUser, type User, getArticles, getNotes } from '@/lib/mock-data'; // Import getArticles and getNotes
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,11 +50,17 @@ interface UserActivity {
     action: string;
 }
 
+interface UserContentStats {
+    articlesCount: number;
+    notesCount: number;
+    totalArticleViews: number; 
+    totalNoteViews: number; 
+}
+
 
 export default function EditUserPage() {
     const params = useParams();
-    const userId = React.use(params.id) as string; // Correctly use React.use for dynamic segment
-
+    const userId = params.id as string;
     const router = useRouter();
 
     const [user, setUser] = React.useState<User | null>(null);
@@ -71,12 +78,17 @@ export default function EditUserPage() {
     const [facebookProfile, setFacebookProfile] = React.useState("");
     const [youtubeChannel, setYoutubeChannel] = React.useState("");
     const [xProfile, setXProfile] = React.useState("");
+    const [contentStats, setContentStats] = React.useState<UserContentStats>({
+        articlesCount: 0,
+        notesCount: 0,
+        totalArticleViews: 0,
+        totalNoteViews: 0,
+    });
 
 
     const [isSaving, setIsSaving] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
 
-    // State for AlertDialog
     const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -90,8 +102,13 @@ export default function EditUserPage() {
         }
 
         setLoading(true);
-        Promise.all([getUserById(userId as string), getUserActivity(userId as string)])
-            .then(([userData, userActivityData]) => {
+        Promise.all([
+            getUserById(userId), 
+            getUserActivity(userId),
+            getArticles(), // Fetch all articles
+            getNotes()     // Fetch all notes
+        ])
+            .then(([userData, userActivityData, allArticles, allNotes]) => {
                 if (userData) {
                     setUser(userData);
                     setName(userData.name);
@@ -107,6 +124,20 @@ export default function EditUserPage() {
                     setYoutubeChannel(userData.youtubeChannel || '');
                     setXProfile(userData.xProfile || '');
                     setActivity(userActivityData);
+
+                     // Calculate content stats
+                    const userArticles = allArticles.filter(article => article.authorId === userId);
+                    const userNotes = allNotes.filter(note => note.authorId === userId);
+                    const totalArticleViews = userArticles.reduce((sum, _) => sum + Math.floor(Math.random() * 500) + 50, 0); // Mock
+                    const totalNoteViews = userNotes.reduce((sum, _) => sum + Math.floor(Math.random() * 200) + 20, 0); // Mock
+
+                    setContentStats({
+                        articlesCount: userArticles.length,
+                        notesCount: userNotes.length,
+                        totalArticleViews,
+                        totalNoteViews,
+                    });
+
                 } else {
                     notFound();
                 }
@@ -173,12 +204,11 @@ export default function EditUserPage() {
                  setYoutubeChannel(updatedUser.youtubeChannel || '');
                  setXProfile(updatedUser.xProfile || '');
 
-                // Update localStorage with new name and avatar for header display
                 if (typeof window !== 'undefined') {
                     const storedUser = localStorage.getItem('currentUser');
                     if (storedUser) {
                         const currentUserData = JSON.parse(storedUser);
-                        if (currentUserData.id === userId) { // Only update if it's the logged-in user
+                        if (currentUserData.id === userId) { 
                              localStorage.setItem('currentUser', JSON.stringify({
                                 ...currentUserData,
                                 name: updatedUser.name,
@@ -263,11 +293,9 @@ export default function EditUserPage() {
                     <p className="text-muted-foreground">{user.email}</p>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isDeleting || isSaving}>
-                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                        </Button>
-                    </AlertDialogTrigger>
+                    <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                         {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                    </Button>
                     <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                     </Button>
@@ -280,9 +308,9 @@ export default function EditUserPage() {
                         <CardHeader>
                             <CardTitle>Kullanıcı Bilgileri</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-6"> {/* Increased spacing */}
+                        <CardContent className="space-y-6"> 
                              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                                <Avatar className="h-24 w-24"> {/* Larger Avatar */}
+                                <Avatar className="h-24 w-24"> 
                                 <AvatarImage src={avatar || `https://picsum.photos/seed/${user.username}/128/128`} alt={user.name} data-ai-hint="user avatar placeholder"/>
                                 <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                 </Avatar>
@@ -424,16 +452,33 @@ export default function EditUserPage() {
                              </Button>
                         </CardContent>
                      </Card>
+                      <Card>
+                        <CardHeader>
+                            <CardTitle>İçerik İstatistikleri</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-2 gap-4 text-center">
+                            <div>
+                                <Newspaper className="h-6 w-6 mx-auto text-primary mb-1"/>
+                                <p className="text-2xl font-bold">{contentStats.articlesCount}</p>
+                                <p className="text-xs text-muted-foreground">Makale</p>
+                                <p className="text-xs text-muted-foreground">({contentStats.totalArticleViews.toLocaleString()} görüntülenme)</p>
+                            </div>
+                            <div>
+                                <BookCopy className="h-6 w-6 mx-auto text-green-600 mb-1"/>
+                                <p className="text-2xl font-bold">{contentStats.notesCount}</p>
+                                <p className="text-xs text-muted-foreground">Not</p>
+                                 <p className="text-xs text-muted-foreground">({contentStats.totalNoteViews.toLocaleString()} görüntülenme)</p>
+                            </div>
+                        </CardContent>
+                    </Card>
                  </div>
              </div>
 
               <Separator />
-             <div className="flex justify-end gap-2">
-                 <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isDeleting || isSaving}>
-                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
-                    </Button>
-                </AlertDialogTrigger>
+             <div className="flex justify-end gap-2 mt-6">
+                 <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
+                 </Button>
                 <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Değişiklikleri Kaydet
                 </Button>
@@ -458,3 +503,4 @@ export default function EditUserPage() {
     );
 
 }
+

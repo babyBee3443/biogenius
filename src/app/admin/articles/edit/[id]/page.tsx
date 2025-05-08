@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -37,7 +38,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers } from "lucide-react"; // Added Layers icon for Remove Template
+import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers, FileText } from "lucide-react"; // Added Layers icon for Remove Template
 
 // Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -50,7 +51,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = React.use(params.id) as string; // Use React.use for simpler param access
+    const articleId = params.id as string; 
 
     // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
@@ -234,16 +235,18 @@ export default function EditArticlePage() {
 
     const handleSave = async (publish: boolean = false) => {
         // Determine the status to save based on the 'publish' flag and current status
-        let finalStatus = status; // Default to current status
+        let finalStatus = status; 
 
         if (publish && status !== 'Yayınlandı') {
             finalStatus = "Yayınlandı";
         } else if (!publish && status === 'Yayınlandı') {
-             // If unpublishing, revert to 'Taslak'
-             finalStatus = "Taslak";
-        } else if (!publish && status !== 'Yayınlandı') {
-             // If saving as draft/review etc. keep the current status
-             finalStatus = status;
+             finalStatus = "Hazır"; // Revert to "Hazır" if unpublishing from "Yayınlandı"
+        } else if (!publish && (status === 'Taslak' || status === 'İncelemede')) {
+            finalStatus = status; // Keep draft or review status
+        } else if (status === 'Hazır' && publish) {
+            finalStatus = "Yayınlandı";
+        } else if (status === 'Hazır' && !publish) {
+            finalStatus = "Hazır"; // Keep as "Hazır" if saving without publishing from "Hazır"
         }
 
 
@@ -260,24 +263,20 @@ export default function EditArticlePage() {
             return;
         }
 
-         // Use the most recent articleData from state or fallback to initial if null
-         // IMPORTANT: Do not include 'id', 'createdAt', 'authorId' in the update payload itself
-         // They are part of the base data but not usually part of what you send for an update.
-         const currentData: Partial<ArticleData> = { // Use Partial for update data
+         const currentData: Partial<ArticleData> = { 
             title,
             excerpt: excerpt || "",
-            category, // Category is now a string
-            status: finalStatus, // Use the determined final status
+            category, 
+            status: finalStatus, 
             mainImageUrl: mainImageUrl || null,
             isFeatured,
-            isHero, // Include isHero in save data
-            slug: slug, // Use state slug directly
+            isHero, 
+            slug: slug, 
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
-            blocks: blocks.length > 0 ? blocks : [createDefaultBlock()], // Use default if empty
+            blocks: blocks.length > 0 ? blocks : [createDefaultBlock()], 
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            // 'updatedAt' will be handled by the updateArticle function on the backend/mock
         };
 
          console.log("[EditArticlePage/handleSave] Preparing to save article:", articleId, "with data:", currentData);
@@ -287,24 +286,20 @@ export default function EditArticlePage() {
              const updatedArticle = await updateArticle(articleId, currentData);
 
              if (updatedArticle) {
-                  // Update the main articleData state with the returned saved data
                  setArticleData(updatedArticle);
-                  // Re-sync individual form fields with the *response* to ensure consistency
                  setTitle(updatedArticle.title);
                  setExcerpt(updatedArticle.excerpt || '');
-                 setCategory(updatedArticle.category); // Ensure category string is updated
-                 setStatus(updatedArticle.status); // Ensure status updates visually based on saved data
+                 setCategory(updatedArticle.category); 
+                 setStatus(updatedArticle.status); 
                  setMainImageUrl(updatedArticle.mainImageUrl || "");
                  setIsFeatured(updatedArticle.isFeatured);
-                 setIsHero(updatedArticle.isHero); // Sync isHero after save
-                 // Use default block if blocks are empty after save
+                 setIsHero(updatedArticle.isHero); 
                  setBlocks(updatedArticle.blocks && updatedArticle.blocks.length > 0 ? updatedArticle.blocks : [createDefaultBlock()]);
                  setSeoTitle(updatedArticle.seoTitle || '');
                  setSeoDescription(updatedArticle.seoDescription || '');
                  setSlug(updatedArticle.slug);
                  setKeywords(updatedArticle.keywords || []);
                  setCanonicalUrl(updatedArticle.canonicalUrl || "");
-                 // Keep templateApplied state as is after save, only modification actions reset it
                   console.log("[EditArticlePage/handleSave] Save successful. Updated articleData state:", updatedArticle);
                  toast({
                      title: "Makale Kaydedildi",
@@ -348,14 +343,12 @@ export default function EditArticlePage() {
     };
 
      const handleTemplateSelect = (templateBlocks: Block[]) => {
-        // Confirmation logic is handled inside TemplateSelector's onSelect now
-        // Generate new IDs for template blocks safely on the client
          const newBlocks = templateBlocks.map(block => ({
             ...block,
             id: generateBlockId()
         }));
         setBlocks(newBlocks);
-        setTemplateApplied(true); // Mark that a template was applied
+        setTemplateApplied(true); 
         setIsTemplateSelectorOpen(false);
         toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
      };
@@ -371,7 +364,7 @@ export default function EditArticlePage() {
 
 
     const handlePreview = () => {
-        if (typeof window === 'undefined') return; // Guard against server-side execution
+        if (typeof window === 'undefined') return; 
 
         if (!category) {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
@@ -380,10 +373,10 @@ export default function EditArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: articleId || 'preview_edit', // Use 'preview_edit' for existing article edits
+            id: articleId || 'preview_edit', 
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
-            category: category, // Category is a string
+            category: category, 
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
             status: status,
@@ -399,7 +392,7 @@ export default function EditArticlePage() {
         };
 
         console.log(`[EditArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[EditArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2)); // Log readable JSON
+        console.log(`[EditArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2)); 
 
 
         try {
@@ -433,11 +426,9 @@ export default function EditArticlePage() {
             }
             // --- End Verification Steps ---
 
-            // Simplified URL - Preview page will read from the fixed key
             const previewUrl = `/admin/preview`;
             console.log(`[EditArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
-            // Add a small delay before opening the window - helps ensure localStorage is written
             setTimeout(() => {
                  const newWindow = window.open(previewUrl, '_blank');
                  if (!newWindow) {
@@ -451,7 +442,7 @@ export default function EditArticlePage() {
                  } else {
                       console.log("[EditArticlePage/handlePreview] Preview window opened successfully after delay.");
                  }
-            }, 250); // Increased delay slightly
+            }, 250); 
 
         } catch (error: any) {
             console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
@@ -468,16 +459,18 @@ export default function EditArticlePage() {
       // --- Block Selection Handler ---
      const handleBlockSelect = (id: string | null) => {
          setSelectedBlockId(id);
-         // Optional: Scroll to the selected block in the editor view if needed
      };
 
-     // --- Revert to Draft Handler ---
-     const handleRevertToDraft = () => {
-        // Set status state to 'Taslak' immediately for visual feedback
-        setStatus('Taslak');
-        // Trigger save with publish=false to update the backend/mock
-        handleSave(false); // Pass false to indicate saving as draft
+     // --- Revert to Draft or Ready Handler ---
+     const handleRevertToDraftOrReady = () => {
+        setStatus('Taslak'); 
+        handleSave(false); 
      };
+
+      const handleMarkAsReady = () => {
+        setStatus('Hazır');
+        handleSave(false); 
+    };
 
 
      // --- Rendering ---
@@ -495,7 +488,7 @@ export default function EditArticlePage() {
          return <div className="text-center py-10 text-destructive">{error}</div>;
     }
 
-    if (!articleData && !loading) { // Show not found if loading is finished and articleData is still null
+    if (!articleData && !loading) { 
          return <div className="text-center py-10">Makale bulunamadı veya yüklenemedi.</div>;
     }
 
@@ -511,12 +504,11 @@ export default function EditArticlePage() {
                     {articleData ? `Makaleyi Düzenle` : 'Yeni Makale'}
                 </h1>
                 <div className="flex items-center gap-2">
-                     {articleData && ( // Only show delete for existing articles
+                     {articleData && ( 
                         <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
                       )}
-                    {/* <Button variant="outline" size="sm"><History className="mr-2 h-4 w-4"/> Revizyonlar</Button> */}
                 </div>
             </div>
 
@@ -530,6 +522,7 @@ export default function EditArticlePage() {
                             <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon</TabsTrigger>
                             <TabsTrigger value="media">Medya</TabsTrigger>
                             <TabsTrigger value="seo">SEO</TabsTrigger>
+                            <TabsTrigger value="guide">Kullanım Kılavuzu</TabsTrigger> {/* New Tab */}
                          </TabsList>
 
                          {/* Content Tab */}
@@ -541,7 +534,7 @@ export default function EditArticlePage() {
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="category">Kategori <span className="text-destructive">*</span></Label>
-                                     <Select value={category} onValueChange={(value) => setCategory(value)} required> {/* Set string value */}
+                                     <Select value={category} onValueChange={(value) => setCategory(value)} required> 
                                          <SelectTrigger id="category">
                                              <SelectValue placeholder="Kategori seçin" />
                                          </SelectTrigger>
@@ -550,7 +543,6 @@ export default function EditArticlePage() {
                                              {categories.map(cat => (
                                                 <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                              ))}
-                                             {/* Option to add new category? Maybe link to categories page */}
                                          </SelectContent>
                                      </Select>
                                  </div>
@@ -571,7 +563,7 @@ export default function EditArticlePage() {
                                      </div>
                                  )}
                              </div>
-                             <div className="flex items-center gap-4 pt-2"> {/* Changed spacing */}
+                             <div className="flex items-center gap-4 pt-2"> 
                                  <div className="flex items-center space-x-2">
                                      <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
                                      <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
@@ -587,7 +579,6 @@ export default function EditArticlePage() {
 
                               <Separator className="my-8" />
 
-                              {/* Block Editor Section */}
                               <BlockEditor
                                 blocks={blocks}
                                 onAddBlock={handleAddBlock}
@@ -625,7 +616,6 @@ export default function EditArticlePage() {
                                     <CardDescription>Makalenizin arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
                                  </CardHeader>
                                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                     {/* SEO Form Fields */}
                                      <div className="space-y-6">
                                          <div className="space-y-2">
                                              <Label htmlFor="seo-title">SEO Başlığı</Label>
@@ -684,15 +674,63 @@ export default function EditArticlePage() {
                                          </div>
                                      </div>
 
-                                      {/* SEO Preview */}
                                       <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.6))] h-fit">
                                           <SeoPreview
                                               title={seoTitle || title}
                                               description={seoDescription || excerpt}
                                               slug={slug}
-                                              category={category || "kategori"} // Use string category
+                                              category={category || "kategori"} 
                                           />
                                       </div>
+                                 </CardContent>
+                             </Card>
+                         </TabsContent>
+                          {/* User Guide Tab */}
+                         <TabsContent value="guide">
+                             <Card>
+                                 <CardHeader>
+                                     <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5"/> Kullanım Kılavuzu: Makale Düzenleme</CardTitle>
+                                     <CardDescription>Bu sayfadaki alanları ve özellikleri nasıl kullanacağınızı öğrenin.</CardDescription>
+                                 </CardHeader>
+                                 <CardContent className="prose dark:prose-invert max-w-none">
+                                     <h4>Temel Alanlar</h4>
+                                     <ul>
+                                         <li><strong>Makale Başlığı:</strong> Makalenizin ana başlığı. SEO için de önemlidir.</li>
+                                         <li><strong>Kategori:</strong> Makalenizin ait olduğu ana kategori.</li>
+                                         <li><strong>Özet:</strong> Makalenin kısa bir özeti. Listeleme sayfalarında ve SEO için kullanılır.</li>
+                                         <li><strong>Ana Görsel URL:</strong> Makalenin ana listeleme görseli.</li>
+                                         <li><strong>Öne Çıkarılmış Makale:</strong> İşaretlenirse, makale anasayfadaki "Öne Çıkanlar" bölümünde gösterilir.</li>
+                                         <li><strong>Hero'da Göster:</strong> İşaretlenirse, makale anasayfanın en üstündeki Hero (kayan) bölümde gösterilir.</li>
+                                     </ul>
+                                     <h4>İçerik Blokları</h4>
+                                     <p>Makalenizin içeriğini oluşturmak için çeşitli bloklar ekleyebilirsiniz:</p>
+                                     <ul>
+                                         <li><strong>Metin:</strong> Paragraf metinleri için.</li>
+                                         <li><strong>Başlık:</strong> H2, H3 gibi alt başlıklar eklemek için.</li>
+                                         <li><strong>Görsel:</strong> Makale içine görseller eklemek için.</li>
+                                         <li><strong>Video:</strong> YouTube videoları gömmek için.</li>
+                                         <li><strong>Alıntı:</strong> Vurgulamak istediğiniz alıntılar için.</li>
+                                         <li><strong>Ayırıcı:</strong> Bölümler arasında yatay bir çizgi eklemek için.</li>
+                                     </ul>
+                                     <p>"Bölüm Ekle" düğmesiyle yeni bloklar ekleyebilir, blokları sürükleyip bırakarak sıralayabilir ve her bloğun sağ üst köşesindeki kontrollerle silebilirsiniz.</p>
+                                     <h4>Yayın Durumu (Sağ Panel)</h4>
+                                     <ul>
+                                         <li><strong>Taslak:</strong> Makale üzerinde çalışılıyor, yayınlanmadı.</li>
+                                         <li><strong>İncelemede:</strong> Makale hazır, yayınlanmadan önce incelenmesi gerekiyor.</li>
+                                         <li><strong>Hazır:</strong> Makale yayınlanmaya hazır. Sadece Admin ve Editörler önizleyebilir.</li>
+                                         <li><strong>Yayınlandı:</strong> Makale tüm kullanıcılara görünür.</li>
+                                         <li><strong>Arşivlendi:</strong> Makale yayından kaldırıldı ama sistemde duruyor.</li>
+                                     </ul>
+                                     <h4>Aksiyonlar (Sağ Panel)</h4>
+                                     <ul>
+                                         <li><strong>Önizle:</strong> Değişikliklerinizi canlı sitede nasıl görüneceğini gösterir.</li>
+                                         <li><strong>Kaydet:</strong> Mevcut durumuyla makaleyi kaydeder (Yayınla'dan farklı).</li>
+                                         <li><strong>Yayınla:</strong> Makaleyi "Yayınlandı" durumuna getirir ve herkese görünür yapar.</li>
+                                         <li><strong>Taslağa/Hazıra Geri Al:</strong> "Yayınlandı" durumundaki bir makaleyi "Taslak" veya "Hazır" durumuna döndürür.</li>
+                                         <li><strong>Şablonu Kaldır:</strong> Uygulanan bir şablon varsa, içeriği varsayılan boş metin bloğuna döndürür.</li>
+                                     </ul>
+                                     <h4>SEO Ayarları Sekmesi</h4>
+                                     <p>Makalenizin arama motorlarındaki görünürlüğünü artırmak için SEO başlığı, meta açıklaması, URL metni (slug) ve anahtar kelimeleri buradan düzenleyebilirsiniz.</p>
                                  </CardContent>
                              </Card>
                          </TabsContent>
@@ -706,12 +744,12 @@ export default function EditArticlePage() {
                          <CardContent className="space-y-4">
                               <div className="space-y-2">
                                  <Label htmlFor="status">Yayın Durumu</Label>
-                                 {/* Use the status from the component state */}
                                  <Select value={status} onValueChange={(value) => setStatus(value as ArticleData['status'])}>
                                      <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                                      <SelectContent>
                                          <SelectItem value="Taslak">Taslak</SelectItem>
                                          <SelectItem value="İncelemede">İncelemede</SelectItem>
+                                         <SelectItem value="Hazır">Hazır (Admin/Editör Görsün)</SelectItem>
                                          <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
                                          <SelectItem value="Arşivlendi">Arşivlendi</SelectItem>
                                      </SelectContent>
@@ -721,25 +759,26 @@ export default function EditArticlePage() {
                                <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving || !slug}> {/* Save as draft/current status, disable if no slug */}
+                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving || !slug}> 
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 Kaydet
                              </Button>
-                             {/* Show publish button only if the current status is not 'Yayınlandı' */}
                              {status !== 'Yayınlandı' && (
-                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving || !slug}> {/* Disable if no slug */}
+                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving || !slug}> 
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                      Yayınla
                                  </Button>
                              )}
-                              {/* Show revert to draft button only if currently 'Yayınlandı' */}
-                              {status === 'Yayınlandı' && (
-                                <Button variant="outline" className="w-full" onClick={handleRevertToDraft} disabled={saving}>
-                                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
-                                    Taslağa Geri Al
+                              {(status === 'Yayınlandı' || status === 'Hazır') && (
+                                <Button variant="outline" className="w-full" onClick={handleRevertToDraftOrReady} disabled={saving}>
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> Taslağa Döndür
                                 </Button>
                              )}
-                              {/* Conditionally show Remove Template button */}
+                             {status === 'Taslak' && (
+                                <Button variant="outline" className="w-full" onClick={handleMarkAsReady} disabled={saving}>
+                                     <Eye className="mr-2 h-4 w-4" /> Hazır Olarak İşaretle
+                                </Button>
+                             )}
                               {templateApplied && (
                                 <Button variant="outline" className="w-full text-destructive border-destructive/50 hover:bg-destructive/10" onClick={handleRemoveTemplate} disabled={saving}>
                                     <Layers className="mr-2 h-4 w-4" /> Şablonu Kaldır
@@ -748,7 +787,6 @@ export default function EditArticlePage() {
                          </CardContent>
                       </Card>
 
-                      {/* Placeholder for Comments */}
                        <Card>
                           <CardHeader>
                              <CardTitle>Yorumlar</CardTitle>
@@ -762,12 +800,12 @@ export default function EditArticlePage() {
                   </aside>
               </div>
 
-              {/* Template Selector Modal */}
               <TemplateSelector
                   isOpen={isTemplateSelectorOpen}
                   onClose={() => setIsTemplateSelectorOpen(false)}
                   onSelectTemplateBlocks={handleTemplateSelect}
-                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))} // Check if blocks have actual content
+                  blocksCurrentlyExist={blocks.length > 1 || (blocks.length === 1 && (blocks[0]?.type !== 'text' || blocks[0]?.content !== ''))} 
+                  templateTypeFilter="article"
               />
          </div>
     );
