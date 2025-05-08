@@ -19,15 +19,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog" // AlertDialogTrigger is not needed here if AlertDialog is conditionally rendered
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Eye } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
-import type { ArticleData, NoteData, Template as TemplateDefinition, PageData as PageDataType } from '@/lib/mock-data'; // Added PageDataType
+import type { ArticleData, NoteData, Template as TemplateDefinition, PageData as PageDataType } from '@/lib/mock-data';
 import { allMockTemplates } from "@/lib/mock-data";
 
 // --- Block Types (Should match the editor's block types) ---
@@ -71,7 +70,7 @@ export function TemplateSelector({
     const handleSelectClick = (template: TemplateDefinition) => {
         setSelectedTemplate(template);
         if (blocksCurrentlyExist) {
-            setIsConfirmOpen(true);
+            setIsConfirmOpen(true); // Open confirmation dialog
         } else {
             applyTemplate(template);
         }
@@ -85,78 +84,72 @@ export function TemplateSelector({
             id: generateId()
         }));
         onSelectTemplateBlocks(newBlocks);
-        onClose();
-        setIsConfirmOpen(false);
-        setSelectedTemplate(null);
+        onClose(); // Close the main template selector dialog
+        setIsConfirmOpen(false); // Close confirmation dialog if it was open
+        setSelectedTemplate(null); // Reset selected template
     };
 
     const handlePreview = (template: TemplateDefinition) => {
         if (typeof window === 'undefined') return;
 
-        let previewData: Partial<ArticleData | NoteData | PageDataType> & { previewType: string };
-        const uniqueTimestamp = Date.now(); // Unique timestamp for the key
+        let previewData: (Partial<ArticleData> | Partial<NoteData> | Partial<PageDataType>) & { previewType: string };
+        
+        const basePreviewData = {
+            id: `preview_template_${template.id}_${Date.now()}`,
+            title: template.name,
+            blocks: template.blocks.map(b => ({...b, id: generateId()})), // Ensure blocks have unique IDs for preview
+            seoTitle: template.seoTitle || template.name,
+            seoDescription: template.seoDescription || template.description,
+            keywords: template.keywords || [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
 
         switch (template.type) {
             case 'article':
                 previewData = {
+                    ...basePreviewData,
                     previewType: 'article',
-                    id: `preview_article_${template.id}_${uniqueTimestamp}`,
-                    title: template.name,
                     excerpt: template.excerpt || template.description,
-                    blocks: template.blocks,
                     category: template.category || 'Teknoloji',
                     status: 'Yayınlandı',
                     mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
-                    seoTitle: template.seoTitle,
-                    seoDescription: template.seoDescription,
-                    keywords: template.keywords,
                     authorId: 'template-author',
                     isFeatured: false,
                     isHero: false,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
                     slug: `template-${template.id}-preview`,
                 };
                 break;
             case 'note':
                 previewData = {
+                    ...basePreviewData,
                     previewType: 'note',
-                    id: `preview_note_${template.id}_${uniqueTimestamp}`,
-                    title: template.name,
                     slug: `template-${template.id}-preview`,
                     category: template.category || 'Genel',
-                    level: 'Lise 9', // Example default, could be part of template data
+                    level: 'Lise 9', // Example default
                     tags: template.keywords || [],
                     summary: template.excerpt || template.description,
-                    contentBlocks: template.blocks,
+                    contentBlocks: template.blocks.map(b => ({...b, id: generateId()})), // Ensure unique IDs
                     imageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
                     authorId: 'template-author',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
                 };
                 break;
             case 'page':
                  previewData = {
+                    ...basePreviewData,
                     previewType: 'page',
-                    id: `preview_page_${template.id}_${uniqueTimestamp}`,
-                    title: template.name,
                     slug: `template-${template.id}-preview`,
-                    blocks: template.blocks,
-                    seoTitle: template.seoTitle || template.name,
-                    seoDescription: template.seoDescription || template.description,
                     imageUrl: template.previewImageUrl,
-                    settings: {}, // Add default settings if needed for pages
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
+                    settings: {},
                 };
                 break;
             default:
-                console.error("Unknown template type for preview:", template.type);
+                console.error("Unknown template type for preview:", (template as any).type);
                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Bilinmeyen şablon tipi." });
                 return;
         }
 
-        const previewKey = PREVIEW_STORAGE_KEY; // Use the fixed key
+        const previewKey = PREVIEW_STORAGE_KEY;
 
         console.log(`[TemplateSelector/handlePreview] Preparing to save preview data with key: ${previewKey}`);
         console.log(`[TemplateSelector/handlePreview] Preview Data:`, previewData);
@@ -164,21 +157,13 @@ export function TemplateSelector({
         try {
             localStorage.setItem(previewKey, JSON.stringify(previewData));
             console.log(`[TemplateSelector/handlePreview] Successfully saved data for key: ${previewKey}`);
-
+            
             const stored = localStorage.getItem(previewKey);
             if (!stored) throw new Error("Verification failed: No data found in localStorage.");
-            const parsed = JSON.parse(stored);
-            // Compare a unique field like 'id' if present, or a combination of fields for better verification.
-            if (parsed.id !== previewData.id || parsed.title !== previewData.title) {
-                 console.warn(`[TemplateSelector/handlePreview] Verification mismatch. Stored:`, parsed, `Preview:`, previewData);
-                 // Potentially throw error or just log, depending on strictness needed.
-                 // For now, let's assume the latest setItem wins if keys are fixed.
-            } else {
-                 console.log("[TemplateSelector/handlePreview] Verification SUCCESS.");
-            }
+            JSON.parse(stored); // Try to parse to ensure it's valid JSON
+            console.log("[TemplateSelector/handlePreview] Verification SUCCESS (data stored and is valid JSON).");
 
-
-            const previewUrl = `/admin/preview`; // Fixed URL, preview page will use fixed key
+            const previewUrl = `/admin/preview`;
             console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
             setTimeout(() => {
@@ -210,16 +195,17 @@ export function TemplateSelector({
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col overflow-hidden">
-                    <DialogHeader>
+                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col p-0"> {/* Remove p-6, handle padding in sub-components */}
+                    <DialogHeader className="p-6 pb-0"> {/* Add padding to header */}
                         <DialogTitle>{dialogTitle}</DialogTitle>
                         <DialogDescription>
                             İçeriğinizi oluşturmaya başlamak için hazır bir şablon seçin.
                             {blocksCurrentlyExist && <span className="text-destructive font-medium"> Şablon içeriği mevcut içeriğinizin üzerine yazılabilir (onayınızla).</span>}
                         </DialogDescription>
                     </DialogHeader>
-                    <ScrollArea className="flex-grow w-full rounded-md border my-4">
-                        <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
+                    {/* ScrollArea now directly child of DialogContent, allow it to manage its own scroll */}
+                    <ScrollArea className="flex-grow border-t border-b"> {/* Added border-t and border-b for visual separation */}
+                        <div className="grid gap-4 p-6 md:grid-cols-2 lg:grid-cols-3"> {/* Add padding to the content inside ScrollArea */}
                             {filteredTemplates.map((template) => (
                                 <Card key={template.id} className="flex flex-col">
                                     <CardHeader className="pb-2">
@@ -229,11 +215,11 @@ export function TemplateSelector({
                                         <div className="relative aspect-[3/2] w-full rounded overflow-hidden">
                                             <Image
                                                 src={template.previewImageUrl}
-                                                alt={template.name} // Use template name for alt text
+                                                alt={template.name}
                                                 layout="fill"
                                                 objectFit="cover"
                                                 className="rounded"
-                                                data-ai-hint={template.category?.toLowerCase() || 'abstract content'} // Adjusted hint
+                                                data-ai-hint={template.category?.toLowerCase() || 'abstract content'}
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground flex-grow">{template.description}</p>
@@ -242,26 +228,8 @@ export function TemplateSelector({
                                                 <Eye className="mr-2 h-4 w-4" />
                                                 Önizle
                                             </Button>
-                                            <AlertDialog open={isConfirmOpen && selectedTemplate?.id === template.id} onOpenChange={(open) => { if (!open && selectedTemplate?.id === template.id) { setIsConfirmOpen(false); setSelectedTemplate(null); } }}>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Düzenleyicide zaten içerik bulunuyor. "{selectedTemplate?.name}" şablonunu uygulamak mevcut içeriği silecektir.
-                                                            Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel onClick={() => { setIsConfirmOpen(false); setSelectedTemplate(null); }}>İptal</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
-                                                            Evet, Üzerine Yaz
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                            {/* AlertDialogTrigger should be a direct child of AlertDialog */}
+                                            <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -273,14 +241,34 @@ export function TemplateSelector({
                             )}
                         </div>
                     </ScrollArea>
-                    <DialogFooter>
+                    <DialogFooter className="p-6 pt-0"> {/* Add padding to footer */}
                         <Button type="button" variant="secondary" onClick={onClose}>
                             Kapat
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            
+            {/* Confirmation Dialog */}
+            {selectedTemplate && (
+                <AlertDialog open={isConfirmOpen} onOpenChange={(open) => { if (!open) { setIsConfirmOpen(false); setSelectedTemplate(null); }}}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Mevcut İçeriğin Üzerine Yazılsın mı?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Düzenleyicide zaten içerik bulunuyor. "{selectedTemplate?.name}" şablonunu uygulamak mevcut içeriği silecektir.
+                                Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => { setIsConfirmOpen(false); setSelectedTemplate(null); }}>İptal</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => applyTemplate(selectedTemplate)}>
+                                Evet, Üzerine Yaz
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
         </>
     );
 }
-
