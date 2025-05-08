@@ -1,22 +1,20 @@
+"use client"; 
 
-"use client"; // Add this line because we're using Framer Motion client-side
-
-import * as React from 'react'; // Import React for useState/useEffect if needed elsewhere
-import { motion } from 'framer-motion'; // Import motion
+import * as React from 'react';
+import { motion } from 'framer-motion'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
 import { ArrowRight } from "lucide-react";
-// import Hero from "@/components/hero"; // Import the Hero component - Will be dynamically imported
-import { cn } from '@/lib/utils'; // Import cn for conditional classes
-import { getArticles, type ArticleData } from '@/lib/mock-data'; // Import mock data functions
-import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import { cn } from '@/lib/utils'; 
+import { getArticles, type ArticleData } from '@/lib/mock-data'; 
+import { Skeleton } from '@/components/ui/skeleton'; 
 import dynamic from 'next/dynamic';
 
 const Hero = dynamic(() => import('@/components/hero'), {
   loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
-  ssr: false // Consider if Hero needs SSR; if not, false can improve client performance
+  ssr: false 
 });
 
 
@@ -40,21 +38,21 @@ const titleContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.03, // Slightly faster stagger
+      staggerChildren: 0.03, 
       delayChildren: 0.2,
     },
   },
 };
 
 const letterRevealVariants = {
-  hidden: { opacity: 0, y: 10, filter: 'blur(2px)' }, // Start slightly faded, down, and blurred
+  hidden: { opacity: 0, y: 10, filter: 'blur(2px)' }, 
   visible: {
     opacity: 1,
     y: 0,
     filter: 'blur(0px)',
     transition: {
-      duration: 0.6, // Slightly longer for a smoother reveal
-      ease: [0.6, -0.05, 0.01, 0.99], // Custom ease for a more dynamic effect
+      duration: 0.6, 
+      ease: [0.6, -0.05, 0.01, 0.99], 
     },
   },
 };
@@ -62,43 +60,74 @@ const letterRevealVariants = {
 
 export default function Home() {
   const [allArticles, setAllArticles] = React.useState<ArticleData[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [filteredArticlesForDisplay, setFilteredArticlesForDisplay] = React.useState<ArticleData[]>([]);
+  const [loadingArticles, setLoadingArticles] = React.useState(true);
+  const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
+  const [loadingRole, setLoadingRole] = React.useState(true);
 
   React.useEffect(() => {
+    // Fetch articles
     getArticles()
       .then(data => {
         setAllArticles(data);
-        setLoading(false);
       })
       .catch(err => {
         console.error("Error fetching articles:", err);
-        // Handle error state if needed
-        setLoading(false);
+      })
+      .finally(() => {
+        setLoadingArticles(false);
       });
-  }, []);
 
-  // Filter articles for display only after data is loaded
-  const publishedArticles = allArticles.filter(article => article.status === 'Yayınlandı');
+    // Fetch user role from localStorage
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          setCurrentUserRole(user.role || null);
+        } catch (e) {
+          console.error("Error parsing current user from localStorage", e);
+          setCurrentUserRole(null); // Fallback
+        }
+      }
+      setLoadingRole(false);
+    } else {
+      setLoadingRole(false); // Not in browser, role won't be available this way
+    }
+  }, []); // Run once on mount
 
-  // Articles specifically marked for the Hero section
-  const heroArticles: ArticleData[] = publishedArticles
+  React.useEffect(() => {
+    if (!loadingArticles && !loadingRole) { // Only process once both are loaded
+      let visibleArticles;
+      if (currentUserRole === 'Admin' || currentUserRole === 'Editor') {
+        visibleArticles = allArticles.filter(article =>
+          article.status === 'Yayınlandı' || article.status === 'Hazır'
+        );
+      } else {
+        visibleArticles = allArticles.filter(article => article.status === 'Yayınlandı');
+      }
+      setFilteredArticlesForDisplay(visibleArticles);
+    }
+  }, [allArticles, currentUserRole, loadingArticles, loadingRole]);
+
+
+  const heroArticles: ArticleData[] = filteredArticlesForDisplay
     .filter(article => article.isHero === true)
-    .slice(0, 5); // Limit Hero articles
+    .slice(0, 5);
 
-  // Articles specifically marked as Featured (but NOT necessarily in Hero)
-  const featuredArticles: ArticleData[] = publishedArticles
-    .filter(article => article.isFeatured === true)
-    .slice(0, 3); // Limit to 3 featured
+  const featuredArticles: ArticleData[] = filteredArticlesForDisplay
+    .filter(article => article.isFeatured === true) 
+    .slice(0, 3);
 
-  // Recent articles: Published, NOT in Hero, NOT Featured
-  const recentArticles: ArticleData[] = publishedArticles
-    .filter(article => !article.isHero && !article.isFeatured)
-    // Sort by creation date descending (assuming createdAt is a valid date string)
+  const recentArticles: ArticleData[] = filteredArticlesForDisplay
+    .filter(article => !article.isHero && !article.isFeatured) 
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 3); // Limit to 3 recent
+    .slice(0, 3);
+
+  const pageIsLoading = loadingArticles || loadingRole;
 
   // --- Loading State ---
-  if (loading) {
+  if (pageIsLoading) {
      return (
         <div className="space-y-16">
              {/* Title Skeleton */}
@@ -160,12 +189,11 @@ export default function Home() {
                 {char === ' ' ? '\u00A0' : char}
               </motion.span>
             ))}
-            {/* Shimmer effect for specific words */}
             {(part.text.toLowerCase() === "teknoloji" || part.text.toLowerCase() === "biyolojinin") && (
                 <motion.span
                     className={cn(
                         "absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-70 dark:via-white/20",
-                        "pointer-events-none" // Ensure it doesn't interfere with text selection
+                        "pointer-events-none" 
                     )}
                     style={{
                         backgroundSize: '200% 100%',
@@ -173,10 +201,10 @@ export default function Home() {
                     initial={{ backgroundPosition: '-200% 0' }}
                     animate={{ backgroundPosition: ['-200% 0', '200% 0'] }}
                     transition={{
-                        duration: 2.5, // Slower shimmer
+                        duration: 2.5, 
                         ease: "linear",
                         repeat: Infinity,
-                        delay: partIndex * 0.5 + 0.5, // Stagger shimmer start
+                        delay: partIndex * 0.5 + 0.5, 
                     }}
                  />
             )}
@@ -184,11 +212,10 @@ export default function Home() {
         ))}
       </motion.h1>
 
-       {/* Hero Section - Pass only articles marked for Hero */}
        <Hero articles={heroArticles} />
 
       {/* Featured Articles Showcase */}
-      <section id="featured-articles"> {/* Added ID for linking from Hero button */}
+      <section id="featured-articles"> 
         <h2 className="text-3xl font-bold mb-8">Öne Çıkanlar</h2>
         {featuredArticles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -196,19 +223,19 @@ export default function Home() {
                 <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group">
                 <CardHeader className="p-0 relative">
                     <Image
-                    src={article.mainImageUrl || 'https://picsum.photos/seed/placeholder/600/400'} // Fallback image
+                    src={article.mainImageUrl || 'https://picsum.photos/seed/placeholder/600/400'} 
                     alt={article.title}
                     width={600}
                     height={400}
                     className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-                    priority={index < 3} // Prioritize first few featured images
+                    priority={index < 3} 
                     data-ai-hint="technology biology abstract"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </CardHeader>
                 <CardContent className="p-6 flex flex-col flex-grow">
                     <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground mb-5 flex-grow line-clamp-3">{article.excerpt}</CardDescription> {/* Limit excerpt lines */}
+                    <CardDescription className="text-muted-foreground mb-5 flex-grow line-clamp-3">{article.excerpt}</CardDescription> 
                     <div className="mt-auto flex justify-between items-center">
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${article.category === 'Teknoloji' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}>
                         {article.category}
@@ -228,7 +255,6 @@ export default function Home() {
         )}
       </section>
 
-       {/* Category-Based Browsing Teaser */}
        <section>
          <h2 className="text-3xl font-bold mb-8">Kategoriler</h2>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -250,7 +276,6 @@ export default function Home() {
        </section>
 
 
-      {/* Recent Articles */}
       <section>
         <h2 className="text-3xl font-bold mb-8">En Son Eklenenler</h2>
         {recentArticles.length > 0 ? (
@@ -259,19 +284,19 @@ export default function Home() {
                 <Card key={article.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group">
                 <CardHeader className="p-0 relative">
                     <Image
-                        src={article.mainImageUrl || 'https://picsum.photos/seed/placeholder-recent/600/400'} // Fallback image
+                        src={article.mainImageUrl || 'https://picsum.photos/seed/placeholder-recent/600/400'} 
                         alt={article.title}
                         width={600}
                         height={400}
                         className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                         data-ai-hint="recent abstract data"
-                        loading="lazy" // Lazy load recent articles images
+                        loading="lazy" 
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </CardHeader>
                 <CardContent className="p-6 flex flex-col flex-grow">
                     <CardTitle className="text-xl font-semibold mb-3">{article.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground mb-5 flex-grow line-clamp-3">{article.excerpt}</CardDescription> {/* Limit excerpt lines */}
+                    <CardDescription className="text-muted-foreground mb-5 flex-grow line-clamp-3">{article.excerpt}</CardDescription> 
                     <div className="mt-auto flex justify-between items-center">
                         <span className={`text-xs font-semibold px-2 py-1 rounded ${article.category === 'Teknoloji' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}>
                         {article.category}
@@ -294,3 +319,4 @@ export default function Home() {
     </div>
   );
 }
+
