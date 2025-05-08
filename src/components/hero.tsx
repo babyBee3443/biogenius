@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -38,6 +37,16 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
     };
   }, [isPlaying, displayArticles.length]); // Re-run effect if isPlaying or articles change
 
+  // Ensure currentIndex is valid after articles might change
+  React.useEffect(() => {
+    if (displayArticles.length > 0 && currentIndex >= displayArticles.length) {
+      setCurrentIndex(0);
+    } else if (displayArticles.length === 0) {
+      setCurrentIndex(0); // Reset if no articles
+    }
+  }, [displayArticles, currentIndex]);
+
+
   // --- Ad Display Logic ---
   const shouldShowAd = displayArticles.length === 0;
 
@@ -63,24 +72,20 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
   }
   // --- End Ad Display Logic ---
 
-  // Ensure currentIndex is valid after articles might change
-  React.useEffect(() => {
-    if (currentIndex >= displayArticles.length) {
-      setCurrentIndex(0);
-    }
-  }, [displayArticles, currentIndex]);
 
   // Handle the case where displayArticles is initially empty and then populated
-  if (displayArticles.length === 0) {
-     // You might want a loading state here, but returning null avoids errors
-     return null;
-  }
+  // This check is now implicitly handled by the shouldShowAd logic above
+  // if (displayArticles.length === 0) {
+  //    return null;
+  // }
 
   const currentArticle = displayArticles[currentIndex];
 
   // Ensure currentArticle is defined before accessing its properties
   if (!currentArticle) {
-    return null; // Or a loading/error state
+    // This can happen if displayArticles is empty, which is handled by shouldShowAd
+    // or if currentIndex is somehow out of sync briefly, which the useEffect above tries to prevent.
+    return null; 
   }
 
   const handleDotClick = (index: number) => {
