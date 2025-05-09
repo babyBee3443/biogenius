@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -77,12 +76,15 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
   const currentArticle = displayArticles[currentIndex];
 
   if (!currentArticle) {
+    // This can happen briefly if displayArticles becomes empty due to filtering
+    // and before the useEffect to reset currentIndex kicks in.
+    // Or if there are genuinely no articles to display after filtering.
     return null; 
   }
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index);
-    setIsPlaying(false); 
+    setIsPlaying(false); // Stop autoplay when a dot is clicked
   };
 
   const togglePlay = () => {
@@ -105,7 +107,7 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
     <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner"> {/* Reduced height */}
       <AnimatePresence initial={false} mode="wait">
         <motion.div
-          key={currentIndex} 
+          key={currentIndex} // Ensure key changes to trigger animation
           className="absolute inset-0 z-0"
           variants={backgroundVariants}
           initial="hidden"
@@ -127,20 +129,21 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
       </AnimatePresence>
 
       <div className="container relative z-10 text-white dark:text-gray-100 px-4"> {/* Adjusted dark text color for better contrast */}
-        <div className="relative h-48 md:h-40"> 
+        <div className="relative h-48 md:h-40"> {/* Container for animated text */}
           <AnimatePresence initial={false} mode="wait">
             <motion.div
-              key={currentIndex} 
+              key={currentIndex} // Ensure key changes to trigger animation
               variants={textVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
               className="absolute inset-0 flex flex-col items-center justify-center"
             >
+                {/* Removed category badge from here as per previous request to simplify Hero content */}
                 <h2 className="mt-2 text-xl font-semibold md:text-2xl text-shadow-md">
                     {currentArticle.title}
                 </h2>
-              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm line-clamp-3"> 
+              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm line-clamp-3"> {/* Ensure consistent line-clamp */}
                 {currentArticle.excerpt}
               </p>
               <Button size="lg" asChild className="mt-6">
@@ -153,7 +156,8 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
         </div>
       </div>
 
-      {displayArticles.length > 1 && ( 
+      {/* Controls (Dots and Play/Pause) */}
+      {displayArticles.length > 1 && ( // Only show controls if more than one article
         <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-3">
           <Button variant="ghost" size="icon" onClick={togglePlay} className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full">
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

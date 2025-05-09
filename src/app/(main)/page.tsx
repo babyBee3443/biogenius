@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic';
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
   loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
-  ssr: false 
+  ssr: false // Crucial for client-side heavy components like Hero with animations/state
 });
 
 const FeaturedArticlesSection = dynamic(() => import('@/components/featured-articles-section'), {
@@ -78,14 +78,14 @@ const titleContainerVariants = {
     transition: {
       duration: 0.8,
       ease: "easeOut",
-      staggerChildren: 0.2, // Stagger per word/part
+      staggerChildren: 0.1, // Stagger per word/part
     },
   },
 };
 
 const wordVariants = {
   hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
 
 
@@ -143,11 +143,13 @@ export default function Home() {
 
 
   const heroArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isHero === true)
-    .slice(0, 5);
+    .filter(article => article.isHero === true) // Use isHero to filter
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) // Sort by most recent
+    .slice(0, 5); // Take top 5 hero articles
 
   const featuredArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isFeatured === true) 
+    .filter(article => article.isFeatured === true && !article.isHero) // Exclude hero articles from featured if distinct
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
   const recentArticles: ArticleData[] = filteredArticlesForDisplay
