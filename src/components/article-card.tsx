@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -34,7 +33,7 @@ const ArticleCardComponent: React.FC<ArticleCardProps> = ({ article, priority = 
                 objectFit="cover"
                 className="transition-transform duration-300 group-hover:scale-105"
                 priority={priority}
-                loading={imageLoading || (priority ? undefined : "lazy")}
+                loading={imageLoading || (priority ? "eager" : "lazy")}
                 data-ai-hint={imageHint}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

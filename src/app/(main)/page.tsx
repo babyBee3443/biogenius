@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic';
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
   loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
-  ssr: false // Assuming Hero component is client-side and doesn't need SSR
+  ssr: false // Hero component is client-side and involves animations/state
 });
 
 const FeaturedArticlesSection = dynamic(() => import('@/components/featured-articles-section'), {
@@ -24,7 +24,7 @@ const FeaturedArticlesSection = dynamic(() => import('@/components/featured-arti
       </div>
     </section>
   ),
-  ssr: false // Assuming this section is client-side
+  ssr: false // Client-side component, potentially fetching its own data or relying on client state
 });
 
 const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser-section'), {
@@ -37,7 +37,7 @@ const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser
       </div>
     </section>
   ),
-  ssr: false // Assuming this section is client-side
+  ssr: false // Client-side component
 });
 
 const RecentArticlesSection = dynamic(() => import('@/components/recent-articles-section'), {
@@ -51,7 +51,7 @@ const RecentArticlesSection = dynamic(() => import('@/components/recent-articles
       </div>
     </section>
   ),
-  ssr: false // Assuming this section is client-side
+  ssr: false // Client-side component
 });
 
 

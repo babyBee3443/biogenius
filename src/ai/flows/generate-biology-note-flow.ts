@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview AI flow for generating biology note suggestions.
@@ -52,23 +51,15 @@ export type GenerateBiologyNoteSuggestionOutput = z.infer<typeof GenerateBiology
 
 // --- Exported Wrapper Function ---
 export async function generateBiologyNoteSuggestion(input: GenerateBiologyNoteSuggestionInput): Promise<GenerateBiologyNoteSuggestionOutput> {
-  // Temporarily disable AI call due to schema issues
-  console.error("generateBiologyNoteSuggestion AI call is temporarily disabled due to ongoing schema/prompt issues.");
-  throw new Error("AI not önerisi özelliği geçici olarak devre dışıdır. Lütfen daha sonra tekrar deneyin.");
-
-  // The following code is commented out until the API issues are resolved.
-  /*
   const { output } = await biologyNotePrompt(input);
   if (!output) {
     throw new Error("AI did not return an output for biology note suggestions.");
   }
   return output;
-  */
 }
 
 
-// --- Genkit Prompt Definition (Commented out due to API errors) ---
-/*
+// --- Genkit Prompt Definition ---
 const biologyNotePrompt = ai.definePrompt({
   name: 'generateBiologyNoteSuggestionPrompt',
   input: { schema: GenerateBiologyNoteSuggestionInputSchema },
@@ -130,10 +121,8 @@ const biologyNotePrompt = ai.definePrompt({
     **Remember to be an expert, accurate, and cautious biology assistant. If unsure, state it.**
   `,
 });
-*/
 
-// --- Genkit Flow Definition (Commented out) ---
-/*
+// --- Genkit Flow Definition ---
 const generateBiologyNoteSuggestionFlow = ai.defineFlow(
   {
     name: 'generateBiologyNoteSuggestionFlow',
@@ -143,9 +132,8 @@ const generateBiologyNoteSuggestionFlow = ai.defineFlow(
   async (input) => {
     const { output } = await biologyNotePrompt(input);
     if (!output) {
-      throw new Error("AI did not return an output for biology note suggestions.");
+      throw new Error("AI did not return an output for biology note generation.");
     }
     return output;
   }
 );
-*/

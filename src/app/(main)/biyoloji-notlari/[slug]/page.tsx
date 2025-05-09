@@ -1,4 +1,3 @@
-
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             width={700} // Slightly smaller width for notes
             height={400}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
-            data-ai-hint="biology diagram illustration" // Added hint
+            data-ai-hint="biology diagram illustration" 
             loading="lazy" // Lazy load content images
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
@@ -187,7 +186,7 @@ export default async function NotePage({ params }: NotePageProps) {
              <h2 className="text-2xl font-semibold mb-6">İlgili Notlar</h2>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                  {relatedNotes.map(relNote => (
-                    <NoteCard key={relNote.id} note={relNote} imageHint="related note biology"/>
+                    <NoteCard key={relNote.id} note={relNote} imageLoading="lazy" imageHint="related note biology"/>
                  ))}
              </div>
            </div>

@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -44,14 +43,14 @@ import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Lay
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
+const PREVIEW_STORAGE_KEY = 'preview_data'; 
 
 // --- Main Page Component ---
 
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = params.id as string;
+    const articleId = React.use(params)?.id as string; // Use React.use for simpler param access
 
     // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
@@ -551,7 +550,16 @@ export default function EditArticlePage() {
                                  </div>
                                  {mainImageUrl && (
                                      <div className="mt-2 rounded border p-2 w-fit">
-                                         <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded" data-ai-hint="article cover placeholder"/>
+                                         <Image 
+                                            src={mainImageUrl} 
+                                            alt="Ana Görsel Önizleme" 
+                                            width={200} 
+                                            height={100} 
+                                            className="object-cover rounded" 
+                                            data-ai-hint="article cover placeholder"
+                                            priority={false} // Main image on edit page might not be LCP for this page itself
+                                            loading="lazy"
+                                        />
                                      </div>
                                  )}
                              </div>

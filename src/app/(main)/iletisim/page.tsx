@@ -1,4 +1,3 @@
-
 "use client"; // Mark as client component for form handling (even if basic)
 
 import * as React from "react";
@@ -131,3 +130,4 @@ export default function IletisimPage() {
     </div>
   );
 }
+

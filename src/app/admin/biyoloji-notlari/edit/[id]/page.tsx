@@ -1,4 +1,3 @@
-
 "use client"; // Essential for hooks
 
 import * as React from 'react';
@@ -42,7 +41,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key
 export default function EditBiyolojiNotuPage() {
     const router = useRouter();
     const params = useParams();
-    const noteId = params.id as string;
+    const noteId = React.use(params)?.id as string;
     const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
     // --- State ---
@@ -446,7 +445,15 @@ export default function EditBiyolojiNotuPage() {
                                 </div>
                                 {imageUrl && (
                                     <div className="mt-2 rounded border p-2 w-fit">
-                                        <Image src={imageUrl} alt="Kapak Görsel Önizleme" width={200} height={100} className="object-cover rounded" data-ai-hint="biology note cover placeholder"/>
+                                        <Image 
+                                            src={imageUrl} 
+                                            alt="Kapak Görsel Önizleme" 
+                                            width={200} 
+                                            height={100} 
+                                            className="object-cover rounded" 
+                                            data-ai-hint="biology note cover placeholder"
+                                            loading="lazy"
+                                        />
                                     </div>
                                 )}
                             </div>

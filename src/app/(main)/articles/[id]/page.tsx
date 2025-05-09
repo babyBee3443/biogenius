@@ -1,4 +1,3 @@
-
 "use client"; // Make this a client component
 
 import * as React from 'react';
@@ -31,7 +30,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             height={450}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="article content image"
-            loading="lazy"
+            loading="lazy" // Lazy load content images
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -67,7 +66,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    loading="lazy"
+                    loading="lazy" // Lazy load iframes
                 ></iframe>
             </div>
         );
@@ -115,7 +114,7 @@ function createMarkup(htmlContent: string) {
 
 export default function ArticlePage() {
   const params = useParams();
-  const articleId = params.id as string;
+  const articleId = React.use(params)?.id as string; // Using React.use for params
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);

@@ -511,7 +511,15 @@ export default function NewBiyolojiNotuPage() {
                                         </div>
                                         {imageUrl && (
                                             <div className="mt-2 rounded border p-2 w-fit">
-                                                <Image src={imageUrl} alt="Kapak Görsel Önizleme" width={200} height={100} className="object-cover rounded" data-ai-hint="biology note cover placeholder"/>
+                                                <Image 
+                                                  src={imageUrl} 
+                                                  alt="Kapak Görsel Önizleme" 
+                                                  width={200} 
+                                                  height={100} 
+                                                  className="object-cover rounded" 
+                                                  data-ai-hint="biology note cover placeholder"
+                                                  loading="lazy"
+                                                />
                                             </div>
                                         )}
                                     </div>
@@ -644,3 +652,4 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
+

@@ -9,7 +9,7 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { useDebouncedCallback } from 'use-debounce';
-import { createArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including getCategories
+import { createArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data'; // Import mock data functions including getCategories
 import { usePermissions } from "@/hooks/usePermissions"; // Import usePermissions
 
 
@@ -45,7 +45,7 @@ import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-reac
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 // --- Main Page Component ---
 
@@ -107,19 +107,19 @@ export default function NewArticlePage() {
     // --- Handlers ---
 
     // Basic slug generation
-    const generateSlug = (text: string) => {
-        if (!text) return '';
-        return text
-            .toLowerCase()
-            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-            .replace(/[^a-z0-9 -]/g, '')
-            .replace(/\s+/g, '-').replace(/-+/g, '-');
-    };
+    // const generateSlug = (text: string) => { // Already using generateSlugUtil from mock-data
+    //     if (!text) return '';
+    //     return text
+    //         .toLowerCase()
+    //         .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+    //         .replace(/[^a-z0-9 -]/g, '')
+    //         .replace(/\s+/g, '-').replace(/-+/g, '-');
+    // };
 
      // Auto-generate slug from title (debounced)
      const debouncedSetSlug = useDebouncedCallback((newTitle: string) => {
          if (newTitle) {
-             setSlug(generateSlug(newTitle));
+             setSlug(generateSlugUtil(newTitle));
          } else {
              setSlug(''); // Clear slug if title is empty
          }
@@ -215,7 +215,7 @@ export default function NewArticlePage() {
              mainImageUrl: mainImageUrl || null,
              isFeatured,
              isHero, // Include isHero in save data
-             slug: slug || generateSlug(title),
+             slug: slug || generateSlugUtil(title),
              keywords: keywords || [],
              canonicalUrl: canonicalUrl || "",
              blocks: blocks.length > 0 ? blocks : [createDefaultBlock()], // Use default if empty
@@ -293,7 +293,7 @@ export default function NewArticlePage() {
             createdAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            slug: slug || generateSlug(title),
+            slug: slug || generateSlugUtil(title),
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
@@ -390,7 +390,7 @@ export default function NewArticlePage() {
                     <Tabs defaultValue="content">
                         <TabsList className="mb-6">
                             <TabsTrigger value="content">İçerik</TabsTrigger>
-                            <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon</TabsTrigger>
+                            <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon Seç</TabsTrigger>
                             <TabsTrigger value="media">Medya</TabsTrigger>
                             <TabsTrigger value="seo">SEO</TabsTrigger>
                         </TabsList>
@@ -437,7 +437,15 @@ export default function NewArticlePage() {
                                 </div>
                                 {mainImageUrl && (
                                     <div className="mt-2 rounded border p-2 w-fit">
-                                        <Image src={mainImageUrl} alt="Ana Görsel Önizleme" width={200} height={100} className="object-cover rounded" data-ai-hint="article cover placeholder"/>
+                                        <Image 
+                                            src={mainImageUrl} 
+                                            alt="Ana Görsel Önizleme" 
+                                            width={200} 
+                                            height={100} 
+                                            className="object-cover rounded" 
+                                            data-ai-hint="article cover placeholder"
+                                            loading="lazy"
+                                        />
                                     </div>
                                 )}
                             </div>
@@ -472,7 +480,7 @@ export default function NewArticlePage() {
 
                          {/* Template Tab (Content is handled by Modal) */}
                          <TabsContent value="template">
-                             <p className="text-muted-foreground">Şablon seçmek için yukarıdaki "Şablon" sekmesine tıklayın.</p>
+                             <p className="text-muted-foreground">Şablon seçmek için yukarıdaki "Şablon Seç" sekmesine tıklayın.</p>
                         </TabsContent>
 
                         {/* Media Tab */}
@@ -528,7 +536,7 @@ export default function NewArticlePage() {
                                              <Input
                                                  id="slug"
                                                  value={slug}
-                                                 onChange={(e) => setSlug(generateSlug(e.target.value))}
+                                                 onChange={(e) => setSlug(generateSlugUtil(e.target.value))}
                                                  placeholder="makale-basligi-url"
                                                  required
                                              />
@@ -588,6 +596,7 @@ export default function NewArticlePage() {
                                     <SelectContent>
                                         <SelectItem value="Taslak">Taslak</SelectItem>
                                         <SelectItem value="İncelemede">İncelemede</SelectItem>
+                                        <SelectItem value="Hazır">Hazır (Admin/Editör Görsün)</SelectItem>
                                         <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
                                         <SelectItem value="Arşivlendi">Arşivlendi</SelectItem>
                                     </SelectContent>
