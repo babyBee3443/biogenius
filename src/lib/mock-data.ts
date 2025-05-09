@@ -9,12 +9,12 @@ export interface Category {
 
 // --- Article Data Structure ---
 export interface ArticleData {
-    id: string;
+    id:string;
     title: string;
     excerpt?: string;
     blocks: Block[];
     category: string;
-    status: 'Taslak' | 'İncelemede' | 'Hazır' | 'Yayınlandı' | 'Arşivlendi'; // Added "Hazır"
+    status: 'Taslak' | 'İncelemede' | 'Hazır' | 'Yayınlandı' | 'Arşivlendi';
     mainImageUrl: string | null;
     seoTitle?: string;
     seoDescription?: string;
@@ -40,8 +40,8 @@ export interface NoteData {
     contentBlocks: Block[];
     relatedNotes?: string[];
     imageUrl?: string | null;
-    authorId: string; // Added authorId
-    status: 'Taslak' | 'İncelemede' | 'Hazır' | 'Yayınlandı' | 'Arşivlendi'; // Added status to NoteData
+    authorId: string;
+    status: 'Taslak' | 'İncelemede' | 'Hazır' | 'Yayınlandı' | 'Arşivlendi';
     createdAt: string;
     updatedAt: string;
 }
@@ -49,21 +49,21 @@ export interface NoteData {
 // --- User Data Structure ---
 export interface User {
   id: string;
-  name: string; // Full name
-  username: string; // Unique username for login and display
+  name: string;
+  username: string;
   email: string;
-  role: 'Admin' | 'Editor' | 'User' | string; // Allow string for flexibility, but define common roles
-  joinedAt: string; // ISO Date string
-  avatar?: string; // Optional
-  lastLogin?: string; // ISO Date string, optional
-  bio?: string; // User's biography
-  website?: string; // User's personal website
-  twitterHandle?: string; // Twitter username (without @)
-  linkedinProfile?: string; // LinkedIn profile URL or username part
-  instagramProfile?: string; // Instagram username (without @)
-  facebookProfile?: string; // Facebook profile URL or username part
-  youtubeChannel?: string; // YouTube channel URL or ID
-  xProfile?: string; // X (Twitter) profile URL or username part
+  role: 'Admin' | 'Editor' | 'User' | string;
+  joinedAt: string;
+  avatar?: string;
+  lastLogin?: string;
+  bio?: string;
+  website?: string;
+  twitterHandle?: string;
+  linkedinProfile?: string;
+  instagramProfile?: string;
+  facebookProfile?: string;
+  youtubeChannel?: string;
+  xProfile?: string;
 }
 
 // --- Role Data Structure ---
@@ -71,660 +71,52 @@ export interface Role {
   id: string;
   name: string;
   description: string;
-  permissions: string[]; // Array of permission IDs/names
-  userCount: number; // How many users have this role
+  permissions: string[];
+  userCount: number;
 }
 
-// --- Template Structure (Used by TemplateSelector) ---
-// This will now also include page templates.
+// --- Template Structure ---
 export interface Template {
   id: string;
   name: string;
   description: string;
   previewImageUrl: string;
   blocks: Block[];
-  type: 'article' | 'note' | 'page'; // Added 'page' type
-  category?: 'Teknoloji' | 'Biyoloji' | 'Genel Sayfa'; // Added category for pages
+  type: 'article' | 'note' | 'page';
+  category?: 'Teknoloji' | 'Biyoloji' | 'Genel Sayfa';
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string[];
-  excerpt?: string; // Could be used as meta description for pages too
+  excerpt?: string;
+}
+
+// --- Page Data Structure ---
+export interface PageData {
+    id: string;
+    title: string;
+    slug: string;
+    blocks: Block[];
+    seoTitle?: string;
+    seoDescription?: string;
+    keywords?: string[];
+    canonicalUrl?: string;
+    imageUrl?: string;
+    settings?: Record<string, any>;
+    heroSettings?: {
+        enabled: boolean;
+        articleSource: 'latest' | 'featured';
+        intervalSeconds: number;
+        maxArticles: number;
+    };
+    status: 'Taslak' | 'Hazır' | 'Yayınlandı';
+    createdAt: string;
+    updatedAt: string;
 }
 
 
-// --- localStorage Setup ---
-export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles';
-export const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes';
-export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories';
-export const USER_STORAGE_KEY = 'teknobiyo_mock_users';
-export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles';
-export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages';
-
-
-// --- Initial Mock Data ---
-let defaultMockCategories: Category[] = [
-    { id: 'teknoloji', name: 'Teknoloji' },
-    { id: 'biyoloji', name: 'Biyoloji' },
-    { id: 'hücre-biyolojisi', name: 'Hücre Biyolojisi' },
-    { id: 'genetik', name: 'Genetik' },
-    { id: 'ekoloji', name: 'Ekoloji' },
-    { id: 'insan-anatomisi', name: 'İnsan Anatomisi' },
-    { id: 'bitki-biyolojisi', name: 'Bitki Biyolojisi' },
-];
-
-let defaultMockArticles: ArticleData[] = [
-     {
-        id: '1',
-        title: 'Yapay Zeka Devrimi',
-        excerpt: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
-        blocks: [
-            { id: 'b1', type: 'text', content: 'Yapay zeka (AI), makinelerin öğrenme, problem çözme ve karar verme gibi tipik olarak insan zekası gerektiren görevleri yerine getirme yeteneğidir.' },
-            { id: 'b2', type: 'image', url: 'https://picsum.photos/seed/ai-edit/800/400', alt: 'Yapay Zeka Görseli', caption: 'AI teknolojileri gelişiyor.' },
-            { id: 'b3', type: 'heading', level: 2, content: 'AI\'nın Etki Alanları' },
-            { id: 'b4', type: 'text', content: 'Sağlık hizmetlerinde AI, hastalıkların daha erken teşhis edilmesine yardımcı olmaktadır...' },
-            { id: 'b5', type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
-        ],
-        category: 'Teknoloji',
-        status: 'Yayınlandı',
-        mainImageUrl: 'https://picsum.photos/seed/ai/600/400',
-        seoTitle: 'Yapay Zeka Devrimi | TeknoBiyo',
-        seoDescription: 'AI etkileri ve geleceği üzerine derinlemesine bir bakış.',
-        slug: 'yapay-zeka-devrimi',
-        isFeatured: true,
-        isHero: true,
-        keywords: ['ai', 'makine öğrenimi', 'yapay zeka'],
-        canonicalUrl: '',
-        authorId: 'u1', // Ali Veli
-        createdAt: '2024-07-20T10:00:00Z',
-        updatedAt: '2024-07-25T14:30:00Z',
-    },
-    {
-        id: '2',
-        title: 'Gen Düzenleme Teknolojileri',
-        excerpt: 'CRISPR ve diğer gen düzenleme araçlarının bilim ve tıp üzerindeki etkileri.',
-        blocks: [
-            { id: 'g1', type: 'text', content: 'Gen düzenleme, DNA dizilimlerinde hedeflenen değişiklikleri yapmayı sağlar.' },
-             { id: 'g2', type: 'heading', level: 2, content: 'CRISPR-Cas9 Sistemi' },
-             { id: 'g3', type: 'text', content: 'Bu sistem, bakterilerin doğal savunma mekanizmasından esinlenilmiştir...' },
-        ],
-        category: 'Biyoloji',
-        status: 'Hazır', // Example of "Hazır" status
-        mainImageUrl: 'https://picsum.photos/seed/crispr/600/400',
-        seoTitle: 'Gen Düzenleme Teknolojileri | TeknoBiyo',
-        seoDescription: 'CRISPR ve diğer gen düzenleme araçlarının bilim ve tıp üzerindeki etkileri.',
-        slug: 'gen-duzenleme-teknolojileri',
-        isFeatured: true, 
-        isHero: false,
-        keywords: ['crispr', 'genetik', 'biyoteknoloji'],
-        canonicalUrl: '',
-        authorId: 'u2', // Ayşe Kaya
-        createdAt: '2024-07-19T11:00:00Z',
-        updatedAt: '2024-07-24T09:15:00Z',
-    },
-    {
-        id: '4',
-        title: 'Mikrobiyom: İçimizdeki Gizli Dünya',
-        excerpt: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri.',
-        blocks: [
-            { id: 'm1', type: 'text', content: 'İnsan vücudu, kendi hücrelerimizden kat kat fazla sayıda mikroorganizmaya ev sahipliği yapar...' },
-            { id: 'm2', type: 'heading', level: 2, content: 'Sağlık Üzerindeki Rolü' },
-            { id: 'm3', type: 'text', content: 'Bağırsak mikrobiyomu, sindirime yardımcı olmaktan bağışıklık sistemini eğitmeye kadar birçok önemli işlevi yerine getirir.' },
-            { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/microbiome-edit/800/400', alt: 'Mikrobiyom Görseli', caption: 'Bağırsak florası.' },
-        ],
-        category: 'Biyoloji',
-        status: 'Yayınlandı',
-        mainImageUrl: 'https://picsum.photos/seed/microbiome/600/400',
-        seoTitle: 'Mikrobiyom: İçimizdeki Dünya | TeknoBiyo',
-        seoDescription: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri ve mikrobiyom dengesinin önemi.',
-        slug: 'mikrobiyom-icimizdeki-dunya',
-        isFeatured: false,
-        isHero: true,
-        keywords: ['mikrobiyom', 'bağırsak', 'sağlık', 'bakteri', 'probiyotik'],
-        canonicalUrl: '',
-        authorId: 'u2', // Ayşe Kaya
-        createdAt: '2024-07-21T08:00:00Z',
-        updatedAt: '2024-07-26T10:00:00Z',
-    },
-     {
-        id: '5',
-        title: 'Blockchain Teknolojisi',
-        excerpt: 'Kripto paraların ötesinde, dağıtık defter teknolojisinin potansiyel uygulama alanları.',
-        blocks: [],
-        category: 'Teknoloji',
-        status: 'Arşivlendi',
-        mainImageUrl: 'https://picsum.photos/seed/blockchain-archived/600/400',
-        seoTitle: 'Blockchain Teknolojisi | TeknoBiyo',
-        seoDescription: 'Kripto paraların ötesinde, dağıtık defter teknolojisinin potansiyel uygulama alanları.',
-        slug: 'blockchain-teknolojisi',
-        isFeatured: false,
-        isHero: false,
-        keywords: ['blockchain', 'kripto', 'dağıtık defter'],
-        canonicalUrl: '',
-        authorId: 'u1', // Ali Veli
-        createdAt: '2024-06-15T14:00:00Z',
-        updatedAt: '2024-07-01T10:00:00Z',
-    },
-    {
-        id: '3',
-        title: 'Kuantum Bilgisayarlar',
-        excerpt: 'Hesaplamanın geleceği...',
-        blocks: [],
-        category: 'Teknoloji',
-        status: 'Yayınlandı',
-        mainImageUrl: 'https://picsum.photos/seed/quantum/600/400',
-        seoTitle: 'Kuantum Bilgisayarlar | TeknoBiyo',
-        seoDescription: 'Kuantum mekaniği prensiplerini kullanan yeni nesil hesaplama makineleri.',
-        slug: 'kuantum-bilgisayarlar',
-        isFeatured: true, 
-        isHero: false,
-        keywords: ['kuantum', 'hesaplama', 'kübit'],
-        canonicalUrl: '',
-        authorId: 'u1', // Ali Veli
-        createdAt: '2024-07-18T09:00:00Z',
-        updatedAt: '2024-07-18T09:00:00Z',
-    },
-     {
-        id: '6',
-        title: 'Sentetik Biyoloji',
-        excerpt: 'Yaşamı yeniden tasarlamak...',
-        blocks: [],
-        category: 'Biyoloji',
-        status: 'Yayınlandı',
-        mainImageUrl: 'https://picsum.photos/seed/syntheticbio/600/400',
-        seoTitle: 'Sentetik Biyoloji | TeknoBiyo',
-        seoDescription: 'Biyolojik sistemleri mühendislik prensipleriyle tasarlama ve inşa etme alanı.',
-        slug: 'sentetik-biyoloji',
-        isFeatured: false,
-        isHero: false,
-        keywords: ['sentetik biyoloji', 'mühendislik', 'dna'],
-        canonicalUrl: '',
-        authorId: 'u2', // Ayşe Kaya
-        createdAt: '2024-07-17T13:00:00Z',
-        updatedAt: '2024-07-23T11:00:00Z',
-    },
-     {
-        id: '7',
-        title: 'Nöral Ağlar ve Derin Öğrenme',
-        excerpt: 'Yapay zekanın temel taşları...',
-        blocks: [],
-        category: 'Teknoloji',
-        status: 'Taslak',
-        mainImageUrl: 'https://picsum.photos/seed/neural/600/400',
-        seoTitle: 'Nöral Ağlar ve Derin Öğrenme | TeknoBiyo',
-        seoDescription: 'Yapay sinir ağları ve derin öğrenme modellerinin çalışma prensipleri.',
-        slug: 'nöral-ağlar-derin-öğrenme',
-        isFeatured: false,
-        isHero: false,
-        keywords: ['nöral ağ', 'derin öğrenme', 'yapay zeka', 'makine öğrenimi'],
-        canonicalUrl: '',
-        authorId: 'u1', // Ali Veli
-        createdAt: '2024-07-22T15:00:00Z',
-        updatedAt: '2024-07-22T15:00:00Z',
-    },
-      {
-        id: '8',
-        title: 'Kanser İmmünoterapisi',
-        excerpt: 'Bağışıklık sistemini kansere karşı kullanma.',
-        blocks: [],
-        category: 'Biyoloji',
-        status: 'Yayınlandı',
-        mainImageUrl: 'https://picsum.photos/seed/immunotherapy/600/400',
-        seoTitle: 'Kanser İmmünoterapisi | TeknoBiyo',
-        seoDescription: 'Vücudun kendi bağışıklık sistemini kanser hücreleriyle savaşmak için güçlendiren tedavi yöntemleri.',
-        slug: 'kanser-immünoterapisi',
-        isFeatured: true,
-        isHero: true,
-        keywords: ['kanser', 'immünoterapi', 'bağışıklık sistemi', 'tedavi'],
-        canonicalUrl: '',
-        authorId: 'u2', // Ayşe Kaya
-        createdAt: '2024-07-16T10:00:00Z',
-        updatedAt: '2024-07-26T09:30:00Z',
-    },
-    {
-        id: '9',
-        title: 'ASDASDASDSAD',
-        excerpt: 'sadsadsad',
-        blocks: [
-            { id: 'block-1746446915238-87j9n5', type: 'text', content: 'sadsadsadasd' }
-        ],
-        category: 'Biyoloji',
-        status: 'Taslak',
-        mainImageUrl: '',
-        seoTitle: 'ASDASDASDSAD',
-        seoDescription: 'sadsadsad',
-        slug: 'asdasdasdsad',
-        isFeatured: false,
-        isHero: false,
-        keywords: [],
-        canonicalUrl: '',
-        authorId: 'u1', // Ali Veli
-        createdAt: '2025-05-04T20:48:22.265Z',
-        updatedAt: '2025-05-04T20:48:22.265Z'
-    },
-
-];
-
-defaultMockArticles = defaultMockArticles.map(article => ({
-    ...article,
-    isHero: article.isHero ?? false,
-}));
-
-let defaultMockNotes: NoteData[] = [
-    {
-        id: 'note-hucre-zari',
-        title: 'Hücre Zarının Yapısı ve Görevleri',
-        slug: 'hucre-zarinin-yapisi-ve-gorevleri',
-        category: 'Hücre Biyolojisi',
-        level: 'Lise 9',
-        tags: ['hücre zarı', 'fosfolipit', 'protein', 'madde geçişi', 'akıcı mozaik model'],
-        summary: 'Hücre zarının yapısını (fosfolipit tabaka, proteinler, karbonhidratlar) ve temel görevlerini (madde alışverişi, hücre tanıma, iletişim) açıklar.',
-        contentBlocks: [
-            { id: 'nb1', type: 'heading', level: 2, content: 'Akıcı Mozaik Zar Modeli' },
-            { id: 'nb2', type: 'text', content: 'Hücre zarı, **akıcı mozaik zar modeli** ile açıklanır. Bu modele göre zar, çift katlı **fosfolipit** tabakasından oluşur ve bu tabaka içinde hareket edebilen **proteinler** bulunur. Ayrıca zara bağlı **karbonhidratlar** (glikolipit, glikoprotein) da bulunur.' },
-            { id: 'nb3', type: 'image', url: 'https://picsum.photos/seed/cell-membrane/600/300', alt: 'Hücre Zarı Modeli', caption: 'Akıcı Mozaik Zar Modeli şematik gösterimi.' },
-            { id: 'nb4', type: 'heading', level: 2, content: 'Temel Görevleri' },
-            { id: 'nb5', type: 'text', content: '- **Madde Alışverişi:** Hücrenin ihtiyaç duyduğu maddelerin alınmasını ve atıkların uzaklaştırılmasını sağlar (pasif taşıma, aktif taşıma, endositoz, ekzositoz).\n- **Hücreyi Koruma ve Şekil Verme:** Hücreyi dış ortamdan ayırır ve desteklik sağlar.\n- **Hücre Tanıma:** Zar yüzeyindeki glikoproteinler ve glikolipitler, hücrelerin birbirini tanımasında rol oynar.\n- **Sinyal İletimi:** Hücreler arası iletişimde görev alır.' },
-        ],
-        imageUrl: 'https://picsum.photos/seed/note-membrane/400/250',
-        authorId: 'u1', // Ali Veli
-        status: 'Yayınlandı',
-        createdAt: '2024-07-28T10:00:00Z',
-        updatedAt: '2024-07-28T11:00:00Z',
-    },
-    {
-        id: 'note-mitokondri',
-        title: 'Mitokondri: Hücrenin Enerji Santrali',
-        slug: 'mitokondri-hucrenin-enerji-santrali',
-        category: 'Hücre Biyolojisi',
-        level: 'Lise 9',
-        tags: ['mitokondri', 'oksijenli solunum', 'ATP', 'enerji', 'organel'],
-        summary: 'Mitokondrinin yapısını, oksijenli solunumdaki rolünü ve ATP üretim sürecini özetler.',
-        contentBlocks: [
-            { id: 'nm1', type: 'heading', level: 2, content: 'Mitokondrinin Yapısı' },
-            { id: 'nm2', type: 'text', content: 'Mitokondri, çift katlı zara sahip bir organeldir. Dış zar düz, iç zar ise **krista** adı verilen kıvrımlara sahiptir. İçini dolduran sıvıya **matriks** denir. Kendine ait DNA, RNA ve ribozomları bulunur.' },
-            { id: 'nm3', type: 'image', url: 'https://picsum.photos/seed/mitochondria-structure/600/350', alt: 'Mitokondri Yapısı', caption: 'Mitokondri iç ve dış zarı, krista ve matriks.' },
-            { id: 'nm4', type: 'heading', level: 2, content: 'Oksijenli Solunum ve ATP Üretimi' },
-            { id: 'nm5', type: 'text', content: 'Mitokondri, **oksijenli solunumun** gerçekleştiği yerdir. Besin molekülleri (glikoz gibi) oksijen kullanılarak parçalanır ve bu süreçte açığa çıkan enerji, hücrenin kullanabileceği enerji formu olan **ATP**\'ye (Adenozin Trifosfat) dönüştürülür. Bu nedenle mitokondriye "hücrenin enerji santrali" denir.' },
-        ],
-        imageUrl: 'https://picsum.photos/seed/note-mitochondria/400/250',
-        authorId: 'u2', // Ayşe Kaya
-        status: 'Hazır',
-        createdAt: '2024-07-27T14:00:00Z',
-        updatedAt: '2024-07-27T15:30:00Z',
-    },
-    {
-        id: 'note-dna-replikasyonu',
-        title: 'DNA Replikasyonu (Eşlenmesi)',
-        slug: 'dna-replikasyonu-eslenmesi',
-        category: 'Genetik',
-        level: 'Lise 12',
-        tags: ['DNA', 'replikasyon', 'eşlenme', 'helikaz', 'DNA polimeraz', 'yarı korunumlu'],
-        summary: 'DNA\'nın kendini yarı korunumlu olarak nasıl eşlediğini, görev alan enzimleri ve süreci açıklar.',
-        contentBlocks: [
-            { id: 'ndr1', type: 'heading', level: 2, content: 'Yarı Korunumlu Eşlenme Modeli' },
-            { id: 'ndr2', type: 'text', content: 'DNA replikasyonu, **yarı korunumlu** olarak gerçekleşir. Bu, her yeni DNA molekülünün bir eski (kalıp) ve bir yeni zincirden oluştuğu anlamına gelir.' },
-            { id: 'ndr3', type: 'heading', level: 2, content: 'Replikasyon Süreci ve Enzimler' },
-             { id: 'ndr4', type: 'image', url: 'https://picsum.photos/seed/dna-replication-process/600/300', alt: 'DNA Replikasyon Süreci Şeması', caption: 'Helikaz, DNA polimeraz ve ligaz enzimleri görev alır.' },
-            { id: 'ndr5', type: 'text', content: '1. **Helikaz:** DNA çift sarmalını açar.\n2. **DNA Polimeraz:** Açılan kalıp zincirlerin karşısına uygun nükleotitleri getirerek yeni zincirleri sentezler.\n3. **DNA Ligaz:** Oluşan DNA parçalarını (Okazaki parçacıkları) birleştirir.' },
-            { id: 'ndr6', type: 'text', content: 'Replikasyon, hücre bölünmesi öncesinde gerçekleşir ve genetik bilginin yeni hücrelere aktarılmasını sağlar.' },
-        ],
-        imageUrl: 'https://picsum.photos/seed/note-dna/400/250',
-        authorId: 'u1', // Ali Veli
-        status: 'Yayınlandı',
-        createdAt: '2024-07-29T09:00:00Z',
-        updatedAt: '2024-07-29T09:30:00Z',
-    },
-    {
-        id: 'note-protein-sentezi',
-        title: 'Protein Sentezi: Transkripsiyon ve Translasyon',
-        slug: 'protein-sentezi-transkripsiyon-translasyon',
-        category: 'Genetik',
-        level: 'Lise 12',
-        tags: ['protein sentezi', 'transkripsiyon', 'translasyon', 'mRNA', 'tRNA', 'ribozom'],
-        summary: 'Protein sentezinin iki ana aşaması olan transkripsiyon (yazılım) ve translasyon (okuma) süreçlerini açıklar.',
-        contentBlocks: [
-            { id: 'nps1', type: 'heading', level: 2, content: 'Transkripsiyon (Yazılım)' },
-            { id: 'nps2', type: 'text', content: 'DNA\'daki genetik bilginin mRNA\'ya (mesajcı RNA) kopyalanmasıdır. Çekirdekte (ökaryotlarda) veya sitoplazmada (prokaryotlarda) gerçekleşir.' },
-            { id: 'nps3', type: 'heading', level: 2, content: 'Translasyon (Okuma)' },
-            { id: 'nps4', type: 'text', content: 'mRNA\'daki genetik kodun ribozomlarda okunarak amino asit dizisine (polipeptit) çevrilmesidir. Sitoplazmada ribozomlarda gerçekleşir. tRNA\'lar (taşıyıcı RNA) uygun amino asitleri ribozoma taşır.' },
-        ],
-        imageUrl: 'https://picsum.photos/seed/note-protein/400/250',
-        authorId: 'u1', // Ali Veli
-        status: 'Taslak',
-        createdAt: '2024-08-01T11:00:00Z',
-        updatedAt: '2024-08-01T11:30:00Z',
-    },
-    {
-        id: 'note-ekosistem',
-        title: 'Ekosistem ve Temel Kavramlar',
-        slug: 'ekosistem-temel-kavramlar',
-        category: 'Ekoloji',
-        level: 'Lise 10',
-        tags: ['ekosistem', 'biyotik faktörler', 'abiyotik faktörler', 'besin zinciri', 'popülasyon'],
-        summary: 'Ekosistemin tanımı, biyotik ve abiyotik faktörler, besin zinciri, popülasyon gibi temel ekolojik kavramları içerir.',
-        contentBlocks: [
-            { id: 'ne1', type: 'heading', level: 2, content: 'Ekosistem Nedir?' },
-            { id: 'ne2', type: 'text', content: 'Belirli bir alanda yaşayan canlılar (biyotik faktörler) ile bu canlıları çevreleyen cansız ortam (abiyotik faktörler) arasındaki etkileşimlerin oluşturduğu bütündür.' },
-             { id: 'ne3', type: 'image', url: 'https://picsum.photos/seed/ecosystem-overview/600/300', alt: 'Ekosistem Örneği', caption: 'Bir orman ekosistemi, canlı ve cansız öğeleri içerir.' },
-        ],
-        imageUrl: 'https://picsum.photos/seed/note-ecosystem/400/250',
-        authorId: 'u2', // Ayşe Kaya
-        status: 'Yayınlandı',
-        createdAt: '2024-08-02T15:00:00Z',
-        updatedAt: '2024-08-02T15:45:00Z',
-    }
-];
-
-let defaultMockUsers: User[] = [
-  { id: 'superadmin', name: 'Super Admin', username: 'superadmin', email: 'superadmin@teknobiyo.example.com', role: 'Admin', joinedAt: '2024-01-01T00:00:00Z', avatar: 'https://picsum.photos/seed/superadmin/128/128', lastLogin: new Date().toISOString(), bio: 'Sistem Yöneticisi.', xProfile: 'teknobiyo_admin' },
-  { id: 'u1', name: 'Ali Veli', username: 'aliveli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15T10:00:00Z', avatar: 'https://picsum.photos/seed/u1/128/128', lastLogin: '2024-07-22T10:30:00Z', bio: 'TeknoBiyo kurucusu ve baş yazarı.', website: 'https://aliveli.dev', twitterHandle: 'aliveli', linkedinProfile: 'aliveli-profil', instagramProfile: 'aliveli_insta', facebookProfile: 'alivelifb', youtubeChannel: 'aliveliyoutube', xProfile: 'aliveli_x' },
-  { id: 'u2', name: 'Ayşe Kaya', username: 'aysekaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22T11:00:00Z', avatar: 'https://picsum.photos/seed/u2/128/128', lastLogin: '2024-07-21T15:00:00Z', bio: 'Biyoloji ve sağlık alanında uzman editör.', instagramProfile: 'aysekaya_insta', xProfile: 'aysekaya_x' },
-  { id: 'u3', name: 'Mehmet Yılmaz', username: 'mehmetyilmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10T12:00:00Z', avatar: 'https://picsum.photos/seed/u3/128/128', lastLogin: '2024-07-20T09:15:00Z' },
-  { id: 'u4', name: 'Zeynep Demir', username: 'zeynepdemir', email: 'zeynep.demir@example.com', role: 'User', joinedAt: '2024-07-01T13:00:00Z', avatar: 'https://picsum.photos/seed/u4/128/128', lastLogin: '2024-07-18T11:00:00Z' },
-  { id: 'u5', name: 'Can Öztürk', username: 'canozturk', email: 'can.ozturk@example.com', role: 'Editor', joinedAt: '2024-05-19T14:00:00Z', avatar: 'https://picsum.photos/seed/u5/128/128', lastLogin: '2024-07-19T18:45:00Z', bio: 'Teknoloji ve yazılım konularında içerik üreticisi.', youtubeChannel: 'canozturktech', xProfile: 'canozturk_x' },
-  { id: 'user-1746537968395-202eb4', name: 'Gökhan Ermiş', username: 'gokhanermis', email: 'sirfpubg12@gmail.com', role: 'Admin', joinedAt: '2025-05-06T05:26:08.395Z', avatar: 'https://picsum.photos/seed/babybee/128/128', lastLogin: '2025-05-06T05:26:08.395Z', bio: 'Yeni kullanıcı bio.', website: 'https://example.com', twitterHandle: 'gokhanermis', linkedinProfile: 'gokhanermis', instagramProfile: 'gokhanermis_insta', facebookProfile: 'gokhanermisfb', youtubeChannel: 'gokhanermisyoutube', xProfile: 'gokhanermis_x' },
-];
-
-let defaultMockRoles: Role[] = [
-  {
-    id: 'admin',
-    name: 'Admin',
-    description: 'Tam sistem erişimine sahip yönetici.',
-    permissions: [
-      'Dashboard Görüntüleme',
-      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Hazır İçeriği Görüntüleme',
-      'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme',
-      'Kategorileri Yönetme',
-      'Sayfaları Yönetme',
-      'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme',
-      'Rolleri Yönetme',
-      'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'
-    ],
-    userCount: 3, // Updated count
-  },
-  {
-    id: 'editor',
-    name: 'Editor',
-    description: 'İçerik oluşturma ve düzenleme yetkisine sahip.',
-    permissions: [
-      'Dashboard Görüntüleme',
-      'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Hazır İçeriği Görüntüleme',
-      'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme',
-      'Kategorileri Yönetme', 'Kullanım Kılavuzunu Görüntüleme'
-    ],
-    userCount: 2,
-  },
-  {
-    id: 'user',
-    name: 'User',
-    description: 'Standart kullanıcı, içerik görüntüleme ve yorum yapma.',
-    permissions: ['Kullanım Kılavuzunu Görüntüleme'],
-    userCount: 2,
-  },
-];
-
-const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-const defaultPageTemplates: Template[] = [
-  {
-    id: 'page-standard',
-    name: 'Standart Sayfa',
-    description: 'Genel amaçlı sayfalar için başlık, metin ve görsel içeren temel düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/page-std/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: '[Sayfa Başlığı Buraya Gelecek]' },
-      { id: generateId(), type: 'text', content: '[Sayfanızın ana metin içeriği için bu alanı kullanın. Paragraflarınızı buraya ekleyebilirsiniz.]' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-std-img1/800/400', alt: 'Standart Sayfa Görseli 1', caption: 'İsteğe bağlı görsel alt yazısı.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 1' },
-      { id: generateId(), type: 'text', content: '[Bu alt başlık altındaki detayları veya ek bilgileri buraya yazın.]' },
-      { id: generateId(), type: 'divider' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 2' },
-      { id: generateId(), type: 'text', content: '[Farklı bir konu veya bölüm için metin içeriği.]' },
-      { id: generateId(), type: 'quote', content: 'İlham verici bir alıntı veya önemli bir notu burada vurgulayabilirsiniz.', citation: 'Kaynak (isteğe bağlı)' },
-    ]
-  },
-  {
-    id: 'page-contact',
-    name: 'İletişim Sayfası',
-    description: 'İletişim formu ve iletişim bilgileri için düzenlenmiş sayfa yapısı.',
-    previewImageUrl: 'https://picsum.photos/seed/page-contact/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'Bizimle İletişime Geçin' },
-      { id: generateId(), type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için aşağıdaki formu kullanabilir veya iletişim bilgilerimizden bize ulaşabilirsiniz.' },
-      { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@example.com' } },
-      { id: generateId(), type: 'heading', level: 2, content: 'Diğer İletişim Yolları' },
-      { id: generateId(), type: 'text', content: '**E-posta:** bilgi@example.com\n**Telefon:** +90 (XXX) XXX XX XX\n**Adres:** Örnek Mah. Bilim Cad. No:123, TeknoKent, İstanbul' },
-      { id: generateId(), type: 'section', sectionType: 'custom-text', settings: { content: '<p style="text-align:center; margin-top:20px;">Harita konumu (Gömülü harita eklenebilir).</p>' } },
-    ]
-  },
-  {
-    id: 'page-about-us',
-    name: 'Hakkımızda Sayfası',
-    description: 'Ekip, misyon ve vizyon gibi bilgileri içeren kurumsal sayfa düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/page-about/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Hakkında' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-about-hero/1000/400', alt: 'Hakkımızda Kapak Görseli', caption: 'Vizyonumuz ve geleceğe bakışımız.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Misyonumuz' },
-      { id: generateId(), type: 'text', content: '[Şirketinizin veya projenizin misyonunu açıklayan detaylı bir metin.]' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Vizyonumuz' },
-      { id: generateId(), type: 'text', content: '[Gelecekte ulaşmak istediğiniz hedefleri ve vizyonunuzu anlatan bir metin.]' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Ekibimiz' },
-      { id: generateId(), type: 'text', content: '[Ekip üyelerinizi tanıtan kısa bilgiler veya görseller eklenebilir. Örneğin, bir "section" bloğu ile daha karmaşık bir düzen oluşturulabilir.]' },
-      // Örnek Section kullanımı (ekip üyeleri için)
-      // { id: generateId(), type: 'section', sectionType: 'team-members', settings: { count: 3, showBio: true } }, // Bu sectionType'ın render edilmesi gerekir
-      { id: generateId(), type: 'text', content: 'Ekip üyelerimiz, alanlarında uzman ve tutkulu bireylerden oluşmaktadır...' },
-    ]
-  },
-  {
-    id: 'page-faq',
-    name: 'SSS Sayfası',
-    description: 'Sıkça sorulan soruları ve cevaplarını düzenli bir şekilde sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/page-faq/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'Sıkça Sorulan Sorular (SSS)' },
-      { id: generateId(), type: 'text', content: 'Hizmetlerimiz, ürünlerimiz veya projemiz hakkında en çok merak edilen soruları ve yanıtlarını burada bulabilirsiniz.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: [Sıkça Sorulan Bir Soru Örneği Nedir?]' },
-      { id: generateId(), type: 'text', content: '**Cevap:** [Bu soruya verilecek detaylı ve açıklayıcı cevap.]' },
-      { id: generateId(), type: 'divider' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: [Başka Bir Yaygın Soru Nasıl Çözülür?]' },
-      { id: generateId(), type: 'text', content: '**Cevap:** [Bu sorunun çözümünü veya açıklamasını içeren metin.]' },
-      { id: generateId(), type: 'divider' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: [Ürün/Hizmet Hakkında Bir Soru]' },
-      { id: generateId(), type: 'text', content: '**Cevap:** [Ürün veya hizmetle ilgili bu soruya verilecek yanıt.]' },
-      { id: generateId(), type: 'text', content: 'Daha fazla sorunuz varsa, lütfen bizimle iletişime geçmekten çekinmeyin.' },
-    ]
-  },
-   {
-    id: 'page-services',
-    name: 'Hizmetler Sayfası',
-    description: 'Sunulan hizmetleri detaylı bir şekilde listeleyen ve açıklayan sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-services/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Sunduğumuz Hizmetler' },
-        { id: generateId(), type: 'text', content: 'Profesyonel ekibimizle sizlere sunduğumuz hizmetlerin detaylarını aşağıda bulabilirsiniz.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Hizmet Alanı 1: [Hizmet Adı]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/service1-img/700/350', alt: 'Hizmet 1 Görseli', caption: 'Hizmet 1 Detayları' },
-        { id: generateId(), type: 'text', content: '[Hizmet 1\'in açıklaması, faydaları ve süreci hakkında detaylı bilgi.]' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Hizmet Alanı 2: [Hizmet Adı]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/service2-img/700/350', alt: 'Hizmet 2 Görseli', caption: 'Hizmet 2 Detayları' },
-        { id: generateId(), type: 'text', content: '[Hizmet 2\'nin açıklaması, sağladığı avantajlar ve kimlere yönelik olduğu.]' },
-        { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Neden Bizi Tercih Etmelisiniz?' },
-        { id: generateId(), type: 'text', content: '- Deneyimli ve uzman kadro\n- Müşteri odaklı yaklaşım\n- Kaliteli ve güvenilir hizmet\n- Rekabetçi fiyatlar' },
-    ]
-  },
-  {
-    id: 'page-portfolio',
-    name: 'Portfolyo Sayfası',
-    description: 'Tamamlanmış projeleri veya çalışmaları sergilemek için galeri tarzı sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-portfolio/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Çalışmalarımızdan Örnekler' },
-        { id: generateId(), type: 'text', content: 'Bugüne kadar tamamladığımız bazı projeleri ve çalışmaları aşağıda inceleyebilirsiniz.' },
-        { id: generateId(), type: 'gallery', images: [
-            { url: 'https://picsum.photos/seed/portfolio1/600/400', alt: 'Proje 1' },
-            { url: 'https://picsum.photos/seed/portfolio2/600/400', alt: 'Proje 2' },
-            { url: 'https://picsum.photos/seed/portfolio3/600/400', alt: 'Proje 3' },
-            { url: 'https://picsum.photos/seed/portfolio4/600/400', alt: 'Proje 4' },
-          ]
-        },
-        { id: generateId(), type: 'heading', level: 2, content: 'Proje Detayı: [Örnek Proje Adı]' },
-        { id: generateId(), type: 'text', content: '[Seçilen bir projenin kısa açıklaması, kullanılan teknolojiler ve elde edilen sonuçlar.]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/portfolio-detail/800/450', alt: 'Proje Detay Görseli' },
-    ]
-  },
-  {
-    id: 'page-landing-product',
-    name: 'Ürün Tanıtım Sayfası (Landing)',
-    description: 'Belirli bir ürünü veya hizmeti tanıtmak için tasarlanmış odaklı sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-landing/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-        { id: generateId(), type: 'section', sectionType: 'hero-banner', settings: { title: '[Ürün Adı]', subtitle: '[Ürünün Ana Faydası veya Sloganı]', ctaButtonText: 'Hemen Keşfet', imageUrl: 'https://picsum.photos/seed/landing-hero/1200/500' } },
-        { id: generateId(), type: 'heading', level: 2, content: 'Neden [Ürün Adı]?' },
-        { id: generateId(), type: 'text', content: '[Ürünün temel özelliklerini ve kullanıcıya sağlayacağı faydaları anlatan 3-4 madde veya kısa paragraf.]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/landing-feature1/700/400', alt: 'Ürün Özellik 1', caption:'Özellik 1 Açıklaması' },
-        { id: generateId(), type: 'text', content: '[Özellik 1\'in detaylı açıklaması.]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/landing-feature2/700/400', alt: 'Ürün Özellik 2', caption:'Özellik 2 Açıklaması' },
-        { id: generateId(), type: 'text', content: '[Özellik 2\'nin detaylı açıklaması.]' },
-        { id: generateId(), type: 'quote', content: 'Müşteri yorumu veya ürün hakkında etkileyici bir söz.', citation: 'Memnun Müşteri' },
-        { id: generateId(), type: 'section', sectionType: 'call-to-action', settings: { title: 'Hemen Denemeye Başlayın!', buttonText: 'Satın Al / Kaydol', descriptionText: '[Kısa bir teşvik edici açıklama.]' } },
-    ]
-  },
-  {
-    id: 'page-blog-index',
-    name: 'Blog Anasayfası',
-    description: 'Blog yazılarını listeleyen ve kategorilere ayıran sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-blog/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Blog' },
-      { id: generateId(), type: 'text', content: 'Teknoloji ve biyoloji dünyasından en son haberler, analizler ve ilginç bilgiler.' },
-      { id: generateId(), type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkan Yazılar', count: 2 } },
-      { id: generateId(), type: 'divider' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Tüm Yazılar' },
-      { id: generateId(), type: 'section', sectionType: 'article-list', settings: { count: 10, showPagination: true, showCategoryFilter: true } },
-    ]
-  },
-  {
-    id: 'page-career',
-    name: 'Kariyer Sayfası',
-    description: 'Açık pozisyonları listeleyen ve şirket kültürünü tanıtan sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-career/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo\'da Kariyer' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/career-team/1000/400', alt: 'TeknoBiyo Ekibi', caption: 'Birlikte büyüyen bir ekibiz.' },
-      { id: generateId(), type: 'text', content: 'Dinamik ve yenilikçi bir ortamda kariyerinize yön vermek ister misiniz? TeknoBiyo olarak, teknoloji ve biyolojiye tutkuyla bağlı yetenekleri aramızda görmekten mutluluk duyarız.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Neden TeknoBiyo?' },
-      { id: generateId(), type: 'text', content: '- Sürekli öğrenme ve gelişim fırsatları.\n- İlham verici ve işbirlikçi bir çalışma ortamı.\n- Sektörde fark yaratan projelerde yer alma şansı.\n- Rekabetçi maaş ve yan haklar.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Açık Pozisyonlar' },
-      { id: generateId(), type: 'section', sectionType: 'job-listings', settings: {} }, // Bu sectionType'ın render edilmesi gerekir
-      { id: generateId(), type: 'text', content: 'Şu anda açık bir pozisyonumuz bulunmuyorsa bile, genel başvurularınızı [e-posta adresi] adresine gönderebilirsiniz.' },
-    ]
-  },
-  { // User Guide Page Template
-    id: 'page-user-guide',
-    name: 'Kullanım Kılavuzu',
-    description: 'Sitenin veya uygulamanın nasıl kullanılacağını açıklayan detaylı bir kılavuz sayfası.',
-    previewImageUrl: 'https://picsum.photos/seed/page-guide/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: '[Platform Adı] Kullanım Kılavuzu' },
-      { id: generateId(), type: 'text', content: 'Bu kılavuz, [Platform Adı] platformunu etkili bir şekilde kullanmanıza yardımcı olmak için tasarlanmıştır. Aşağıdaki bölümlerde sıkça ihtiyaç duyacağınız bilgilere ve özelliklere ulaşabilirsiniz.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 1: Başlarken' },
-      { id: generateId(), type: 'text', content: '- Hesap Oluşturma ve Giriş Yapma\n- Profil Ayarları\n- Gösterge Paneline Genel Bakış' },
-      { id: generateId(), type: 'divider' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 2: İçerik Yönetimi' },
-      { id: generateId(), type: 'text', content: '- Yeni Makale/Not Oluşturma\n- Zengin Metin Editörü Kullanımı\n- Medya Yükleme ve Yönetimi\n- Kategori ve Etiket Ekleme\n- Yayınlama Süreci' },
-      { id: generateId(), type: 'divider' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 3: Kullanıcı Yönetimi (Adminler İçin)' },
-      { id: generateId(), type: 'text', content: '- Yeni Kullanıcı Ekleme\n- Rol ve İzin Yönetimi\n- Kullanıcı Aktivitelerini İzleme' },
-      { id: generateId(), type: 'divider' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Sıkça Sorulan Sorular (SSS)' },
-      { id: generateId(), type: 'text', content: '**Soru:** [Yaygın bir soru örneği]\n**Cevap:** [Soruya ait cevap]' },
-      { id: generateId(), type: 'text', content: 'Daha fazla yardıma ihtiyacınız olursa, lütfen destek ekibimizle iletişime geçin.' },
-    ]
-  }
-];
-
-
-// --- In-Memory Data Stores with localStorage Persistence ---
-let mockArticles: ArticleData[] = [];
-let mockNotes: NoteData[] = [];
-let mockCategories: Category[] = [];
-let mockUsers: User[] = [];
-let mockRoles: Role[] = [];
-
-// Ensure data is loaded once when the module is first imported
-export const loadInitialData = () => {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        const storedCategories = localStorage.getItem(CATEGORY_STORAGE_KEY);
-        mockCategories = storedCategories ? JSON.parse(storedCategories) : defaultMockCategories;
-
-        const storedArticles = localStorage.getItem(ARTICLE_STORAGE_KEY);
-        mockArticles = storedArticles ? JSON.parse(storedArticles).map((article: ArticleData) => ({ ...article, isHero: article.isHero ?? false })) : defaultMockArticles;
-
-        const storedNotes = localStorage.getItem(NOTE_STORAGE_KEY);
-        mockNotes = storedNotes ? JSON.parse(storedNotes) : defaultMockNotes;
-
-        const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
-        mockUsers = storedUsers ? JSON.parse(storedUsers) : defaultMockUsers;
-
-        const storedRoles = localStorage.getItem(ROLE_STORAGE_KEY);
-        mockRoles = storedRoles ? JSON.parse(storedRoles) : defaultMockRoles;
-
-
-        if (!storedCategories) localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
-        if (!storedArticles) localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
-        if (!storedNotes) localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
-        if (!storedUsers) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
-        if (!storedRoles) localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
-
-    } else {
-        mockCategories = defaultMockCategories;
-        mockArticles = defaultMockArticles;
-        mockNotes = defaultMockNotes;
-        mockUsers = defaultMockUsers;
-        mockRoles = defaultMockRoles;
-    }
-};
-
-const saveData = () => {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        try {
-            localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
-            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
-            localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
-            localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages)); // Save pages
-        } catch (error) {
-            console.error("Error saving data to localStorage:", error);
-        }
-    }
-};
-
-loadInitialData();
-
+// No more localStorage keys for mock data
+// No more defaultMock... arrays
+// No more loadInitialData or saveData related to mock content
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -737,320 +129,304 @@ export const generateSlug = (text: string) => {
         .replace(/\s+/g, '-').replace(/-+/g, '-');
 };
 
+const generateId = () => `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`;
+
 // --- Category CRUD ---
 export const getCategories = async (): Promise<Category[]> => {
     await delay(5);
-    loadInitialData();
-    return JSON.parse(JSON.stringify(mockCategories));
+    // In a real app, fetch from backend API
+    console.warn("getCategories: Fetching mock data. Implement backend integration.");
+    return [];
 };
 
 export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category> => {
     await delay(30);
-    loadInitialData();
+    console.warn("addCategory: Simulating backend. Implement backend integration.");
+    // Simulate successful creation for UI testing, but data won't persist without backend
     const newCategory: Category = {
         ...data,
         id: generateSlug(data.name) + '-' + Date.now().toString(36),
     };
-    if (mockCategories.some(cat => cat.name.toLowerCase() === newCategory.name.toLowerCase())) {
-        throw new Error(`"${newCategory.name}" adında bir kategori zaten mevcut.`);
-    }
-    mockCategories.push(newCategory);
-    saveData();
+    // mockCategories.push(newCategory); // No longer mutating in-memory array
     return JSON.parse(JSON.stringify(newCategory));
 };
 
 export const updateCategory = async (id: string, data: Partial<Omit<Category, 'id'>>): Promise<Category | null> => {
     await delay(30);
-    loadInitialData();
-    const categoryIndex = mockCategories.findIndex(cat => cat.id === id);
-    if (categoryIndex === -1) return null;
-    if (data.name && mockCategories.some(cat => cat.id !== id && cat.name.toLowerCase() === data.name!.toLowerCase())) {
-         throw new Error(`"${data.name}" adında başka bir kategori zaten mevcut.`);
-    }
-    const updatedCategory = { ...mockCategories[categoryIndex], ...data };
-    mockCategories[categoryIndex] = updatedCategory;
-    saveData();
+    console.warn("updateCategory: Simulating backend. Implement backend integration.");
+    // Simulate update
+    const updatedCategory: Category = {
+        id,
+        name: data.name || "Updated Category",
+        ...data,
+    } as Category;
     return JSON.parse(JSON.stringify(updatedCategory));
 };
 
 export const deleteCategory = async (id: string): Promise<boolean> => {
     await delay(50);
-    loadInitialData();
-    const categoryToDelete = mockCategories.find(cat => cat.id === id);
-    if (!categoryToDelete) return false;
-
-    const initialLength = mockCategories.length;
-    mockCategories = mockCategories.filter(cat => cat.id !== id);
-    const success = mockCategories.length < initialLength;
-
-    if (success) {
-        mockArticles = mockArticles.map(article => article.category === categoryToDelete.name ? { ...article, category: '' } : article);
-        mockNotes = mockNotes.map(note => note.category === categoryToDelete.name ? { ...note, category: '' } : note);
-        saveData();
-    }
-    return success;
+    console.warn("deleteCategory: Simulating backend. Implement backend integration.");
+    return true; // Simulate success
 };
 
 // --- Article CRUD ---
 export const getArticles = async (): Promise<ArticleData[]> => {
     await delay(10);
-    loadInitialData();
-    return JSON.parse(JSON.stringify(mockArticles));
+    console.warn("getArticles: Fetching mock data. Implement backend integration.");
+    return [];
 };
 
 export const getArticleById = async (id: string): Promise<ArticleData | null> => {
     await delay(10);
-    loadInitialData();
-    const article = mockArticles.find(article => article.id === id);
-    return article ? JSON.parse(JSON.stringify(article)) : null;
+    console.warn(`getArticleById(${id}): Fetching mock data. Implement backend integration.`);
+    return null;
 };
 
 export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'>): Promise<ArticleData> => {
     await delay(50);
-    loadInitialData();
+    console.warn("createArticle: Simulating backend. Implement backend integration.");
     const newArticle: ArticleData = {
         ...data,
         isHero: data.isHero ?? false,
-        id: `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
+        id: generateId(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-    mockArticles.push(newArticle);
-    saveData();
     return JSON.parse(JSON.stringify(newArticle));
 };
 
 export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 'id' | 'createdAt'>>): Promise<ArticleData | null> => {
     await delay(50);
-    loadInitialData();
-    const articleIndex = mockArticles.findIndex(article => article.id === id);
-    if (articleIndex === -1) return null;
-    const updatedArticle = {
-        ...mockArticles[articleIndex],
-        ...data,
-        isHero: data.isHero ?? mockArticles[articleIndex].isHero, // Ensure isHero persists if not in data
+    console.warn(`updateArticle(${id}): Simulating backend. Implement backend integration.`);
+    const updatedArticle: ArticleData = {
+        id,
+        title: data.title || "Updated Title",
+        category: data.category || "Teknoloji",
+        status: data.status || "Taslak",
+        authorId: data.authorId || "mock-admin",
+        blocks: data.blocks || [],
+        slug: data.slug || generateSlug(data.title || "updated-title"),
+        isFeatured: data.isFeatured || false,
+        isHero: data.isHero || false,
+        createdAt: new Date().toISOString(), // This should be original creation date
         updatedAt: new Date().toISOString(),
+        mainImageUrl: data.mainImageUrl === undefined ? null : data.mainImageUrl,
+        ...data,
     };
-    mockArticles[articleIndex] = updatedArticle;
-    saveData();
     return JSON.parse(JSON.stringify(updatedArticle));
 };
 
 export const deleteArticle = async (id: string): Promise<boolean> => {
     await delay(80);
-    loadInitialData();
-    const initialLength = mockArticles.length;
-    mockArticles = mockArticles.filter(article => article.id !== id);
-    const success = mockArticles.length < initialLength;
-    if (success) saveData();
-    return success;
+    console.warn(`deleteArticle(${id}): Simulating backend. Implement backend integration.`);
+    return true; // Simulate success
 };
 
 // --- Note CRUD ---
 export const getNotes = async (): Promise<NoteData[]> => {
     await delay(10);
-    loadInitialData();
-    return JSON.parse(JSON.stringify(mockNotes));
+    console.warn("getNotes: Fetching mock data. Implement backend integration.");
+    return [];
 };
 
 export const getNoteById = async (id: string): Promise<NoteData | null> => {
     await delay(10);
-    loadInitialData();
-    const note = mockNotes.find(note => note.id === id);
-    return note ? JSON.parse(JSON.stringify(note)) : null;
+    console.warn(`getNoteById(${id}): Fetching mock data. Implement backend integration.`);
+    return null;
 };
 
 export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt'>): Promise<NoteData> => {
     await delay(50);
-    loadInitialData();
+    console.warn("createNote: Simulating backend. Implement backend integration.");
     const newNote: NoteData = {
         ...data,
         id: `note-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         status: data.status || 'Taslak',
-        authorId: data.authorId || 'u1', // Default author if not provided
+        authorId: data.authorId || 'u1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-    mockNotes.push(newNote);
-    saveData();
     return JSON.parse(JSON.stringify(newNote));
 };
 
 export const updateNote = async (id: string, data: Partial<Omit<NoteData, 'id' | 'createdAt'>>): Promise<NoteData | null> => {
     await delay(50);
-    loadInitialData();
-    const noteIndex = mockNotes.findIndex(note => note.id === id);
-    if (noteIndex === -1) return null;
-    const updatedNote = {
-        ...mockNotes[noteIndex],
-        ...data,
+    console.warn(`updateNote(${id}): Simulating backend. Implement backend integration.`);
+    const updatedNote: NoteData = {
+        id,
+        title: data.title || "Updated Note Title",
+        slug: data.slug || generateSlug(data.title || "updated-note"),
+        category: data.category || "Genel",
+        level: data.level || "Lise 9",
+        tags: data.tags || [],
+        summary: data.summary || "",
+        contentBlocks: data.contentBlocks || [],
+        authorId: data.authorId || "u1",
+        status: data.status || "Taslak",
+        createdAt: new Date().toISOString(), // This should be original creation date
         updatedAt: new Date().toISOString(),
+        ...data,
     };
-    mockNotes[noteIndex] = updatedNote;
-    saveData();
     return JSON.parse(JSON.stringify(updatedNote));
 };
 
 export const deleteNote = async (id: string): Promise<boolean> => {
     await delay(80);
-    loadInitialData();
-    const initialLength = mockNotes.length;
-    mockNotes = mockNotes.filter(note => note.id !== id);
-    const success = mockNotes.length < initialLength;
-    if (success) saveData();
-    return success;
+    console.warn(`deleteNote(${id}): Simulating backend. Implement backend integration.`);
+    return true;
 };
 
 // --- User CRUD Functions ---
 export const getUsers = async (): Promise<User[]> => {
     await delay(10);
-    loadInitialData();
-    return JSON.parse(JSON.stringify(mockUsers));
+    console.warn("getUsers: Fetching mock data. Implement backend integration.");
+    // Return a default admin user if local storage is empty for login purposes.
+    if (typeof window !== 'undefined' && !localStorage.getItem(USER_STORAGE_KEY)) {
+        const defaultAdmin: User = {
+            id: 'superadmin',
+            name: 'Super Admin',
+            username: 'superadmin',
+            email: 'superadmin@teknobiyo.example.com',
+            role: 'Admin',
+            joinedAt: '2024-01-01T00:00:00Z',
+            avatar: 'https://picsum.photos/seed/superadmin/128/128',
+            lastLogin: new Date().toISOString(),
+            bio: 'Sistem Yöneticisi.',
+        };
+        return [defaultAdmin];
+    }
+    // Attempt to get from local storage if it exists from previous versions (for migration)
+    // or return empty if we are truly dynamic
+    if (typeof window !== 'undefined') {
+        const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
+        if (storedUsers) return JSON.parse(storedUsers);
+    }
+    return [];
 };
 
 export const getUserById = async (id: string): Promise<User | null> => {
     await delay(10);
-    loadInitialData();
-    const user = mockUsers.find(u => u.id === id);
-    return user ? JSON.parse(JSON.stringify(user)) : null;
+    console.warn(`getUserById(${id}): Fetching mock data. Implement backend integration.`);
+     if (id === 'superadmin' && typeof window !== 'undefined' && !localStorage.getItem(USER_STORAGE_KEY)) {
+        return {
+            id: 'superadmin',
+            name: 'Super Admin',
+            username: 'superadmin',
+            email: 'superadmin@teknobiyo.example.com',
+            role: 'Admin',
+            joinedAt: '2024-01-01T00:00:00Z',
+            avatar: 'https://picsum.photos/seed/superadmin/128/128',
+            lastLogin: new Date().toISOString(),
+            bio: 'Sistem Yöneticisi.',
+        };
+    }
+    if (typeof window !== 'undefined') {
+        const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
+        if (storedUsers) {
+            const users: User[] = JSON.parse(storedUsers);
+            return users.find(u => u.id === id) || null;
+        }
+    }
+    return null;
 };
 
 export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin'>): Promise<User> => {
     await delay(50);
-    loadInitialData();
-    // Validate if username or email already exists
-    if (mockUsers.some(u => u.username === data.username)) {
-        throw new Error(`Kullanıcı adı "${data.username}" zaten mevcut.`);
-    }
-    if (mockUsers.some(u => u.email === data.email)) {
-        throw new Error(`E-posta adresi "${data.email}" zaten mevcut.`);
-    }
-
+    console.warn("createUser: Simulating backend. Implement backend integration.");
     const newUser: User = {
         ...data,
         id: `user-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         joinedAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(), // Set lastLogin on creation
-        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`, // Default avatar
-        bio: data.bio || '',
-        website: data.website || '',
-        twitterHandle: data.twitterHandle || '',
-        linkedinProfile: data.linkedinProfile || '',
-        instagramProfile: data.instagramProfile || '',
-        facebookProfile: data.facebookProfile || '',
-        youtubeChannel: data.youtubeChannel || '',
-        xProfile: data.xProfile || '',
+        lastLogin: new Date().toISOString(),
+        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`,
     };
-    mockUsers.push(newUser);
-    saveData();
     return JSON.parse(JSON.stringify(newUser));
 };
 
 export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'joinedAt' | 'email'>>): Promise<User | null> => {
     await delay(50);
-    loadInitialData();
-    const userIndex = mockUsers.findIndex(u => u.id === id);
-    if (userIndex === -1) return null;
-
-    // If username is being updated, check for uniqueness
-    if (data.username && data.username !== mockUsers[userIndex].username && mockUsers.some(u => u.username === data.username && u.id !== id)) {
-        throw new Error(`Kullanıcı adı "${data.username}" zaten mevcut.`);
-    }
-
-    const updatedUser = {
-        ...mockUsers[userIndex],
+    console.warn(`updateUser(${id}): Simulating backend. Implement backend integration.`);
+    const updatedUser: User = {
+        id,
+        name: data.name || "Updated User",
+        username: data.username || "updateduser",
+        email: "user@example.com", // Email should not be updated this way typically
+        role: data.role || "User",
+        joinedAt: new Date().toISOString(), // Should be original
         ...data,
-    };
-    mockUsers[userIndex] = updatedUser;
-    saveData();
+    } as User;
     return JSON.parse(JSON.stringify(updatedUser));
 };
 
 export const deleteUser = async (id: string): Promise<boolean> => {
   await delay(80);
-  loadInitialData();
-  console.log(`[mock-data/deleteUser] Attempting to delete user with id: ${id}`);
-  const initialLength = mockUsers.length;
-  console.log(`[mock-data/deleteUser] Users before deletion (${initialLength}):`, JSON.stringify(mockUsers.map(u => u.id)));
-
-  const usersBefore = [...mockUsers]; // Create a copy for comparison
-  mockUsers = mockUsers.filter(u => u.id !== id);
-
-  const success = mockUsers.length < initialLength;
-
-  console.log(`[mock-data/deleteUser] Users after filtering (${mockUsers.length}):`, JSON.stringify(mockUsers.map(u => u.id)));
-  console.log(`[mock-data/deleteUser] Deletion success: ${success}`);
-
-  if (success) {
-    console.log(`[mock-data/deleteUser] Saving updated user list to localStorage.`);
-    saveData();
-  } else {
-    console.warn(`[mock-data/deleteUser] User with id ${id} not found or no changes made. Users before: ${JSON.stringify(usersBefore.map(u=>u.id))}`);
-  }
-  return success;
+  console.warn(`deleteUser(${id}): Simulating backend. Implement backend integration.`);
+  return true;
 };
 
 
 // --- Role CRUD Functions ---
 export const getRoles = async (): Promise<Role[]> => {
   await delay(10);
-  loadInitialData();
-  return JSON.parse(JSON.stringify(mockRoles));
+  console.warn("getRoles: Fetching mock data. Implement backend integration.");
+   if (typeof window !== 'undefined' && !localStorage.getItem(ROLE_STORAGE_KEY)) {
+        return [
+            { id: 'admin', name: 'Admin', description: 'Tam sistem erişimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Kullanıcıları Görüntüleme', 'Rolleri Yönetme', 'Ayarları Görüntüleme'], userCount: 1 },
+            { id: 'editor', name: 'Editor', description: 'İçerik yönetimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme'], userCount: 0 },
+            { id: 'user', name: 'User', description: 'Standart kullanıcı.', permissions: [], userCount: 0 },
+        ];
+    }
+    if (typeof window !== 'undefined') {
+        const storedRoles = localStorage.getItem(ROLE_STORAGE_KEY);
+        if (storedRoles) return JSON.parse(storedRoles);
+    }
+  return [];
 };
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
   await delay(10);
-  loadInitialData();
-  const role = mockRoles.find(r => r.id === id);
-  return role ? JSON.parse(JSON.stringify(role)) : null;
+  console.warn(`getRoleById(${id}): Fetching mock data. Implement backend integration.`);
+   if (typeof window !== 'undefined') {
+        const storedRoles = localStorage.getItem(ROLE_STORAGE_KEY);
+        if (storedRoles) {
+            const roles: Role[] = JSON.parse(storedRoles);
+            return roles.find(r => r.id === id) || null;
+        }
+         // Fallback if no roles in local storage
+        if (id === 'admin') return { id: 'admin', name: 'Admin', description: 'Tam sistem erişimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Kullanıcıları Görüntüleme', 'Rolleri Yönetme', 'Ayarları Görüntüleme'], userCount: 1 };
+    }
+  return null;
 };
 
 export const createRole = async (data: Omit<Role, 'id' | 'userCount'>): Promise<Role> => {
   await delay(50);
-  loadInitialData();
-  if (mockRoles.some(r => r.name.toLowerCase() === data.name.toLowerCase())) {
-    throw new Error(`"${data.name}" adında bir rol zaten mevcut.`);
-  }
+  console.warn("createRole: Simulating backend. Implement backend integration.");
   const newRole: Role = {
     ...data,
     id: generateSlug(data.name) + '-' + Date.now().toString(36),
     userCount: 0,
   };
-  mockRoles.push(newRole);
-  saveData();
   return JSON.parse(JSON.stringify(newRole));
 };
 
 export const updateRole = async (id: string, data: Partial<Omit<Role, 'id' | 'userCount'>>): Promise<Role | null> => {
   await delay(50);
-  loadInitialData();
-  const roleIndex = mockRoles.findIndex(r => r.id === id);
-  if (roleIndex === -1) return null;
-  if (data.name && data.name !== mockRoles[roleIndex].name && mockRoles.some(r => r.name.toLowerCase() === data.name!.toLowerCase())) {
-    throw new Error(`"${data.name}" adında başka bir rol zaten mevcut.`);
-  }
-  const updatedRole = { ...mockRoles[roleIndex], ...data };
-  mockRoles[roleIndex] = updatedRole;
-  saveData();
+  console.warn(`updateRole(${id}): Simulating backend. Implement backend integration.`);
+   const updatedRole: Role = {
+       id,
+       name: data.name || "Updated Role",
+       description: data.description || "",
+       permissions: data.permissions || [],
+       userCount: 0, // This should be calculated by backend
+       ...data,
+   } as Role;
   return JSON.parse(JSON.stringify(updatedRole));
 };
 
 export const deleteRole = async (id: string): Promise<boolean> => {
   await delay(80);
-  loadInitialData();
-  const roleToDelete = mockRoles.find(r => r.id === id);
-  if (!roleToDelete) return false;
-
-  const initialLength = mockRoles.length;
-  mockRoles = mockRoles.filter(r => r.id !== id);
-  const success = mockRoles.length < initialLength;
-
-  if (success) {
-    // Optionally update users who had this role
-    mockUsers = mockUsers.map(user => user.role === roleToDelete.name || user.role === roleToDelete.id ? { ...user, role: 'User' } : user); // Reassign to 'User' role
-    saveData();
-  }
-  return success;
+  console.warn(`deleteRole(${id}): Simulating backend. Implement backend integration.`);
+  return true;
 };
 
 // --- Permissions Data ---
@@ -1064,6 +440,7 @@ export interface PermissionCategory {
 }
 export const getAllPermissions = async (): Promise<PermissionCategory[]> => {
     await delay(5);
+    // This can remain hardcoded as permissions are usually part of the application's definition
     return [
         {
             name: 'Genel Yönetim',
@@ -1100,209 +477,62 @@ export const getAllPermissions = async (): Promise<PermissionCategory[]> => {
                 { id: 'Rolleri Yönetme', description: 'Kullanıcı rollerini ve bu rollere atanmış izinleri yönetebilir.' },
             ],
         },
-        // Add more categories and permissions as needed
     ];
 };
 
-// --- Page CRUD (New) ---
-export interface PageData {
-    id: string;
-    title: string;
-    slug: string;
-    blocks: Block[];
-    seoTitle?: string;
-    seoDescription?: string;
-    keywords?: string[];
-    canonicalUrl?: string;
-    imageUrl?: string; // For social sharing, etc.
-    settings?: Record<string, any>; // For page-specific settings like hero visibility
-    heroSettings?: { // Specific for homepage hero
-        enabled: boolean;
-        articleSource: 'latest' | 'featured';
-        intervalSeconds: number;
-        maxArticles: number;
-    };
-    status: 'Taslak' | 'Hazır' | 'Yayınlandı'; // Status for pages
-    createdAt: string;
-    updatedAt: string;
-}
-
-
-let defaultMockPages: PageData[] = [
-    {
-        id: 'anasayfa',
-        title: 'Anasayfa',
-        slug: '', // Empty slug for homepage
-        blocks: [
-            { id: 'hpb-welcome', type: 'heading', level: 1, content: 'TeknoBiyo\'ya Hoş Geldiniz!' },
-            { id: 'hpb-intro', type: 'text', content: 'Teknoloji ve biyoloji dünyasındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.' },
-            { id: 'hp-section-hero', type: 'section', sectionType: 'hero-banner', settings: { title: "Ana Başlık", subtitle: "Alt Başlık" } },
-            { id: 'hp-section-featured', type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkanlar', count: 3 } },
-            { id: 'hp-section-categories', type: 'section', sectionType: 'category-teaser', settings: { title: 'Kategoriler', techButtonLabel: 'Teknoloji', bioButtonLabel: 'Biyoloji'} },
-            { id: 'hp-section-recent', type: 'section', sectionType: 'recent-articles', settings: { title: 'En Son Eklenenler', count: 3 } },
-        ],
-        seoTitle: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
-        seoDescription: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
-        imageUrl: 'https://picsum.photos/seed/homepage-main/1200/600',
-        heroSettings: { enabled: true, articleSource: 'featured', intervalSeconds: 5, maxArticles: 3 },
-        status: 'Yayınlandı',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-    {
-        id: 'hakkimizda',
-        title: 'Hakkımızda',
-        slug: 'hakkimizda',
-        blocks: [
-            { id: 'ab1', type: 'heading', level: 2, content: 'Biz Kimiz?' },
-            { id: 'ab2', type: 'text', content: 'TeknoBiyo, teknoloji ve biyoloji dünyalarının kesişim noktasında yer alan, meraklı zihinler için hazırlanmış bir bilgi platformudur...' },
-            { id: 'ab3', type: 'image', url: 'https://picsum.photos/seed/teamwork-page/800/600', alt: 'Ekip Çalışması', caption: 'Vizyonumuz' },
-        ],
-        seoTitle: 'Hakkımızda | TeknoBiyo',
-        seoDescription: 'TeknoBiyo\'nun arkasındaki vizyonu, misyonu ve değerleri keşfedin.',
-        imageUrl: 'https://picsum.photos/seed/aboutus-main/1200/600',
-        status: 'Yayınlandı',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-    {
-        id: 'iletisim',
-        title: 'İletişim',
-        slug: 'iletisim',
-        blocks: [
-            { id: 'cb1', type: 'heading', level: 2, content: 'Bizimle İletişime Geçin' },
-            { id: 'cb2', type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşın.' },
-            { id: 'cb-form', type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@teknobiyo.example.com' } },
-        ],
-        seoTitle: 'İletişim | TeknoBiyo',
-        seoDescription: 'TeknoBiyo ile iletişime geçin. Sorularınız ve önerileriniz için buradayız.',
-        imageUrl: 'https://picsum.photos/seed/contactus-main/1200/600',
-        status: 'Yayınlandı',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-     { // User Guide Page
-        id: 'kullanim-kilavuzu',
-        title: 'Kullanım Kılavuzu',
-        slug: 'kullanim-kilavuzu', // Accessible by admin/editor
-        blocks: [
-            { id: 'kg1', type: 'heading', level: 1, content: 'TeknoBiyo Yönetim Paneli Kullanım Kılavuzu' },
-            { id: 'kg2', type: 'text', content: 'Bu kılavuz, TeknoBiyo yönetim panelini etkili bir şekilde kullanmanıza yardımcı olmak için tasarlanmıştır.' },
-            { id: 'kg3', type: 'heading', level: 2, content: '1. Giriş ve Gösterge Paneli' },
-            { id: 'kg4', type: 'text', content: '- **Giriş Yapma:** Kullanıcı adı/e-posta ve şifrenizle giriş yapın.\n- **Gösterge Paneli:** Sitenizin genel istatistiklerini ve son aktiviteleri görüntüler.' },
-            { id: 'kg5', type: 'heading', level: 2, content: '2. Makale Yönetimi' },
-            { id: 'kg6', type: 'text', content: '- **Yeni Makale Ekleme:** "Yeni Makale Ekle" butonuna tıklayın. Başlık, kategori, içerik blokları ve SEO ayarlarını doldurun.\n- **Makale Düzenleme:** Listeden bir makale seçip düzenleme ikonuna tıklayın.\n- **Durum Yönetimi:** Makaleleri "Taslak", "İncelemede", "Hazır" (Admin/Editör önizlemesi için) veya "Yayınlandı" olarak ayarlayabilirsiniz.\n- **Öne Çıkarma/Hero:** Makaleleri anasayfada öne çıkarmak veya Hero bölümünde göstermek için ilgili seçenekleri işaretleyin.' },
-             { id: 'kg7', type: 'image', url: 'https://picsum.photos/seed/admin-guide-article/800/400', alt: 'Makale Düzenleme Ekranı', caption: 'Makale düzenleme arayüzü.' },
-            { id: 'kg8', type: 'heading', level: 2, content: '3. Biyoloji Notları Yönetimi' },
-            { id: 'kg9', type: 'text', content: '- Makale yönetimine benzer şekilde biyoloji notları oluşturabilir, düzenleyebilirsiniz ve yayınlayabilirsiniz.\n- **AI Yardımcı:** Not oluştururken AI\'dan konuyla ilgili fikir ve taslak önerileri alabilirsiniz.' },
-            { id: 'kg10', type: 'heading', level: 2, content: '4. Sayfa Yönetimi' },
-            { id: 'kg11', type: 'text', content: '- "Anasayfa", "Hakkımızda" gibi statik sayfaların içeriklerini ve yapılarını düzenleyebilirsiniz.\n- **Canlı Önizleme:** Yaptığınız değişiklikleri sağ panelde anlık olarak görebilirsiniz.' },
-            { id: 'kg12', type: 'heading', level: 2, content: '5. Kullanıcı ve Rol Yönetimi' },
-            { id: 'kg13', type: 'text', content: '- Yeni kullanıcılar ekleyebilir, mevcut kullanıcıların bilgilerini ve rollerini düzenleyebilirsiniz.\n- Farklı kullanıcı rolleri (Admin, Editör, Kullanıcı) oluşturup bu rollere özel izinler atayabilirsiniz.' },
-            { id: 'kg14', type: 'heading', level: 2, content: 'İpuçları' },
-            { id: 'kg15', type: 'text', content: '- **Önizleme:** Değişikliklerinizi kaydetmeden veya yayınlamadan önce "Önizle" butonunu kullanarak nasıl görüneceğini kontrol edin.\n- **SEO:** Makale ve sayfalarınızın SEO ayarlarını (başlık, açıklama, anahtar kelimeler) doldurarak arama motorlarında daha iyi sıralamalar elde edebilirsiniz.\n- **Kategoriler ve Etiketler:** İçeriklerinizi düzenli tutmak ve kullanıcıların kolayca bulmasını sağlamak için kategorileri ve etiketleri etkili kullanın.' },
-        ],
-        seoTitle: 'Kullanım Kılavuzu | TeknoBiyo Admin',
-        seoDescription: 'TeknoBiyo yönetim panelinin nasıl kullanılacağına dair rehber.',
-        imageUrl: 'https://picsum.photos/seed/user-guide-main/1200/600',
-        status: 'Hazır', // Only visible to Admin/Editor
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    }
-];
-let mockPages: PageData[] = [];
-
-const loadPageData = () => {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        const storedPages = localStorage.getItem(PAGE_STORAGE_KEY);
-        mockPages = storedPages ? JSON.parse(storedPages) : defaultMockPages;
-        if (!storedPages) localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages));
-    } else {
-        mockPages = defaultMockPages;
-    }
-};
-loadPageData(); // Load on initial import
-
-const savePageData = () => {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages));
-    }
-};
-
+// --- Page CRUD ---
 export const getPages = async (): Promise<PageData[]> => {
     await delay(5);
-    loadPageData(); // Ensure data is loaded before returning
-    return JSON.parse(JSON.stringify(mockPages));
+    console.warn("getPages: Fetching mock data. Implement backend integration.");
+    return [];
 };
 
 export const getPageById = async (id: string): Promise<PageData | null> => {
     await delay(5);
-    loadPageData();
-    const page = mockPages.find(p => p.id === id);
-    return page ? JSON.parse(JSON.stringify(page)) : null;
+    console.warn(`getPageById(${id}): Fetching mock data. Implement backend integration.`);
+    return null;
 };
 
 export const createPage = async (data: Omit<PageData, 'id' | 'createdAt' | 'updatedAt'>): Promise<PageData> => {
     await delay(50);
-    loadPageData();
+    console.warn("createPage: Simulating backend. Implement backend integration.");
     const newPage: PageData = {
         ...data,
         id: generateSlug(data.title) + '-' + Date.now().toString(36),
         slug: generateSlug(data.slug || data.title),
-        status: data.status || 'Taslak', // Default to Taslak
+        status: data.status || 'Taslak',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-    if (mockPages.some(p => p.slug === newPage.slug && p.id !== newPage.id)) { // Check if slug exists for OTHER pages
-        throw new Error(`"${newPage.slug}" URL metni ile başka bir sayfa zaten mevcut.`);
-    }
-    mockPages.push(newPage);
-    savePageData();
     return JSON.parse(JSON.stringify(newPage));
 };
 
 export const updatePage = async (id: string, data: Partial<Omit<PageData, 'id' | 'createdAt'>>): Promise<PageData | null> => {
     await delay(50);
-    loadPageData();
-    const pageIndex = mockPages.findIndex(p => p.id === id);
-    if (pageIndex === -1) return null;
-
-    const existingPage = mockPages[pageIndex];
-    let updatedSlug = existingPage.slug;
-    if (data.slug && data.slug !== existingPage.slug) { // If slug is being changed
-        updatedSlug = generateSlug(data.slug);
-        if (mockPages.some(p => p.slug === updatedSlug && p.id !== id)) {
-            throw new Error(`"${updatedSlug}" URL metni ile başka bir sayfa zaten mevcut.`);
-        }
-    }
-
-
-    const updatedPage = {
-        ...existingPage,
-        ...data,
-        slug: updatedSlug,
+    console.warn(`updatePage(${id}): Simulating backend. Implement backend integration.`);
+    const updatedPage: PageData = {
+        id,
+        title: data.title || "Updated Page Title",
+        slug: data.slug || generateSlug(data.title || "updated-page"),
+        blocks: data.blocks || [],
+        status: data.status || "Taslak",
+        createdAt: new Date().toISOString(), // Should be original
         updatedAt: new Date().toISOString(),
+        ...data,
     };
-    mockPages[pageIndex] = updatedPage;
-    savePageData();
     return JSON.parse(JSON.stringify(updatedPage));
 };
 
 export const deletePage = async (id: string): Promise<boolean> => {
     await delay(80);
-    loadPageData();
-    if (id === 'anasayfa' || id === 'kullanim-kilavuzu') return false; // Prevent deletion of critical pages
-    const initialLength = mockPages.length;
-    mockPages = mockPages.filter(p => p.id !== id);
-    const success = mockPages.length < initialLength;
-    if (success) savePageData();
-    return success;
+    console.warn(`deletePage(${id}): Simulating backend. Implement backend integration.`);
+    if (id === 'anasayfa' || id === 'kullanim-kilavuzu') return false;
+    return true;
 };
 // --- End Page CRUD ---
 
-
+// Templates can remain hardcoded as they define structure, not dynamic content
 export const allMockTemplates: Template[] = [
-    // Article Templates
     {
         id: 'standard-article',
         name: 'Standart Makale',
@@ -1321,7 +551,7 @@ export const allMockTemplates: Template[] = [
           { id: generateId(), type: 'text', content: 'AI sistemlerinin karar alma süreçlerindeki **şeffaflık**, **hesap verebilirlik** ve **adalet** gibi ilkeler, etik tartışmaların merkezinde yer alıyor. Algoritmik önyargılar, veri gizliliği ve otonom sistemlerin sorumluluğu gibi konular acil çözümler gerektiriyor.' },
           { id: generateId(), type: 'heading', level: 2, content: 'Algoritmik Önyargıların Tehlikeleri' },
           { id: generateId(), type: 'text', content: 'AI modelleri, eğitildikleri verilerdeki mevcut toplumsal önyargıları yansıtabilir ve hatta güçlendirebilir. Bu durum, işe alım süreçlerinden kredi başvurularına kadar birçok alanda ayrımcılığa yol açabilir. Önyargısız veri setleri oluşturmak ve adil algoritmalar geliştirmek kritik önem taşımaktadır.' },
-           { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=ABd2-6hnwAI', youtubeId: 'ABd2-6hnwAI' }, // Relevant video on AI ethics
+           { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=ABd2-6hnwAI', youtubeId: 'ABd2-6hnwAI' },
           { id: generateId(), type: 'heading', level: 2, content: 'Geleceğe Yönelik Adımlar' },
           { id: generateId(), type: 'text', content: 'Yapay zeka etiği konusunda küresel standartların oluşturulması, multidisipliner yaklaşımların benimsenmesi ve kamuoyu bilincinin artırılması gerekiyor. Teknoloji geliştiricileri, politika yapıcılar ve toplum olarak birlikte çalışarak AI\'ın insanlık yararına kullanılmasını sağlamalıyız.' },
           { id: generateId(), type: 'quote', content: 'Etik olmayan bir yapay zeka, insanlığın karşılaştığı en büyük tehditlerden biri olabilir.', citation: 'Stephen Hawking (uyarlanmıştır)' },
@@ -1501,7 +731,6 @@ export const allMockTemplates: Template[] = [
             { id: generateId(), type: 'text', content: 'Dr. Elif Aydın\'a beyin plastisitesi konusundaki değerli bilgileri paylaştığı için teşekkür ediyoruz. Beynimizin bu inanılmaz uyum yeteneği, sürekli gelişim ve öğrenme için bize büyük bir potansiyel sunuyor.' },
         ]
       },
-    // --- Note Templates ---
    {
     id: 'note-basic-concept',
     name: 'Temel Kavram Notu',
@@ -1509,13 +738,13 @@ export const allMockTemplates: Template[] = [
     previewImageUrl: 'https://picsum.photos/seed/note-concept-dna/300/200',
     type: 'note',
     blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: '[Kavram Adı]' },
-        { id: generateId(), type: 'text', content: '**Tanım:** [Kavramın kısa ve net tanımı buraya gelecek.]' },
+        { id: generateId(), type: 'heading', level: 2, content: 'DNA\'nın Yapısı' },
+        { id: generateId(), type: 'text', content: '**Tanım:** Deoksiribonükleik asit (DNA), canlıların genetik bilgilerini taşıyan ve nesilden nesile aktaran moleküldür.' },
         { id: generateId(), type: 'heading', level: 3, content: 'Anahtar Noktalar' },
-        { id: generateId(), type: 'text', content: '- [Anahtar nokta 1]\n- [Anahtar nokta 2]\n- [Anahtar nokta 3]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-concept-placeholder/600/300', alt: 'Kavramla İlgili Görsel', caption:'[Görsel açıklaması]' },
+        { id: generateId(), type: 'text', content: '- Çift sarmal yapısındadır.\n- Nükleotit adı verilen birimlerden oluşur (Adenin, Timin, Guanin, Sitozin).\n- A ile T, G ile C arasında hidrojen bağları bulunur.\n- Genetik kodu taşır.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-dna-structure/600/300', alt: 'DNA Çift Sarmalı', caption:'DNA\'nın çift sarmal yapısı ve baz eşleşmeleri.' },
         { id: generateId(), type: 'heading', level: 3, content: 'Örnek/İlişkili Konular' },
-        { id: generateId(), type: 'text', content: '[Kavramın anlaşıldığı bir örnek veya ilişkili diğer konular.]' },
+        { id: generateId(), type: 'text', content: 'Gen, kromozom, RNA, protein sentezi, mutasyon.' },
     ]
    },
    {
@@ -1525,18 +754,31 @@ export const allMockTemplates: Template[] = [
     previewImageUrl: 'https://picsum.photos/seed/note-process-mitosis/300/200',
     type: 'note',
     blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: '[Süreç Adı]' },
-        { id: generateId(), type: 'text', content: '[Sürecin genel bir özeti veya amacı.]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [Adımın Adı]' },
-        { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-process-step1/500/250', alt: 'Adım 1 Görseli', caption:'[Adım 1 ile ilgili görsel]' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Mitoz Bölünme Aşamaları' },
+        { id: generateId(), type: 'text', content: 'Mitoz bölünme, tek hücreli canlılarda üremeyi, çok hücreli canlılarda ise büyüme, gelişme ve onarımı sağlayan temel hücre bölünmesi çeşididir. Birbirini takip eden evrelerden oluşur.' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: İnterfaz (Hazırlık Evresi)' },
+        { id: generateId(), type: 'text', content: 'Hücrenin bölünmeye hazırlandığı evredir. DNA kendini eşler (replikasyon), organel sayısı artar ve hücre büyür. Bu evre G1, S ve G2 olmak üzere üç alt evreden oluşur.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-mitosis-interphase/500/250', alt: 'İnterfaz Evresi Şeması', caption:'İnterfaz: DNA replikasyonu ve hücre büyümesi.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [Adımın Adı]' },
-        { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-process-step2/500/250', alt: 'Adım 2 Görseli', caption:'[Adım 2 ile ilgili görsel]' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: Profaz' },
+        { id: generateId(), type: 'text', content: 'Kromatin iplikler kısalıp kalınlaşarak kromozomları oluşturur. Çekirdek zarı ve çekirdekçik erimeye başlar. Sentrozomlar (hayvan hücrelerinde) zıt kutuplara çekilir ve iğ ipliklerini oluşturur.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-mitosis-prophase/500/250', alt: 'Profaz Evresi Şeması', caption:'Profaz: Kromozomların oluşumu ve iğ ipliklerinin belirmesi.' },
         { id: generateId(), type: 'divider' },
-        { id: generateId(), type: 'heading', level: 3, content: '[... Diğer Adımlar ...]' },
-        { id: generateId(), type: 'text', content: '[Sürecin sonucu veya önemi.]' },
+         { id: generateId(), type: 'heading', level: 3, content: 'Adım 3: Metafaz' },
+        { id: generateId(), type: 'text', content: 'Kromozomlar hücrenin ekvatoral düzlemine (metafaz plağı) tek sıra halinde dizilir. Her kromozomun sentromeri iğ ipliklerine tutunur.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-mitosis-metaphase/500/250', alt: 'Metafaz Evresi Şeması', caption:'Metafaz: Kromozomların ekvatoral düzlemde dizilmesi.' },
+         { id: generateId(), type: 'divider' },
+         { id: generateId(), type: 'heading', level: 3, content: 'Adım 4: Anafaz' },
+        { id: generateId(), type: 'text', content: 'Kardeş kromatitler birbirinden ayrılarak zıt kutuplara doğru hareket eder. Ayrılan her bir kromatit artık bir kromozomdur.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-mitosis-anaphase/500/250', alt: 'Anafaz Evresi Şeması', caption:'Anafaz: Kardeş kromatitlerin ayrılması.' },
+         { id: generateId(), type: 'divider' },
+         { id: generateId(), type: 'heading', level: 3, content: 'Adım 5: Telofaz' },
+        { id: generateId(), type: 'text', content: 'Kutuplara ulaşan kromozomlar tekrar kromatin ipliklere dönüşür. Çekirdek zarı ve çekirdekçik yeniden oluşur. İğ iplikleri kaybolur.' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-mitosis-telophase/500/250', alt: 'Telofaz Evresi Şeması', caption:'Telofaz: İki yeni çekirdeğin oluşumu.' },
+         { id: generateId(), type: 'divider' },
+         { id: generateId(), type: 'heading', level: 3, content: 'Adım 6: Sitokinez (Sitoplazma Bölünmesi)' },
+        { id: generateId(), type: 'text', content: 'Telofaz ile eş zamanlı başlayabilir. Sitoplazma bölünerek iki yeni hücre oluşur. Hayvan hücrelerinde boğumlanma, bitki hücrelerinde ise ara lamel (hücre plağı) oluşumu ile gerçekleşir.' },
+        { id: generateId(), type: 'text', content: 'Sonuç olarak, mitoz bölünme ile ana hücreyle aynı genetik yapıda ve aynı kromozom sayısında iki yavru hücre meydana gelir.' },
     ]
    },
     {
@@ -1546,25 +788,230 @@ export const allMockTemplates: Template[] = [
     previewImageUrl: 'https://picsum.photos/seed/note-compare-cells/300/200',
     type: 'note',
     blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: '[Kavram 1] ve [Kavram 2] Karşılaştırması' },
-        { id: generateId(), type: 'text', content: '[Karşılaştırılan kavramların kısa bir tanıtımı.]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Benzerlikler' },
-        { id: generateId(), type: 'text', content: '- [Benzerlik 1]\n- [Benzerlik 2]' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Farklılıklar' },
-        // Simple text-based table structure
-        { id: generateId(), type: 'text', content: '**Özellik** | **[Kavram 1]** | **[Kavram 2]**' },
-        { id: generateId(), type: 'text', content: '---|---|---' }, // Markdown table separator
-        { id: generateId(), type: 'text', content: '[Farklılık 1] | [Kavram 1 Açıklama] | [Kavram 2 Açıklama]' },
-        { id: generateId(), type: 'text', content: '[Farklılık 2] | [Kavram 1 Açıklama] | [Kavram 2 Açıklama]' },
-        { id: generateId(), type: 'quote', content: '[Karşılaştırma ile ilgili önemli bir not veya özet.]', citation:'' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Mitoz ve Mayoz Bölünme Karşılaştırması' },
+        { id: generateId(), type: 'text', content: 'Mitoz ve mayoz, hücre bölünmesinin iki temel tipidir ancak amaçları, gerçekleştiği hücreler ve sonuçları bakımından önemli farklılıklar gösterirler.' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Temel Amaçları' },
+        { id: generateId(), type: 'text', content: '- **Mitoz:** Büyüme, gelişme, onarım, tek hücrelilerde eşeysiz üreme.\n- **Mayoz:** Eşeyli üreyen canlılarda gamet (üreme hücresi) oluşturma, genetik çeşitliliği sağlama.' },
+        { id: generateId(), type: 'heading', level: 3, content: 'Karşılaştırma Tablosu' },
+        { id: generateId(), type: 'text', content: '**Özellik** | **Mitoz Bölünme** | **Mayoz Bölünme**' },
+        { id: generateId(), type: 'text', content: '---|---|---' },
+        { id: generateId(), type: 'text', content: 'Gerçekleştiği Hücreler | Vücut hücreleri (somatik) | Eşey ana hücreleri (üreme ana hücreleri)' },
+        { id: generateId(), type: 'text', content: 'Bölünme Sayısı | Bir | İki (Mayoz I ve Mayoz II)' },
+        { id: generateId(), type: 'text', content: 'Oluşan Hücre Sayısı | İki | Dört' },
+        { id: generateId(), type: 'text', content: 'Kromozom Sayısı | Değişmez (2n → 2n) | Yarıya iner (2n → n)' },
+        { id: generateId(), type: 'text', content: 'Genetik Çeşitlilik | Genellikle oluşmaz (mutasyonlar hariç) | Oluşur (krossing over ve homolog kromozomların rastgele ayrılması ile)' },
+        { id: generateId(), type: 'text', content: 'Kardeş Kromatit Ayrılması | Anafazda | Mayoz II Anafaz II\'de' },
+        { id: generateId(), type: 'text', content: 'Homolog Kromozom Ayrılması | Yok | Mayoz I Anafaz I\'de' },
+        { id: generateId(), type: 'text', content: 'Krossing Over | Yok | Mayoz I Profaz I\'de (genellikle)' },
+        { id: generateId(), type: 'quote', content: 'Mitoz, genetik sürekliliği sağlarken; mayoz, genetik çeşitliliğin temelini atar.', citation:'Biyoloji Ders Notları' },
     ]
    },
-   // Page Templates
-   ...defaultPageTemplates,
+   // --- Page Templates (Kept from previous state for completeness) ---
+      {
+    id: 'page-standard',
+    name: 'Standart Sayfa',
+    description: 'Genel amaçlı sayfalar için başlık, metin ve görsel içeren temel düzen.',
+    previewImageUrl: 'https://picsum.photos/seed/page-std/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: '[Sayfa Başlığı Buraya Gelecek]' },
+      { id: generateId(), type: 'text', content: '[Sayfanızın ana metin içeriği için bu alanı kullanın. Paragraflarınızı buraya ekleyebilirsiniz.]' },
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-std-img1/800/400', alt: 'Standart Sayfa Görseli 1', caption: 'İsteğe bağlı görsel alt yazısı.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 1' },
+      { id: generateId(), type: 'text', content: '[Bu alt başlık altındaki detayları veya ek bilgileri buraya yazın.]' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 2' },
+      { id: generateId(), type: 'text', content: '[Farklı bir konu veya bölüm için metin içeriği.]' },
+      { id: generateId(), type: 'quote', content: 'İlham verici bir alıntı veya önemli bir notu burada vurgulayabilirsiniz.', citation: 'Kaynak (isteğe bağlı)' },
+    ]
+  },
+  {
+    id: 'page-contact',
+    name: 'İletişim Sayfası',
+    description: 'İletişim formu ve iletişim bilgileri için düzenlenmiş sayfa yapısı.',
+    previewImageUrl: 'https://picsum.photos/seed/page-contact/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: 'Bizimle İletişime Geçin' },
+      { id: generateId(), type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için aşağıdaki formu kullanabilir veya iletişim bilgilerimizden bize ulaşabilirsiniz.' },
+      { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@example.com' } },
+      { id: generateId(), type: 'heading', level: 2, content: 'Diğer İletişim Yolları' },
+      { id: generateId(), type: 'text', content: '**E-posta:** bilgi@example.com\n**Telefon:** +90 (XXX) XXX XX XX\n**Adres:** Örnek Mah. Bilim Cad. No:123, TeknoKent, İstanbul' },
+      { id: generateId(), type: 'section', sectionType: 'custom-text', settings: { content: '<p style="text-align:center; margin-top:20px;">Harita konumu (Gömülü harita eklenebilir).</p>' } },
+    ]
+  },
+  {
+    id: 'page-about-us',
+    name: 'Hakkımızda Sayfası',
+    description: 'Ekip, misyon ve vizyon gibi bilgileri içeren kurumsal sayfa düzeni.',
+    previewImageUrl: 'https://picsum.photos/seed/page-about/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Hakkında' },
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-about-hero/1000/400', alt: 'Hakkımızda Kapak Görseli', caption: 'Vizyonumuz ve geleceğe bakışımız.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Misyonumuz' },
+      { id: generateId(), type: 'text', content: '[Şirketinizin veya projenizin misyonunu açıklayan detaylı bir metin.]' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Vizyonumuz' },
+      { id: generateId(), type: 'text', content: '[Gelecekte ulaşmak istediğiniz hedefleri ve vizyonunuzu anlatan bir metin.]' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Ekibimiz' },
+      { id: generateId(), type: 'text', content: '[Ekip üyelerinizi tanıtan kısa bilgiler veya görseller eklenebilir. Örneğin, bir "section" bloğu ile daha karmaşık bir düzen oluşturulabilir.]' },
+      { id: generateId(), type: 'text', content: 'Ekip üyelerimiz, alanlarında uzman ve tutkulu bireylerden oluşmaktadır...' },
+    ]
+  },
+  {
+    id: 'page-faq',
+    name: 'SSS Sayfası',
+    description: 'Sıkça sorulan soruları ve cevaplarını düzenli bir şekilde sunar.',
+    previewImageUrl: 'https://picsum.photos/seed/page-faq/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: 'Sıkça Sorulan Sorular (SSS)' },
+      { id: generateId(), type: 'text', content: 'Hizmetlerimiz, ürünlerimiz veya projemiz hakkında en çok merak edilen soruları ve yanıtlarını burada bulabilirsiniz.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: [Sıkça Sorulan Bir Soru Örneği Nedir?]' },
+      { id: generateId(), type: 'text', content: '**Cevap:** [Bu soruya verilecek detaylı ve açıklayıcı cevap.]' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Soru 2: [Başka Bir Yaygın Soru Nasıl Çözülür?]' },
+      { id: generateId(), type: 'text', content: '**Cevap:** [Bu sorunun çözümünü veya açıklamasını içeren metin.]' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Soru 3: [Ürün/Hizmet Hakkında Bir Soru]' },
+      { id: generateId(), type: 'text', content: '**Cevap:** [Ürün veya hizmetle ilgili bu soruya verilecek yanıt.]' },
+      { id: generateId(), type: 'text', content: 'Daha fazla sorunuz varsa, lütfen bizimle iletişime geçmekten çekinmeyin.' },
+    ]
+  },
+   {
+    id: 'page-services',
+    name: 'Hizmetler Sayfası',
+    description: 'Sunulan hizmetleri detaylı bir şekilde listeleyen ve açıklayan sayfa.',
+    previewImageUrl: 'https://picsum.photos/seed/page-services/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+        { id: generateId(), type: 'heading', level: 1, content: 'Sunduğumuz Hizmetler' },
+        { id: generateId(), type: 'text', content: 'Profesyonel ekibimizle sizlere sunduğumuz hizmetlerin detaylarını aşağıda bulabilirsiniz.' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Hizmet Alanı 1: [Hizmet Adı]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/service1-img/700/350', alt: 'Hizmet 1 Görseli', caption: 'Hizmet 1 Detayları' },
+        { id: generateId(), type: 'text', content: '[Hizmet 1\'in açıklaması, faydaları ve süreci hakkında detaylı bilgi.]' },
+        { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Hizmet Alanı 2: [Hizmet Adı]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/service2-img/700/350', alt: 'Hizmet 2 Görseli', caption: 'Hizmet 2 Detayları' },
+        { id: generateId(), type: 'text', content: '[Hizmet 2\'nin açıklaması, sağladığı avantajlar ve kimlere yönelik olduğu.]' },
+        { id: generateId(), type: 'divider' },
+        { id: generateId(), type: 'heading', level: 2, content: 'Neden Bizi Tercih Etmelisiniz?' },
+        { id: generateId(), type: 'text', content: '- Deneyimli ve uzman kadro\n- Müşteri odaklı yaklaşım\n- Kaliteli ve güvenilir hizmet\n- Rekabetçi fiyatlar' },
+    ]
+  },
+  {
+    id: 'page-portfolio',
+    name: 'Portfolyo Sayfası',
+    description: 'Tamamlanmış projeleri veya çalışmaları sergilemek için galeri tarzı sayfa.',
+    previewImageUrl: 'https://picsum.photos/seed/page-portfolio/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+        { id: generateId(), type: 'heading', level: 1, content: 'Çalışmalarımızdan Örnekler' },
+        { id: generateId(), type: 'text', content: 'Bugüne kadar tamamladığımız bazı projeleri ve çalışmaları aşağıda inceleyebilirsiniz.' },
+        { id: generateId(), type: 'gallery', images: [
+            { url: 'https://picsum.photos/seed/portfolio1/600/400', alt: 'Proje 1' },
+            { url: 'https://picsum.photos/seed/portfolio2/600/400', alt: 'Proje 2' },
+            { url: 'https://picsum.photos/seed/portfolio3/600/400', alt: 'Proje 3' },
+            { url: 'https://picsum.photos/seed/portfolio4/600/400', alt: 'Proje 4' },
+          ]
+        },
+        { id: generateId(), type: 'heading', level: 2, content: 'Proje Detayı: [Örnek Proje Adı]' },
+        { id: generateId(), type: 'text', content: '[Seçilen bir projenin kısa açıklaması, kullanılan teknolojiler ve elde edilen sonuçlar.]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/portfolio-detail/800/450', alt: 'Proje Detay Görseli' },
+    ]
+  },
+  {
+    id: 'page-landing-product',
+    name: 'Ürün Tanıtım Sayfası (Landing)',
+    description: 'Belirli bir ürünü veya hizmeti tanıtmak için tasarlanmış odaklı sayfa.',
+    previewImageUrl: 'https://picsum.photos/seed/page-landing/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+        { id: generateId(), type: 'section', sectionType: 'hero-banner', settings: { title: '[Ürün Adı]', subtitle: '[Ürünün Ana Faydası veya Sloganı]', ctaButtonText: 'Hemen Keşfet', imageUrl: 'https://picsum.photos/seed/landing-hero/1200/500' } },
+        { id: generateId(), type: 'heading', level: 2, content: 'Neden [Ürün Adı]?' },
+        { id: generateId(), type: 'text', content: '[Ürünün temel özelliklerini ve kullanıcıya sağlayacağı faydaları anlatan 3-4 madde veya kısa paragraf.]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/landing-feature1/700/400', alt: 'Ürün Özellik 1', caption:'Özellik 1 Açıklaması' },
+        { id: generateId(), type: 'text', content: '[Özellik 1\'in detaylı açıklaması.]' },
+        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/landing-feature2/700/400', alt: 'Ürün Özellik 2', caption:'Özellik 2 Açıklaması' },
+        { id: generateId(), type: 'text', content: '[Özellik 2\'nin detaylı açıklaması.]' },
+        { id: generateId(), type: 'quote', content: 'Müşteri yorumu veya ürün hakkında etkileyici bir söz.', citation: 'Memnun Müşteri' },
+        { id: generateId(), type: 'section', sectionType: 'call-to-action', settings: { title: 'Hemen Denemeye Başlayın!', buttonText: 'Satın Al / Kaydol', descriptionText: '[Kısa bir teşvik edici açıklama.]' } },
+    ]
+  },
+  {
+    id: 'page-blog-index',
+    name: 'Blog Anasayfası',
+    description: 'Blog yazılarını listeleyen ve kategorilere ayıran sayfa.',
+    previewImageUrl: 'https://picsum.photos/seed/page-blog/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Blog' },
+      { id: generateId(), type: 'text', content: 'Teknoloji ve biyoloji dünyasından en son haberler, analizler ve ilginç bilgiler.' },
+      { id: generateId(), type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkan Yazılar', count: 2 } },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Tüm Yazılar' },
+      { id: generateId(), type: 'section', sectionType: 'article-list', settings: { count: 10, showPagination: true, showCategoryFilter: true } },
+    ]
+  },
+  {
+    id: 'page-career',
+    name: 'Kariyer Sayfası',
+    description: 'Açık pozisyonları listeleyen ve şirket kültürünü tanıtan sayfa.',
+    previewImageUrl: 'https://picsum.photos/seed/page-career/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo\'da Kariyer' },
+      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/career-team/1000/400', alt: 'TeknoBiyo Ekibi', caption: 'Birlikte büyüyen bir ekibiz.' },
+      { id: generateId(), type: 'text', content: 'Dinamik ve yenilikçi bir ortamda kariyerinize yön vermek ister misiniz? TeknoBiyo olarak, teknoloji ve biyolojiye tutkuyla bağlı yetenekleri aramızda görmekten mutluluk duyarız.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Neden TeknoBiyo?' },
+      { id: generateId(), type: 'text', content: '- Sürekli öğrenme ve gelişim fırsatları.\n- İlham verici ve işbirlikçi bir çalışma ortamı.\n- Sektörde fark yaratan projelerde yer alma şansı.\n- Rekabetçi maaş ve yan haklar.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Açık Pozisyonlar' },
+      { id: generateId(), type: 'section', sectionType: 'job-listings', settings: {} }, 
+      { id: generateId(), type: 'text', content: 'Şu anda açık bir pozisyonumuz bulunmuyorsa bile, genel başvurularınızı [e-posta adresi] adresine gönderebilirsiniz.' },
+    ]
+  },
+  { 
+    id: 'page-user-guide',
+    name: 'Kullanım Kılavuzu',
+    description: 'Sitenin veya uygulamanın nasıl kullanılacağını açıklayan detaylı bir kılavuz sayfası.',
+    previewImageUrl: 'https://picsum.photos/seed/page-guide/300/200',
+    type: 'page',
+    category: 'Genel Sayfa',
+    blocks: [
+      { id: generateId(), type: 'heading', level: 1, content: '[Platform Adı] Kullanım Kılavuzu' },
+      { id: generateId(), type: 'text', content: 'Bu kılavuz, [Platform Adı] platformunu etkili bir şekilde kullanmanıza yardımcı olmak için tasarlanmıştır. Aşağıdaki bölümlerde sıkça ihtiyaç duyacağınız bilgilere ve özelliklere ulaşabilirsiniz.' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 1: Başlarken' },
+      { id: generateId(), type: 'text', content: '- Hesap Oluşturma ve Giriş Yapma\n- Profil Ayarları\n- Gösterge Paneline Genel Bakış' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 2: İçerik Yönetimi' },
+      { id: generateId(), type: 'text', content: '- Yeni Makale/Not Oluşturma\n- Zengin Metin Editörü Kullanımı\n- Medya Yükleme ve Yönetimi\n- Kategori ve Etiket Ekleme\n- Yayınlama Süreci' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 3: Kullanıcı Yönetimi (Adminler İçin)' },
+      { id: generateId(), type: 'text', content: '- Yeni Kullanıcı Ekleme\n- Rol ve İzin Yönetimi\n- Kullanıcı Aktivitelerini İzleme' },
+      { id: generateId(), type: 'divider' },
+      { id: generateId(), type: 'heading', level: 2, content: 'Sıkça Sorulan Sorular (SSS)' },
+      { id: generateId(), type: 'text', content: '**Soru:** [Yaygın bir soru örneği]\n**Cevap:** [Soruya ait cevap]' },
+      { id: generateId(), type: 'text', content: 'Daha fazla yardıma ihtiyacınız olursa, lütfen destek ekibimizle iletişime geçin.' },
+    ]
+  }
 ];
 
+export const USER_STORAGE_KEY = 'teknobiyo_mock_users';
+export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles';
 
-// Export loadData function for potential manual reloading if needed elsewhere (optional)
-export { loadInitialData as reloadMockData };
-
-    
+// Reload mock data (used for specific cases like data import)
+export const reloadMockData = () => {
+    console.log("reloadMockData called - This function should ideally re-fetch from a backend.");
+    // Since there's no backend, this function doesn't have much to do other than log
+    // and potentially reset to defaults if that was the desired behavior for a 'reset' button.
+    // For now, it's a placeholder.
+};
