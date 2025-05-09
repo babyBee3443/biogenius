@@ -105,12 +105,6 @@ const renderBlock = (block: Block) => {
     }
 };
 
-// No longer need ArticlePageProps as params is accessed directly
-// interface ArticlePageProps {
-//   params: {
-//     id: string;
-//   };
-// }
 
 function createMarkup(htmlContent: string) {
     const sanitizedHtml = htmlContent?.replace(/<script.*?>.*?<\/script>/gi, '') || '';
@@ -118,9 +112,9 @@ function createMarkup(htmlContent: string) {
 }
 
 
-export default function ArticlePage() { // Removed params from props
-  const params = useParams(); // Get params using the hook
-  const articleId = params.id as string; // Access id directly
+export default function ArticlePage() { 
+  const params = useParams(); 
+  const articleId = React.use(params)?.id as string; 
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
@@ -159,7 +153,7 @@ export default function ArticlePage() { // Removed params from props
                 const allArticles = await getArticles();
                 const relArticles = allArticles
                     .filter(a => 
-                        (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) && // Show ready articles to admin/editor
+                        (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) && 
                         a.category === fetchedArticle.category && 
                         a.id !== articleId
                     )
@@ -167,12 +161,12 @@ export default function ArticlePage() { // Removed params from props
                 setRelatedArticles(relArticles);
 
             } else {
-                setArticle(null); // Explicitly set to null if not found
+                setArticle(null); 
             }
         }
       } catch (error) {
         console.error("Failed to fetch article:", error);
-        if (isMounted) setArticle(null); // Handle fetch error
+        if (isMounted) setArticle(null); 
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -180,9 +174,9 @@ export default function ArticlePage() { // Removed params from props
 
     fetchArticleData();
     return () => { isMounted = false; };
-  }, [articleId, currentUserRole]); // Re-fetch if articleId or userRole changes
+  }, [articleId, currentUserRole]); 
 
-  // Determine visibility after data is loaded
+  
   const isVisible = React.useMemo(() => {
     if (!article) return false;
     if (article.status === 'Yayınlandı') return true;
@@ -227,7 +221,7 @@ export default function ArticlePage() { // Removed params from props
                 width={1200}
                 height={600}
                 className="w-full h-auto object-cover"
-                priority
+                priority // LCP image
                 data-ai-hint="article main image"
             />
           </div>
@@ -289,3 +283,4 @@ export default function ArticlePage() { // Removed params from props
     </article>
   );
 }
+

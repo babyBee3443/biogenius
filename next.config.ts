@@ -2,7 +2,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  swcMinify: true, // Enable SWC minifier for faster builds
   typescript: {
     ignoreBuildErrors: true, // Consider setting to false for production builds
   },
@@ -35,9 +35,6 @@ const nextConfig: NextConfig = {
     // Enable appDir for improved routing and performance (if you are using it)
     // appDir: true, 
     
-    // Enable SWC minifier for faster builds (default in newer Next.js versions)
-    // swcMinify: true,
-
     // Consider enabling these for potential performance gains, but test thoroughly
     //isrMemoryCacheSize: 0, // Disable in-memory cache for ISR (if using ISR heavily and have memory issues)
     // PPR (Partial Prerendering) - for future Next.js versions
@@ -49,3 +46,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

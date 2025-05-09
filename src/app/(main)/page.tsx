@@ -1,5 +1,3 @@
-
-
 "use client"; 
 
 import * as React from 'react';
@@ -9,9 +7,10 @@ import { getArticles, type ArticleData } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton'; 
 import dynamic from 'next/dynamic';
 
+// Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
   loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
-  ssr: false 
+  ssr: false // Assuming Hero component is client-side and doesn't need SSR
 });
 
 const FeaturedArticlesSection = dynamic(() => import('@/components/featured-articles-section'), {
@@ -25,7 +24,7 @@ const FeaturedArticlesSection = dynamic(() => import('@/components/featured-arti
       </div>
     </section>
   ),
-  ssr: false
+  ssr: false // Assuming this section is client-side
 });
 
 const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser-section'), {
@@ -38,7 +37,7 @@ const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser
       </div>
     </section>
   ),
-  ssr: false
+  ssr: false // Assuming this section is client-side
 });
 
 const RecentArticlesSection = dynamic(() => import('@/components/recent-articles-section'), {
@@ -52,7 +51,7 @@ const RecentArticlesSection = dynamic(() => import('@/components/recent-articles
       </div>
     </section>
   ),
-  ssr: false
+  ssr: false // Assuming this section is client-side
 });
 
 
@@ -227,7 +226,6 @@ export default function Home() {
                 {char === ' ' ? '\u00A0' : char}
               </motion.span>
             ))}
-            {/* Removed the background sheen animation span here */}
           </span>
         ))}
       </motion.h1>
@@ -254,3 +252,4 @@ export default function Home() {
     </div>
   );
 }
+
