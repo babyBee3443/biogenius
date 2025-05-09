@@ -1,9 +1,10 @@
+
 "use client";
 
 import * as React from "react";
 import { notFound, useParams, useRouter } from 'next/navigation'; // Added useRouter
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea"; // Added for Bio
@@ -52,13 +53,14 @@ interface UserActivity {
 interface UserContentStats {
     articlesCount: number;
     notesCount: number;
-    totalArticleViews: number; 
-    totalNoteViews: number; 
+    totalArticleViews: number;
+    totalNoteViews: number;
 }
 
 
 export default function EditUserPage() {
     const params = useParams();
+    // Ensure params.id is accessed safely and correctly
     const userId = params.id as string;
     const router = useRouter();
 
@@ -103,7 +105,7 @@ export default function EditUserPage() {
 
         setLoading(true);
         Promise.all([
-            getUserById(userId), 
+            getUserById(userId),
             getUserActivity(userId),
             getArticles(), // Fetch all articles
             getNotes()     // Fetch all notes
@@ -208,7 +210,7 @@ export default function EditUserPage() {
                     const storedUser = localStorage.getItem('currentUser');
                     if (storedUser) {
                         const currentUserData = JSON.parse(storedUser);
-                        if (currentUserData.id === userId) { 
+                        if (currentUserData.id === userId) {
                              localStorage.setItem('currentUser', JSON.stringify({
                                 ...currentUserData,
                                 name: updatedUser.name,
@@ -310,9 +312,9 @@ export default function EditUserPage() {
                         <CardHeader>
                             <CardTitle>Kullanıcı Bilgileri</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-6"> 
+                        <CardContent className="space-y-6">
                              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                                <Avatar className="h-24 w-24"> 
+                                <Avatar className="h-24 w-24">
                                 <AvatarImage src={avatar || `https://picsum.photos/seed/${user.username}/128/128`} alt={user.name} data-ai-hint="user avatar placeholder"/>
                                 <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                                 </Avatar>

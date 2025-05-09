@@ -1,3 +1,4 @@
+
 "use client"; // Essential for hooks like useState, useEffect, useRouter
 
 import * as React from 'react';
@@ -50,7 +51,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = params.id as string; // Use React.use for simpler param access
+    const articleId = params.id as string;
 
     // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);

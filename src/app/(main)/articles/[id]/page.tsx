@@ -1,3 +1,4 @@
+
 "use client"; // Make this a client component
 
 import * as React from 'react';
@@ -112,9 +113,9 @@ function createMarkup(htmlContent: string) {
 }
 
 
-export default function ArticlePage() { 
-  const params = useParams(); 
-  const articleId = React.use(params)?.id as string; 
+export default function ArticlePage() {
+  const params = useParams();
+  const articleId = params.id as string;
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
@@ -144,7 +145,7 @@ export default function ArticlePage() {
 
       try {
         const fetchedArticle = await getArticleById(articleId);
-        
+
         if (isMounted) {
             if (fetchedArticle) {
                 setArticle(fetchedArticle);
@@ -152,21 +153,21 @@ export default function ArticlePage() {
                 // Fetch related articles
                 const allArticles = await getArticles();
                 const relArticles = allArticles
-                    .filter(a => 
-                        (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) && 
-                        a.category === fetchedArticle.category && 
+                    .filter(a =>
+                        (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) &&
+                        a.category === fetchedArticle.category &&
                         a.id !== articleId
                     )
                     .slice(0, 2);
                 setRelatedArticles(relArticles);
 
             } else {
-                setArticle(null); 
+                setArticle(null);
             }
         }
       } catch (error) {
         console.error("Failed to fetch article:", error);
-        if (isMounted) setArticle(null); 
+        if (isMounted) setArticle(null);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -174,9 +175,9 @@ export default function ArticlePage() {
 
     fetchArticleData();
     return () => { isMounted = false; };
-  }, [articleId, currentUserRole]); 
+  }, [articleId, currentUserRole]);
 
-  
+
   const isVisible = React.useMemo(() => {
     if (!article) return false;
     if (article.status === 'Yayınlandı') return true;
@@ -240,9 +241,9 @@ export default function ArticlePage() {
              <h2 className="text-2xl font-semibold mb-6">İlgili Makaleler</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {relatedArticles.map(relArticle => (
-                   <ArticleCard 
-                     key={relArticle.id} 
-                     article={relArticle} 
+                   <ArticleCard
+                     key={relArticle.id}
+                     article={relArticle}
                      imageLoading="lazy"
                      imageHint="related article abstract"
                    />
