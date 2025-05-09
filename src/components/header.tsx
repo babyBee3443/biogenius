@@ -1,16 +1,17 @@
-"use client"; // Add "use client" for useState and useEffect
+
+"use client";
 
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react'; // Replaced UserShield with ShieldCheck
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet components
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Import Popover
-import { Input } from '@/components/ui/input'; // Import Input
-import { Badge } from '@/components/ui/badge'; // Import Badge
-import * as React from 'react'; // Import React for state
-import { ScrollArea } from './ui/scroll-area'; // Import ScrollArea
-import { cn } from '@/lib/utils'; // Import cn utility
+import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import * as React from 'react';
+import { ScrollArea } from './ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface ArticleStub {
   id: string;
@@ -18,18 +19,14 @@ interface ArticleStub {
   category: string;
 }
 
-// Mock search function - replace with actual API call
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
   const mockData: ArticleStub[] = [
-    { id: '1', title: 'Yapay Zeka Devrimi', category: 'Teknoloji' },
+    // Removed Teknoloji articles
     { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
-    { id: '3', title: 'Kuantum Bilgisayarlar', category: 'Teknoloji' },
     { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
-    { id: '5', title: 'Blockchain Teknolojisi', category: 'Teknoloji' },
     { id: 's1', title: 'İnsan Bağışıklık Sistemi', category: 'Biyoloji' },
     { id: 's2', title: 'Beyin Nöroplastisitesi', category: 'Biyoloji' },
-
   ];
   return mockData.filter(article =>
     article.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -66,7 +63,7 @@ const Header = () => {
 
   React.useEffect(() => {
     setIsMounted(true);
-    checkAdminStatus(); // Initial check
+    checkAdminStatus();
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser') {
@@ -74,9 +71,9 @@ const Header = () => {
             checkAdminStatus();
         }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('currentUserUpdated', checkAdminStatus); // Listen for same-tab updates
+    window.addEventListener('currentUserUpdated', checkAdminStatus);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -123,7 +120,7 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
-    { href: "/categories/teknoloji", label: "Teknoloji" },
+    // { href: "/categories/teknoloji", label: "Teknoloji" }, // Removed Teknoloji
     { href: "/categories/biyoloji", label: "Biyoloji" },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
@@ -131,11 +128,12 @@ const Header = () => {
   ];
 
   const getCategoryClass = (category: string): string => {
-     switch (category) {
-        case 'Teknoloji': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
-        case 'Biyoloji': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-        default: return 'bg-muted text-muted-foreground';
-    }
+     // Simplified as only Biyoloji is expected or a default
+     const lowerCaseName = category.toLowerCase();
+     if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+     }
+     return 'bg-muted text-muted-foreground';
   }
 
 
@@ -153,13 +151,12 @@ const Header = () => {
             strokeLinejoin="round"
             className="h-7 w-7 text-primary animate-spin-slow"
           >
-            <path d="M4 4C4 4 6 12 12 12C18 12 20 20 20 20" />
-            <path d="M4 20C4 20 6 12 12 12C18 12 20 4 20 4" />
-            <path d="M6.5 7.5L9.5 5.5" />
-            <path d="M14.5 18.5L17.5 16.5" />
-            <path d="M6.5 16.5L9.5 18.5" />
-            <path d="M14.5 5.5L17.5 7.5" />
-            <path d="M10 12H14" />
+            <path d="M12 2a10 10 0 0 0-10 10c0 2.5 1 4.8 2.6 6.4A10 10 0 0 0 12 22a10 10 0 0 0 10-10c0-2.5-1-4.8-2.6-6.4A10 10 0 0 0 12 2z" />
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+            <path d="M15.7 15.7a4 4 0 1 0-7.4 0" />
+            <path d="M12 12v10" />
+            <path d="m4.6 10.6.8.8" />
+            <path d="m18.6 10.6-.8.8" />
           </svg>
           <span className="font-bold text-lg">TeknoBiyo</span>
         </Link>

@@ -1,11 +1,12 @@
-"use client"; // Make this a client component
+
+"use client";
 
 import * as React from 'react';
-import { notFound, useParams } from 'next/navigation'; // Import useParams
+import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Loader2 } from 'lucide-react'; // Added Loader2
+import { ArrowLeft, Twitter, Facebook, Linkedin, Loader2 } from 'lucide-react';
 import { getArticleById, getArticles, type ArticleData } from '@/lib/mock-data';
 import type { Block } from '@/components/admin/template-selector';
 import { ArticleCard } from '@/components/article-card';
@@ -30,7 +31,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             height={450}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="article content image"
-            loading="lazy" // Lazy load content images
+            loading="lazy"
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -66,7 +67,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    loading="lazy" // Lazy load iframes
+                    loading="lazy"
                 ></iframe>
             </div>
         );
@@ -114,7 +115,7 @@ function createMarkup(htmlContent: string) {
 
 export default function ArticlePage() {
   const params = useParams();
-  const articleId = React.use(params)?.id as string; // Using React.use for params
+  const articleId = React.use(params)?.id as string;
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
@@ -149,12 +150,11 @@ export default function ArticlePage() {
             if (fetchedArticle) {
                 setArticle(fetchedArticle);
 
-                // Fetch related articles
                 const allArticles = await getArticles();
                 const relArticles = allArticles
                     .filter(a =>
                         (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) &&
-                        a.category === fetchedArticle.category &&
+                        a.category === fetchedArticle.category && // Category will likely always be Biyoloji now
                         a.id !== articleId
                     )
                     .slice(0, 2);
@@ -198,9 +198,8 @@ export default function ArticlePage() {
     notFound();
   }
 
-  const categoryLinkClass = article.category === 'Teknoloji'
-    ? 'text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'
-    : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300';
+  // Simplified categoryLinkClass since "Teknoloji" is removed
+  const categoryLinkClass = 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300';
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -221,7 +220,7 @@ export default function ArticlePage() {
                 width={1200}
                 height={600}
                 className="w-full h-auto object-cover"
-                priority // LCP image
+                priority
                 data-ai-hint="article main image"
             />
           </div>
@@ -283,4 +282,3 @@ export default function ArticlePage() {
     </article>
   );
 }
-

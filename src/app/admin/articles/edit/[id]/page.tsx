@@ -1,15 +1,16 @@
-"use client"; // Essential for hooks like useState, useEffect, useRouter
+
+"use client";
 
 import * as React from 'react';
-import { useRouter, useParams, notFound } from 'next/navigation'; // Import hooks
+import { useRouter, useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data'; // Import mock data functions including getCategories
-import { useDebouncedCallback } from 'use-debounce'; // Import debounce hook
+import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data';
+import { useDebouncedCallback } from 'use-debounce';
 
 import {
   Tabs,
@@ -37,38 +38,33 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers, FileText } from "lucide-react"; // Added Layers icon for Remove Template
+import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers, FileText } from "lucide-react";
 
-// Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; 
-
-// --- Main Page Component ---
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = React.use(params)?.id as string; // Use React.use for simpler param access
+    const articleId = React.use(params)?.id as string;
 
-    // --- State ---
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
-    const [saving, setSaving] = React.useState(false); // Added saving state
-    const [error, setError] = React.useState<string | null>(null); // Added error state
-    const [templateApplied, setTemplateApplied] = React.useState(false); // Track if a template has been applied
-    const [categories, setCategories] = React.useState<Category[]>([]); // State for categories
+    const [saving, setSaving] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
+    const [templateApplied, setTemplateApplied] = React.useState(false);
+    const [categories, setCategories] = React.useState<Category[]>([]);
 
-    // Form Field States (Sync with articleData on load and save)
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
     const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
-    const [isHero, setIsHero] = React.useState(false); // Added isHero state
+    const [isHero, setIsHero] = React.useState(false);
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
-    const [blocks, setBlocks] = React.useState<Block[]>([]); // Initialize empty, create default in effect if needed
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
@@ -76,9 +72,8 @@ export default function EditArticlePage() {
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
 
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
-    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
 
-    // --- Data Fetching - Delayed until client-side hydration ---
     React.useEffect(() => {
         let isMounted = true;
 
@@ -100,17 +95,17 @@ export default function EditArticlePage() {
              try {
                  const [articleResult, categoriesResult] = await Promise.all([
                      getArticleById(articleId),
-                     getCategories() // Fetch categories
+                     getCategories()
                  ]);
 
                  if (isMounted) {
-                     setCategories(categoriesResult); // Set categories state
+                     setCategories(categoriesResult.filter(cat => cat.name !== 'Teknoloji')); // Filter out Teknoloji
 
                      if (articleResult) {
                          setArticleData(articleResult);
                          setTitle(articleResult.title);
                          setExcerpt(articleResult.excerpt || '');
-                         setCategory(articleResult.category); // Now a string
+                         setCategory(articleResult.category);
                          setStatus(articleResult.status);
                          setMainImageUrl(articleResult.mainImageUrl || "");
                          setIsFeatured(articleResult.isFeatured);
@@ -141,40 +136,35 @@ export default function EditArticlePage() {
 
         fetchData();
 
-        return () => { isMounted = false }; // Cleanup function
-    }, [articleId]); // Only run when articleId changes
+        return () => { isMounted = false };
+    }, [articleId]);
 
-     // --- Handlers ---
-     // Auto-update slug when title changes (debounced, respects manual changes)
      const debouncedSetSlug = useDebouncedCallback((newTitle: string, originalTitle: string, currentSlug: string) => {
          if (newTitle && newTitle !== originalTitle) {
-             // Check if slug is empty OR if slug matches the slug generated from the *original* title
              if (!currentSlug || currentSlug === generateSlugUtil(originalTitle)) {
                  setSlug(generateSlugUtil(newTitle));
              }
-         } else if (newTitle && !currentSlug) { // Generate slug if title exists but slug is empty
+         } else if (newTitle && !currentSlug) {
             setSlug(generateSlugUtil(newTitle));
          }
-     }, 500); // 500ms delay
+     }, 500);
 
      React.useEffect(() => {
-         if (articleData) { // Only run if articleData is loaded
+         if (articleData) {
              debouncedSetSlug(title, articleData.title, slug);
-         } else if (title && !slug) { // Handle initial slug generation for potentially new articles (though this is edit page)
+         } else if (title && !slug) {
             setSlug(generateSlugUtil(title));
          }
      }, [title, articleData, slug, debouncedSetSlug]);
 
-     // Auto-generate SEO Title from main title if empty
      React.useEffect(() => {
-       if (title && !seoTitle) { // Simplified: Always sync if seoTitle is empty
+       if (title && !seoTitle) {
          setSeoTitle(title);
        }
      }, [title, seoTitle]);
 
-      // Auto-generate SEO Description from excerpt if empty
      React.useEffect(() => {
-        if (excerpt && !seoDescription) { // Simplified: Always sync if seoDescription is empty
+        if (excerpt && !seoDescription) {
           const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
           setSeoDescription(desc);
         }
@@ -182,7 +172,6 @@ export default function EditArticlePage() {
 
 
     const handleAddBlock = (type: Block['type']) => {
-        // ID generation happens client-side, safe from hydration issues
         const newBlock: Block = {
             id: generateBlockId(),
             type: type,
@@ -190,54 +179,49 @@ export default function EditArticlePage() {
             ...(type === 'heading' && { level: 2, content: '' }),
             ...(type === 'image' && { url: '', alt: '', caption: '' }),
             ...(type === 'gallery' && { images: [] }),
-            ...(type === 'video' && { url: '', youtubeId: '' }), // Added youtubeId
+            ...(type === 'video' && { url: '', youtubeId: '' }),
             ...(type === 'quote' && { content: '', citation: '' }),
             ...(type === 'code' && { language: 'javascript', content: '' }),
             ...(type === 'divider' && {}),
             ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
         setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
-        setSelectedBlockId(newBlock.id); // Select the newly added block
-        setTemplateApplied(false); // Adding a block manually means template is no longer strictly applied
+        setSelectedBlockId(newBlock.id);
+        setTemplateApplied(false);
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks((prevBlocks) => prevBlocks.filter(block => block.id !== id));
-        if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
-        setTemplateApplied(false); // Removing a block means template is modified
+        if (selectedBlockId === id) setSelectedBlockId(null);
+        setTemplateApplied(false);
     };
 
-      // Update block state (generic, used by BlockEditor)
       const handleUpdateBlock = (updatedBlock: Block) => {
           setBlocks(prevBlocks =>
               prevBlocks.map(block =>
                   block.id === updatedBlock.id ? updatedBlock : block
               )
           );
-          // Note: Updating content doesn't necessarily mean the template structure changed
-          // If order/type changes, templateApplied should be false. Reordering handles this.
       };
 
-      // Reorder blocks (generic, used by BlockEditor)
       const handleReorderBlocks = (reorderedBlocks: Block[]) => {
           setBlocks(reorderedBlocks);
-          setTemplateApplied(false); // Reordering breaks the original template structure
+          setTemplateApplied(false);
       };
 
     const handleSave = async (publish: boolean = false) => {
-        // Determine the status to save based on the 'publish' flag and current status
         let finalStatus = status;
 
         if (publish && status !== 'Yayınlandı') {
             finalStatus = "Yayınlandı";
         } else if (!publish && status === 'Yayınlandı') {
-             finalStatus = "Hazır"; // Revert to "Hazır" if unpublishing from "Yayınlandı"
+             finalStatus = "Hazır";
         } else if (!publish && (status === 'Taslak' || status === 'İncelemede')) {
-            finalStatus = status; // Keep draft or review status
+            finalStatus = status;
         } else if (status === 'Hazır' && publish) {
             finalStatus = "Yayınlandı";
         } else if (status === 'Hazır' && !publish) {
-            finalStatus = "Hazır"; // Keep as "Hazır" if saving without publishing from "Hazır"
+            finalStatus = "Hazır";
         }
 
 
@@ -270,7 +254,6 @@ export default function EditArticlePage() {
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
         };
 
-         console.log("[EditArticlePage/handleSave] Preparing to save article:", articleId, "with data:", currentData);
          setSaving(true);
 
          try {
@@ -291,18 +274,15 @@ export default function EditArticlePage() {
                  setSlug(updatedArticle.slug);
                  setKeywords(updatedArticle.keywords || []);
                  setCanonicalUrl(updatedArticle.canonicalUrl || "");
-                  console.log("[EditArticlePage/handleSave] Save successful. Updated articleData state:", updatedArticle);
                  toast({
                      title: "Makale Kaydedildi",
                      description: `"${updatedArticle.title}" başlıklı makale başarıyla kaydedildi (${updatedArticle.status}).`,
                  });
 
              } else {
-                  console.error("[EditArticlePage/handleSave] Save failed. API returned no data.");
                   toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilemedi." });
              }
          } catch (error) {
-             console.error("[EditArticlePage/handleSave] Error during save:", error);
              toast({ variant: "destructive", title: "Kaydetme Hatası", description: "Makale kaydedilirken bir hata oluştu." });
          } finally {
              setSaving(false);
@@ -311,7 +291,7 @@ export default function EditArticlePage() {
 
      const handleDelete = async () => {
         if (window.confirm(`"${title}" başlıklı makaleyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-            setSaving(true); // Indicate deletion in progress
+            setSaving(true);
             try {
                 const success = await deleteArticle(articleId);
                 if (success) {
@@ -320,13 +300,12 @@ export default function EditArticlePage() {
                         title: "Makale Silindi",
                         description: `"${title}" başlıklı makale silindi.`,
                     });
-                    router.push('/admin/articles'); // Redirect after successful deletion
+                    router.push('/admin/articles');
                 } else {
                      toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinemedi." });
                      setSaving(false);
                 }
              } catch (error) {
-                 console.error("Error deleting article:", error);
                  toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinirken bir hata oluştu." });
                  setSaving(false);
              }
@@ -346,9 +325,9 @@ export default function EditArticlePage() {
 
      const handleRemoveTemplate = () => {
          if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
-            setBlocks([createDefaultBlock()]); // Reset to default block
-            setTemplateApplied(false); // Mark template as removed
-            setSelectedBlockId(null); // Deselect any selected block
+            setBlocks([createDefaultBlock()]);
+            setTemplateApplied(false);
+            setSelectedBlockId(null);
             toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
          }
      };
@@ -381,78 +360,38 @@ export default function EditArticlePage() {
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
-
-        console.log(`[EditArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[EditArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2));
-
-
+        
         try {
-            const stringifiedData = JSON.stringify(previewData);
-            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
-                console.error("[EditArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
-                toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
-                return;
-            }
-            console.log(`[EditArticlePage/handlePreview] Stringified data length: ${stringifiedData.length}`);
-
-            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
-            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            console.log(`[EditArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0, 200) + "..." : "NULL");
-
-
-            // --- Verification Steps ---
-            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            if (storedData && storedData !== 'null' && storedData !== 'undefined') {
-                console.log(`[EditArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage. Length: ${storedData.length}`);
-                try {
-                    const parsed = JSON.parse(storedData);
-                    console.log(`[EditArticlePage/handlePreview] Verification 2 SUCCESS: Data parsed successfully. Title: ${parsed.title}`);
-                } catch (parseError: any) {
-                     console.error(`[EditArticlePage/handlePreview] Verification 2 FAILED: Could not parse stored JSON.`, parseError);
-                     throw new Error(`Verification failed: Data for key ${PREVIEW_STORAGE_KEY} is not valid JSON: ${parseError.message}`);
-                }
-            } else {
-                console.error(`[EditArticlePage/handlePreview] Verification 1 FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
-                throw new Error(`Verification failed: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}.`);
-            }
-            // --- End Verification Steps ---
-
+            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             const previewUrl = `/admin/preview`;
-            console.log(`[EditArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
-
+            
             setTimeout(() => {
                  const newWindow = window.open(previewUrl, '_blank');
                  if (!newWindow) {
-                      console.error("[EditArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
                       toast({
                           variant: "destructive",
                           title: "Önizleme Penceresi Açılamadı",
                           description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
                           duration: 10000,
                       });
-                 } else {
-                      console.log("[EditArticlePage/handlePreview] Preview window opened successfully after delay.");
                  }
             }, 250);
 
         } catch (error: any) {
-            console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
+                description: `Önizleme verisi kaydedilemedi: ${error.message}`,
                 duration: 10000,
             });
         }
     };
 
 
-      // --- Block Selection Handler ---
      const handleBlockSelect = (id: string | null) => {
          setSelectedBlockId(id);
      };
 
-     // --- Revert to Draft or Ready Handler ---
      const handleRevertToDraftOrReady = () => {
         setStatus('Taslak');
         handleSave(false);
@@ -463,8 +402,6 @@ export default function EditArticlePage() {
         handleSave(false);
     };
 
-
-     // --- Rendering ---
 
     if (loading) {
         return (
@@ -486,7 +423,6 @@ export default function EditArticlePage() {
 
     return (
         <div className="flex flex-col h-full">
-             {/* Top Bar */}
              <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
                 <Button variant="ghost" size="sm" asChild>
                     <Link href="/admin/articles"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
@@ -503,9 +439,7 @@ export default function EditArticlePage() {
                 </div>
             </div>
 
-             {/* Main Content Area */}
              <div className="flex flex-1 overflow-hidden">
-                 {/* Left Content Area (Tabs & Editor) */}
                  <div className="flex-1 overflow-y-auto p-6 space-y-6">
                      <Tabs defaultValue="content">
                          <TabsList className="mb-6">
@@ -513,10 +447,9 @@ export default function EditArticlePage() {
                             <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon</TabsTrigger>
                             <TabsTrigger value="media">Medya</TabsTrigger>
                             <TabsTrigger value="seo">SEO</TabsTrigger>
-                            <TabsTrigger value="guide">Kullanım Kılavuzu</TabsTrigger> {/* New Tab */}
+                            <TabsTrigger value="guide">Kullanım Kılavuzu</TabsTrigger>
                          </TabsList>
 
-                         {/* Content Tab */}
                          <TabsContent value="content" className="space-y-6">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                  <div className="space-y-2">
@@ -550,14 +483,14 @@ export default function EditArticlePage() {
                                  </div>
                                  {mainImageUrl && (
                                      <div className="mt-2 rounded border p-2 w-fit">
-                                         <Image 
-                                            src={mainImageUrl} 
-                                            alt="Ana Görsel Önizleme" 
-                                            width={200} 
-                                            height={100} 
-                                            className="object-cover rounded" 
+                                         <Image
+                                            src={mainImageUrl}
+                                            alt="Ana Görsel Önizleme"
+                                            width={200}
+                                            height={100}
+                                            className="object-cover rounded"
                                             data-ai-hint="article cover placeholder"
-                                            priority={false} // Main image on edit page might not be LCP for this page itself
+                                            priority={false}
                                             loading="lazy"
                                         />
                                      </div>
@@ -591,12 +524,10 @@ export default function EditArticlePage() {
 
                          </TabsContent>
 
-                          {/* Template Tab */}
                          <TabsContent value="template">
                              <p className="text-muted-foreground">Şablon seçmek için yukarıdaki "Şablon" sekmesine tıklayın.</p>
                          </TabsContent>
 
-                         {/* Media Tab */}
                          <TabsContent value="media">
                               <Card>
                                   <CardHeader>
@@ -608,7 +539,6 @@ export default function EditArticlePage() {
                               </Card>
                          </TabsContent>
 
-                         {/* SEO Tab */}
                          <TabsContent value="seo">
                               <Card>
                                  <CardHeader>
@@ -685,7 +615,6 @@ export default function EditArticlePage() {
                                  </CardContent>
                              </Card>
                          </TabsContent>
-                          {/* User Guide Tab */}
                          <TabsContent value="guide">
                              <Card>
                                  <CardHeader>
@@ -737,7 +666,6 @@ export default function EditArticlePage() {
                      </Tabs>
                  </div>
 
-                  {/* Right Sidebar */}
                   <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
                       <Card>
                          <CardHeader><CardTitle>Durum</CardTitle></CardHeader>

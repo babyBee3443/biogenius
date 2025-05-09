@@ -1,5 +1,5 @@
 
-"use client"; // Indicate this is a Client Component
+"use client";
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from "@/components/ui/pagination";
 import Link from "next/link";
-import { toast } from "@/hooks/use-toast"; // Import toast
-import { getArticles, deleteArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data'; // Import mock data functions including categories
-import { cn } from "@/lib/utils"; // Import cn utility
+import { toast } from "@/hooks/use-toast";
+import { getArticles, deleteArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data';
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,41 +46,37 @@ const getStatusVariant = (status: ArticleData['status']): "default" | "secondary
         case 'Yayınlandı': return 'default';
         case 'Taslak': return 'secondary';
         case 'İncelemede': return 'outline';
+        case 'Hazır': return 'secondary'; // Changed from default for better distinction
         case 'Arşivlendi': return 'destructive';
         default: return 'secondary';
     }
 }
 
-// Basic category styling based on common examples - refine as needed
 const getCategoryClass = (categoryName: string): string => {
      const lowerCaseName = categoryName.toLowerCase();
-     if (lowerCaseName.includes('teknoloji')) {
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-     } else if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
+     // Only Biyoloji and Genel expected from mock-data.ts now
+     if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
-     // Add more specific checks or a default
      return 'bg-muted text-muted-foreground';
 }
 
 
 export default function AdminArticlesPage() {
   const [articles, setArticles] = React.useState<ArticleData[]>([]);
-  const [allCategories, setAllCategories] = React.useState<Category[]>([]); // State for all categories
+  const [allCategories, setAllCategories] = React.useState<Category[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [deletingId, setDeletingId] = React.useState<string | null>(null); // Track deleting state
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
   const [articleToDelete, setArticleToDelete] = React.useState<{ id: string; title: string } | null>(null);
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const router = useRouter();
 
-  // Filters
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedStatuses, setSelectedStatuses] = React.useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]); // Filter by category name
+  const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 5;
 
@@ -88,35 +84,27 @@ export default function AdminArticlesPage() {
   const fetchArticlesAndCategories = React.useCallback(async () => {
     setLoading(true);
     setError(null);
-    console.log("[fetchArticlesAndCategories] Fetching data...");
     try {
       const [articleData, categoryData] = await Promise.all([
         getArticles(),
         getCategories()
       ]);
-      console.log("[fetchArticlesAndCategories] Raw data fetched:", articleData.length, "articles,", categoryData.length, "categories");
+      setAllCategories(categoryData.filter(cat => cat.name !== 'Teknoloji')); // Ensure Teknoloji is not in filter options
 
-      setAllCategories(categoryData); // Store all categories for filter dropdown
-
-      // Apply filtering
       const filteredData = articleData.filter(article =>
           (article.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
           (selectedStatuses.length === 0 || selectedStatuses.includes(article.status)) &&
           (selectedCategories.length === 0 || selectedCategories.includes(article.category))
       );
-      // TODO: Add sorting logic here
-
       setArticles(filteredData);
-      console.log("[fetchArticlesAndCategories] Filtered data set to state:", filteredData.length, "articles");
     } catch (err) {
       console.error("[fetchArticlesAndCategories] Error fetching data:", err);
       setError("Makaleler veya kategoriler yüklenirken bir hata oluştu.");
       toast({ variant: "destructive", title: "Hata", description: "Veriler yüklenemedi." });
     } finally {
       setLoading(false);
-      console.log("[fetchArticlesAndCategories] Fetching complete, loading set to false.");
     }
-  }, [searchTerm, selectedStatuses, selectedCategories]); // Add filter dependencies
+  }, [searchTerm, selectedStatuses, selectedCategories]);
 
   React.useEffect(() => {
     if (!permissionsLoading && !hasPermission('Makaleleri Görüntüleme')) {
@@ -138,40 +126,31 @@ export default function AdminArticlesPage() {
      if (!articleToDelete) return;
      const { id, title } = articleToDelete;
 
-     console.log(`[handleDelete] User confirmed deletion for: ${id}`);
      setDeletingId(id);
      setIsConfirmDeleteDialogOpen(false);
      try {
-         console.log(`[handleDelete] Calling deleteArticle(${id})`);
          const success = await deleteArticle(id);
-         console.log(`[handleDelete] deleteArticle(${id}) returned: ${success}`);
          if (success) {
              toast({
-                 variant: "default", // Changed variant for visual distinction
+                 variant: "default",
                  title: "Makale Silindi",
                  description: `"${title}" başlıklı makale başarıyla silindi.`,
              });
-             console.log(`[handleDelete] Deletion successful for ${id}. Refetching articles...`);
-             await fetchArticlesAndCategories(); // Use await to ensure fetch completes before resetting deletingId
-              // Adjust current page if the last item on a page was deleted
+             await fetchArticlesAndCategories();
              if (paginatedArticles.length === 1 && currentPage > 1 && totalPages > 1 && currentPage === totalPages) {
                  setCurrentPage(currentPage - 1);
              }
-             console.log(`[handleDelete] Article list refetched after deleting ${id}.`);
          } else {
-             console.error(`[handleDelete] deleteArticle(${id}) failed.`);
              toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinemedi." });
          }
      } catch (error) {
-         console.error(`[handleDelete] Error during deletion of ${id}:`, error);
          toast({ variant: "destructive", title: "Silme Hatası", description: "Makale silinirken bir hata oluştu." });
      } finally {
-         setDeletingId(null); // Reset on failure as well
+         setDeletingId(null);
          setArticleToDelete(null);
      }
    };
 
-    // Filter Handlers
    const handleStatusFilterChange = (status: string) => {
        setSelectedStatuses(prev =>
            prev.includes(status)
@@ -190,7 +169,7 @@ export default function AdminArticlesPage() {
        setCurrentPage(1);
    };
 
-   const filteredArticles = articles.filter(article =>
+  const filteredArticles = articles.filter(article =>
     (article.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (selectedStatuses.length === 0 || selectedStatuses.includes(article.status)) &&
     (selectedCategories.length === 0 || selectedCategories.includes(article.category))
@@ -236,7 +215,6 @@ export default function AdminArticlesPage() {
          </div>
       </div>
 
-      {/* Filtering and Search Bar */}
        <Card>
             <CardHeader>
                 <CardTitle>Filtrele ve Ara</CardTitle>
@@ -249,7 +227,6 @@ export default function AdminArticlesPage() {
                     onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
                  />
                  <div className="flex gap-2">
-                    {/* Status Filter Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="outline">
@@ -259,7 +236,7 @@ export default function AdminArticlesPage() {
                         <DropdownMenuContent align="end">
                              <DropdownMenuLabel>Duruma Göre Filtrele</DropdownMenuLabel>
                              <DropdownMenuSeparator />
-                             {['Yayınlandı', 'Taslak', 'İncelemede', 'Arşivlendi'].map(status => (
+                             {['Yayınlandı', 'Taslak', 'İncelemede', 'Hazır', 'Arşivlendi'].map(status => (
                                  <DropdownMenuCheckboxItem
                                      key={status}
                                      checked={selectedStatuses.includes(status)}
@@ -270,7 +247,6 @@ export default function AdminArticlesPage() {
                              ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    {/* Category Filter Dropdown */}
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="outline">
@@ -295,17 +271,15 @@ export default function AdminArticlesPage() {
                               )}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    {/* Sort Dropdown (Placeholder) */}
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" disabled> {/* Disabled until implemented */}
+                            <Button variant="outline" disabled>
                                 <ArrowUpDown className="mr-2 h-4 w-4" /> Sırala
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Sırala</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            {/* Add Radio items for sorting logic */}
                              <DropdownMenuCheckboxItem disabled>Başlık (A-Z)</DropdownMenuCheckboxItem>
                              <DropdownMenuCheckboxItem disabled>Tarih (En Yeni)</DropdownMenuCheckboxItem>
                              <DropdownMenuCheckboxItem disabled>Tarih (En Eski)</DropdownMenuCheckboxItem>
@@ -400,7 +374,6 @@ export default function AdminArticlesPage() {
             </Table>
           )}
         </CardContent>
-         {/* Pagination (Only show if not loading, no error, and there are articles) */}
          {totalPages > 1 && !loading && !error && paginatedArticles.length > 0 && (
              <CardContent>
                  <Pagination>
@@ -413,7 +386,6 @@ export default function AdminArticlesPage() {
                             className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
                         />
                     </PaginationItem>
-                    {/* Dynamically generate page numbers based on totalPages */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
                         <PaginationItem key={pageNumber}>
                           <PaginationLink
@@ -425,7 +397,6 @@ export default function AdminArticlesPage() {
                           </PaginationLink>
                         </PaginationItem>
                     ))}
-                    {/* Add Ellipsis if needed */}
                      {totalPages > 5 && currentPage < totalPages - 2 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
                     <PaginationItem>
                         <PaginationNext

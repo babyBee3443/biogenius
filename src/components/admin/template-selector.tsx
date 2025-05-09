@@ -19,7 +19,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog" // AlertDialogTrigger is not needed here if AlertDialog is conditionally rendered
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +54,6 @@ interface TemplateSelectorProps {
 
 const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-// Fixed key for storing preview data in localStorage
 const PREVIEW_STORAGE_KEY = 'preview_data';
 
 
@@ -70,7 +70,7 @@ export function TemplateSelector({
     const handleSelectClick = (template: TemplateDefinition) => {
         setSelectedTemplate(template);
         if (blocksCurrentlyExist) {
-            setIsConfirmOpen(true); // Open confirmation dialog
+            setIsConfirmOpen(true);
         } else {
             applyTemplate(template);
         }
@@ -84,9 +84,9 @@ export function TemplateSelector({
             id: generateId()
         }));
         onSelectTemplateBlocks(newBlocks);
-        onClose(); // Close the main template selector dialog
-        setIsConfirmOpen(false); // Close confirmation dialog if it was open
-        setSelectedTemplate(null); // Reset selected template
+        onClose();
+        setIsConfirmOpen(false);
+        setSelectedTemplate(null);
     };
 
     const handlePreview = (template: TemplateDefinition) => {
@@ -97,7 +97,7 @@ export function TemplateSelector({
         const basePreviewData = {
             id: `preview_template_${template.id}_${Date.now()}`,
             title: template.name,
-            blocks: template.blocks.map(b => ({...b, id: generateId()})), // Ensure blocks have unique IDs for preview
+            blocks: template.blocks.map(b => ({...b, id: generateId()})),
             seoTitle: template.seoTitle || template.name,
             seoDescription: template.seoDescription || template.description,
             keywords: template.keywords || [],
@@ -111,7 +111,7 @@ export function TemplateSelector({
                     ...basePreviewData,
                     previewType: 'article',
                     excerpt: template.excerpt || template.description,
-                    category: template.category || 'Teknoloji',
+                    category: template.category || 'Biyoloji', // Default to Biyoloji if Teknoloji removed
                     status: 'Yayınlandı',
                     mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
                     authorId: 'template-author',
@@ -126,10 +126,10 @@ export function TemplateSelector({
                     previewType: 'note',
                     slug: `template-${template.id}-preview`,
                     category: template.category || 'Genel',
-                    level: 'Lise 9', // Example default
+                    level: 'Lise 9',
                     tags: template.keywords || [],
                     summary: template.excerpt || template.description,
-                    contentBlocks: template.blocks.map(b => ({...b, id: generateId()})), // Ensure unique IDs
+                    contentBlocks: template.blocks.map(b => ({...b, id: generateId()})),
                     imageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
                     authorId: 'template-author',
                 };
@@ -144,47 +144,34 @@ export function TemplateSelector({
                 };
                 break;
             default:
-                console.error("Unknown template type for preview:", (template as any).type);
                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Bilinmeyen şablon tipi." });
                 return;
         }
 
-        const previewKey = PREVIEW_STORAGE_KEY;
-
-        console.log(`[TemplateSelector/handlePreview] Preparing to save preview data with key: ${previewKey}`);
-        console.log(`[TemplateSelector/handlePreview] Preview Data:`, previewData);
-
         try {
-            localStorage.setItem(previewKey, JSON.stringify(previewData));
-            console.log(`[TemplateSelector/handlePreview] Successfully saved data for key: ${previewKey}`);
-            
-            const stored = localStorage.getItem(previewKey);
-            if (!stored) throw new Error("Verification failed: No data found in localStorage.");
-            JSON.parse(stored); // Try to parse to ensure it's valid JSON
-            console.log("[TemplateSelector/handlePreview] Verification SUCCESS (data stored and is valid JSON).");
-
+            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             const previewUrl = `/admin/preview`;
-            console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
-
+            
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
-                    console.error("[TemplateSelector/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
                     toast({ variant: "destructive", title: "Önizleme Penceresi Açılamadı", description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.", duration: 10000 });
-                } else {
-                    console.log("[TemplateSelector/handlePreview] Preview window opened successfully.");
                 }
-            }, 150);
+            }, 250);
 
         } catch (error: any) {
-            console.error("[TemplateSelector/handlePreview] Error during preview process:", error);
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`, duration: 10000 });
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi: ${error.message}`, duration: 10000 });
         }
     };
 
-    const filteredTemplates = templateTypeFilter
-        ? allMockTemplates.filter(t => t.type === templateTypeFilter)
-        : allMockTemplates;
+    const filteredTemplates = allMockTemplates.filter(t => {
+        if (t.category === 'Teknoloji') return false; // Exclude Teknoloji templates
+        if (templateTypeFilter) {
+            return t.type === templateTypeFilter;
+        }
+        return true;
+    });
+
 
     let dialogTitle = "Şablon Seç";
     if (templateTypeFilter === 'article') dialogTitle = "Makale Şablonu Seç";
@@ -195,17 +182,16 @@ export function TemplateSelector({
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col p-0"> {/* Remove p-6, handle padding in sub-components */}
-                    <DialogHeader className="p-6 pb-0"> {/* Add padding to header */}
+                <DialogContent className="sm:max-w-[60%] lg:max-w-[70%] max-h-[80vh] flex flex-col p-0">
+                    <DialogHeader className="p-6 pb-0">
                         <DialogTitle>{dialogTitle}</DialogTitle>
                         <DialogDescription>
                             İçeriğinizi oluşturmaya başlamak için hazır bir şablon seçin.
                             {blocksCurrentlyExist && <span className="text-destructive font-medium"> Şablon içeriği mevcut içeriğinizin üzerine yazılabilir (onayınızla).</span>}
                         </DialogDescription>
                     </DialogHeader>
-                    {/* ScrollArea now directly child of DialogContent, allow it to manage its own scroll */}
-                    <ScrollArea className="flex-grow border-t border-b"> {/* Added border-t and border-b for visual separation */}
-                        <div className="grid gap-4 p-6 md:grid-cols-2 lg:grid-cols-3"> {/* Add padding to the content inside ScrollArea */}
+                    <ScrollArea className="flex-grow border-t border-b">
+                        <div className="grid gap-4 p-6 md:grid-cols-2 lg:grid-cols-3">
                             {filteredTemplates.map((template) => (
                                 <Card key={template.id} className="flex flex-col">
                                     <CardHeader className="pb-2">
@@ -228,8 +214,7 @@ export function TemplateSelector({
                                                 <Eye className="mr-2 h-4 w-4" />
                                                 Önizle
                                             </Button>
-                                            {/* AlertDialogTrigger should be a direct child of AlertDialog */}
-                                            <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
+                                             <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -241,7 +226,7 @@ export function TemplateSelector({
                             )}
                         </div>
                     </ScrollArea>
-                    <DialogFooter className="p-6 pt-0"> {/* Add padding to footer */}
+                    <DialogFooter className="p-6 pt-0">
                         <Button type="button" variant="secondary" onClick={onClose}>
                             Kapat
                         </Button>
@@ -249,7 +234,6 @@ export function TemplateSelector({
                 </DialogContent>
             </Dialog>
             
-            {/* Confirmation Dialog */}
             {selectedTemplate && (
                 <AlertDialog open={isConfirmOpen} onOpenChange={(open) => { if (!open) { setIsConfirmOpen(false); setSelectedTemplate(null); }}}>
                     <AlertDialogContent>

@@ -1,7 +1,8 @@
-"use client"; // Essential for hooks like useState, useEffect, useRouter
+
+"use client";
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation'; // Import hooks
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -9,8 +10,8 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { useDebouncedCallback } from 'use-debounce';
-import { createArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data'; // Import mock data functions including getCategories
-import { usePermissions } from "@/hooks/usePermissions"; // Import usePermissions
+import { createArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data';
+import { usePermissions } from "@/hooks/usePermissions";
 
 
 import {
@@ -39,49 +40,41 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-react"; // Added Layers icon
+import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-react";
 
-// Helper to generate unique block IDs safely on the client
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
 const PREVIEW_STORAGE_KEY = 'preview_data';
 
-// --- Main Page Component ---
-
 export default function NewArticlePage() {
-    const router = useRouter(); // Initialize router
+    const router = useRouter();
     const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
-    // --- State ---
-    const [saving, setSaving] = React.useState(false); // Added saving state
-    const [templateApplied, setTemplateApplied] = React.useState(false); // Track if template is applied
-    const [categories, setCategories] = React.useState<Category[]>([]); // State for categories
-    const [loadingCategories, setLoadingCategories] = React.useState(true); // Loading state for categories
+    const [saving, setSaving] = React.useState(false);
+    const [templateApplied, setTemplateApplied] = React.useState(false);
+    const [categories, setCategories] = React.useState<Category[]>([]);
+    const [loadingCategories, setLoadingCategories] = React.useState(true);
 
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
-    const [category, setCategory] = React.useState<ArticleData['category'] | "">(""); // Category is a string
+    const [category, setCategory] = React.useState<ArticleData['category'] | "">("");
     const [mainImageUrl, setMainImageUrl] = React.useState("");
     const [isFeatured, setIsFeatured] = React.useState(false);
-    const [isHero, setIsHero] = React.useState(false); // Added isHero state
+    const [isHero, setIsHero] = React.useState(false);
     const [status, setStatus] = React.useState<ArticleData['status']>("Taslak");
 
-    // Block Editor State - Initialize with default block client-side
-    const [blocks, setBlocks] = React.useState<Block[]>([]); // Initialize empty
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
 
-    // SEO States
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [slug, setSlug] = React.useState("");
     const [keywords, setKeywords] = React.useState<string[]>([]);
     const [canonicalUrl, setCanonicalUrl] = React.useState("");
 
-    // Other States
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
-    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null); // Added for block editor interaction
+    const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
 
-     // Effect to set default block and load categories only on client side after mount
      React.useEffect(() => {
         if (!permissionsLoading && !hasPermission('Makale Oluşturma')) {
           toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni makale oluşturma yetkiniz yok." });
@@ -95,48 +88,33 @@ export default function NewArticlePage() {
 
         setLoadingCategories(true);
         getCategories()
-            .then(data => setCategories(data))
+            .then(data => setCategories(data.filter(cat => cat.name !== 'Teknoloji'))) // Filter out Teknoloji
             .catch(err => {
                 console.error("Error fetching categories:", err);
                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
             })
             .finally(() => setLoadingCategories(false));
 
-     }, [permissionsLoading, hasPermission, router, blocks.length]); // Add blocks.length to ensure default block is set
+     }, [permissionsLoading, hasPermission, router, blocks.length]);
 
-    // --- Handlers ---
-
-    // Basic slug generation
-    // const generateSlug = (text: string) => { // Already using generateSlugUtil from mock-data
-    //     if (!text) return '';
-    //     return text
-    //         .toLowerCase()
-    //         .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-    //         .replace(/[^a-z0-9 -]/g, '')
-    //         .replace(/\s+/g, '-').replace(/-+/g, '-');
-    // };
-
-     // Auto-generate slug from title (debounced)
      const debouncedSetSlug = useDebouncedCallback((newTitle: string) => {
          if (newTitle) {
              setSlug(generateSlugUtil(newTitle));
          } else {
-             setSlug(''); // Clear slug if title is empty
+             setSlug('');
          }
-     }, 500); // 500ms delay
+     }, 500);
 
      React.useEffect(() => {
          debouncedSetSlug(title);
      }, [title, debouncedSetSlug]);
 
-    // Auto-generate SEO Title from main title if empty
     React.useEffect(() => {
       if (title && !seoTitle) {
         setSeoTitle(title);
       }
     }, [title, seoTitle]);
 
-     // Auto-generate SEO Description from excerpt if empty
     React.useEffect(() => {
        if (excerpt && !seoDescription) {
          const desc = excerpt.length > 160 ? excerpt.substring(0, 157) + '...' : excerpt;
@@ -153,39 +131,35 @@ export default function NewArticlePage() {
             ...(type === 'heading' && { level: 2, content: '' }),
             ...(type === 'image' && { url: '', alt: '', caption: '' }),
             ...(type === 'gallery' && { images: [] }),
-            ...(type === 'video' && { url: '', youtubeId: '' }), // Added youtubeId
+            ...(type === 'video' && { url: '', youtubeId: '' }),
             ...(type === 'quote' && { content: '', citation: '' }),
              ...(type === 'divider' && {}),
              ...(type === 'section' && { sectionType: 'custom-text', settings: {} }),
         } as Block;
         setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
-        setSelectedBlockId(newBlock.id); // Select the newly added block
-        setTemplateApplied(false); // Adding manually modifies template
+        setSelectedBlockId(newBlock.id);
+        setTemplateApplied(false);
     };
 
     const handleDeleteBlock = (id: string) => {
         setBlocks((prevBlocks) => prevBlocks.filter(block => block.id !== id));
-         if (selectedBlockId === id) setSelectedBlockId(null); // Deselect if deleted
-         setTemplateApplied(false); // Deleting modifies template
+         if (selectedBlockId === id) setSelectedBlockId(null);
+         setTemplateApplied(false);
     };
 
-     // Update block state
      const handleUpdateBlock = (updatedBlock: Block) => {
          setBlocks(prevBlocks =>
              prevBlocks.map(block =>
                  block.id === updatedBlock.id ? updatedBlock : block
              )
          );
-         // Modifying content doesn't necessarily change template structure
      };
 
-     // Reorder blocks
      const handleReorderBlocks = (reorderedBlocks: Block[]) => {
          setBlocks(reorderedBlocks);
-         setTemplateApplied(false); // Reordering modifies template
+         setTemplateApplied(false);
      };
 
-     // Block selection
      const handleBlockSelect = (id: string | null) => {
          setSelectedBlockId(id);
      };
@@ -210,21 +184,19 @@ export default function NewArticlePage() {
          const newArticleData: Omit<ArticleData, 'id' | 'createdAt' | 'updatedAt'> = {
              title,
              excerpt: excerpt || "",
-             category, // Category is a string
+             category,
              status: finalStatus,
              mainImageUrl: mainImageUrl || null,
              isFeatured,
-             isHero, // Include isHero in save data
+             isHero,
              slug: slug || generateSlugUtil(title),
              keywords: keywords || [],
              canonicalUrl: canonicalUrl || "",
-             blocks: blocks.length > 0 ? blocks : [createDefaultBlock()], // Use default if empty
+             blocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
              seoTitle: seoTitle || title,
              seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-             authorId: 'mock-admin', // Assign a default author ID
+             authorId: 'mock-admin',
          };
-
-         console.log("Preparing to create article:", newArticleData);
 
          try {
              const newArticle = await createArticle(newArticleData);
@@ -233,45 +205,40 @@ export default function NewArticlePage() {
                      title: "Makale Oluşturuldu",
                      description: `"${newArticle.title}" başlıklı makale başarıyla oluşturuldu (${newArticle.status}).`,
                  });
-                  // Redirect to the edit page of the newly created article
                   router.push(`/admin/articles/edit/${newArticle.id}`);
-                  // No need to setSaving(false) here as we are navigating away
              } else {
                   toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulamadı." });
-                  setSaving(false); // Allow retry on failure
+                  setSaving(false);
              }
          } catch (error) {
-             console.error("Error creating article:", error);
              toast({ variant: "destructive", title: "Oluşturma Hatası", description: "Makale oluşturulurken bir hata oluştu." });
-             setSaving(false); // Allow retry on failure
+             setSaving(false);
          }
     };
 
-     // Handler for template selection
      const handleTemplateSelect = (templateBlocks: Block[]) => {
-         // Confirmation handled within TemplateSelector now
          const newBlocks = templateBlocks.map(block => ({
              ...block,
-             id: generateBlockId() // Assign new IDs on client
+             id: generateBlockId()
          }));
          setBlocks(newBlocks);
-         setTemplateApplied(true); // Mark template as applied
+         setTemplateApplied(true);
          setIsTemplateSelectorOpen(false);
          toast({ title: "Şablon Uygulandı", description: "Seçilen şablon içeriğe başarıyla uygulandı." });
      };
 
      const handleRemoveTemplate = () => {
          if (window.confirm("Mevcut içeriği kaldırıp varsayılan boş metin bloğuna dönmek istediğinizden emin misiniz?")) {
-             setBlocks([createDefaultBlock()]); // Reset to default block
-             setTemplateApplied(false); // Mark template as removed
-             setSelectedBlockId(null); // Deselect any selected block
+             setBlocks([createDefaultBlock()]);
+             setTemplateApplied(false);
+             setSelectedBlockId(null);
              toast({ title: "Şablon Kaldırıldı", description: "İçerik varsayılan boş metin bloğuna döndürüldü." });
          }
      };
 
 
      const handlePreview = () => {
-        if (typeof window === 'undefined') return; // Guard against server-side execution
+        if (typeof window === 'undefined') return;
 
         if (!category) {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce bir kategori seçin." });
@@ -280,10 +247,10 @@ export default function NewArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: 'preview_new', // Use a distinct ID for new article preview
+            id: 'preview_new',
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
-            category: category, // Category is string
+            category: category,
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
             isFeatured: isFeatured,
@@ -297,67 +264,28 @@ export default function NewArticlePage() {
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
-
-        console.log(`[NewArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[NewArticlePage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2)); // Log the data being saved in a readable format
-
+        
         try {
-            const stringifiedData = JSON.stringify(previewData);
-            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
-                console.error("[NewArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
-                toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
-                return;
-            }
-            console.log(`[NewArticlePage/handlePreview] Stringified data length: ${stringifiedData.length}`);
-
-            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
-            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            console.log(`[NewArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0, 200) + "..." : "NULL");
-
-
-             // --- Verification Steps ---
-            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-             if (storedData && storedData !== 'null' && storedData !== 'undefined') {
-                 console.log(`[NewArticlePage/handlePreview] Verification 1 SUCCESS: Data found in localStorage. Length: ${storedData.length}`);
-                 try {
-                    const parsed = JSON.parse(storedData);
-                    console.log(`[NewArticlePage/handlePreview] Verification 2 SUCCESS: Data parsed successfully. Title: ${parsed.title}`);
-                 } catch (parseError: any) {
-                      console.error(`[NewArticlePage/handlePreview] Verification 2 FAILED: Could not parse stored JSON.`, parseError);
-                      throw new Error(`Verification failed: Data for key ${PREVIEW_STORAGE_KEY} is not valid JSON: ${parseError.message}`);
-                 }
-             } else {
-                  console.error(`[NewArticlePage/handlePreview] Verification 1 FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
-                  throw new Error(`Verification failed: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}.`);
-             }
-             // --- End Verification Steps ---
-
-            // Simplified URL - Preview page will read from the fixed key
+            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             const previewUrl = `/admin/preview`;
-            console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
-
-             // Add a small delay before opening the window
+            
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
-                     console.error("[NewArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
                      toast({
                          variant: "destructive",
                          title: "Önizleme Penceresi Açılamadı",
                          description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
                          duration: 10000,
                      });
-                } else {
-                     console.log("[NewArticlePage/handlePreview] Preview window opened successfully after delay.");
                 }
-            }, 250); // Increased delay slightly
+            }, 250);
 
         } catch (error: any) {
-            console.error("[NewArticlePage/handlePreview] Error during preview process:", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
+                description: `Önizleme verisi kaydedilemedi: ${error.message}`,
                 duration: 10000,
             });
         }
@@ -374,18 +302,15 @@ export default function NewArticlePage() {
 
     return (
         <div className="flex flex-col h-full">
-            {/* Top Bar */}
              <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
                 <Button variant="ghost" size="sm" asChild>
                     <Link href="/admin/articles"><ArrowLeft className="mr-2 h-4 w-4" /> Geri</Link>
                 </Button>
                 <h1 className="text-xl font-semibold">Yeni Makale Oluştur</h1>
-                <div className="w-20"></div> {/* Spacer */}
+                <div className="w-20"></div>
             </div>
 
-            {/* Main Content Area */}
              <div className="flex flex-1 overflow-hidden">
-                {/* Left Content Area (Tabs & Editor) */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     <Tabs defaultValue="content">
                         <TabsList className="mb-6">
@@ -395,7 +320,6 @@ export default function NewArticlePage() {
                             <TabsTrigger value="seo">SEO</TabsTrigger>
                         </TabsList>
 
-                        {/* Content Tab */}
                         <TabsContent value="content" className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
@@ -416,7 +340,6 @@ export default function NewArticlePage() {
                                                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                                 ))
                                              )}
-                                             {/* TODO: Add link/button to manage categories */}
                                              <Separator />
                                              {hasPermission('Kategorileri Yönetme') && (
                                                 <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
@@ -433,23 +356,23 @@ export default function NewArticlePage() {
                                 <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                 <div className="flex gap-2">
                                      <Input id="main-image-url" value={mainImageUrl} onChange={(e) => setMainImageUrl(e.target.value)} placeholder="https://..." />
-                                     <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button> {/* TODO: Implement upload */}
+                                     <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button>
                                 </div>
                                 {mainImageUrl && (
                                     <div className="mt-2 rounded border p-2 w-fit">
-                                        <Image 
-                                            src={mainImageUrl} 
-                                            alt="Ana Görsel Önizleme" 
-                                            width={200} 
-                                            height={100} 
-                                            className="object-cover rounded" 
+                                        <Image
+                                            src={mainImageUrl}
+                                            alt="Ana Görsel Önizleme"
+                                            width={200}
+                                            height={100}
+                                            className="object-cover rounded"
                                             data-ai-hint="article cover placeholder"
                                             loading="lazy"
                                         />
                                     </div>
                                 )}
                             </div>
-                            <div className="flex items-center gap-4 pt-2"> {/* Changed spacing */}
+                            <div className="flex items-center gap-4 pt-2">
                                  <div className="flex items-center space-x-2">
                                      <Switch id="featured-article" checked={isFeatured} onCheckedChange={setIsFeatured} />
                                      <Label htmlFor="featured-article">Öne Çıkarılmış Makale</Label>
@@ -465,7 +388,6 @@ export default function NewArticlePage() {
 
                              <Separator className="my-8" />
 
-                             {/* Block Editor Section */}
                              <BlockEditor
                                 blocks={blocks}
                                 onAddBlock={handleAddBlock}
@@ -478,12 +400,10 @@ export default function NewArticlePage() {
 
                         </TabsContent>
 
-                         {/* Template Tab (Content is handled by Modal) */}
                          <TabsContent value="template">
                              <p className="text-muted-foreground">Şablon seçmek için yukarıdaki "Şablon Seç" sekmesine tıklayın.</p>
                         </TabsContent>
 
-                        {/* Media Tab */}
                         <TabsContent value="media">
                              <Card>
                                  <CardHeader>
@@ -491,14 +411,12 @@ export default function NewArticlePage() {
                                     <CardDescription>Mevcut medyaları yönetin veya yenilerini yükleyin.</CardDescription>
                                  </CardHeader>
                                  <CardContent>
-                                     {/* TODO: Implement Media Library Component */}
                                      <p className="text-muted-foreground">Medya kütüphanesi burada yer alacak.</p>
                                      <Button className="mt-4"><Upload className="mr-2 h-4 w-4"/> Medya Yükle</Button>
                                  </CardContent>
                              </Card>
                         </TabsContent>
 
-                        {/* SEO Tab */}
                         <TabsContent value="seo">
                              <Card>
                                  <CardHeader>
@@ -506,7 +424,6 @@ export default function NewArticlePage() {
                                     <CardDescription>Makalenizin arama motorlarında nasıl görüneceğini optimize edin.</CardDescription>
                                  </CardHeader>
                                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                     {/* SEO Form Fields */}
                                      <div className="space-y-6">
                                          <div className="space-y-2">
                                              <Label htmlFor="seo-title">SEO Başlığı</Label>
@@ -565,13 +482,12 @@ export default function NewArticlePage() {
                                          </div>
                                      </div>
 
-                                     {/* SEO Preview */}
                                      <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.6))] h-fit">
                                           <SeoPreview
                                               title={seoTitle || title}
                                               description={seoDescription || excerpt}
                                               slug={slug}
-                                              category={category || "kategori"} // Use string category
+                                              category={category || "kategori"}
                                           />
                                       </div>
                                  </CardContent>
@@ -580,8 +496,7 @@ export default function NewArticlePage() {
                     </Tabs>
                 </div>
 
-                 {/* Right Sidebar (Actions & Status) */}
-                 <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block"> {/* Hide on smaller screens */}
+                 <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
                      <Card>
                         <CardHeader>
                            <CardTitle>Durum</CardTitle>
@@ -614,7 +529,6 @@ export default function NewArticlePage() {
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Yayınla
                                  </Button>
                              )}
-                             {/* Conditionally show Remove Template button */}
                              {templateApplied && (
                                 <Button variant="outline" className="w-full text-destructive border-destructive/50 hover:bg-destructive/10" onClick={handleRemoveTemplate} disabled={saving}>
                                     <Layers className="mr-2 h-4 w-4" /> Şablonu Kaldır
@@ -625,7 +539,6 @@ export default function NewArticlePage() {
                  </aside>
              </div>
 
-             {/* Template Selector Modal */}
              <TemplateSelector
                  isOpen={isTemplateSelectorOpen}
                  onClose={() => setIsTemplateSelectorOpen(false)}
@@ -636,4 +549,3 @@ export default function NewArticlePage() {
         </div>
     );
 }
-
