@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic';
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
   loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
-  ssr: false // Hero component is client-side and involves animations/state
+  ssr: false 
 });
 
 const FeaturedArticlesSection = dynamic(() => import('@/components/featured-articles-section'), {
@@ -24,7 +24,7 @@ const FeaturedArticlesSection = dynamic(() => import('@/components/featured-arti
       </div>
     </section>
   ),
-  ssr: false // Client-side component, potentially fetching its own data or relying on client state
+  ssr: false 
 });
 
 const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser-section'), {
@@ -37,7 +37,7 @@ const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser
       </div>
     </section>
   ),
-  ssr: false // Client-side component
+  ssr: false 
 });
 
 const RecentArticlesSection = dynamic(() => import('@/components/recent-articles-section'), {
@@ -51,7 +51,7 @@ const RecentArticlesSection = dynamic(() => import('@/components/recent-articles
       </div>
     </section>
   ),
-  ssr: false // Client-side component
+  ssr: false 
 });
 
 
@@ -69,29 +69,23 @@ const titleParts = [
     { text: " Kesişim Noktası", colorClass: "text-foreground" },
 ];
 
-// Animation variants for the title reveal
+// Simplified animation variants for the title
 const titleContainerVariants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
+    y: 0,
     transition: {
-      staggerChildren: 0.03, 
-      delayChildren: 0.2,
+      duration: 0.8,
+      ease: "easeOut",
+      staggerChildren: 0.2, // Stagger per word/part
     },
   },
 };
 
-const letterRevealVariants = {
-  hidden: { opacity: 0, y: 10, filter: 'blur(2px)' }, 
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: 'blur(0px)',
-    transition: {
-      duration: 0.6, 
-      ease: [0.6, -0.05, 0.01, 0.99], 
-    },
-  },
+const wordVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 
@@ -213,20 +207,13 @@ export default function Home() {
         aria-label="Teknoloji ve Biyolojinin Kesişim Noktası"
       >
         {titleParts.map((part, partIndex) => (
-          <span key={`part-${partIndex}`} className="inline-block relative overflow-hidden group">
-            {part.text.split("").map((char, charIndex) => (
-              <motion.span
-                key={`${partIndex}-${charIndex}`}
-                variants={letterRevealVariants}
-                className={cn(
-                  "inline-block",
-                  part.colorClass
-                )}
-              >
-                {char === ' ' ? '\u00A0' : char}
-              </motion.span>
-            ))}
-          </span>
+          <motion.span
+            key={`part-${partIndex}`}
+            variants={wordVariants}
+            className={cn("inline-block", part.colorClass)}
+          >
+            {part.text}
+          </motion.span>
         ))}
       </motion.h1>
 
@@ -252,4 +239,3 @@ export default function Home() {
     </div>
   );
 }
-
