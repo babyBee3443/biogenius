@@ -16,7 +16,7 @@ interface BlockWrapperProps {
   onSelect: () => void; // Callback when this block wrapper is clicked
 }
 
-const BlockWrapper: React.FC<BlockWrapperProps> = ({
+const BlockWrapperComponent: React.FC<BlockWrapperProps> = ({
   blockId,
   blockType,
   blockNumber,
@@ -75,5 +75,5 @@ const BlockWrapper: React.FC<BlockWrapperProps> = ({
   );
 };
 
+export const BlockWrapper = React.memo(BlockWrapperComponent);
 export default BlockWrapper;
-

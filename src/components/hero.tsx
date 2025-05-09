@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -13,7 +14,7 @@ interface HeroProps {
   articles: ArticleData[]; // Accept ArticleData[]
 }
 
-const Hero: React.FC<HeroProps> = ({ articles }) => {
+const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(true);
 
@@ -73,24 +74,15 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
   // --- End Ad Display Logic ---
 
 
-  // Handle the case where displayArticles is initially empty and then populated
-  // This check is now implicitly handled by the shouldShowAd logic above
-  // if (displayArticles.length === 0) {
-  //    return null;
-  // }
-
   const currentArticle = displayArticles[currentIndex];
 
-  // Ensure currentArticle is defined before accessing its properties
   if (!currentArticle) {
-    // This can happen if displayArticles is empty, which is handled by shouldShowAd
-    // or if currentIndex is somehow out of sync briefly, which the useEffect above tries to prevent.
     return null; 
   }
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index);
-    setIsPlaying(false); // Pause auto-play on manual interaction
+    setIsPlaying(false); 
   };
 
   const togglePlay = () => {
@@ -111,10 +103,9 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner"> {/* Reduced height */}
-      {/* Animated Background Image */}
       <AnimatePresence initial={false} mode="wait">
         <motion.div
-          key={currentIndex} // Change key to trigger animation
+          key={currentIndex} 
           className="absolute inset-0 z-0"
           variants={backgroundVariants}
           initial="hidden"
@@ -122,26 +113,24 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
           exit="exit"
         >
           <Image
-            src={currentArticle.mainImageUrl || 'https://picsum.photos/seed/hero-placeholder/1920/1080'} // Fallback image
+            src={currentArticle.mainImageUrl || 'https://picsum.photos/seed/hero-placeholder/1920/1080'}
             alt={currentArticle.title}
             layout="fill"
             objectFit="cover"
             quality={85}
-            className="filter brightness-50 dark:brightness-[0.4]" // Darken image for text contrast
+            className="filter brightness-50 dark:brightness-[0.4]"
             data-ai-hint="technology biology abstract background"
-            priority={currentIndex === 0} // Prioritize the first (or currently visible) image
+            priority={currentIndex === 0}
           />
-          {/* Gradient overlay for better text readability */}
            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
         </motion.div>
       </AnimatePresence>
 
-      <div className="container relative z-10 text-white dark:text-foreground px-4">
-        {/* Animated Article Content */}
-        <div className="relative h-48 md:h-40"> {/* Fixed height container */}
+      <div className="container relative z-10 text-white dark:text-gray-100 px-4"> {/* Adjusted dark text color for better contrast */}
+        <div className="relative h-48 md:h-40"> 
           <AnimatePresence initial={false} mode="wait">
             <motion.div
-              key={currentIndex} // Change key to trigger animation
+              key={currentIndex} 
               variants={textVariants}
               initial="hidden"
               animate="visible"
@@ -151,7 +140,7 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
                 <h2 className="mt-2 text-xl font-semibold md:text-2xl text-shadow-md">
                     {currentArticle.title}
                 </h2>
-              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm line-clamp-3"> {/* Limit description lines */}
+              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm line-clamp-3"> 
                 {currentArticle.excerpt}
               </p>
               <Button size="lg" asChild className="mt-6">
@@ -164,8 +153,7 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
         </div>
       </div>
 
-      {/* Navigation Dots & Play/Pause */}
-      {displayArticles.length > 1 && ( // Only show controls if more than one article
+      {displayArticles.length > 1 && ( 
         <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-3">
           <Button variant="ghost" size="icon" onClick={togglePlay} className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full">
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -188,4 +176,5 @@ const Hero: React.FC<HeroProps> = ({ articles }) => {
   );
 };
 
+export const Hero = React.memo(HeroComponent);
 export default Hero;

@@ -11,7 +11,7 @@ interface SeoPreviewProps {
   category?: string;
 }
 
-const SeoPreview: React.FC<SeoPreviewProps> = ({
+const SeoPreviewComponent: React.FC<SeoPreviewProps> = ({
   title = "Makale Başlığı",
   description = "Bu makale için henüz bir açıklama girilmedi...",
   slug = "makale-url",
@@ -67,4 +67,5 @@ const SeoPreview: React.FC<SeoPreviewProps> = ({
   );
 };
 
+export const SeoPreview = React.memo(SeoPreviewComponent);
 export default SeoPreview;
