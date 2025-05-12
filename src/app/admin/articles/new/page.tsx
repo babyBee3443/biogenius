@@ -10,7 +10,7 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { useDebouncedCallback } from 'use-debounce';
-import { createArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data';
+import { createArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil, ARTICLE_STORAGE_KEY } from '@/lib/mock-data';
 import { usePermissions } from "@/hooks/usePermissions";
 
 
@@ -45,7 +45,7 @@ import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-reac
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data';
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key for preview
 
 export default function NewArticlePage() {
     const router = useRouter();
@@ -88,7 +88,7 @@ export default function NewArticlePage() {
 
         setLoadingCategories(true);
         getCategories()
-            .then(data => setCategories(data.filter(cat => cat.name !== 'Teknoloji'))) // Filter out Teknoloji
+            .then(data => setCategories(data))
             .catch(err => {
                 console.error("Error fetching categories:", err);
                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
@@ -195,7 +195,7 @@ export default function NewArticlePage() {
              blocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
              seoTitle: seoTitle || title,
              seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-             authorId: 'mock-admin',
+             authorId: 'admin001', // Default or logged-in user ID
          };
 
          try {
@@ -247,7 +247,7 @@ export default function NewArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: 'preview_new',
+            id: 'preview_new', // Static ID for new article preview
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
@@ -256,8 +256,9 @@ export default function NewArticlePage() {
             isFeatured: isFeatured,
             isHero: isHero,
             status: status,
-            authorId: 'mock-admin',
-            createdAt: new Date().toISOString(),
+            authorId: 'admin001', // Default or logged-in user ID
+            createdAt: new Date().toISOString(), // Use current time for new
+            updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
             slug: slug || generateSlugUtil(title),
@@ -265,6 +266,7 @@ export default function NewArticlePage() {
             canonicalUrl: canonicalUrl || "",
         };
         
+        console.log(`[NewArticlePage/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             const previewUrl = `/admin/preview`;
@@ -335,6 +337,8 @@ export default function NewArticlePage() {
                                         <SelectContent>
                                              {loadingCategories ? (
                                                 <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
+                                             ) : categories.length === 0 ? (
+                                                <SelectItem value="no_categories_placeholder" disabled>Kategori bulunamadı.</SelectItem>
                                              ) : (
                                                 categories.map(cat => (
                                                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>

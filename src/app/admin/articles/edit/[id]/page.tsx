@@ -43,7 +43,7 @@ import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Lay
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data';
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key for preview
 
 export default function EditArticlePage() {
     const params = useParams();
@@ -99,7 +99,7 @@ export default function EditArticlePage() {
                  ]);
 
                  if (isMounted) {
-                     setCategories(categoriesResult.filter(cat => cat.name !== 'Teknoloji')); // Filter out Teknoloji
+                     setCategories(categoriesResult);
 
                      if (articleResult) {
                          setArticleData(articleResult);
@@ -352,8 +352,9 @@ export default function EditArticlePage() {
             status: status,
             isFeatured: isFeatured,
             isHero: isHero,
-            authorId: articleData?.authorId || 'mock-admin',
+            authorId: articleData?.authorId || 'admin001', // Default or logged-in user ID
             createdAt: articleData?.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
             slug: slug || generateSlugUtil(title),
@@ -361,6 +362,7 @@ export default function EditArticlePage() {
             canonicalUrl: canonicalUrl || "",
         };
         
+        console.log(`[EditArticlePage/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             const previewUrl = `/admin/preview`;
@@ -463,10 +465,13 @@ export default function EditArticlePage() {
                                              <SelectValue placeholder="Kategori seçin" />
                                          </SelectTrigger>
                                          <SelectContent>
-                                             {categories.length === 0 && <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>}
-                                             {categories.map(cat => (
-                                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                             ))}
+                                             {categories.length === 0 ? (
+                                                <SelectItem value="no_categories_placeholder" disabled>Kategori bulunamadı.</SelectItem>
+                                              ) : (
+                                                categories.map(cat => (
+                                                  <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                                ))
+                                              )}
                                          </SelectContent>
                                      </Select>
                                  </div>

@@ -25,10 +25,10 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
-import { Eye } from 'lucide-react';
+import { Eye, Loader2 } from 'lucide-react'; // Added Loader2
 import { toast } from "@/hooks/use-toast";
 import type { ArticleData, NoteData, Template as TemplateDefinition, PageData as PageDataType } from '@/lib/mock-data';
-import { allMockTemplates } from "@/lib/mock-data";
+import { allMockTemplatesGetter } from "@/lib/mock-data"; // Use getter
 
 // --- Block Types (Should match the editor's block types) ---
 export type Block =
@@ -66,6 +66,26 @@ export function TemplateSelector({
 }: TemplateSelectorProps) {
     const [selectedTemplate, setSelectedTemplate] = React.useState<TemplateDefinition | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
+    const [templates, setTemplates] = React.useState<TemplateDefinition[]>([]);
+    const [loadingTemplates, setLoadingTemplates] = React.useState(true);
+
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setLoadingTemplates(true);
+            allMockTemplatesGetter()
+                .then(data => {
+                    setTemplates(data);
+                })
+                .catch(err => {
+                    console.error("Error fetching templates:", err);
+                    toast({ variant: "destructive", title: "Hata", description: "Şablonlar yüklenemedi." });
+                    setTemplates([]); // Set to empty array on error
+                })
+                .finally(() => setLoadingTemplates(false));
+        }
+    }, [isOpen]);
+
 
     const handleSelectClick = (template: TemplateDefinition) => {
         setSelectedTemplate(template);
@@ -81,7 +101,7 @@ export function TemplateSelector({
 
         const newBlocks = templateToApply.blocks.map(block => ({
             ...block,
-            id: generateId()
+            id: generateId() // Ensure new blocks have unique IDs
         }));
         onSelectTemplateBlocks(newBlocks);
         onClose();
@@ -97,7 +117,7 @@ export function TemplateSelector({
         const basePreviewData = {
             id: `preview_template_${template.id}_${Date.now()}`,
             title: template.name,
-            blocks: template.blocks.map(b => ({...b, id: generateId()})),
+            blocks: template.blocks.map(b => ({...b, id: generateId()})), // Fresh IDs for preview blocks
             seoTitle: template.seoTitle || template.name,
             seoDescription: template.seoDescription || template.description,
             keywords: template.keywords || [],
@@ -111,8 +131,8 @@ export function TemplateSelector({
                     ...basePreviewData,
                     previewType: 'article',
                     excerpt: template.excerpt || template.description,
-                    category: template.category || 'Biyoloji', // Default to Biyoloji if Teknoloji removed
-                    status: 'Yayınlandı',
+                    category: template.category || 'Biyoloji',
+                    status: 'Yayınlandı', // Preview as published
                     mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
                     authorId: 'template-author',
                     isFeatured: false,
@@ -126,12 +146,13 @@ export function TemplateSelector({
                     previewType: 'note',
                     slug: `template-${template.id}-preview`,
                     category: template.category || 'Genel',
-                    level: 'Lise 9',
+                    level: 'Lise 9', // Default level for preview
                     tags: template.keywords || [],
                     summary: template.excerpt || template.description,
-                    contentBlocks: template.blocks.map(b => ({...b, id: generateId()})),
+                    contentBlocks: template.blocks.map(b => ({...b, id: generateId()})), // Use contentBlocks for notes
                     imageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
-                    authorId: 'template-author',
+                    authorId: 'template-author', // Default author
+                    status: 'Yayınlandı', // Preview as published
                 };
                 break;
             case 'page':
@@ -140,7 +161,8 @@ export function TemplateSelector({
                     previewType: 'page',
                     slug: `template-${template.id}-preview`,
                     imageUrl: template.previewImageUrl,
-                    settings: {},
+                    settings: {}, // Default empty settings for page
+                    status: 'Yayınlandı', // Preview as published
                 };
                 break;
             default:
@@ -150,22 +172,21 @@ export function TemplateSelector({
 
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            const previewUrl = `/admin/preview`;
+            const previewUrl = `/admin/preview`; // Use the fixed preview URL
             
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
                     toast({ variant: "destructive", title: "Önizleme Penceresi Açılamadı", description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.", duration: 10000 });
                 }
-            }, 250);
+            }, 150); // Increased delay slightly
 
         } catch (error: any) {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi: ${error.message}`, duration: 10000 });
         }
     };
 
-    const filteredTemplates = allMockTemplates.filter(t => {
-        if (t.category === 'Teknoloji') return false; // Exclude Teknoloji templates
+    const filteredTemplates = templates.filter(t => {
         if (templateTypeFilter) {
             return t.type === templateTypeFilter;
         }
@@ -191,40 +212,52 @@ export function TemplateSelector({
                         </DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="flex-grow border-t border-b">
-                        <div className="grid gap-4 p-6 md:grid-cols-2 lg:grid-cols-3">
-                            {filteredTemplates.map((template) => (
-                                <Card key={template.id} className="flex flex-col">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-base">{template.name}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="flex flex-col flex-grow space-y-3">
-                                        <div className="relative aspect-[3/2] w-full rounded overflow-hidden">
-                                            <Image
-                                                src={template.previewImageUrl}
-                                                alt={template.name}
-                                                layout="fill"
-                                                objectFit="cover"
-                                                className="rounded"
-                                                data-ai-hint={template.category?.toLowerCase() || 'abstract content'}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground flex-grow">{template.description}</p>
-                                        <div className="flex justify-between items-center pt-2">
-                                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handlePreview(template); }}>
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                Önizle
-                                            </Button>
-                                             <Button size="sm" onClick={() => handleSelectClick(template)}>Seç</Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                            {filteredTemplates.length === 0 && (
-                                <p className="text-muted-foreground text-center md:col-span-2 lg:col-span-3 py-4">
-                                    Bu tür için uygun şablon bulunamadı.
-                                </p>
-                            )}
-                        </div>
+                        {loadingTemplates ? (
+                            <div className="flex justify-center items-center h-64">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <span className="ml-2">Şablonlar yükleniyor...</span>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4 p-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {filteredTemplates.map((template) => (
+                                    <Card key={template.id} className="flex flex-col">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-base">{template.name}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="flex flex-col flex-grow space-y-3">
+                                            <div className="relative aspect-[3/2] w-full rounded overflow-hidden bg-muted">
+                                                <Image
+                                                    src={template.previewImageUrl || 'https://picsum.photos/seed/default-template/300/200'}
+                                                    alt={template.name}
+                                                    layout="fill"
+                                                    objectFit="cover"
+                                                    className="rounded"
+                                                    data-ai-hint={template.category?.toLowerCase() || 'abstract content design'}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground flex-grow line-clamp-3">{template.description}</p>
+                                            <div className="flex justify-between items-center pt-2">
+                                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handlePreview(template); }}>
+                                                    <Eye className="mr-2 h-4 w-4" />
+                                                    Önizle
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                         <Button size="sm" onClick={(e) => {e.stopPropagation(); handleSelectClick(template);}}>Seç</Button>
+                                                    </AlertDialogTrigger>
+                                                    {/* AlertDialogContent will be handled by the main confirmation dialog below */}
+                                                </AlertDialog>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                                {filteredTemplates.length === 0 && (
+                                    <p className="text-muted-foreground text-center md:col-span-2 lg:col-span-3 xl:col-span-4 py-4">
+                                        Bu tür için uygun şablon bulunamadı veya hiç şablon eklenmemiş.
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </ScrollArea>
                     <DialogFooter className="p-6 pt-0">
                         <Button type="button" variant="secondary" onClick={onClose}>

@@ -13,7 +13,7 @@ export interface ArticleData {
     title: string;
     excerpt?: string;
     blocks: Block[];
-    category: string; // Keep as string, but will only be "Biyoloji" from mock data
+    category: string;
     status: 'Taslak' | 'İncelemede' | 'Hazır' | 'Yayınlandı' | 'Arşivlendi';
     mainImageUrl: string | null;
     seoTitle?: string;
@@ -83,7 +83,7 @@ export interface Template {
   previewImageUrl: string;
   blocks: Block[];
   type: 'article' | 'note' | 'page';
-  category?: 'Biyoloji' | 'Genel Sayfa'; // Removed 'Teknoloji'
+  category?: 'Biyoloji' | 'Genel Sayfa';
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string[];
@@ -127,17 +127,22 @@ export const generateSlug = (text: string) => {
 
 const generateId = () => `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`;
 
-const mockCategories: Category[] = [
-    { id: 'biyoloji', name: 'Biyoloji' },
-    // { id: 'teknoloji', name: 'Teknoloji' }, // Removed Teknoloji
-    { id: 'genel', name: 'Genel' }, // For notes or other content types
-];
+// Start with empty or minimal essential data
+let mockCategories: Category[] = [];
 
 // --- Category CRUD ---
 export const getCategories = async (): Promise<Category[]> => {
     await delay(5);
-    // Returns only "Biyoloji" and "Genel" or other relevant categories for selection in admin
-    return JSON.parse(JSON.stringify(mockCategories.filter(cat => cat.name !== 'Teknoloji')));
+    const storedCategories = typeof window !== 'undefined' ? localStorage.getItem(CATEGORY_STORAGE_KEY) : null;
+    if (storedCategories) {
+        try {
+            return JSON.parse(storedCategories);
+        } catch (e) {
+            console.error("Error parsing categories from localStorage", e);
+            return []; // Return empty if parsing fails
+        }
+    }
+    return []; // Return empty if not in localStorage
 };
 
 export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category> => {
@@ -146,186 +151,124 @@ export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category>
         ...data,
         id: generateSlug(data.name) + '-' + Date.now().toString(36),
     };
-    mockCategories.push(newCategory); // For dynamic additions during session
+    const currentCategories = await getCategories();
+    currentCategories.push(newCategory);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
+    }
+    mockCategories = currentCategories; // Update in-memory cache
     return JSON.parse(JSON.stringify(newCategory));
 };
 
 export const updateCategory = async (id: string, data: Partial<Omit<Category, 'id'>>): Promise<Category | null> => {
     await delay(30);
-    const index = mockCategories.findIndex(cat => cat.id === id);
+    const currentCategories = await getCategories();
+    const index = currentCategories.findIndex(cat => cat.id === id);
     if (index !== -1) {
-        mockCategories[index] = { ...mockCategories[index], ...data };
-        return JSON.parse(JSON.stringify(mockCategories[index]));
+        currentCategories[index] = { ...currentCategories[index], ...data };
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
+        }
+        mockCategories = currentCategories; // Update in-memory cache
+        return JSON.parse(JSON.stringify(currentCategories[index]));
     }
     return null;
 };
 
 export const deleteCategory = async (id: string): Promise<boolean> => {
     await delay(50);
-    const index = mockCategories.findIndex(cat => cat.id === id);
-    if (index !== -1) {
-        mockCategories.splice(index, 1);
+    let currentCategories = await getCategories();
+    const initialLength = currentCategories.length;
+    currentCategories = currentCategories.filter(cat => cat.id !== id);
+    if (currentCategories.length < initialLength) {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
+        }
+        mockCategories = currentCategories; // Update in-memory cache
         return true;
     }
     return false;
 };
 
 
-let mockArticles: ArticleData[] = [
-    // Only Biyoloji articles
-    {
-      id: 'biyo1',
-      title: 'Gen Düzenleme Teknolojileri: CRISPR ve Ötesi',
-      excerpt: 'CRISPR gibi gen düzenleme teknolojilerinin potansiyelini ve etik boyutlarını inceleyin.',
-      blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Gen Düzenleme: CRISPR ve Geleceği' },
-        { id: generateId(), type: 'text', content: 'Gen düzenleme teknolojileri, tıp ve biyoteknoloji alanında devrim yaratma potansiyeline sahip.' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/crispr-tech/800/400', alt: 'CRISPR Teknolojisi', caption: 'Genetik materyali hassas bir şekilde değiştirmek.' },
-      ],
-      category: 'Biyoloji',
-      status: 'Yayınlandı',
-      mainImageUrl: 'https://picsum.photos/seed/biyo-gen-edit/600/400',
-      slug: 'gen-duzenleme-teknolojileri',
-      isFeatured: true,
-      isHero: true,
-      authorId: 'mock-editor',
-      createdAt: '2024-07-19T10:00:00Z',
-      updatedAt: '2024-07-19T10:00:00Z',
-      seoTitle: 'Gen Düzenleme Teknolojileri: CRISPR ve Ötesi',
-      seoDescription: 'CRISPR ve diğer gen düzenleme yöntemlerinin bilimsel temelleri, uygulama alanları ve etik tartışmalar.',
-      keywords: ['gen düzenleme', 'CRISPR', 'biyoteknoloji', 'genetik', 'etik'],
-    },
-    {
-      id: 'biyo2',
-      title: 'Mikrobiyom: İçimizdeki Gizli Dünya',
-      excerpt: 'İnsan vücudundaki mikroorganizmaların sağlığımız üzerindeki etkileri.',
-      blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Mikrobiyom: Sağlığımızın Gizli Yöneticileri' },
-        { id: generateId(), type: 'text', content: 'Vücudumuzda yaşayan trilyonlarca mikroorganizma, sağlığımız üzerinde derin etkilere sahip.' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/microbiome-art/800/400', alt: 'Mikroorganizmalar', caption: 'Bağırsak mikrobiyotası ve sağlık ilişkisi.' },
-      ],
-      category: 'Biyoloji',
-      status: 'İncelemede',
-      mainImageUrl: 'https://picsum.photos/seed/biyo-microbiome/600/400',
-      slug: 'mikrobiyom-icimizdeki-gizli-dunya',
-      isFeatured: true,
-      isHero: false,
-      authorId: 'mock-editor',
-      createdAt: '2024-07-21T12:00:00Z',
-      updatedAt: '2024-07-21T12:00:00Z',
-    },
-    {
-      id: 'biyo3',
-      title: 'Sentetik Biyoloji: Yaşamı Yeniden Tasarlamak',
-      excerpt: 'Sentetik biyolojinin tıp, enerji ve malzeme bilimindeki uygulamaları.',
-      blocks: [],
-      category: 'Biyoloji',
-      status: 'Yayınlandı',
-      mainImageUrl: 'https://picsum.photos/seed/biyo-synbio/600/400',
-      slug: 'sentetik-biyoloji-yasami-yeniden-tasarlamak',
-      isFeatured: false,
-      isHero: true,
-      authorId: 'mock-editor',
-      createdAt: '2024-07-17T10:00:00Z',
-      updatedAt: '2024-07-17T10:00:00Z',
-    },
-    {
-      id: 'biyo4',
-      title: 'Kanser İmmünoterapisi: Vücudun Kendi Savunması',
-      excerpt: 'Kanserle mücadelede immünoterapinin rolü ve geleceği.',
-      blocks: [],
-      category: 'Biyoloji',
-      status: 'Yayınlandı',
-      mainImageUrl: 'https://picsum.photos/seed/biyo-cancer-immuno/600/400',
-      slug: 'kanser-immunoterapisi',
-      isFeatured: true,
-      isHero: false,
-      authorId: 'mock-editor',
-      createdAt: '2024-07-16T10:00:00Z',
-      updatedAt: '2024-07-16T10:00:00Z',
-    },
-];
-
-let mockNotes: NoteData[] = [
-    {
-      id: 'note1',
-      title: 'Hücre Zarının Yapısı ve Görevleri',
-      slug: 'hucre-zarinin-yapisi-gorevleri',
-      category: 'Hücre Biyolojisi',
-      level: 'Lise 9',
-      tags: ['hücre zarı', 'fosfolipit', 'protein', 'madde alışverişi'],
-      summary: 'Hücre zarının yapısını (fosfolipit tabaka, proteinler, karbonhidratlar) ve temel görevlerini (madde alışverişi, hücre tanıma, iletişim) açıklar.',
-      contentBlocks: [
-        {id: generateId(), type: 'heading', level: 2, content: 'Hücre Zarının Yapısı'},
-        {id: generateId(), type: 'text', content: 'Hücre zarı, akıcı mozaik modeline göre çift katlı fosfolipit tabakası ve bu tabakaya gömülü veya bağlı proteinlerden oluşur. Karbonhidratlar da zarın dış yüzeyinde proteinlere (glikoprotein) veya lipitlere (glikolipit) bağlı olarak bulunabilir.'},
-        {id: generateId(), type: 'image', url: 'https://picsum.photos/seed/cell-membrane/600/300', alt:'Hücre Zarı Modeli', caption: 'Akıcı Mozaik Zar Modeli'},
-        {id: generateId(), type: 'heading', level: 2, content: 'Hücre Zarının Görevleri'},
-        {id: generateId(), type: 'text', content: '- Hücreyi dış ortamdan ayırır ve hücre bütünlüğünü korur.\n- Madde alışverişini denetler (seçici geçirgen).\n- Hücreler arası iletişimi sağlar.\n- Hücrelerin birbirini tanımasını sağlar (glikokaliks sayesinde).'}
-      ],
-      imageUrl: 'https://picsum.photos/seed/note-cell-membrane/400/250',
-      authorId: 'u1',
-      status: 'Yayınlandı',
-      createdAt: '2024-07-10T10:00:00Z',
-      updatedAt: '2024-07-12T14:30:00Z',
-    },
-    {
-      id: 'note2',
-      title: 'Mitokondri: Hücrenin Enerji Santrali',
-      slug: 'mitokondri-enerji-santrali',
-      category: 'Hücre Biyolojisi',
-      level: 'Lise 9',
-      tags: ['mitokondri', 'oksijenli solunum', 'ATP', 'enerji'],
-      summary: 'Mitokondrinin yapısını, oksijenli solunumdaki rolünü ve ATP üretim sürecini özetler.',
-      contentBlocks: [],
-      imageUrl: 'https://picsum.photos/seed/note-mitochondria/400/250',
-      authorId: 'u1',
-      status: 'Yayınlandı',
-      createdAt: '2024-07-11T11:00:00Z',
-      updatedAt: '2024-07-11T11:00:00Z',
-    },
-    {
-      id: 'note3',
-      title: 'DNA Replikasyonu (Eşlenmesi)',
-      slug: 'dna-replikasyonu',
-      category: 'Genetik',
-      level: 'Lise 12',
-      tags: ['DNA', 'replikasyon', 'helikaz', 'polimeraz', 'ligaz'],
-      summary: 'DNA\'nın kendini yarı korunumlu olarak nasıl eşlediğini, görev alan enzimleri ve süreci açıklar.',
-      contentBlocks: [],
-      imageUrl: 'https://picsum.photos/seed/note-dna-replication/400/250',
-      authorId: 'u2',
-      status: 'Hazır',
-      createdAt: '2024-07-12T09:00:00Z',
-      updatedAt: '2024-07-13T16:00:00Z',
-    },
-];
-
-let mockUsers: User[] = [
-  { id: 'u1', name: 'Ali Veli', username: 'aliveli', email: 'ali.veli@example.com', role: 'Admin', joinedAt: '2024-01-15T10:00:00Z', avatar: 'https://picsum.photos/seed/aliveli/128/128', lastLogin: '2024-07-25T13:30:00Z', bio: 'Biyoloji ve teknoloji meraklısı.'},
-  { id: 'u2', name: 'Ayşe Kaya', username: 'aysekaya', email: 'ayse.kaya@example.com', role: 'Editor', joinedAt: '2024-03-22T14:30:00Z', avatar: 'https://picsum.photos/seed/aysekaya/128/128', lastLogin: '2024-07-25T18:00:00Z' },
-  { id: 'u3', name: 'Mehmet Yılmaz', username: 'mehmetyilmaz', email: 'mehmet.yilmaz@example.com', role: 'User', joinedAt: '2024-06-10T08:15:00Z', avatar: 'https://picsum.photos/seed/mehmetyilmaz/128/128', lastLogin: '2024-07-24T12:15:00Z' },
-  { id: 'u4', name: 'Zeynep Demir', username: 'zeynepdemir', email: 'zeynep.demir@example.com', role: 'User', joinedAt: '2024-07-01T11:00:00Z', avatar: 'https://picsum.photos/seed/zeynepdemir/128/128', lastLogin: '2024-07-25T09:45:00Z' },
-  { id: 'u5', name: 'Can Öztürk', username: 'canozturk', email: 'can.ozturk@example.com', role: 'Editor', joinedAt: '2024-05-19T16:00:00Z', avatar: 'https://picsum.photos/seed/canozturk/128/128', lastLogin: '2024-07-23T20:00:00Z' },
-  { id: 'superadmin', name: 'Super Admin', username: 'superadmin', email: 'superadmin@teknobiyo.example.com', role: 'Admin', joinedAt: '2024-01-01T00:00:00Z', avatar: 'https://picsum.photos/seed/superadmin/128/128', lastLogin: new Date().toISOString(), bio: 'Sistem Yöneticisi.'},
-  { id: 'gokhan', name: 'Gökhan Ermiş', username: 'babybee', email: 'sirfpubg12@gmail.com', role: 'Admin', joinedAt: '2024-01-01T00:00:00Z', avatar: 'https://picsum.photos/seed/babybee/128/128', lastLogin: new Date().toISOString(), bio: 'TeknoBiyo Kurucusu.'},
-];
-
+let mockArticles: ArticleData[] = [];
+let mockNotes: NoteData[] = [];
+let mockUsers: User[] = [];
+// Keep default roles for system functionality, but with userCount 0.
+// User will need to manually add an Admin user to localStorage or implement a setup flow.
 let mockRoles: Role[] = [
-    { id: 'admin', name: 'Admin', description: 'Tam sistem erişimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme', 'Hazır İçeriği Görüntüleme','Kategorileri Yönetme', 'Sayfaları Yönetme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme', 'Rolleri Yönetme', 'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 2 },
-    { id: 'editor', name: 'Editor', description: 'İçerik yönetimi ve düzenleme yetkileri.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Hazır İçeriği Görüntüleme', 'Kategorileri Yönetme', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 2 },
-    { id: 'user', name: 'User', description: 'Standart kullanıcı, içerik görüntüleme ve yorum yapma.', permissions: [], userCount: 2 },
+    { id: 'admin', name: 'Admin', description: 'Tam sistem erişimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme', 'Hazır İçeriği Görüntüleme','Kategorileri Yönetme', 'Sayfaları Yönetme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme', 'Rolleri Yönetme', 'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
+    { id: 'editor', name: 'Editor', description: 'İçerik yönetimi ve düzenleme yetkileri.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Hazır İçeriği Görüntüleme', 'Kategorileri Yönetme', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
+    { id: 'user', name: 'User', description: 'Standart kullanıcı, içerik görüntüleme ve yorum yapma.', permissions: [], userCount: 0 },
 ];
+
+let mockPages: PageData[] = [
+    {
+        id: 'anasayfa',
+        title: 'Anasayfa',
+        slug: '', // Empty slug for homepage
+        blocks: [
+            { id: generateId(), type: 'text', content: 'TeknoBiyo\'ya hoş geldiniz! İçeriğinizi buraya ekleyebilirsiniz.' }
+        ],
+        status: 'Yayınlandı',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        heroSettings: { enabled: false, articleSource: 'latest', intervalSeconds: 5, maxArticles: 0 } // Start with hero disabled/empty
+    },
+    {
+        id: 'hakkimizda',
+        title: 'Hakkımızda',
+        slug: 'hakkimizda',
+        blocks: [{id: generateId(), type: 'text', content: 'Hakkımızda sayfa içeriği buraya gelecek.'}],
+        status: 'Taslak', // Start as draft for user to populate
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'iletisim',
+        title: 'İletişim',
+        slug: 'iletisim',
+        blocks: [{id: generateId(), type: 'text', content: 'İletişim sayfa içeriği buraya gelecek.'}],
+        status: 'Taslak', // Start as draft
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+    {
+        id: 'kullanim-kilavuzu',
+        title: 'Kullanım Kılavuzu',
+        slug: 'kullanim-kilavuzu',
+        blocks: [
+            {id: generateId(), type: 'heading', level: 1, content: 'Admin Paneli Kullanım Kılavuzu'},
+            {id: generateId(), type: 'text', content: 'Bu kılavuz, admin panelinin çeşitli özelliklerini ve işlevlerini nasıl kullanacağınız konusunda size yol gösterecektir. Herhangi bir sorunuz olursa, lütfen destek ekibimizle iletişime geçmekten çekinmeyin.'}
+        ],
+        status: 'Yayınlandı', // Keep this published as it's a guide
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    },
+];
+
+let allMockTemplates: Template[] = [];
 
 
 // --- Article CRUD ---
 export const getArticles = async (): Promise<ArticleData[]> => {
     await delay(10);
-    return JSON.parse(JSON.stringify(mockArticles));
+    const storedArticles = typeof window !== 'undefined' ? localStorage.getItem(ARTICLE_STORAGE_KEY) : null;
+    if (storedArticles) {
+        try {
+            return JSON.parse(storedArticles);
+        } catch (e) {
+            console.error("Error parsing articles from localStorage", e);
+            return [];
+        }
+    }
+    return [];
 };
 
 export const getArticleById = async (id: string): Promise<ArticleData | null> => {
     await delay(10);
-    const article = mockArticles.find(a => a.id === id);
+    const articles = await getArticles();
+    const article = articles.find(a => a.id === id);
     return article ? JSON.parse(JSON.stringify(article)) : null;
 };
 
@@ -338,36 +281,64 @@ export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' |
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-    mockArticles.push(newArticle);
+    const currentArticles = await getArticles();
+    currentArticles.push(newArticle);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(currentArticles));
+    }
+    mockArticles = currentArticles;
     return JSON.parse(JSON.stringify(newArticle));
 };
 
 export const updateArticle = async (id: string, data: Partial<Omit<ArticleData, 'id' | 'createdAt'>>): Promise<ArticleData | null> => {
     await delay(50);
-    const index = mockArticles.findIndex(a => a.id === id);
+    const currentArticles = await getArticles();
+    const index = currentArticles.findIndex(a => a.id === id);
     if (index !== -1) {
-        mockArticles[index] = { ...mockArticles[index], ...data, updatedAt: new Date().toISOString() };
-        return JSON.parse(JSON.stringify(mockArticles[index]));
+        currentArticles[index] = { ...currentArticles[index], ...data, updatedAt: new Date().toISOString() };
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(currentArticles));
+        }
+        mockArticles = currentArticles;
+        return JSON.parse(JSON.stringify(currentArticles[index]));
     }
     return null;
 };
 
 export const deleteArticle = async (id: string): Promise<boolean> => {
     await delay(80);
-    const initialLength = mockArticles.length;
-    mockArticles = mockArticles.filter(a => a.id !== id);
-    return mockArticles.length < initialLength;
+    let currentArticles = await getArticles();
+    const initialLength = currentArticles.length;
+    currentArticles = currentArticles.filter(a => a.id !== id);
+    if (currentArticles.length < initialLength) {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(currentArticles));
+        }
+        mockArticles = currentArticles;
+        return true;
+    }
+    return false;
 };
 
 // --- Note CRUD ---
 export const getNotes = async (): Promise<NoteData[]> => {
     await delay(10);
-    return JSON.parse(JSON.stringify(mockNotes));
+    const storedNotes = typeof window !== 'undefined' ? localStorage.getItem(NOTE_STORAGE_KEY) : null;
+    if (storedNotes) {
+        try {
+            return JSON.parse(storedNotes);
+        } catch (e) {
+            console.error("Error parsing notes from localStorage", e);
+            return [];
+        }
+    }
+    return [];
 };
 
 export const getNoteById = async (id: string): Promise<NoteData | null> => {
     await delay(10);
-    const note = mockNotes.find(n => n.id === id);
+    const notes = await getNotes();
+    const note = notes.find(n => n.id === id);
     return note ? JSON.parse(JSON.stringify(note)) : null;
 };
 
@@ -377,40 +348,73 @@ export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'upda
         ...data,
         id: `note-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         status: data.status || 'Taslak',
-        authorId: data.authorId || 'u1',
+        authorId: data.authorId || 'unknown-author', // Default author if not provided
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-    mockNotes.push(newNote);
+    const currentNotes = await getNotes();
+    currentNotes.push(newNote);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(currentNotes));
+    }
+    mockNotes = currentNotes;
     return JSON.parse(JSON.stringify(newNote));
 };
 
 export const updateNote = async (id: string, data: Partial<Omit<NoteData, 'id' | 'createdAt'>>): Promise<NoteData | null> => {
     await delay(50);
-    const index = mockNotes.findIndex(n => n.id === id);
+    const currentNotes = await getNotes();
+    const index = currentNotes.findIndex(n => n.id === id);
     if (index !== -1) {
-        mockNotes[index] = { ...mockNotes[index], ...data, updatedAt: new Date().toISOString() };
-        return JSON.parse(JSON.stringify(mockNotes[index]));
+        currentNotes[index] = { ...currentNotes[index], ...data, updatedAt: new Date().toISOString() };
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(currentNotes));
+        }
+        mockNotes = currentNotes;
+        return JSON.parse(JSON.stringify(currentNotes[index]));
     }
     return null;
 };
 
 export const deleteNote = async (id: string): Promise<boolean> => {
     await delay(80);
-    const initialLength = mockNotes.length;
-    mockNotes = mockNotes.filter(n => n.id !== id);
-    return mockNotes.length < initialLength;
+    let currentNotes = await getNotes();
+    const initialLength = currentNotes.length;
+    currentNotes = currentNotes.filter(n => n.id !== id);
+    if (currentNotes.length < initialLength) {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(currentNotes));
+        }
+        mockNotes = currentNotes;
+        return true;
+    }
+    return false;
 };
 
 // --- User CRUD Functions ---
+// IMPORTANT: After clearing mockUsers, login will not work until a user is manually added
+// to localStorage or a proper user creation/setup flow is implemented.
+// Example to manually add an admin user in browser console:
+// localStorage.setItem('teknobiyo_mock_users_v2', JSON.stringify([{id: 'admin-user', name: 'Admin User', username: 'admin', email: 'admin@example.com', role: 'Admin', joinedAt: new Date().toISOString()}]));
+// And ensure the Admin role exists in teknobiyo_mock_roles_v2.
 export const getUsers = async (): Promise<User[]> => {
     await delay(10);
-    return JSON.parse(JSON.stringify(mockUsers));
+    const storedUsers = typeof window !== 'undefined' ? localStorage.getItem(USER_STORAGE_KEY) : null;
+    if (storedUsers) {
+        try {
+            return JSON.parse(storedUsers);
+        } catch (e) {
+            console.error("Error parsing users from localStorage", e);
+            return [];
+        }
+    }
+    return [];
 };
 
 export const getUserById = async (id: string): Promise<User | null> => {
     await delay(10);
-    const user = mockUsers.find(u => u.id === id);
+    const users = await getUsers();
+    const user = users.find(u => u.id === id);
     return user ? JSON.parse(JSON.stringify(user)) : null;
 };
 
@@ -421,50 +425,80 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
         id: `user-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         joinedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`,
+        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`, // Generic default avatar
     };
-    mockUsers.push(newUser);
-    // Update user count in roles
-    const roleIndex = mockRoles.findIndex(r => r.id === newUser.role.toLowerCase() || r.name.toLowerCase() === newUser.role.toLowerCase());
+    const currentUsers = await getUsers();
+    currentUsers.push(newUser);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUsers));
+    }
+    mockUsers = currentUsers;
+
+    const currentRoles = await getRoles();
+    const roleIndex = currentRoles.findIndex(r => r.id === newUser.role.toLowerCase() || r.name.toLowerCase() === newUser.role.toLowerCase());
     if (roleIndex !== -1) {
-        mockRoles[roleIndex].userCount += 1;
+        currentRoles[roleIndex].userCount = (currentRoles[roleIndex].userCount || 0) + 1;
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+        }
+        mockRoles = currentRoles;
     }
     return JSON.parse(JSON.stringify(newUser));
 };
 
 export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'joinedAt' | 'email'>>): Promise<User | null> => {
     await delay(50);
-    const index = mockUsers.findIndex(u => u.id === id);
+    const currentUsers = await getUsers();
+    const index = currentUsers.findIndex(u => u.id === id);
     if (index !== -1) {
-        const oldRole = mockUsers[index].role;
-        mockUsers[index] = { ...mockUsers[index], ...data, lastLogin: new Date().toISOString() };
+        const oldRole = currentUsers[index].role;
+        currentUsers[index] = { ...currentUsers[index], ...data, lastLogin: new Date().toISOString() };
 
-        // Update user counts if role changed
-        if (data.role && data.role !== oldRole) {
-            const oldRoleIndex = mockRoles.findIndex(r => r.id === oldRole.toLowerCase() || r.name.toLowerCase() === oldRole.toLowerCase());
-            if (oldRoleIndex !== -1) {
-                mockRoles[oldRoleIndex].userCount = Math.max(0, mockRoles[oldRoleIndex].userCount - 1);
-            }
-            const newRoleIndex = mockRoles.findIndex(r => r.id === data.role!.toLowerCase() || r.name.toLowerCase() === data.role!.toLowerCase());
-            if (newRoleIndex !== -1) {
-                mockRoles[newRoleIndex].userCount += 1;
-            }
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUsers));
         }
-        return JSON.parse(JSON.stringify(mockUsers[index]));
+        mockUsers = currentUsers;
+
+        if (data.role && data.role !== oldRole) {
+            const currentRoles = await getRoles();
+            const oldRoleIndex = currentRoles.findIndex(r => r.id === oldRole.toLowerCase() || r.name.toLowerCase() === oldRole.toLowerCase());
+            if (oldRoleIndex !== -1) {
+                currentRoles[oldRoleIndex].userCount = Math.max(0, (currentRoles[oldRoleIndex].userCount || 0) - 1);
+            }
+            const newRoleIndex = currentRoles.findIndex(r => r.id === data.role!.toLowerCase() || r.name.toLowerCase() === data.role!.toLowerCase());
+            if (newRoleIndex !== -1) {
+                currentRoles[newRoleIndex].userCount = (currentRoles[newRoleIndex].userCount || 0) + 1;
+            }
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+            }
+            mockRoles = currentRoles;
+        }
+        return JSON.parse(JSON.stringify(currentUsers[index]));
     }
     return null;
 };
 
 export const deleteUser = async (id: string): Promise<boolean> => {
   await delay(80);
-  const userIndex = mockUsers.findIndex(u => u.id === id);
+  let currentUsers = await getUsers();
+  const userIndex = currentUsers.findIndex(u => u.id === id);
   if (userIndex !== -1) {
-    const userRole = mockUsers[userIndex].role;
-    mockUsers.splice(userIndex, 1);
-    // Update user count in roles
-    const roleIndex = mockRoles.findIndex(r => r.id === userRole.toLowerCase() || r.name.toLowerCase() === userRole.toLowerCase());
+    const userRole = currentUsers[userIndex].role;
+    currentUsers.splice(userIndex, 1);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUsers));
+    }
+    mockUsers = currentUsers;
+
+    const currentRoles = await getRoles();
+    const roleIndex = currentRoles.findIndex(r => r.id === userRole.toLowerCase() || r.name.toLowerCase() === userRole.toLowerCase());
     if (roleIndex !== -1) {
-        mockRoles[roleIndex].userCount = Math.max(0, mockRoles[roleIndex].userCount - 1);
+        currentRoles[roleIndex].userCount = Math.max(0, (currentRoles[roleIndex].userCount || 0) - 1);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+        }
+        mockRoles = currentRoles;
     }
     return true;
   }
@@ -475,12 +509,22 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 // --- Role CRUD Functions ---
 export const getRoles = async (): Promise<Role[]> => {
   await delay(10);
-  return JSON.parse(JSON.stringify(mockRoles));
+  const storedRoles = typeof window !== 'undefined' ? localStorage.getItem(ROLE_STORAGE_KEY) : null;
+  if (storedRoles) {
+      try {
+          return JSON.parse(storedRoles);
+      } catch (e) {
+          console.error("Error parsing roles from localStorage", e);
+          return mockRoles; // Fallback to in-memory if parse fails
+      }
+  }
+  return mockRoles; // Fallback to in-memory if not in localStorage
 };
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
   await delay(10);
-  const role = mockRoles.find(r => r.id === id);
+  const roles = await getRoles();
+  const role = roles.find(r => r.id === id);
   return role ? JSON.parse(JSON.stringify(role)) : null;
 };
 
@@ -489,34 +533,58 @@ export const createRole = async (data: Omit<Role, 'id' | 'userCount'>): Promise<
   const newRole: Role = {
     ...data,
     id: generateSlug(data.name) + '-' + Date.now().toString(36),
-    userCount: 0, // New roles start with 0 users
+    userCount: 0,
   };
-  mockRoles.push(newRole);
+  const currentRoles = await getRoles();
+  currentRoles.push(newRole);
+  if (typeof window !== 'undefined') {
+      localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+  }
+  mockRoles = currentRoles;
   return JSON.parse(JSON.stringify(newRole));
 };
 
-export const updateRole = async (id: string, data: Partial<Omit<Role, 'id' | 'userCount'>>): Promise<Role | null> => {
+export const updateRole = async (id: string, data: Partial<Omit<Role, 'id'>>): Promise<Role | null> => {
   await delay(50);
-  const index = mockRoles.findIndex(r => r.id === id);
+  const currentRoles = await getRoles();
+  const index = currentRoles.findIndex(r => r.id === id);
   if (index !== -1) {
-      // Preserve userCount unless explicitly provided (though typically it's calculated)
-      mockRoles[index] = { ...mockRoles[index], ...data, userCount: data.userCount !== undefined ? data.userCount : mockRoles[index].userCount };
-      return JSON.parse(JSON.stringify(mockRoles[index]));
+      // Recalculate userCount if not provided, or use provided one
+      let updatedUserCount = currentRoles[index].userCount;
+      if (data.userCount !== undefined) {
+          updatedUserCount = data.userCount;
+      } else {
+          // If role name changes, userCount might need recalculation based on actual users
+          // For simplicity, we are not doing that here without a direct link to users based on role name changes
+      }
+      currentRoles[index] = { ...currentRoles[index], ...data, userCount: updatedUserCount };
+      if (typeof window !== 'undefined') {
+          localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+      }
+      mockRoles = currentRoles;
+      return JSON.parse(JSON.stringify(currentRoles[index]));
   }
   return null;
 };
 
 export const deleteRole = async (id: string): Promise<boolean> => {
   await delay(80);
-  const initialLength = mockRoles.length;
-  // Prevent deletion of 'Admin', 'Editor', 'User' core roles if they have users
-  const roleToDelete = mockRoles.find(r => r.id === id);
+  let currentRoles = await getRoles();
+  const roleToDelete = currentRoles.find(r => r.id === id);
   if (roleToDelete && ['admin', 'editor', 'user'].includes(roleToDelete.id.toLowerCase()) && roleToDelete.userCount > 0) {
     console.warn(`Cannot delete core role "${roleToDelete.name}" as it has ${roleToDelete.userCount} users.`);
     return false;
   }
-  mockRoles = mockRoles.filter(r => r.id !== id);
-  return mockRoles.length < initialLength;
+  const initialLength = currentRoles.length;
+  currentRoles = currentRoles.filter(r => r.id !== id);
+  if (currentRoles.length < initialLength) {
+      if (typeof window !== 'undefined') {
+          localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+      }
+      mockRoles = currentRoles;
+      return true;
+  }
+  return false;
 };
 
 // --- Permissions Data ---
@@ -569,22 +637,26 @@ export const getAllPermissions = async (): Promise<PermissionCategory[]> => {
     ];
 };
 
-let mockPages: PageData[] = [
-    { id: 'anasayfa', title: 'Anasayfa', slug: '', blocks: [], status: 'Yayınlandı', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z', heroSettings: { enabled: true, articleSource: 'latest', intervalSeconds: 5, maxArticles: 3 } },
-    { id: 'hakkimizda', title: 'Hakkımızda', slug: 'hakkimizda', blocks: [], status: 'Yayınlandı', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-    { id: 'iletisim', title: 'İletişim', slug: 'iletisim', blocks: [], status: 'Yayınlandı', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-    { id: 'kullanim-kilavuzu', title: 'Kullanım Kılavuzu', slug: 'kullanim-kilavuzu', blocks: [{id: generateId(), type: 'heading', level: 1, content: 'Admin Paneli Kullanım Kılavuzu'}, {id: generateId(), type: 'text', content: 'Bu kılavuz admin panelinin kullanımı hakkında bilgiler içerir.'}], status: 'Yayınlandı', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z'},
-];
 
 // --- Page CRUD ---
 export const getPages = async (): Promise<PageData[]> => {
     await delay(5);
-    return JSON.parse(JSON.stringify(mockPages));
+    const storedPages = typeof window !== 'undefined' ? localStorage.getItem(PAGE_STORAGE_KEY) : null;
+    if (storedPages) {
+        try {
+            return JSON.parse(storedPages);
+        } catch (e) {
+            console.error("Error parsing pages from localStorage", e);
+            return mockPages; // Fallback to in-memory minimal stubs
+        }
+    }
+    return mockPages; // Fallback to in-memory minimal stubs
 };
 
 export const getPageById = async (id: string): Promise<PageData | null> => {
     await delay(5);
-    const page = mockPages.find(p => p.id === id || p.slug === id);
+    const pages = await getPages();
+    const page = pages.find(p => p.id === id || p.slug === id);
     return page ? JSON.parse(JSON.stringify(page)) : null;
 };
 
@@ -598,290 +670,103 @@ export const createPage = async (data: Omit<PageData, 'id' | 'createdAt' | 'upda
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
-    mockPages.push(newPage);
+    const currentPages = await getPages();
+    currentPages.push(newPage);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(currentPages));
+    }
+    mockPages = currentPages;
     return JSON.parse(JSON.stringify(newPage));
 };
 
 export const updatePage = async (id: string, data: Partial<Omit<PageData, 'id' | 'createdAt'>>): Promise<PageData | null> => {
     await delay(50);
-    const index = mockPages.findIndex(p => p.id === id);
+    const currentPages = await getPages();
+    const index = currentPages.findIndex(p => p.id === id);
     if (index !== -1) {
-        mockPages[index] = { ...mockPages[index], ...data, updatedAt: new Date().toISOString() };
-        return JSON.parse(JSON.stringify(mockPages[index]));
+        currentPages[index] = { ...currentPages[index], ...data, updatedAt: new Date().toISOString() };
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(currentPages));
+        }
+        mockPages = currentPages;
+        return JSON.parse(JSON.stringify(currentPages[index]));
     }
     return null;
 };
 
 export const deletePage = async (id: string): Promise<boolean> => {
     await delay(80);
-    if (id === 'anasayfa' || id === 'kullanim-kilavuzu') return false; // Prevent deletion of core pages
-    const initialLength = mockPages.length;
-    mockPages = mockPages.filter(p => p.id !== id);
-    return mockPages.length < initialLength;
+    if (id === 'anasayfa' || id === 'kullanim-kilavuzu' || id === 'hakkimizda' || id === 'iletisim') return false; // Prevent deletion of core pages
+    let currentPages = await getPages();
+    const initialLength = currentPages.length;
+    currentPages = currentPages.filter(p => p.id !== id);
+    if (currentPages.length < initialLength) {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(currentPages));
+        }
+        mockPages = currentPages;
+        return true;
+    }
+    return false;
 };
 // --- End Page CRUD ---
 
-// Templates can remain hardcoded as they define structure, not dynamic content
-export const allMockTemplates: Template[] = [
-    // Biyoloji focused templates
-    {
-        id: 'listicle-biyo',
-        name: 'Listeleme Makalesi (Biyoloji)',
-        description: 'Belirli bir biyoloji konusunda numaralı veya madde işaretli öneriler/bilgiler sunan format.',
-        previewImageUrl: 'https://picsum.photos/seed/template-list-brain/300/200',
-        type: 'article',
-        category: 'Biyoloji',
-        excerpt: 'Beyin sağlığınızı korumak ve geliştirmek için bilimsel temelli 7 basit yöntemi listeleyen bir şablon.',
-        seoTitle: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem',
-        seoDescription: 'Listeleme makalesi şablonu ile beyin sağlığını destekleyen alışkanlıklar ve ipuçları.',
-        keywords: ['beyin sağlığı', 'hafıza', 'nöroloji', 'bilişsel fonksiyon', 'sağlıklı yaşam'],
-        blocks: [
-            { id: generateId(), type: 'heading', level: 1, content: 'Beyin Sağlığınızı Güçlendirmek İçin 7 Bilimsel Yöntem' },
-            { id: generateId(), type: 'text', content: 'Yaş aldıkça bilişsel fonksiyonlarımızı korumak ve beyin sağlığımızı optimize etmek hepimizin hedefi. İşte bilimsel araştırmalarla desteklenen 7 etkili yöntem:' },
-            { id: generateId(), type: 'heading', level: 2, content: '1. Zihinsel Olarak Aktif Kalın' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-puzzle-img/600/300', alt: 'Yapboz Yapan Kişi', caption: 'Yeni şeyler öğrenmek ve bulmacalar çözmek beyni uyarır.' },
-            { id: generateId(), type: 'text', content: 'Okumak, yazmak, yeni bir dil veya müzik aleti öğrenmek, strateji oyunları oynamak gibi zihinsel aktiviteler, beyin hücreleri arasındaki bağlantıları güçlendirir ve bilişsel rezervinizi artırır.' },
-            { id: generateId(), type: 'divider'},
-            { id: generateId(), type: 'heading', level: 2, content: '2. Fiziksel Egzersizi İhmal Etmeyin' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-brain-running-img/600/300', alt: 'Koşan Kişi', caption: 'Aerobik egzersiz beyne giden kan akışını artırır.' },
-            { id: generateId(), type: 'text', content: 'Düzenli fiziksel aktivite, beyne oksijen ve besin taşıyan kan akışını iyileştirir. Hafıza ve öğrenme ile ilişkili beyin bölgelerinde yeni hücrelerin büyümesini teşvik edebilir.' },
-        ]
-      },
-      {
-        id: 'interview-biyo',
-        name: 'Röportaj Makalesi (Biyoloji)',
-        description: 'Bir biyoloji uzmanıyla yapılan söyleşiyi soru-cevap formatında detaylı bir şekilde sunar.',
-        previewImageUrl: 'https://picsum.photos/seed/template-interview-neuro/300/200',
-        type: 'article',
-        category: 'Biyoloji',
-        excerpt: 'Nörobilim uzmanı Dr. Elif Aydın ile beyin plastisitesi ve öğrenme üzerine bir röportaj.',
-        seoTitle: 'Röportaj: Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme',
-        seoDescription: 'Röportaj makalesi şablonu ile nörobilim uzmanı Dr. Elif Aydın\'ın beyin esnekliği ve öğrenme süreçleri hakkındaki görüşleri.',
-        keywords: ['nörobilim', 'plastisite', 'beyin', 'öğrenme', 'hafıza', 'röportaj'],
-        blocks: [
-            { id: generateId(), type: 'heading', level: 1, content: 'Dr. Elif Aydın ile Beyin Plastisitesi ve Öğrenme Üzerine Söyleşi' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interview-elif-aydin-img/400/400', alt: 'Dr. Elif Aydın Portresi', caption:'Dr. Elif Aydın, Nörobilim Uzmanı' },
-            { id: generateId(), type: 'text', content: 'Beynimizin yaşam boyu değişme ve adapte olma yeteneği olan nöroplastisite, öğrenme ve hafıza süreçlerimizin temelini oluşturuyor. Bu büyüleyici konuyu, alanın önde gelen isimlerinden Nörobilim Uzmanı Dr. Elif Aydın ile konuştuk.' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Nöroplastisite Tam Olarak Nedir?' },
-            { id: generateId(), type: 'text', content: '**Soru:** Hocam, nöroplastisite kavramını basitçe nasıl açıklarsınız?' },
-            { id: generateId(), type: 'text', content: '**Cevap:** Nöroplastisite, beynin yapısını ve fonksiyonunu deneyimlere, öğrenmeye ve hatta yaralanmalara yanıt olarak değiştirme yeteneğidir. Yani beynimiz sabit bir yapı değil, sürekli olarak yeniden şekillenebilen dinamik bir organdır. Yeni sinirsel bağlantılar kurabilir, mevcut bağlantıları güçlendirebilir veya zayıflatabilir.' },
-        ]
-      },
-   {
-    id: 'note-basic-concept',
-    name: 'Temel Kavram Notu',
-    description: 'Bir biyoloji kavramını açıklayan, tanım ve anahtar noktaları içeren basit not düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/note-concept-dna/300/200',
-    type: 'note',
-    blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: 'DNA\'nın Yapısı' },
-        { id: generateId(), type: 'text', content: '**Tanım:** Deoksiribonükleik asit (DNA), canlıların genetik bilgilerini taşıyan ve nesilden nesile aktaran moleküldür.' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Anahtar Noktalar' },
-        { id: generateId(), type: 'text', content: '- Çift sarmal yapısındadır.\n- Nükleotit adı verilen birimlerden oluşur (Adenin, Timin, Guanin, Sitozin).\n- A ile T, G ile C arasında hidrojen bağları bulunur.\n- Genetik kodu taşır.' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-dna-structure/600/300', alt: 'DNA Çift Sarmalı', caption:'DNA\'nın çift sarmal yapısı ve baz eşleşmeleri.' },
-    ]
-   },
-   {
-    id: 'note-process-steps',
-    name: 'Süreç Adımları Notu',
-    description: 'Biyolojik bir süreci (örn. fotosentez, mitoz) adım adım açıklayan not düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/note-process-mitosis/300/200',
-    type: 'note',
-    blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: 'Mitoz Bölünme Aşamaları' },
-        { id: generateId(), type: 'text', content: 'Mitoz bölünme, tek hücreli canlılarda üremeyi, çok hücreli canlılarda ise büyüme, gelişme ve onarımı sağlayan temel hücre bölünmesi çeşididir.' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: İnterfaz (Hazırlık Evresi)' },
-        { id: generateId(), type: 'text', content: 'Hücrenin bölünmeye hazırlandığı evredir. DNA kendini eşler (replikasyon), organel sayısı artar ve hücre büyür.' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-mitosis-interphase/500/250', alt: 'İnterfaz Evresi Şeması', caption:'İnterfaz: DNA replikasyonu ve hücre büyümesi.' },
-        { id: generateId(), type: 'divider' },
-    ]
-   },
-    {
-    id: 'note-comparison',
-    name: 'Karşılaştırma Notu',
-    description: 'İki veya daha fazla biyolojik kavramı/yapıyı karşılaştıran not düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/note-compare-cells/300/200',
-    type: 'note',
-    blocks: [
-        { id: generateId(), type: 'heading', level: 2, content: 'Mitoz ve Mayoz Bölünme Karşılaştırması' },
-        { id: generateId(), type: 'text', content: 'Mitoz ve mayoz, hücre bölünmesinin iki temel tipidir ancak amaçları, gerçekleştiği hücreler ve sonuçları bakımından önemli farklılıklar gösterirler.' },
-        { id: generateId(), type: 'heading', level: 3, content: 'Temel Amaçları' },
-        { id: generateId(), type: 'text', content: '- **Mitoz:** Büyüme, gelişme, onarım, tek hücrelilerde eşeysiz üreme.\n- **Mayoz:** Eşeyli üreyen canlılarda gamet (üreme hücresi) oluşturma, genetik çeşitliliği sağlama.' },
-    ]
-   },
-   // --- Page Templates ---
-      {
-    id: 'page-standard',
-    name: 'Standart Sayfa',
-    description: 'Genel amaçlı sayfalar için başlık, metin ve görsel içeren temel düzen.',
-    previewImageUrl: 'https://picsum.photos/seed/page-std/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: '[Sayfa Başlığı Buraya Gelecek]' },
-      { id: generateId(), type: 'text', content: '[Sayfanızın ana metin içeriği için bu alanı kullanın. Paragraflarınızı buraya ekleyebilirsiniz.]' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-std-img1/800/400', alt: 'Standart Sayfa Görseli 1', caption: 'İsteğe bağlı görsel alt yazısı.' },
-    ]
-  },
-  {
-    id: 'page-contact',
-    name: 'İletişim Sayfası',
-    description: 'İletişim formu ve iletişim bilgileri için düzenlenmiş sayfa yapısı.',
-    previewImageUrl: 'https://picsum.photos/seed/page-contact/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'Bizimle İletişime Geçin' },
-      { id: generateId(), type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için aşağıdaki formu kullanabilir veya iletişim bilgilerimizden bize ulaşabilirsiniz.' },
-      { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'İletişim Formu', recipientEmail: 'iletisim@example.com' } },
-    ]
-  },
-  {
-    id: 'page-about-us',
-    name: 'Hakkımızda Sayfası',
-    description: 'Ekip, misyon ve vizyon gibi bilgileri içeren kurumsal sayfa düzeni.',
-    previewImageUrl: 'https://picsum.photos/seed/page-about/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Hakkında' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-about-hero/1000/400', alt: 'Hakkımızda Kapak Görseli', caption: 'Vizyonumuz ve geleceğe bakışımız.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Misyonumuz' },
-      { id: generateId(), type: 'text', content: '[Şirketinizin veya projenizin misyonunu açıklayan detaylı bir metin.]' },
-    ]
-  },
-  {
-    id: 'page-faq',
-    name: 'SSS Sayfası',
-    description: 'Sıkça sorulan soruları ve cevaplarını düzenli bir şekilde sunar.',
-    previewImageUrl: 'https://picsum.photos/seed/page-faq/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'Sıkça Sorulan Sorular (SSS)' },
-      { id: generateId(), type: 'text', content: 'Hizmetlerimiz, ürünlerimiz veya projemiz hakkında en çok merak edilen soruları ve yanıtlarını burada bulabilirsiniz.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Soru 1: [Sıkça Sorulan Bir Soru Örneği Nedir?]' },
-      { id: generateId(), type: 'text', content: '**Cevap:** [Bu soruya verilecek detaylı ve açıklayıcı cevap.]' },
-    ]
-  },
-   {
-    id: 'page-services',
-    name: 'Hizmetler Sayfası',
-    description: 'Sunulan hizmetleri detaylı bir şekilde listeleyen ve açıklayan sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-services/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Sunduğumuz Hizmetler' },
-        { id: generateId(), type: 'text', content: 'Profesyonel ekibimizle sizlere sunduğumuz hizmetlerin detaylarını aşağıda bulabilirsiniz.' },
-        { id: generateId(), type: 'heading', level: 2, content: 'Hizmet Alanı 1: [Hizmet Adı]' },
-        { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/service1-img/700/350', alt: 'Hizmet 1 Görseli', caption: 'Hizmet 1 Detayları' },
-    ]
-  },
-  {
-    id: 'page-portfolio',
-    name: 'Portfolyo Sayfası',
-    description: 'Tamamlanmış projeleri veya çalışmaları sergilemek için galeri tarzı sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-portfolio/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-        { id: generateId(), type: 'heading', level: 1, content: 'Çalışmalarımızdan Örnekler' },
-        { id: generateId(), type: 'gallery', images: [
-            { url: 'https://picsum.photos/seed/portfolio1/600/400', alt: 'Proje 1' },
-            { url: 'https://picsum.photos/seed/portfolio2/600/400', alt: 'Proje 2' },
-          ]
-        },
-    ]
-  },
-  {
-    id: 'page-landing-product',
-    name: 'Ürün Tanıtım Sayfası (Landing)',
-    description: 'Belirli bir ürünü veya hizmeti tanıtmak için tasarlanmış odaklı sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-landing/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-        { id: generateId(), type: 'section', sectionType: 'hero-banner', settings: { title: '[Ürün Adı]', subtitle: '[Ürünün Ana Faydası veya Sloganı]', ctaButtonText: 'Hemen Keşfet', imageUrl: 'https://picsum.photos/seed/landing-hero/1200/500' } },
-        { id: generateId(), type: 'heading', level: 2, content: 'Neden [Ürün Adı]?' },
-    ]
-  },
-  {
-    id: 'page-blog-index',
-    name: 'Blog Anasayfası',
-    description: 'Blog yazılarını listeleyen ve kategorilere ayıran sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-blog/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Blog' },
-      { id: generateId(), type: 'section', sectionType: 'featured-articles', settings: { title: 'Öne Çıkan Yazılar', count: 2 } },
-      { id: generateId(), type: 'section', sectionType: 'article-list', settings: { count: 10, showPagination: true, showCategoryFilter: true } },
-    ]
-  },
-  {
-    id: 'page-career',
-    name: 'Kariyer Sayfası',
-    description: 'Açık pozisyonları listeleyen ve şirket kültürünü tanıtan sayfa.',
-    previewImageUrl: 'https://picsum.photos/seed/page-career/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo\'da Kariyer' },
-      { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/career-team/1000/400', alt: 'TeknoBiyo Ekibi', caption: 'Birlikte büyüyen bir ekibiz.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Açık Pozisyonlar' },
-      { id: generateId(), type: 'section', sectionType: 'job-listings', settings: {} },
-    ]
-  },
-  {
-    id: 'page-user-guide',
-    name: 'Kullanım Kılavuzu',
-    description: 'Sitenin veya uygulamanın nasıl kullanılacağını açıklayan detaylı bir kılavuz sayfası.',
-    previewImageUrl: 'https://picsum.photos/seed/page-guide/300/200',
-    type: 'page',
-    category: 'Genel Sayfa',
-    blocks: [
-      { id: generateId(), type: 'heading', level: 1, content: '[Platform Adı] Kullanım Kılavuzu' },
-      { id: generateId(), type: 'text', content: 'Bu kılavuz, [Platform Adı] platformunu etkili bir şekilde kullanmanıza yardımcı olmak için tasarlanmıştır.' },
-      { id: generateId(), type: 'heading', level: 2, content: 'Bölüm 1: Başlarken' },
-    ]
-  }
-];
-
-export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles_v2';
-export const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes_v2';
-export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories_v2';
-export const USER_STORAGE_KEY = 'teknobiyo_mock_users_v2';
-export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles_v2';
-export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages_v2';
-
-export const reloadMockData = () => {
-    console.log("reloadMockData called - This function should ideally re-fetch from a backend.");
+// --- Templates ---
+export const allMockTemplatesGetter = async (): Promise<Template[]> => {
+    await delay(5);
+     const storedTemplates = typeof window !== 'undefined' ? localStorage.getItem(TEMPLATE_STORAGE_KEY) : null;
+    if (storedTemplates) {
+        try {
+            return JSON.parse(storedTemplates);
+        } catch (e) {
+            console.error("Error parsing templates from localStorage", e);
+            return [];
+        }
+    }
+    return [];
 };
 
-// Helper to initialize data in localStorage if it doesn't exist
-const initializeLocalStorage = () => {
-  if (typeof window !== 'undefined') {
-    if (!localStorage.getItem(ARTICLE_STORAGE_KEY)) {
-      localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
+
+export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles_v3'; // Incremented version
+export const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes_v3';
+export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories_v3';
+export const USER_STORAGE_KEY = 'teknobiyo_mock_users_v3';
+export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles_v3';
+export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages_v3';
+export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3'; // For templates
+
+export const loadInitialData = () => {
+    if (typeof window !== 'undefined') {
+        if (!localStorage.getItem(ARTICLE_STORAGE_KEY)) {
+            localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
+        }
+        if (!localStorage.getItem(NOTE_STORAGE_KEY)) {
+            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
+        }
+        if (!localStorage.getItem(CATEGORY_STORAGE_KEY)) {
+            localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
+        }
+        if (!localStorage.getItem(USER_STORAGE_KEY)) {
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
+            // Add a default admin if no users exist, to prevent lockout
+            if (mockUsers.length === 0) {
+                 const defaultAdmin = {id: 'admin001', name: 'Admin User', username: 'admin', email: 'admin@teknobiyo.example.com', role: 'Admin', joinedAt: new Date().toISOString(), avatar: ''};
+                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdmin]));
+                 console.log("Default admin user created in localStorage for initial login.");
+            }
+        }
+        if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
+        }
+        if (!localStorage.getItem(PAGE_STORAGE_KEY)) {
+            localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages));
+        }
+        if (!localStorage.getItem(TEMPLATE_STORAGE_KEY)) {
+            localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates));
+        }
     }
-    if (!localStorage.getItem(NOTE_STORAGE_KEY)) {
-      localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
-    }
-    if (!localStorage.getItem(CATEGORY_STORAGE_KEY)) {
-      localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
-    }
-    if (!localStorage.getItem(USER_STORAGE_KEY)) {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
-    }
-    if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
-      localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
-    }
-     if (!localStorage.getItem(PAGE_STORAGE_KEY)) {
-      localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages));
-    }
-  }
 };
 
-// Call initialization when the module is loaded
-initializeLocalStorage();
+loadInitialData(); // Initialize on first load if needed
+
+export { loadInitialData as reloadMockData };

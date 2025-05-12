@@ -1,4 +1,5 @@
-"use client"; // Essential for hooks
+
+"use client"; 
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
@@ -39,7 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon, Send } from "lucide-react"; // Added Send icon
+import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon, Send } from "lucide-react";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 
@@ -48,7 +49,7 @@ import { Badge } from '@/components/ui/badge';
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data';
+const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key for preview
 
 // --- AI Message Types ---
 interface AiAssistantMessage {
@@ -101,7 +102,7 @@ export default function NewBiyolojiNotuPage() {
 
 
     React.useEffect(() => {
-        if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) { // Assuming specific permission
+        if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) { 
           toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni biyoloji notu oluşturma yetkiniz yok." });
           router.push('/admin/biyoloji-notlari');
           return;
@@ -113,7 +114,7 @@ export default function NewBiyolojiNotuPage() {
         setLoadingCategories(true);
         getCategories()
             .then(data => {
-                setCategories(data.filter(cat => cat.id && cat.name)); // Ensure categories have id and name
+                setCategories(data.filter(cat => cat.id && cat.name)); 
             })
             .catch(err => {
                 console.error("Error fetching categories:", err);
@@ -186,6 +187,8 @@ export default function NewBiyolojiNotuPage() {
              title, slug, category, level, tags, summary,
              contentBlocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
              imageUrl: imageUrl || null,
+             authorId: 'admin001', // Default or logged-in user ID
+             status: 'Taslak', // Default status for new notes
          };
          try {
              const newNote = await createNote(newNoteData);
@@ -231,10 +234,11 @@ export default function NewBiyolojiNotuPage() {
             category: category, level: level, tags: tags, summary: summary || '', contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            authorId: 'admin001', status: 'Taslak',
         };
 
         console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[NewBiyolojiNotuPage/handlePreview] Preview Data:`, JSON.stringify(previewData, null, 2));
+        console.log(`[NewBiyolojiNotuPage/handlePreview] Preview Data:`, previewData);
 
         try {
             const stringifiedData = JSON.stringify(previewData);
@@ -260,7 +264,7 @@ export default function NewBiyolojiNotuPage() {
             }
             console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS");
 
-            const previewUrl = `/admin/preview`; // Single, fixed preview URL
+            const previewUrl = `/admin/preview`; 
             console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window: ${previewUrl}`);
 
             setTimeout(() => {
@@ -271,7 +275,7 @@ export default function NewBiyolojiNotuPage() {
                 } else {
                     console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened successfully.");
                 }
-            }, 250); // Increased delay
+            }, 250); 
 
         } catch (error: any) {
             console.error("[NewBiyolojiNotuPage/handlePreview] Error during preview process:", error);
@@ -291,13 +295,16 @@ export default function NewBiyolojiNotuPage() {
             return;
         }
 
-        const currentFormData = {
+        const currentFormData: GenerateBiologyNoteSuggestionInput['currentFormData'] = {
             currentTitle: title,
             currentSummary: summary,
             currentTags: tags,
             currentCategory: category,
             currentLevel: level,
-            currentBlocksStructure: blocks.map(b => ({ type: b.type, contentPreview: (b as any).content?.substring(0, 50) || `[${b.type} bloğu]` }) as GenerateNoteAiBlockStructure[])
+            currentBlocksStructure: blocks.map(b => ({
+                type: b.type,
+                contentPreview: (b as any).content?.substring(0, 50) || (b as any).url?.substring(0,50) || `[${b.type} bloğu]`
+            }) as GenerateNoteAiBlockStructure) // Added type assertion
         };
 
         const userInput: GenerateBiologyNoteSuggestionInput = {
@@ -381,11 +388,9 @@ export default function NewBiyolojiNotuPage() {
         setIsAiChatResponding(true);
 
         try {
-            // Filter out system_error messages before sending to AI history
-            // and ensure the history objects match AiDirectChatMessageDef for the flow
             const historyForAI: AiDirectChatMessageDef[] = aiChatMessages
-                .filter(m => m.role === 'user' || m.role === 'assistant') // Filter out system_error for the AI
-                .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })); // Ensure correct role type
+                .filter(m => m.role === 'user' || m.role === 'assistant') 
+                .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })); 
 
 
             const response: BiologyChatOutput = await biologyChat({ query: userQuery, history: historyForAI });
@@ -401,14 +406,14 @@ export default function NewBiyolojiNotuPage() {
 
     const toggleAiAssistantPanel = () => {
         setIsAiAssistantPanelOpen(prev => !prev);
-        if (!isAiAssistantPanelOpen) { // If opening assistant, close chat
+        if (!isAiAssistantPanelOpen) { 
             setIsAiChatPanelOpen(false);
         }
     };
 
     const toggleAiChatPanel = () => {
         setIsAiChatPanelOpen(prev => !prev);
-        if (!isAiChatPanelOpen) { // If opening chat, close assistant
+        if (!isAiChatPanelOpen) { 
             setIsAiAssistantPanelOpen(false);
         }
     };
@@ -467,6 +472,8 @@ export default function NewBiyolojiNotuPage() {
                                                 <SelectContent>
                                                      {loadingCategories ? (
                                                         <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
+                                                     ) : categories.length === 0 ? (
+                                                        <SelectItem value="no_categories_placeholder" disabled>Kategori bulunamadı.</SelectItem>
                                                      ) : (
                                                         categories.map(cat => (
                                                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
@@ -518,7 +525,6 @@ export default function NewBiyolojiNotuPage() {
                                                   height={100} 
                                                   className="object-cover rounded" 
                                                   data-ai-hint="biology note cover placeholder"
-                                                  loading="lazy"
                                                 />
                                             </div>
                                         )}
@@ -559,7 +565,7 @@ export default function NewBiyolojiNotuPage() {
                                             {typeof msg.content === 'string' ? (
                                                 <div className="whitespace-pre-wrap">{msg.content}</div>
                                             ) : (
-                                                msg.content // Render ReactNode directly
+                                                msg.content 
                                             )}
                                         </div>
                                     ))}
@@ -652,4 +658,10 @@ export default function NewBiyolojiNotuPage() {
          </div>
     );
 }
-
+// Ensure flows are imported for side effects if they register themselves with Genkit.
+// This is typically done in a central `dev.ts` or similar, but if not, ensure they are loaded.
+// If generateBiologyNoteSuggestion or biologyChat are defined inline or don't need registration,
+// these imports might not be strictly necessary here.
+// For server actions, Next.js handles their availability.
+// import './flows/generate-biology-note-flow';
+// import './flows/biology-chat-flow';
