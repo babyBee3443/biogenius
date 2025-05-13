@@ -1,3 +1,5 @@
 
 // Flows will be imported for their side effects in this file.
-import './flows/generate
+import './flows/generate-biology-note-flow';
+import './flows/biology-chat-flow';
+import './flows/get-daily-biology-fact-flow';

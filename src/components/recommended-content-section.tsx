@@ -5,15 +5,9 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Lightbulb, FileText, HelpCircle, ArrowRight, Users } from "lucide-react";
+import { Lightbulb, FileText, HelpCircle, ArrowRight, Users, Loader2, AlertTriangle } from "lucide-react";
 import Link from 'next/link';
-
-// Define a type for the "Today's Fact" if it were dynamic
-interface TodaysFact {
-  title: string;
-  description: string;
-  link: string;
-}
+import { getDailyBiologyFact, type DailyBiologyFactOutput } from '@/ai/flows/get-daily-biology-fact-flow';
 
 // Define a type for the "Latest Note" if it were dynamic
 interface LatestNote {
@@ -32,17 +26,36 @@ interface PopularTest {
 }
 
 const RecommendedContentSection: React.FC = () => {
-  // Static data for now as per the image
-  const todaysFact: TodaysFact = {
-    title: "Bugünün Bilgisi",
-    description: "Mitokondri: Hücrenin enerji santrali olarak bilinen bu organel, kendi DNA'sına sahiptir ve sadece anneden çocuğa geçer.",
-    link: "#" // Placeholder link
-  };
+  const [todaysFact, setTodaysFact] = React.useState<DailyBiologyFactOutput | null>(null);
+  const [isLoadingFact, setIsLoadingFact] = React.useState(true);
+  const [factError, setFactError] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    const fetchFact = async () => {
+      setIsLoadingFact(true);
+      setFactError(null);
+      try {
+        const fact = await getDailyBiologyFact();
+        setTodaysFact(fact);
+      } catch (error: any) {
+        console.error("Error fetching daily fact:", error);
+        setFactError("Günlük bilgi yüklenirken bir hata oluştu.");
+        setTodaysFact({ // Provide a fallback in case of error
+            factTitle: "Bilgi Alınamadı",
+            factDetail: "Günlük biyoloji bilgisi şu anda mevcut değil. Lütfen daha sonra tekrar deneyin.",
+        });
+      } finally {
+        setIsLoadingFact(false);
+      }
+    };
+    fetchFact();
+  }, []);
+
+
+  // Static data for other cards
   const latestNote: LatestNote = {
-    exists: false, // Set to true if a note exists
-    // title: "Yeni Eklenen Not Başlığı", // Example if note exists
-    link: "/admin/biyoloji-notlari/new" // Link to add new note
+    exists: false,
+    link: "/admin/biyoloji-notlari/new"
   };
 
   const popularTest: PopularTest = {
@@ -50,7 +63,7 @@ const RecommendedContentSection: React.FC = () => {
     category: "Hücre Bölünmeleri",
     solvedBy: 856,
     averageSuccess: 72,
-    link: "#" // Placeholder link
+    link: "#"
   };
 
   return (
@@ -67,23 +80,43 @@ const RecommendedContentSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Card 1: Bugünün Bilgisi */}
+          {/* Card 1: Bugünün Bilgisi (AI Powered) */}
           <Card className="flex flex-col h-full shadow-md hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="flex flex-row items-center space-x-3 pb-3">
               <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/30">
                 <Lightbulb className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <CardTitle className="text-lg">{todaysFact.title}</CardTitle>
+                <CardTitle className="text-lg">{isLoadingFact ? "Yükleniyor..." : todaysFact?.factTitle || "Bugünün Bilgisi"}</CardTitle>
                 <CardDescription className="text-xs">Her gün yeni bir bilimsel gerçek</CardDescription>
               </div>
             </CardHeader>
             <CardContent className="flex-grow">
-              <p className="text-sm text-muted-foreground mb-4">{todaysFact.description}</p>
+              {isLoadingFact ? (
+                <div className="flex items-center justify-center h-20">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : factError ? (
+                <div className="flex items-center text-destructive text-sm">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  {factError}
+                </div>
+              ) : todaysFact ? (
+                <p className="text-sm text-muted-foreground mb-4">{todaysFact.factDetail}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-4">Bugün için bir bilgi bulunamadı.</p>
+              )}
             </CardContent>
             <div className="p-6 pt-0 mt-auto">
-              <Button variant="link" asChild className="p-0 h-auto text-primary hover:text-primary/80">
-                <Link href={todaysFact.link}>Detaylı Bilgi <ArrowRight className="ml-1 h-4 w-4" /></Link>
+              {todaysFact?.sourceHint && !isLoadingFact && !factError && (
+                <p className="text-xs text-muted-foreground mb-2">
+                  <span className="font-semibold">İpucu:</span> "{todaysFact.sourceHint}" diye aratabilirsiniz.
+                </p>
+              )}
+              <Button variant="link" asChild className="p-0 h-auto text-primary hover:text-primary/80" disabled={isLoadingFact || !!factError}>
+                <a href={todaysFact?.sourceHint ? `https://www.google.com/search?q=${encodeURIComponent(todaysFact.sourceHint)}` : "#"} target="_blank" rel="noopener noreferrer">
+                  Daha Fazla Bilgi <ArrowRight className="ml-1 h-4 w-4" />
+                </a>
               </Button>
             </div>
           </Card>
