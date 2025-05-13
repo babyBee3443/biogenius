@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react'; // Reverted UserShield to ShieldCheck
+import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
@@ -141,11 +142,11 @@ const Header = () => {
            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10 group-hover:animate-spin-slow">
             <defs>
               <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="cyan" className="group-hover:[stop-color:magenta] transition-all duration-500 ease-in-out">
-                  <animate attributeName="stop-color" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor="hsl(175 80% 40%)" className="group-hover:[stop-color:hsl(280,70%,60%)] transition-all duration-500 ease-in-out">
+                  <animate attributeName="stop-color" values="hsl(175 80% 40%);hsl(280 70% 60%);hsl(120 70% 50%);hsl(175 80% 40%)" dur="4s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="lime" className="group-hover:[stop-color:cyan] transition-all duration-500 ease-in-out">
-                  <animate attributeName="stop-color" values="lime;cyan;magenta;lime" dur="4s" repeatCount="indefinite" />
+                <stop offset="100%" stopColor="hsl(120 70% 50%)" className="group-hover:[stop-color:hsl(175,80%,40%)] transition-all duration-500 ease-in-out">
+                  <animate attributeName="stop-color" values="hsl(120 70% 50%);hsl(175 80% 40%);hsl(280 70% 60%);hsl(120 70% 50%)" dur="4s" repeatCount="indefinite" />
                 </stop>
               </linearGradient>
             </defs>
@@ -156,7 +157,7 @@ const Header = () => {
                 strokeWidth="5"
                 fill="none"
                 strokeLinecap="round"
-                className="transition-all duration-500 ease-in-out group-hover:stroke-[magenta]"
+                className="transition-all duration-500 ease-in-out group-hover:stroke-[hsl(280,70%,60%)]"
               >
                 <animateTransform
                   attributeName="transform"
@@ -173,7 +174,7 @@ const Header = () => {
                 strokeWidth="5"
                 fill="none"
                 strokeLinecap="round"
-                 className="transition-all duration-500 ease-in-out group-hover:stroke-[lime]"
+                 className="transition-all duration-500 ease-in-out group-hover:stroke-[hsl(120,70%,50%)]"
               >
                 <animateTransform
                   attributeName="transform"
@@ -194,9 +195,9 @@ const Header = () => {
                   y2={-35 + i * 10}
                   strokeWidth="2.5"
                   strokeLinecap="round"
-                  className="transition-all duration-300 ease-in-out group-hover:stroke-[cyan]"
+                  className="transition-all duration-300 ease-in-out group-hover:stroke-[hsl(175,80%,40%)]"
                 >
-                  <animate attributeName="stroke" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" begin={`${i * 0.2}s`} />
+                  <animate attributeName="stroke" values="hsl(175 80% 40%);hsl(280 70% 60%);hsl(120 70% 50%);hsl(175 80% 40%)" dur="4s" repeatCount="indefinite" begin={`${i * 0.2}s`} />
                    <animateTransform
                     attributeName="transform"
                     type="rotate"
@@ -226,10 +227,10 @@ const Header = () => {
           ))}
         </nav>
 
-        <div className="flex flex-1 items-center justify-end space-x-3"> {/* Increased spacing with space-x-3 */}
+        <div className="flex flex-1 items-center justify-end space-x-2"> {/* Reduced spacing to space-x-2 */}
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-               <div className="relative w-full max-w-xs">
+               <div className="relative w-full max-w-[200px]"> {/* Reduced max-width for search bar */}
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
@@ -252,7 +253,7 @@ const Header = () => {
                </div>
             </PopoverTrigger>
             <PopoverContent
-                className="w-[350px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
+                className="w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"  // Slightly reduced width
                 align="end"
                 onOpenAutoFocus={(e) => e.preventDefault()}
              >
@@ -288,13 +289,12 @@ const Header = () => {
           <ThemeToggle />
 
           {isMounted && isAdminOrEditor && (
-            <Button variant="outline" size="sm" asChild className="ml-1">
-              <span> {/* Wrap Link in a span to resolve Slot issue */}
-                <Link href="/admin">
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  Admin Paneli
+             <Button variant="ghost" size="sm" asChild className="ml-1 shrink-0"> {/* Added shrink-0 */}
+                <Link href="/admin" className="flex items-center">
+                  <ShieldCheck className="mr-1.5 h-4 w-4" /> {/* Adjusted margin */}
+                  <span className="hidden sm:inline">Admin Paneli</span>
+                  <span className="sm:hidden">Admin</span>
                 </Link>
-              </span>
             </Button>
           )}
 
