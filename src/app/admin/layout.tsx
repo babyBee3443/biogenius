@@ -26,7 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { toast } from '@/hooks/use-toast';
 import { usePermissions } from "@/hooks/usePermissions";
-import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
@@ -41,22 +41,29 @@ export default function AdminLayout({
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
-  const [userLoaded, setUserLoaded] = React.useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = React.useState(false); // New state for auth check
   const router = useRouter();
   const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions();
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
     console.log("[AdminLayout] loadUserDataAndSettings called");
+    let userFound = false;
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
       if (storedUserString) {
         try {
           const userData = JSON.parse(storedUserString);
-          setCurrentUserName(userData.name || "Kullanıcı");
-          setCurrentUserAvatar(userData.avatar || "https://picsum.photos/seed/default-avatar/32/32");
-          setCurrentUserId(userData.id || null);
-          console.log("[AdminLayout] User data loaded from localStorage:", userData.id, userData.name);
+          if (userData && userData.id) {
+            setCurrentUserName(userData.name || "Kullanıcı");
+            setCurrentUserAvatar(userData.avatar || "https://picsum.photos/seed/default-avatar/32/32");
+            setCurrentUserId(userData.id);
+            userFound = true;
+            console.log("[AdminLayout] User data loaded from localStorage:", userData.id, userData.name);
+          } else {
+             console.error("[AdminLayout] User ID not found in stored currentUser object.");
+             setCurrentUserId(null); // Explicitly set to null
+          }
         } catch (e) {
           console.error("Error parsing user data from localStorage in AdminLayout", e);
           setCurrentUserName("Kullanıcı");
@@ -76,39 +83,53 @@ export default function AdminLayout({
       } else {
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
-      setUserLoaded(true);
     }
-  }, []); // Removed router from dependencies
+    setAuthCheckComplete(true); // Mark auth check as complete
+    return userFound; // Return if user was found
+  }, []);
 
 
   React.useEffect(() => {
     document.title = 'TeknoBiyo Admin';
-    loadUserDataAndSettings();
+    const userFound = loadUserDataAndSettings();
+
+    if (typeof window !== 'undefined' && !userFound && !window.location.pathname.startsWith('/login')) {
+      console.log("[AdminLayout] Initial check: User not found, redirecting to login.");
+      toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
+      router.replace('/login'); // Use replace to avoid adding to history stack
+      return; // Prevent further execution if redirecting
+    }
+
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setUserLoaded(false);
+            setAuthCheckComplete(false);
             loadUserDataAndSettings();
         }
     };
     
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
-        setUserLoaded(false);
+        setAuthCheckComplete(false);
+        loadUserDataAndSettings();
+    };
+    
+    const handleSessionTimeoutChanged = () => {
+        console.log("AdminLayout: 'sessionTimeoutChanged' event received, reloading settings.");
         loadUserDataAndSettings();
     };
     
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('currentUserUpdated', handleCurrentUserUpdated);
-    window.addEventListener('sessionTimeoutChanged', loadUserDataAndSettings);
+    window.addEventListener('sessionTimeoutChanged', handleSessionTimeoutChanged);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('currentUserUpdated', handleCurrentUserUpdated);
-      window.removeEventListener('sessionTimeoutChanged', loadUserDataAndSettings);
+      window.removeEventListener('sessionTimeoutChanged', handleSessionTimeoutChanged);
     };
-  }, [loadUserDataAndSettings]);
+  }, [loadUserDataAndSettings, router]);
 
   const handleLogout = React.useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -117,30 +138,44 @@ export default function AdminLayout({
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null);
-    setUserLoaded(true);
+    setAuthCheckComplete(true); // User is now definitely logged out
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/login');
+    router.replace('/login');
   }, [router]);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
+  // Further check after auth check and permissions loading are complete
   React.useEffect(() => {
-    if (userLoaded && !currentUserId && !window.location.pathname.startsWith('/login')) {
-        console.log("[AdminLayout] User not found after loading, redirecting to login.");
+    if (authCheckComplete && !permissionsLoading && !currentUserId && !window.location.pathname.startsWith('/login')) {
+        console.log("[AdminLayout] Post-load check: User not found, redirecting to login.");
         toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
-        router.push('/login');
+        router.replace('/login');
     }
-  }, [userLoaded, currentUserId, router]);
+  }, [authCheckComplete, permissionsLoading, currentUserId, router]);
 
 
-  if (!userLoaded || permissionsLoading) {
+  if (!authCheckComplete || permissionsLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">Yönetim paneli yükleniyor...</p>
       </div>
     );
+  }
+  
+  // If still no currentUserId after loading and not on login page, redirect
+  // This catches cases where initial localStorage check passed but permissions haven't settled
+  if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+     console.log("[AdminLayout] Final check: No user ID, redirecting to login.");
+     router.replace('/login');
+     return ( // Show loading while redirecting
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Yönlendiriliyor...</p>
+        </div>
+     );
   }
 
 
@@ -162,9 +197,8 @@ export default function AdminLayout({
                 <path d="M12 2a10 10 0 0 0-10 10c0 2.5 1 4.8 2.6 6.4A10 10 0 0 0 12 22a10 10 0 0 0 10-10c0-2.5-1-4.8-2.6-6.4A10 10 0 0 0 12 2z" />
                 <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
                 <path d="M15.7 15.7a4 4 0 1 0-7.4 0" />
-                 {/* Additional biology-themed paths */}
-                <path d="M12 12v10" /> {/* Vertical stem */}
-                <path d="m4.6 10.6.8.8" /> {/* Leaf-like elements */}
+                <path d="M12 12v10" />
+                <path d="m4.6 10.6.8.8" />
                 <path d="m18.6 10.6-.8.8" />
             </svg>
           </Link>
@@ -381,3 +415,4 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
+
