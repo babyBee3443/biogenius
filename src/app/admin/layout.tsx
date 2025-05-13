@@ -42,44 +42,46 @@ export default function AdminLayout({
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
   const router = useRouter();
-  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId); // Pass currentUserId to re-trigger permissions
+  // Pass currentUserId to usePermissions and ensure it re-runs when userId changes.
+  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId);
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
     console.log("[AdminLayout] loadUserDataAndSettings called");
     let userFound = false;
     let newUserId: string | null = null;
+    let newUserName = "Kullanıcı";
+    let newUserAvatar = "https://picsum.photos/seed/default-avatar/32/32";
+
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
       if (storedUserString) {
         try {
           const userData = JSON.parse(storedUserString);
           if (userData && userData.id) {
-            setCurrentUserName(userData.name || "Kullanıcı");
-            setCurrentUserAvatar(userData.avatar || `https://picsum.photos/seed/${userData.username || 'avatar'}/32/32`);
+            newUserName = userData.name || "Kullanıcı";
+            newUserAvatar = userData.avatar || `https://picsum.photos/seed/${userData.username || 'avatar'}/32/32`;
             newUserId = userData.id;
             userFound = true;
-            console.log("[AdminLayout] User data loaded from localStorage:", userData.id, userData.name);
+            console.log("[AdminLayout] User data loaded from localStorage:", newUserId, newUserName);
           } else {
              console.error("[AdminLayout] User ID not found in stored currentUser object.");
-             newUserId = null;
+             newUserId = null; // Ensure newUserId is null if data is invalid
           }
         } catch (e) {
           console.error("Error parsing user data from localStorage in AdminLayout", e);
-          setCurrentUserName("Kullanıcı");
-          setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
-          newUserId = null;
-          localStorage.removeItem('currentUser'); // Clear corrupted data
+          newUserId = null; // Ensure newUserId is null on error
+          localStorage.removeItem('currentUser');
         }
       } else {
         newUserId = null;
         console.log("[AdminLayout] No currentUser in localStorage.");
       }
-      // Update currentUserId state outside the main set of state updates if it changed
-      if (currentUserId !== newUserId) {
-        setCurrentUserId(newUserId);
-      }
 
+      // Critical: Update state to reflect the loaded user
+      setCurrentUserId(newUserId);
+      setCurrentUserName(newUserName);
+      setCurrentUserAvatar(newUserAvatar);
 
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
@@ -89,34 +91,37 @@ export default function AdminLayout({
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    setAuthCheckComplete(true); 
+    setAuthCheckComplete(true);
     return userFound;
-  }, [currentUserId]); // Added currentUserId as dependency
+  }, []); // Removed currentUserId from dependencies as it's set inside and would cause a loop.
 
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
         document.title = 'BiyoHox Admin Panel';
     }
+    // Initial load
     loadUserDataAndSettings();
 
     const handleStorageChange = (event: StorageEvent) => {
+        // Listen for changes from other tabs
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setAuthCheckComplete(false); 
+            setAuthCheckComplete(false); // Re-trigger auth check
             loadUserDataAndSettings();
         }
     };
 
+    // Listen for custom event when user logs in/out via modal
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
-        setAuthCheckComplete(false); 
+        setAuthCheckComplete(false); // Re-trigger auth check
         loadUserDataAndSettings();
     };
 
     const handleSessionTimeoutChanged = () => {
         console.log("AdminLayout: 'sessionTimeoutChanged' event received, reloading settings.");
-        loadUserDataAndSettings();
+        loadUserDataAndSettings(); // Reload settings which includes timeout
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -128,7 +133,7 @@ export default function AdminLayout({
       window.removeEventListener('currentUserUpdated', handleCurrentUserUpdated);
       window.removeEventListener('sessionTimeoutChanged', handleSessionTimeoutChanged);
     };
-  }, [loadUserDataAndSettings]);
+  }, [loadUserDataAndSettings]); // loadUserDataAndSettings is stable due to useCallback
 
 
   const handleLogout = React.useCallback(() => {
@@ -136,41 +141,36 @@ export default function AdminLayout({
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
     }
-    setCurrentUserName("Kullanıcı"); // Reset UI immediately
+    setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null); // This will trigger the redirection useEffect
-    // setAuthCheckComplete(true); // Auth state is now known (logged out)
+    setAuthCheckComplete(false); // Re-trigger auth check for redirection
+    loadUserDataAndSettings(); // Ensure state is clean and auth check completes
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    // No need to call router.replace here, the useEffect below will handle it.
-  }, []);
+    router.push('/login'); // Explicitly redirect
+  }, [router, loadUserDataAndSettings]);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
   React.useEffect(() => {
-    // This effect handles redirection based on authentication status
-    // It runs when authCheckComplete, permissionsLoading, or currentUserId changes.
     console.log(`[AdminLayout] Redirection Effect: authComplete=${authCheckComplete}, permLoading=${permissionsLoading}, userId=${currentUserId}, pathname=${typeof window !== 'undefined' ? window.location.pathname : 'server'}`);
 
     if (!authCheckComplete || permissionsLoading) {
       console.log("[AdminLayout] Redirection Effect: Waiting for auth/permissions check.");
-      return; // Wait for auth check and permissions to complete
+      return;
     }
 
-    // If here, authCheck is complete AND permissions are loaded (or error state is set for permissions)
-    if (!currentUserId) { // User is not logged in
+    if (!currentUserId) {
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to login from:", window.location.pathname);
-        // toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." }); // Toast can be annoying during rapid redirects
         router.replace('/login');
       }
-      // If already on /login, do nothing, let the login page render.
-    } else { // User IS logged in
+    } else {
       if (typeof window !== 'undefined' && window.location.pathname === '/login') {
         console.log("[AdminLayout] Redirection Effect: User authenticated on login page, redirecting to admin.");
         router.replace('/admin');
       }
-      // If on an admin page and logged in, do nothing, let the admin page render.
     }
   }, [authCheckComplete, permissionsLoading, currentUserId, router]);
 
@@ -183,13 +183,10 @@ export default function AdminLayout({
       </div>
     );
   }
-  
-  // This check should ideally be covered by the redirection effect.
-  // If we reach here and !currentUserId, and not on /login, something is wrong with the redirect logic or it hasn't fired yet.
-  // However, to prevent rendering admin content if somehow the redirect fails or is delayed:
+
   if (!currentUserId && typeof window !== 'undefined' && window.location.pathname !== '/login') {
      console.warn("[AdminLayout] Render block: Attempting to render admin layout without user ID, but not on login page. This should have been caught by redirect.");
-     return ( // Fallback, should ideally be handled by the redirect.
+     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground">Giriş sayfasına yönlendiriliyor...</p>
@@ -218,7 +215,7 @@ export default function AdminLayout({
               <path
                 d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
                 stroke="url(#adminDnaGradient)"
-                strokeWidth="6" 
+                strokeWidth="6"
                 fill="none"
                 strokeLinecap="round"
               >
@@ -227,14 +224,14 @@ export default function AdminLayout({
                   type="rotate"
                   from="0 0 0"
                   to="360 0 0"
-                  dur="12s" 
+                  dur="12s"
                   repeatCount="indefinite"
                 />
               </path>
               <path
                 d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
                 stroke="url(#adminDnaGradient)"
-                strokeWidth="6" 
+                strokeWidth="6"
                 fill="none"
                 strokeLinecap="round"
               >
@@ -243,7 +240,7 @@ export default function AdminLayout({
                   type="rotate"
                   from="0 0 0"
                   to="360 0 0"
-                  dur="12s" 
+                  dur="12s"
                   repeatCount="indefinite"
                 />
                  <animate attributeName="stroke-width" values="6;7;6" dur="2.5s" repeatCount="indefinite" />
@@ -252,10 +249,10 @@ export default function AdminLayout({
                 <line
                   key={`admin-dna-base-${i}`}
                   x1={Math.sin(i * Math.PI / 3.5) * (12 + (i%2 === 0 ? 2: 0) )}
-                  y1={-35 + i * (70/6)} 
+                  y1={-35 + i * (70/6)}
                   x2={Math.sin(i * Math.PI / 3.5 + Math.PI) * (12 + (i%2 === 0 ? 2: 0))}
                   y2={-35 + i * (70/6)}
-                  strokeWidth="3" 
+                  strokeWidth="3"
                   strokeLinecap="round"
                 >
                   <animate attributeName="stroke" values="cyan;magenta;lime;green;blue;cyan" dur="5s" repeatCount="indefinite" begin={`${i * 0.25}s`} />

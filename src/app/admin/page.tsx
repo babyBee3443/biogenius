@@ -66,7 +66,26 @@ export default function AdminDashboard() {
   const [recentArticles, setRecentArticles] = React.useState<ArticleData[]>([]);
   const [activeUsers, setActiveUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // Added to pass to usePermissions
+
+  // Get current user ID from localStorage to pass to usePermissions
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          setCurrentUserId(user.id || null);
+        } catch (e) {
+          console.error("Error parsing currentUser in AdminDashboard", e);
+          setCurrentUserId(null);
+        }
+      }
+    }
+  }, []);
+
+
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions(currentUserId);
   const router = useRouter();
 
   const fetchData = React.useCallback(async () => {
@@ -111,14 +130,19 @@ export default function AdminDashboard() {
   }, []);
 
   React.useEffect(() => {
-    if (!permissionsLoading && !hasPermission('Dashboard Görüntüleme')) {
+    // Wait for permissions to load before fetching data or redirecting
+    if (permissionsLoading) {
+        return; // Still loading permissions, do nothing yet
+    }
+
+    if (!hasPermission('Dashboard Görüntüleme')) {
         toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Gösterge panelini görüntüleme yetkiniz yok." });
         router.push('/admin/profile'); // Redirect to a safe page like profile
         return;
     }
-    if (!permissionsLoading && hasPermission('Dashboard Görüntüleme')) {
-        fetchData();
-    }
+    // If permissions are loaded and user has permission, fetch data
+    fetchData();
+
   }, [fetchData, permissionsLoading, hasPermission, router]);
 
 
@@ -134,7 +158,7 @@ export default function AdminDashboard() {
   const subscriberConversionRate = "0.00%"; // Placeholder
   const errorRate = "0.00%"; // Placeholder
 
-  if (loading || permissionsLoading) {
+  if (loading || permissionsLoading) { // Check permissionsLoading as well
     return (
         <div className="flex justify-center items-center h-screen">
             <Loader2 className="mr-2 h-8 w-8 animate-spin" />
@@ -345,10 +369,10 @@ export default function AdminDashboard() {
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="user avatar placeholder" />
-                                            <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                                            <AvatarFallback>{user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??'}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                             <Link href={`/admin/users/edit/${user.id}`} className="text-sm font-medium hover:underline">{user.name}</Link>
+                                             <Link href={`/admin/users/edit/${user.id}`} className="text-sm font-medium hover:underline">{user.name || 'İsimsiz Kullanıcı'}</Link>
                                              <p className="text-xs text-muted-foreground">{user.email}</p>
                                         </div>
                                     </div>
