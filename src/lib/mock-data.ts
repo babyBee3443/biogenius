@@ -82,7 +82,7 @@ export interface Template {
   previewImageUrl: string;
   blocks: Block[];
   type: 'article' | 'note' | 'page';
-  category?: 'Biyoloji' | 'Genel Sayfa'; // Adjusted category for templates
+  category?: 'Biyoloji' | 'Genel Sayfa';
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string[];
@@ -135,7 +135,12 @@ export const getCategories = async (): Promise<Category[]> => {
     const storedCategories = typeof window !== 'undefined' ? localStorage.getItem(CATEGORY_STORAGE_KEY) : null;
     if (storedCategories) {
         try {
-            return JSON.parse(storedCategories);
+            const parsedCategories = JSON.parse(storedCategories);
+            if (Array.isArray(parsedCategories)) {
+                return parsedCategories;
+            }
+            console.warn("Invalid categories in localStorage, returning empty array.");
+            return [];
         } catch (e) {
             console.error("Error parsing categories from localStorage", e);
             return [];
@@ -667,7 +672,12 @@ const defaultPageTemplates: Template[] = [
     }
 ];
 
-let allMockTemplates: Template[] = [...defaultArticleTemplates, ...defaultNoteTemplates, ...defaultPageTemplates];
+// --- Single source of truth for all templates ---
+const ALL_MOCK_TEMPLATES_SOURCE: ReadonlyArray<Template> = Object.freeze([
+    ...defaultArticleTemplates,
+    ...defaultNoteTemplates,
+    ...defaultPageTemplates
+]);
 // --- End Re-populated Default Templates ---
 
 // --- Article CRUD ---
@@ -676,7 +686,12 @@ export const getArticles = async (): Promise<ArticleData[]> => {
     const storedArticles = typeof window !== 'undefined' ? localStorage.getItem(ARTICLE_STORAGE_KEY) : null;
     if (storedArticles) {
         try {
-            return JSON.parse(storedArticles);
+            const parsedArticles = JSON.parse(storedArticles);
+            if (Array.isArray(parsedArticles)) {
+                return parsedArticles;
+            }
+            console.warn("Invalid articles in localStorage, returning empty array.");
+            return [];
         } catch (e) {
             console.error("Error parsing articles from localStorage", e);
             return [];
@@ -746,7 +761,12 @@ export const getNotes = async (): Promise<NoteData[]> => {
     const storedNotes = typeof window !== 'undefined' ? localStorage.getItem(NOTE_STORAGE_KEY) : null;
     if (storedNotes) {
         try {
-            return JSON.parse(storedNotes);
+            const parsedNotes = JSON.parse(storedNotes);
+            if (Array.isArray(parsedNotes)) {
+                return parsedNotes;
+            }
+            console.warn("Invalid notes in localStorage, returning empty array.");
+            return [];
         } catch (e) {
             console.error("Error parsing notes from localStorage", e);
             return [];
@@ -762,7 +782,7 @@ export const getNoteById = async (id: string): Promise<NoteData | null> => {
     return note ? JSON.parse(JSON.stringify(note)) : null;
 };
 
-export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt' | 'authorId' | 'status'>): Promise<NoteData> => {
+export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt'>): Promise<NoteData> => {
     await delay(50);
     const newNote: NoteData = {
         ...data,
@@ -817,7 +837,12 @@ export const getUsers = async (): Promise<User[]> => {
     const storedUsers = typeof window !== 'undefined' ? localStorage.getItem(USER_STORAGE_KEY) : null;
     if (storedUsers) {
         try {
-            return JSON.parse(storedUsers);
+            const parsedUsers = JSON.parse(storedUsers);
+            if (Array.isArray(parsedUsers)) {
+                return parsedUsers;
+            }
+            console.warn("Invalid users in localStorage, returning empty array.");
+            return [];
         } catch (e) {
             console.error("Error parsing users from localStorage", e);
             return [];
@@ -927,7 +952,12 @@ export const getRoles = async (): Promise<Role[]> => {
   const storedRoles = typeof window !== 'undefined' ? localStorage.getItem(ROLE_STORAGE_KEY) : null;
   if (storedRoles) {
       try {
-          return JSON.parse(storedRoles);
+          const parsedRoles = JSON.parse(storedRoles);
+          if (Array.isArray(parsedRoles)) {
+            return parsedRoles;
+          }
+           console.warn("Invalid roles in localStorage, returning default mockRoles.");
+           return mockRoles;
       } catch (e) {
           console.error("Error parsing roles from localStorage", e);
           return mockRoles; // Return default if parsing fails
@@ -982,10 +1012,7 @@ export const deleteRole = async (id: string): Promise<boolean> => {
   await delay(80);
   let currentRoles = await getRoles();
   const roleToDelete = currentRoles.find(r => r.id === id);
-  // Prevent deletion of core roles if they have users, or generally prevent deletion of core roles
   if (roleToDelete && ['admin', 'editor', 'user'].includes(roleToDelete.id.toLowerCase())) {
-    // For core roles, maybe only allow deletion if userCount is 0, or disallow entirely
-    // For now, let's disallow deleting core roles if they have users for safety.
     if (roleToDelete.userCount > 0) {
       console.warn(`Cannot delete core role "${roleToDelete.name}" as it has ${roleToDelete.userCount} users.`);
       return false;
@@ -1060,7 +1087,12 @@ export const getPages = async (): Promise<PageData[]> => {
     const storedPages = typeof window !== 'undefined' ? localStorage.getItem(PAGE_STORAGE_KEY) : null;
     if (storedPages) {
         try {
-            return JSON.parse(storedPages);
+            const parsedPages = JSON.parse(storedPages);
+            if (Array.isArray(parsedPages)) {
+                return parsedPages;
+            }
+            console.warn("Invalid pages in localStorage, returning default mockPages.");
+            return mockPages;
         } catch (e) {
             console.error("Error parsing pages from localStorage", e);
             return mockPages;
@@ -1128,37 +1160,34 @@ export const deletePage = async (id: string): Promise<boolean> => {
 // --- End Page CRUD ---
 
 // --- Templates ---
+export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3';
+
 export const allMockTemplatesGetter = async (): Promise<Template[]> => {
     await delay(5);
-     const storedTemplates = typeof window !== 'undefined' ? localStorage.getItem(TEMPLATE_STORAGE_KEY) : null;
+    if (typeof window === 'undefined') {
+        return [...ALL_MOCK_TEMPLATES_SOURCE]; // Return a copy for server-side or non-browser environments
+    }
+
+    const storedTemplates = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+
     if (storedTemplates) {
         try {
             const parsed = JSON.parse(storedTemplates);
-            // Basic validation: check if it's an array
-            if (Array.isArray(parsed)) {
+            // Ensure it's a non-empty array and has the expected structure (e.g., check first item)
+            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0] && parsed[0].id && parsed[0].name && parsed[0].blocks) {
                 return parsed;
             }
-            // If not an array, or some other invalid structure, re-initialize.
-            console.warn("Invalid template data in localStorage, re-initializing.");
-            if (typeof window !== 'undefined') {
-                localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates));
-            }
-            return allMockTemplates;
-
+            console.warn("Invalid or empty template data in localStorage, re-initializing from source.");
         } catch (e) {
-            console.error("Error parsing templates from localStorage, re-initializing.", e);
-            // If parsing fails, re-initialize with defaults and save them.
-            if (typeof window !== 'undefined') {
-                localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates));
-            }
-            return allMockTemplates;
+            console.error("Error parsing templates from localStorage, re-initializing from source.", e);
         }
     }
-     // If no templates in localStorage, initialize with defaults and save them.
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates));
-    }
-    return allMockTemplates;
+
+    // If no valid templates in localStorage, initialize/re-initialize from source and return a copy.
+    // This ensures that even if localStorage is cleared or corrupted, templates are available.
+    console.log("Initializing templates in localStorage from ALL_MOCK_TEMPLATES_SOURCE.");
+    localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(ALL_MOCK_TEMPLATES_SOURCE));
+    return [...ALL_MOCK_TEMPLATES_SOURCE]; // Return a mutable copy of the source
 };
 
 
@@ -1168,19 +1197,32 @@ export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories_v3';
 export const USER_STORAGE_KEY = 'teknobiyo_mock_users_v3';
 export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles_v3';
 export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages_v3';
-export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3';
+
 
 export const loadInitialData = () => {
     if (typeof window !== 'undefined') {
-        if (!localStorage.getItem(ARTICLE_STORAGE_KEY)) {
-            localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(mockArticles));
-        }
-        if (!localStorage.getItem(NOTE_STORAGE_KEY)) {
-            localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(mockNotes));
-        }
-        if (!localStorage.getItem(CATEGORY_STORAGE_KEY)) {
-            localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
-        }
+        const initOrVerify = (key: string, defaultData: any[]) => {
+            const stored = localStorage.getItem(key);
+            if (!stored) {
+                localStorage.setItem(key, JSON.stringify(defaultData));
+            } else {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (!Array.isArray(parsed)) { // Basic check, could be more specific
+                        console.warn(`Invalid data for ${key} in localStorage, re-initializing.`);
+                        localStorage.setItem(key, JSON.stringify(defaultData));
+                    }
+                } catch (e) {
+                    console.error(`Error verifying ${key} from localStorage, re-initializing.`, e);
+                    localStorage.setItem(key, JSON.stringify(defaultData));
+                }
+            }
+        };
+
+        initOrVerify(ARTICLE_STORAGE_KEY, mockArticles);
+        initOrVerify(NOTE_STORAGE_KEY, mockNotes);
+        initOrVerify(CATEGORY_STORAGE_KEY, mockCategories);
+
         if (!localStorage.getItem(USER_STORAGE_KEY)) {
             const defaultAdminUser: User = {
                  id: 'admin001', name: 'Admin User', username: 'admin',
@@ -1189,23 +1231,28 @@ export const loadInitialData = () => {
                  avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
             };
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
-            console.log("Default admin user created in localStorage for initial login.");
         }
+        
         if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
-            // Ensure user counts are updated based on default users
-            const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]');
+            const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
             const rolesWithCounts = mockRoles.map(role => {
                 const count = users.filter((u: User) => u.role.toLowerCase() === role.name.toLowerCase() || u.role === role.id).length;
                 return {...role, userCount: count};
             });
             localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(rolesWithCounts));
+        } else { // Recalculate user counts for roles if roles already exist
+            const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
+            let existingRoles = JSON.parse(localStorage.getItem(ROLE_STORAGE_KEY)!) as Role[];
+            existingRoles = existingRoles.map(role => {
+                 const count = users.filter((u: User) => u.role.toLowerCase() === role.name.toLowerCase() || u.role === role.id).length;
+                 return {...role, userCount: count};
+            });
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(existingRoles));
         }
-        if (!localStorage.getItem(PAGE_STORAGE_KEY)) {
-            localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages));
-        }
-        if (!localStorage.getItem(TEMPLATE_STORAGE_KEY)) {
-            localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates)); // Initialize with default templates
-        }
+
+
+        initOrVerify(PAGE_STORAGE_KEY, mockPages);
+        initOrVerify(TEMPLATE_STORAGE_KEY, [...ALL_MOCK_TEMPLATES_SOURCE]); // Use the const source here
     }
 };
 
