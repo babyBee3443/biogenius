@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -84,7 +85,7 @@ const WelcomeScreen = () => {
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center text-center py-8 px-4 overflow-hidden mb-16">
+    <section className="relative flex flex-col items-center justify-center text-center py-8 px-4 overflow-hidden mb-8"> {/* Reduced mb from 16 to 8 */}
       {/* Removed dark background classes, rounded-lg, shadow-2xl, border */}
       {/* Removed background SVG and particle animations as they were designed for dark background */}
 
@@ -93,7 +94,7 @@ const WelcomeScreen = () => {
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-primary"
+          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-primary" // Reduced mb from 6 to 4
         >
           {title}
         </motion.h1>
@@ -196,7 +197,7 @@ export default function Home() {
   if (pageIsLoading) {
      return (
         <div className="space-y-16">
-            <Skeleton className="h-[40vh] w-full mb-8 rounded-lg" /> {/* Adjusted welcome screen skeleton */}
+            <Skeleton className="h-[30vh] w-full mb-8 rounded-lg" /> {/* Adjusted welcome screen skeleton height */}
             <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />
              <section className="w-full py-8">
                 <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
@@ -225,7 +226,7 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-12"> {/* Reduced space-y from 16 to 12 */}
       <WelcomeScreen />
 
        <Hero articles={heroArticles} />
