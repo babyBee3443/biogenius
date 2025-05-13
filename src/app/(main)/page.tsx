@@ -56,11 +56,11 @@ const RecentArticlesSection = dynamic(() => import('@/components/recent-articles
 
 // --- Welcome Screen Component ---
 const WelcomeScreen = () => {
-  const title = "Öğrenmenin genetik temeli.";
+  const title = "Öğrenmenin genetik temeli";
   const subtitleParts = [
     { text: "Hox genleri canlıyı şekillendirir, ", colorClass: "text-muted-foreground" },
     { text: "Biyohox", colorClass: "text-primary animate-text-rgb-cycle-fast" },
-    { text: " ise öğrenmeni.", colorClass: "text-muted-foreground" },
+    { text: " ise öğrenmeni", colorClass: "text-muted-foreground" },
   ];
 
   const titleVariants = {
