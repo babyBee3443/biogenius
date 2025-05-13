@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -18,6 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added import for AlertDialogTrigger
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -74,18 +76,18 @@ export function TemplateSelector({
                 setLoadingTemplates(true);
                 try {
                     const data = await allMockTemplatesGetter();
-                     // Ensure data is an array before setting
+                    console.log("[TemplateSelector] Fetched templates data:", data);
                     if (Array.isArray(data)) {
                         setTemplates(data);
                     } else {
-                        console.error("Fetched templates are not an array:", data);
-                        setTemplates([]); // Default to empty if data is invalid
+                        console.error("[TemplateSelector] Fetched templates are not an array:", data);
+                        setTemplates([]); 
                         toast({ variant: "destructive", title: "Hata", description: "Şablon verileri geçersiz." });
                     }
                 } catch (err) {
-                    console.error("Error fetching templates:", err);
+                    console.error("[TemplateSelector] Error fetching templates:", err);
                     toast({ variant: "destructive", title: "Hata", description: "Şablonlar yüklenemedi." });
-                    setTemplates([]); // Set to empty array on error
+                    setTemplates([]);
                 } finally {
                     setLoadingTemplates(false);
                 }
@@ -109,7 +111,7 @@ export function TemplateSelector({
 
         const newBlocks = templateToApply.blocks.map(block => ({
             ...block,
-            id: generateId() // Ensure new blocks have unique IDs
+            id: generateId() 
         }));
         onSelectTemplateBlocks(newBlocks);
         onClose();
@@ -178,6 +180,7 @@ export function TemplateSelector({
                 return;
         }
 
+        console.log(`[TemplateSelector/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             const previewUrl = `/admin/preview`;
@@ -227,7 +230,7 @@ export function TemplateSelector({
                             </div>
                         ) : (
                             <div className="grid gap-4 p-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                {filteredTemplates.map((template) => (
+                                {filteredTemplates.length > 0 ? filteredTemplates.map((template) => (
                                     <Card key={template.id} className="flex flex-col">
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-base">{template.name}</CardTitle>
@@ -237,7 +240,7 @@ export function TemplateSelector({
                                                 <Image
                                                     src={template.previewImageUrl || 'https://picsum.photos/seed/default-template/300/200'}
                                                     alt={template.name}
-                                                    layout="fill"
+                                                    fill // Changed from layout="fill"
                                                     objectFit="cover"
                                                     className="rounded"
                                                     data-ai-hint={template.category?.toLowerCase() || 'abstract content design'}
@@ -258,9 +261,8 @@ export function TemplateSelector({
                                             </div>
                                         </CardContent>
                                     </Card>
-                                ))}
-                                {filteredTemplates.length === 0 && (
-                                    <p className="text-muted-foreground text-center md:col-span-2 lg:col-span-3 xl:col-span-4 py-4">
+                                )) : (
+                                     <p className="text-muted-foreground text-center md:col-span-2 lg:col-span-3 xl:col-span-4 py-4">
                                         Bu tür için uygun şablon bulunamadı veya hiç şablon eklenmemiş.
                                     </p>
                                 )}
