@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -139,102 +138,104 @@ const Header = () => {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex flex-col items-center group">
           <div className="flex items-center space-x-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 100 100"
-              className="h-10 w-10 group-hover:animate-spin-slow"
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 100 100"
+            className="h-10 w-10 group-hover:animate-spin-slow"
+            // Removed fixed fill, stroke, strokeWidth for dynamic coloring via CSS or gradient
             >
-              <defs>
+            <defs>
                 <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="cyan">
+                <stop offset="0%" stopColor="cyan">
                     <animate attributeName="stop-color" values="cyan;magenta;lime;green;blue;cyan" dur="8s" repeatCount="indefinite" />
-                  </stop>
-                  <stop offset="100%" stopColor="lime">
+                </stop>
+                <stop offset="100%" stopColor="lime">
                     <animate attributeName="stop-color" values="lime;green;blue;cyan;magenta;lime" dur="8s" repeatCount="indefinite" />
-                  </stop>
+                </stop>
                 </linearGradient>
-              </defs>
-              <g transform="translate(50,50) scale(0.8) rotate(15)">
+            </defs>
+            <g transform="translate(50,50) scale(0.8) rotate(15)">
+                {/* First helix strand */}
                 <path
-                  d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
-                  stroke="url(#dnaGradientHeader)"
-                  strokeWidth="5"
-                  fill="none"
-                  strokeLinecap="round"
+                d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
+                stroke="url(#dnaGradientHeader)" // Apply gradient to stroke
+                strokeWidth="5" // Kept original strokeWidth
+                fill="none" // No fill for the strands
+                strokeLinecap="round"
                 >
-                  <animateTransform
+                <animateTransform
                     attributeName="transform"
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="10s"
+                    dur="12s" // Slower rotation
                     repeatCount="indefinite"
-                  />
-                  <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" />
+                />
+                <animate attributeName="stroke-width" values="5;6.5;5" dur="3.5s" repeatCount="indefinite" />
                 </path>
+                {/* Second helix strand */}
                 <path
-                  d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
-                  stroke="url(#dnaGradientHeader)"
-                  strokeWidth="5"
-                  fill="none"
-                  strokeLinecap="round"
+                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
+                stroke="url(#dnaGradientHeader)" // Apply gradient to stroke
+                strokeWidth="5" // Kept original strokeWidth
+                fill="none" // No fill for the strands
+                strokeLinecap="round"
                 >
-                  <animateTransform
+                <animateTransform
                     attributeName="transform"
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="10s"
+                    dur="12s" // Slower rotation
                     repeatCount="indefinite"
-                  />
-                   <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" begin="0.5s" />
+                />
+                <animate attributeName="stroke-width" values="5;6.5;5" dur="3.5s" repeatCount="indefinite" begin="0.5s" />
                 </path>
+                {/* Base pairs (connectors) */}
                 {[...Array(7)].map((_, i) => {
-                  const yPos = -35 + i * (70 / 6);
-                  const angle = (i * Math.PI) / 3.5;
-                  // Corrected amplitude logic
-                  const baseAmplitude = 10;
-                  let dynamicAmplitude = 0;
-                  if (typeof window !== 'undefined') { // Check if window is defined for Date.now()
-                     dynamicAmplitude = Math.sin(Date.now() / 1000 + i) * 2;
-                  }
-                  const amplitude = baseAmplitude + dynamicAmplitude;
-
-                  const x1 = Math.sin(angle) * amplitude;
-                  const x2 = Math.sin(angle + Math.PI) * amplitude;
-                  return (
+                const yPos = -35 + i * (70 / 6);
+                const angle = (i * Math.PI) / 3.5;
+                let dynamicAmplitude = 0;
+                if (typeof window !== 'undefined') {
+                    dynamicAmplitude = Math.sin(Date.now() / 800 + i) * 2.5; // Slower pulsing, slightly increased amplitude
+                }
+                const amplitude = 10 + dynamicAmplitude; // Base amplitude
+                const x1 = Math.sin(angle) * amplitude;
+                const x2 = Math.sin(angle + Math.PI) * amplitude;
+                return (
                     <line
-                      key={`header-dna-base-${i}`}
-                      x1={x1}
-                      y1={yPos}
-                      x2={x2}
-                      y2={yPos}
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
+                    key={`header-dna-base-${i}`}
+                    x1={x1}
+                    y1={yPos}
+                    x2={x2}
+                    y2={yPos}
+                    strokeWidth="2.5" // Kept original strokeWidth for bases
+                    strokeLinecap="round"
+                    // Individual base color animation
                     >
-                      <animate
+                    <animate
                         attributeName="stroke"
-                        values="hsl(180,100%,50%);hsl(300,100%,50%);hsl(120,100%,50%);hsl(120,100%,25%);hsl(240,100%,50%);hsl(180,100%,50%)"
-                        dur="7s"
+                        values="cyan;magenta;lime;green;blue;cyan" // Vibrant RGB sequence
+                        dur="7s" // Color transition duration
                         repeatCount="indefinite"
-                        begin={`${i * 0.2}s`}
-                      />
-                       <animateTransform
+                        begin={`${i * 0.25}s`} // Staggered start for color animation
+                    />
+                    <animateTransform
                         attributeName="transform"
                         type="rotate"
                         from="0 0 0"
                         to="360 0 0"
-                        dur="10s"
+                        dur="12s" // Match helix rotation speed
                         repeatCount="indefinite"
-                      />
+                    />
                     </line>
-                  );
+                );
                 })}
-              </g>
+            </g>
             </svg>
             <span className="font-bold text-lg group-hover:text-primary transition-colors">BiyoHox</span>
           </div>
-          <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mt-0.5 text-center">
+          <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mt-0 text-center">
             Öğrenmenin DNA’sı
           </span>
         </Link>
@@ -256,7 +257,7 @@ const Header = () => {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-               <div className="relative w-full max-w-[140px] sm:max-w-[160px]">
+               <div className="relative w-full max-w-[130px] sm:max-w-[150px]">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
