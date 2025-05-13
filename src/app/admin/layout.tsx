@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -42,7 +43,6 @@ export default function AdminLayout({
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
   const router = useRouter();
-  // Pass currentUserId to usePermissions and ensure it re-runs when userId changes.
   const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId);
 
 
@@ -66,11 +66,11 @@ export default function AdminLayout({
             console.log("[AdminLayout] User data loaded from localStorage:", newUserId, newUserName);
           } else {
              console.error("[AdminLayout] User ID not found in stored currentUser object.");
-             newUserId = null; // Ensure newUserId is null if data is invalid
+             newUserId = null;
           }
         } catch (e) {
           console.error("Error parsing user data from localStorage in AdminLayout", e);
-          newUserId = null; // Ensure newUserId is null on error
+          newUserId = null;
           localStorage.removeItem('currentUser');
         }
       } else {
@@ -78,7 +78,6 @@ export default function AdminLayout({
         console.log("[AdminLayout] No currentUser in localStorage.");
       }
 
-      // Critical: Update state to reflect the loaded user
       setCurrentUserId(newUserId);
       setCurrentUserName(newUserName);
       setCurrentUserAvatar(newUserAvatar);
@@ -93,35 +92,32 @@ export default function AdminLayout({
     }
     setAuthCheckComplete(true);
     return userFound;
-  }, []); // Removed currentUserId from dependencies as it's set inside and would cause a loop.
+  }, []);
 
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
         document.title = 'BiyoHox Admin Panel';
     }
-    // Initial load
     loadUserDataAndSettings();
 
     const handleStorageChange = (event: StorageEvent) => {
-        // Listen for changes from other tabs
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setAuthCheckComplete(false); // Re-trigger auth check
+            setAuthCheckComplete(false);
             loadUserDataAndSettings();
         }
     };
 
-    // Listen for custom event when user logs in/out via modal
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
-        setAuthCheckComplete(false); // Re-trigger auth check
+        setAuthCheckComplete(false);
         loadUserDataAndSettings();
     };
 
     const handleSessionTimeoutChanged = () => {
         console.log("AdminLayout: 'sessionTimeoutChanged' event received, reloading settings.");
-        loadUserDataAndSettings(); // Reload settings which includes timeout
+        loadUserDataAndSettings();
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -133,7 +129,7 @@ export default function AdminLayout({
       window.removeEventListener('currentUserUpdated', handleCurrentUserUpdated);
       window.removeEventListener('sessionTimeoutChanged', handleSessionTimeoutChanged);
     };
-  }, [loadUserDataAndSettings]); // loadUserDataAndSettings is stable due to useCallback
+  }, [loadUserDataAndSettings]);
 
 
   const handleLogout = React.useCallback(() => {
@@ -143,11 +139,11 @@ export default function AdminLayout({
     }
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
-    setCurrentUserId(null); // This will trigger the redirection useEffect
-    setAuthCheckComplete(false); // Re-trigger auth check for redirection
-    loadUserDataAndSettings(); // Ensure state is clean and auth check completes
+    setCurrentUserId(null);
+    setAuthCheckComplete(false);
+    loadUserDataAndSettings();
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/login'); // Explicitly redirect
+    router.push('/'); // Redirect to homepage after logout
   }, [router, loadUserDataAndSettings]);
 
 
@@ -162,14 +158,14 @@ export default function AdminLayout({
     }
 
     if (!currentUserId) {
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to login from:", window.location.pathname);
-        router.replace('/login');
-      }
-    } else {
-      if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-        console.log("[AdminLayout] Redirection Effect: User authenticated on login page, redirecting to admin.");
-        router.replace('/admin');
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin/preview')) { // Allow preview page without auth for now
+        console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to homepage from:", window.location.pathname);
+        toast({
+            title: "Erişim Reddedildi",
+            description: "Lütfen admin paneline erişmek için giriş yapın.",
+            variant: "destructive"
+        });
+        router.replace('/'); // Redirect to homepage, user can login via header modal
       }
     }
   }, [authCheckComplete, permissionsLoading, currentUserId, router]);
@@ -184,12 +180,12 @@ export default function AdminLayout({
     );
   }
 
-  if (!currentUserId && typeof window !== 'undefined' && window.location.pathname !== '/login') {
+  if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin/preview')) {
      console.warn("[AdminLayout] Render block: Attempting to render admin layout without user ID, but not on login page. This should have been caught by redirect.");
      return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Giriş sayfasına yönlendiriliyor...</p>
+            <p className="text-muted-foreground">Anasayfaya yönlendiriliyor...</p>
         </div>
      );
   }
@@ -420,7 +416,7 @@ export default function AdminLayout({
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Kullanım Kılavuzu">
                         <Link href="/admin/pages/edit/kullanim-kilavuzu">
-                           <Layers /> {/* Assuming Layers icon for guide or choose another like BookOpen */}
+                           <Layers />
                            <span>Kullanım Kılavuzu</span>
                         </Link>
                     </SidebarMenuButton>
@@ -434,7 +430,7 @@ export default function AdminLayout({
                  <SidebarMenu>
                    <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Profil">
-                        <Link href={currentUserId ? `/admin/profile` : '/login'}>
+                        <Link href={currentUserId ? `/admin/profile` : '/'}>
                           <span className="flex items-center gap-2">
                             <Avatar className="size-5">
                               <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
@@ -467,7 +463,7 @@ export default function AdminLayout({
                 </Link>
             </Button>
             <ThemeToggle />
-            <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
+            <Link href={currentUserId ? `/admin/profile` : '/'} passHref>
                  <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">
                     <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>

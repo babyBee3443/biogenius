@@ -234,15 +234,15 @@ const Header = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
     }
-    setCurrentUser(null); // Update state immediately
+    setCurrentUser(null); 
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    // No need to dispatch event if state is updated directly and other components listen to it
+    // Dispatch event so AdminLayout can react if needed for immediate redirect logic.
+    // window.dispatchEvent(new CustomEvent('currentUserUpdated')); // This is handled by checkUserStatus
   };
 
   const handleCreateAccountSuccess = () => {
     checkUserStatus();
     setIsCreateAccountModalOpen(false);
-    // Automatically open login modal after successful account creation
     setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
@@ -259,7 +259,6 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
-    // { href: "/categories/biyoloji", label: "Biyoloji" }, // Removed "Biyoloji" category link
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },

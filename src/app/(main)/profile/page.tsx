@@ -13,7 +13,6 @@ export default function UserProfilePage() {
   const [currentUser, setCurrentUser] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();
-  // Pass currentUserId to usePermissions. It will be null initially.
   const { permissions, isLoading: permissionsLoading } = usePermissions(currentUser?.id || null);
 
 
@@ -27,10 +26,10 @@ export default function UserProfilePage() {
           if (isMounted) setCurrentUser(user);
         } catch (e) {
           console.error("Error parsing current user from localStorage", e);
-          if (isMounted) router.push('/login'); // Redirect if user data is corrupt
+          if (isMounted) router.push('/'); // Redirect to homepage if user data is corrupt
         }
       } else {
-        if (isMounted) router.push('/login'); // Redirect if no user is logged in
+        if (isMounted) router.push('/'); // Redirect to homepage if no user is logged in
       }
       if (isMounted) setLoading(false);
     }
@@ -62,7 +61,7 @@ export default function UserProfilePage() {
       <div className="text-center py-10">
         <p className="text-muted-foreground">Lütfen giriş yapınız.</p>
         <Button asChild className="mt-4">
-          <Link href="/login">Giriş Yap</Link>
+          <Link href="/">Giriş Yap</Link>
         </Button>
       </div>
     );
