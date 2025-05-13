@@ -139,11 +139,11 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10">
+         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10">
             <defs>
-              <linearGradient id="dnaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="cyan">
-                  <animate attributeName="stop-color" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stop-color" values="cyan;lime;magenta;cyan" dur="4s" repeatCount="indefinite" />
                 </stop>
                 <stop offset="100%" stopColor="lime">
                   <animate attributeName="stop-color" values="lime;cyan;magenta;lime" dur="4s" repeatCount="indefinite" />
@@ -153,7 +153,7 @@ const Header = () => {
             <g transform="translate(50,50) scale(0.8)">
               <path
                 d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
-                stroke="url(#dnaGradient)"
+                stroke="url(#dnaGradientHeader)"
                 strokeWidth="5"
                 fill="none"
                 strokeLinecap="round"
@@ -169,7 +169,7 @@ const Header = () => {
               </path>
               <path
                 d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
-                stroke="url(#dnaGradient)"
+                stroke="url(#dnaGradientHeader)"
                 strokeWidth="5"
                 fill="none"
                 strokeLinecap="round"
@@ -186,7 +186,7 @@ const Header = () => {
               </path>
               {[...Array(8)].map((_, i) => (
                 <line
-                  key={i}
+                  key={`header-dna-base-${i}`}
                   x1={Math.sin(i * Math.PI / 4) * (10 + (i%2 === 0 ? 2: 0) )}
                   y1={-35 + i * 10}
                   x2={Math.sin(i * Math.PI / 4 + Math.PI) * (10 + (i%2 === 0 ? 2: 0))}
@@ -224,7 +224,7 @@ const Header = () => {
           ))}
         </nav>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex flex-1 items-center justify-end space-x-3"> {/* Increased spacing with space-x-3 */}
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
                <div className="relative w-full max-w-xs">
@@ -286,7 +286,7 @@ const Header = () => {
           <ThemeToggle />
 
           {isMounted && isAdminOrEditor && (
-            <Button variant="outline" size="sm" asChild className="ml-2">
+            <Button variant="outline" size="sm" asChild className="ml-1"> {/* Adjusted margin */}
               <Link href="/admin">
                 <ShieldCheck className="mr-2 h-4 w-4" />
                 Admin Paneli
