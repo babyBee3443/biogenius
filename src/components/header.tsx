@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -136,13 +137,11 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex flex-col items-center group">
-          <div className="flex items-center space-x-2">
+        <Link href="/" className="mr-6 flex items-center group"> {/* Changed flex-col to flex and items-center */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 100 100"
-            className="h-10 w-10 group-hover:animate-spin-slow"
-            // Removed fixed fill, stroke, strokeWidth for dynamic coloring via CSS or gradient
+            className="h-10 w-10 group-hover:animate-spin-slow mr-2" // Added mr-2 for spacing
             >
             <defs>
                 <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -155,12 +154,11 @@ const Header = () => {
                 </linearGradient>
             </defs>
             <g transform="translate(50,50) scale(0.8) rotate(15)">
-                {/* First helix strand */}
                 <path
                 d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
-                stroke="url(#dnaGradientHeader)" // Apply gradient to stroke
-                strokeWidth="5" // Kept original strokeWidth
-                fill="none" // No fill for the strands
+                stroke="url(#dnaGradientHeader)"
+                strokeWidth="5"
+                fill="none"
                 strokeLinecap="round"
                 >
                 <animateTransform
@@ -168,17 +166,16 @@ const Header = () => {
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="12s" // Slower rotation
+                    dur="12s"
                     repeatCount="indefinite"
                 />
                 <animate attributeName="stroke-width" values="5;6.5;5" dur="3.5s" repeatCount="indefinite" />
                 </path>
-                {/* Second helix strand */}
                 <path
                 d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
-                stroke="url(#dnaGradientHeader)" // Apply gradient to stroke
-                strokeWidth="5" // Kept original strokeWidth
-                fill="none" // No fill for the strands
+                stroke="url(#dnaGradientHeader)"
+                strokeWidth="5"
+                fill="none"
                 strokeLinecap="round"
                 >
                 <animateTransform
@@ -186,20 +183,19 @@ const Header = () => {
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="12s" // Slower rotation
+                    dur="12s"
                     repeatCount="indefinite"
                 />
                 <animate attributeName="stroke-width" values="5;6.5;5" dur="3.5s" repeatCount="indefinite" begin="0.5s" />
                 </path>
-                {/* Base pairs (connectors) */}
                 {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
                 let dynamicAmplitude = 0;
                 if (typeof window !== 'undefined') {
-                    dynamicAmplitude = Math.sin(Date.now() / 800 + i) * 2.5; // Slower pulsing, slightly increased amplitude
+                    dynamicAmplitude = Math.sin(Date.now() / 800 + i) * 2.5;
                 }
-                const amplitude = 10 + dynamicAmplitude; // Base amplitude
+                const amplitude = 10 + dynamicAmplitude;
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
@@ -209,23 +205,22 @@ const Header = () => {
                     y1={yPos}
                     x2={x2}
                     y2={yPos}
-                    strokeWidth="2.5" // Kept original strokeWidth for bases
+                    strokeWidth="2.5"
                     strokeLinecap="round"
-                    // Individual base color animation
                     >
                     <animate
                         attributeName="stroke"
-                        values="cyan;magenta;lime;green;blue;cyan" // Vibrant RGB sequence
-                        dur="7s" // Color transition duration
+                        values="cyan;magenta;lime;green;blue;cyan"
+                        dur="7s"
                         repeatCount="indefinite"
-                        begin={`${i * 0.25}s`} // Staggered start for color animation
+                        begin={`${i * 0.25}s`}
                     />
                     <animateTransform
                         attributeName="transform"
                         type="rotate"
                         from="0 0 0"
                         to="360 0 0"
-                        dur="12s" // Match helix rotation speed
+                        dur="12s"
                         repeatCount="indefinite"
                     />
                     </line>
@@ -233,11 +228,12 @@ const Header = () => {
                 })}
             </g>
             </svg>
-            <span className="font-bold text-lg group-hover:text-primary transition-colors">BiyoHox</span>
-          </div>
-          <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mt-0 text-center">
-            Öğrenmenin DNA’sı
-          </span>
+            <div className="flex flex-col items-start"> {/* Changed to items-start for left alignment */}
+                <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
+                <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
+                    Öğrenmenin DNA’sı
+                </span>
+            </div>
         </Link>
 
         <nav className="hidden md:flex flex-1 items-center space-x-1">
