@@ -129,7 +129,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
           <AnimatedDnaIcon />
           <DialogTitle className="text-2xl font-bold text-foreground">Giriş Yap</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            BiyoHox platformuna erişmek için giriş yapın.
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-green-500 animate-text-rgb-cycle-fast font-semibold">
+              BiyoHox
+            </span> platformuna erişmek için giriş yapın.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleLogin} className="space-y-6 px-2 py-4">
