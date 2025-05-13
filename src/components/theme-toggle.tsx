@@ -4,7 +4,7 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { motion } from "framer-motion" // Import motion
+import { motion } from "framer-motion" 
 import { cn } from "@/lib/utils"
 
 export function ThemeToggle() {
@@ -13,19 +13,17 @@ export function ThemeToggle() {
 
   React.useEffect(() => setMounted(true), [])
 
-  // Values from a previous version that the user might be referring to
-  const toggleWidth = 130;
-  const indicatorSize = 32; // h-8 w-8 -> 32px
-  const padding = 4; // p-1 -> 4px (2px on each side of the indicator in the padding visual)
+  // New dimensions for a more minimalistic button
+  const toggleWidth = 120; // Reduced width
+  const indicatorSize = 28; // h-7 w-7 -> 28px, slightly smaller indicator
+  const padding = 4; // p-1 -> 4px (2px on each side of the indicator)
 
-  // Calculate the distance the indicator should move
-  // Total width - (left padding + right padding) - indicator width
-  const moveDistance = toggleWidth - (padding * 2) - indicatorSize; // 130 - 8 - 32 = 90
+  const moveDistance = toggleWidth - (padding * 2) - indicatorSize;
 
 
   if (!mounted) {
     // Render a static placeholder to avoid layout shifts and match dimensions
-    return <div style={{ height: '40px', width: `${toggleWidth}px` }} className="rounded-full bg-secondary animate-pulse"></div>;
+    return <div style={{ height: '36px', width: `${toggleWidth}px` }} className="rounded-full bg-secondary animate-pulse"></div>;
   }
 
   const isLight = theme === "light";
@@ -34,49 +32,48 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      style={{ width: `${toggleWidth}px`, height: '40px' }} // Apply dimensions using style for precision
+      style={{ width: `${toggleWidth}px`, height: '36px' }} // Apply new dimensions
       className={cn(
-        "relative flex items-center rounded-full p-1 cursor-pointer transition-all duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        // Reverted to gradient backgrounds
+        "relative flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        // Updated background colors to match the minimalistic design
         isLight
-          ? "bg-gradient-to-r from-sky-400 via-blue-400 to-indigo-400"
-          : "bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-950"
+          ? "bg-muted hover:bg-muted/80" // Light gray background for light mode
+          : "bg-slate-700 hover:bg-slate-600" // Dark gray background for dark mode
       )}
       aria-label={isLight ? "Koyu temaya geç" : "Açık temaya geç"}
     >
       {/* Sliding Indicator */}
       <motion.div
-        layout // Enables smooth layout animation
+        layout 
         transition={{ type: "spring", stiffness: 500, damping: 35 }}
         className={cn(
-          "absolute h-8 w-8 rounded-full bg-white/90 dark:bg-slate-300/90 shadow-lg flex items-center justify-center backdrop-blur-sm",
-           // Use absolute positioning with left defined by padding
-           "top-1 left-1" // Corresponds to p-1
+          "absolute h-7 w-7 rounded-full bg-background shadow-md flex items-center justify-center", // Use background for indicator, simpler shadow
+           "top-1 left-1" 
         )}
-        initial={false} // Don't animate on initial load
-        animate={{ x: isLight ? 0 : moveDistance }} // Move indicator based on calculated distance
+        initial={false} 
+        animate={{ x: isLight ? 0 : moveDistance }} 
       >
         {isLight ? (
-          <Sun className="h-5 w-5 text-orange-500" />
+          <Sun className="h-[18px] w-[18px] text-slate-600" /> // Smaller icon, adjusted color
         ) : (
-          <Moon className="h-5 w-5 text-indigo-400" />
+          <Moon className="h-[18px] w-[18px] text-slate-300" /> // Smaller icon, adjusted color
         )}
       </motion.div>
 
       {/* Labels */}
-       <span style={{ left: `${padding + indicatorSize + 8}px` }} // Position relative to indicator + padding
+       <span style={{ left: `${padding + indicatorSize + 6}px` }} // Adjusted spacing
             className={cn(
-           "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
-           isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0" // Text shadow for better visibility on gradient
+           "absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none",
+           isLight ? "text-slate-500 opacity-100" : "opacity-0" 
         )}>
-           AÇIK TEMA
+           LIGHT MODE
        </span>
-       <span style={{ right: `${padding + indicatorSize + 8}px` }} // Position relative to indicator + padding
+       <span style={{ right: `${padding + indicatorSize + 6}px` }} // Adjusted spacing
             className={cn(
-           "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
-           !isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0" // Text shadow for better visibility on gradient
+           "absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none",
+           !isLight ? "text-slate-300 opacity-100" : "opacity-0" 
         )}>
-          KOYU TEMA
+          DARK MODE
       </span>
 
     </button>
