@@ -1,3 +1,4 @@
+
 "use client"; // Required for useState, useEffect, event handlers
 
 import * as React from "react";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link";
 import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon } from "lucide-react"; // Added SettingsIcon
 import { toast } from "@/hooks/use-toast";
-import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, loadInitialData as reloadMockData } from '@/lib/mock-data';
+import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, loadInitialData as reloadMockData, TEMPLATE_STORAGE_KEY } from '@/lib/mock-data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,8 +62,9 @@ export default function AdminSettingsPage() {
     setMaintenanceMode(checked);
     if (typeof window !== 'undefined') {
       localStorage.setItem(MAINTENANCE_MODE_KEY, String(checked));
-      // Optionally, dispatch an event if other parts of the app need to react immediately
-      // window.dispatchEvent(new CustomEvent('maintenanceModeChanged', { detail: checked }));
+      // Dispatch a custom event so other parts of the app can react immediately
+      window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
+      console.log("AdminSettingsPage: Dispatched maintenanceModeUpdated event", checked);
     }
   };
 
@@ -71,7 +73,8 @@ export default function AdminSettingsPage() {
         localStorage.setItem(SESSION_TIMEOUT_KEY, sessionTimeout.toString());
         localStorage.setItem(MAINTENANCE_MODE_KEY, String(maintenanceMode)); // Ensure maintenance mode is also saved here
         window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
-        // window.dispatchEvent(new CustomEvent('maintenanceModeChanged', { detail: maintenanceMode }));
+        window.dispatchEvent(new CustomEvent('maintenanceModeUpdated')); // Dispatch event on save too
+        console.log("AdminSettingsPage: Dispatched maintenanceModeUpdated event on save", maintenanceMode);
     }
     toast({ title: "Ayarlar Kaydedildi", description: "Genel ayarlar başarıyla güncellendi." });
     console.log("Genel ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout });
@@ -89,6 +92,7 @@ export default function AdminSettingsPage() {
         users: USER_STORAGE_KEY,
         roles: ROLE_STORAGE_KEY,
         pages: PAGE_STORAGE_KEY,
+        templates: TEMPLATE_STORAGE_KEY,
       };
 
       for (const [key, storageKey] of Object.entries(dataKeys)) {
@@ -149,7 +153,7 @@ export default function AdminSettingsPage() {
         const content = e.target?.result as string;
         const importedData = JSON.parse(content);
 
-        const requiredKeys = ['articles', 'notes', 'categories', 'users', 'roles', 'pages'];
+        const requiredKeys = ['articles', 'notes', 'categories', 'users', 'roles', 'pages', 'templates'];
         const missingKeys = requiredKeys.filter(key => !(key in importedData));
 
         if (missingKeys.length > 0) {
@@ -164,6 +168,8 @@ export default function AdminSettingsPage() {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(importedData.users || []));
         localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(importedData.roles || []));
         localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(importedData.pages || []));
+        localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(importedData.templates || []));
+
 
         reloadMockData(); 
 
