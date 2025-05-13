@@ -120,6 +120,7 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
+    // { href: "/categories/biyoloji", label: "Biyoloji" }, // Removed Biyoloji from main nav
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -145,35 +146,17 @@ const Header = () => {
           >
             <defs>
               <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(175 75% 45%)"> {/* Teal */}
-                  <animate attributeName="stop-color" values="hsl(175 75% 45%);hsl(120 60% 50%);hsl(175 75% 45%)" dur="6s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor="cyan">
+                  <animate attributeName="stop-color" values="cyan;magenta;lime;green;blue;cyan" dur="8s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="hsl(120 60% 50%)"> {/* Green */}
-                  <animate attributeName="stop-color" values="hsl(120 60% 50%);hsl(175 75% 45%);hsl(120 60% 50%)" dur="6s" repeatCount="indefinite" />
+                <stop offset="100%" stopColor="lime">
+                  <animate attributeName="stop-color" values="lime;green;blue;cyan;magenta;lime" dur="8s" repeatCount="indefinite" />
                 </stop>
               </linearGradient>
             </defs>
-            <g transform="translate(50,50) scale(0.8) rotate(15)"> {/* Slightly rotate for dynamic feel */}
-              {/* Strand 1 */}
+            <g transform="translate(50,50) scale(0.8) rotate(15)">
               <path
                 d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
-                stroke="url(#dnaGradientHeader)"
-                strokeWidth="5" 
-                fill="none"
-                strokeLinecap="round"
-              >
-                <animateTransform
-                  attributeName="transform"
-                  type="rotate"
-                  from="0 0 0"
-                  to="360 0 0"
-                  dur="10s" 
-                  repeatCount="indefinite"
-                />
-              </path>
-              {/* Strand 2 */}
-              <path
-                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40" // Mirrored Q values
                 stroke="url(#dnaGradientHeader)"
                 strokeWidth="5"
                 fill="none"
@@ -187,14 +170,31 @@ const Header = () => {
                   dur="10s"
                   repeatCount="indefinite"
                 />
+                <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" />
               </path>
-              {/* Bases */}
+              <path
+                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
+                stroke="url(#dnaGradientHeader)"
+                strokeWidth="5"
+                fill="none"
+                strokeLinecap="round"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 0 0"
+                  to="360 0 0"
+                  dur="10s"
+                  repeatCount="indefinite"
+                />
+                 <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" begin="0.5s" />
+              </path>
               {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
-                const angle = (i * Math.PI) / 3.5; // Adjust for dynamic connection points
-                const amplitude = 10 + Math.sin(Date.now() / 1000 + i) * 2; // Pulsing amplitude
+                const angle = (i * Math.PI) / 3.5; 
+                const amplitude = 10 + Math.sin(Date.now() / 1000 + i) * 2; 
                 const x1 = Math.sin(angle) * amplitude;
-                const x2 = Math.sin(angle + Math.PI) * amplitude; 
+                const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
                   <line
                     key={`header-dna-base-${i}`}
@@ -207,10 +207,10 @@ const Header = () => {
                   >
                     <animate
                       attributeName="stroke"
-                      values="hsl(175 75% 55%);hsl(120 60% 60%);hsl(175 75% 55%)" // Brighter, cycling colors for bases
-                      dur={`${3 + Math.random() * 2}s`} // Faster, varied animation
+                      values="yellow;green;magenta;cyan;blue;yellow"
+                      dur="7s"
                       repeatCount="indefinite"
-                      begin={`${i * 0.15}s`}
+                      begin={`${i * 0.2}s`}
                     />
                      <animateTransform
                       attributeName="transform"
@@ -245,7 +245,7 @@ const Header = () => {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-               <div className="relative w-full max-w-[160px] sm:max-w-[180px]">
+               <div className="relative w-full max-w-[140px] sm:max-w-[160px]"> {/* Reduced search bar width */}
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
