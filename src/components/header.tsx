@@ -137,8 +137,8 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex flex-col items-center group"> {/* Changed to flex-col and items-center */}
-          <div className="flex items-center space-x-2"> {/* Logo and BiyoHox text */}
+        <Link href="/" className="mr-6 flex flex-col items-center group">
+          <div className="flex items-center space-x-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 100 100"
@@ -192,7 +192,14 @@ const Header = () => {
                 {[...Array(7)].map((_, i) => {
                   const yPos = -35 + i * (70 / 6);
                   const angle = (i * Math.PI) / 3.5;
-                  const amplitude = 10 + Math.sin(Date.now() / 1000 + i) * 2;
+                  // Corrected amplitude logic
+                  const baseAmplitude = 10;
+                  let dynamicAmplitude = 0;
+                  if (typeof window !== 'undefined') { // Check if window is defined for Date.now()
+                     dynamicAmplitude = Math.sin(Date.now() / 1000 + i) * 2;
+                  }
+                  const amplitude = baseAmplitude + dynamicAmplitude;
+
                   const x1 = Math.sin(angle) * amplitude;
                   const x2 = Math.sin(angle + Math.PI) * amplitude;
                   return (
@@ -207,7 +214,7 @@ const Header = () => {
                     >
                       <animate
                         attributeName="stroke"
-                        values="hsl(180,100%,50%);hsl(300,100%,50%);hsl(120,100%,50%);hsl(120,100%,25%);hsl(240,100%,50%);hsl(180,100%,50%)" // Explicit HSL values for vibrancy
+                        values="hsl(180,100%,50%);hsl(300,100%,50%);hsl(120,100%,50%);hsl(120,100%,25%);hsl(240,100%,50%);hsl(180,100%,50%)"
                         dur="7s"
                         repeatCount="indefinite"
                         begin={`${i * 0.2}s`}
@@ -227,7 +234,7 @@ const Header = () => {
             </svg>
             <span className="font-bold text-lg group-hover:text-primary transition-colors">BiyoHox</span>
           </div>
-          <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mt-0.5">
+          <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mt-0.5 text-center">
             Öğrenmenin DNA’sı
           </span>
         </Link>
