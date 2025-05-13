@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -267,28 +266,57 @@ export default function NewArticlePage() {
             canonicalUrl: canonicalUrl || "",
         };
         
-        console.log(`[NewArticlePage/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
+        console.log(`[NewArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[NewArticlePage/handlePreview] Preview Data:`, previewData);
+
         try {
-            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            const previewUrl = `/admin/preview`;
-            
+            const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                 console.error("[NewArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
+                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                 return;
+            }
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[NewArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+
+
+            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            if (!storedData || storedData === 'null' || storedData === 'undefined') {
+                 console.error(`[NewArticlePage/handlePreview] Verification FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
+                 throw new Error("Verification failed: No data found in localStorage.");
+            }
+            const parsed = JSON.parse(storedData);
+            if (!parsed || parsed.previewType !== 'article') {
+                console.error(`[NewArticlePage/handlePreview] Verification FAILED: Invalid data structure or previewType. Parsed:`, parsed);
+                throw new Error("Verification failed: Invalid data structure.");
+            }
+            console.log("[NewArticlePage/handlePreview] Verification SUCCESS");
+
+            const previewUrl = `/admin/preview`; // Single, fixed preview URL
+            console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
+
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
-                     toast({
-                         variant: "destructive",
-                         title: "Önizleme Penceresi Açılamadı",
-                         description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                         duration: 10000,
-                     });
+                    console.error("[NewArticlePage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
+                    toast({
+                        variant: "destructive",
+                        title: "Önizleme Penceresi Açılamadı",
+                        description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
+                        duration: 10000,
+                    });
+                } else {
+                    console.log("[NewArticlePage/handlePreview] Preview window opened successfully.");
                 }
-            }, 250);
+            }, 250); // Increased delay slightly
 
         } catch (error: any) {
+            console.error("[NewArticlePage/handlePreview] Error during preview process:", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi: ${error.message}`,
+                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
                 duration: 10000,
             });
         }
@@ -628,4 +656,3 @@ export default function NewArticlePage() {
              />
         </div>
     );
-}
