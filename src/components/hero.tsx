@@ -82,7 +82,7 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
 
   if (shouldShowAd) {
       return (
-           <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/80 to-teal-900/70 h-[65vh] md:h-[70vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-2xl border border-primary/20">
+           <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/80 to-teal-900/70 h-[50vh] md:h-[55vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-2xl border border-primary/20"> {/* Reduced height */}
               <AnimatedDnaBackground />
               <div className="container relative z-10 px-4 text-white">
                  <motion.div
@@ -139,7 +139,7 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner">
+    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[55vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner"> {/* Reduced height */}
       <AnimatePresence initial={false} mode="wait">
         <motion.div
           key={`bg-${currentArticle.id}`}
