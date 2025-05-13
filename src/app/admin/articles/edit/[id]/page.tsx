@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -9,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil } from '@/lib/mock-data';
+import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil, ARTICLE_STORAGE_KEY } from '@/lib/mock-data';
 import { useDebouncedCallback } from 'use-debounce';
 
 import {
@@ -40,6 +39,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers, FileText } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePermissions } from "@/hooks/usePermissions";
+
 
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
@@ -49,7 +50,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data';
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = React.use(params).id as string;
+    const articleId = params.id as string;
 
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -57,6 +58,7 @@ export default function EditArticlePage() {
     const [error, setError] = React.useState<string | null>(null);
     const [templateApplied, setTemplateApplied] = React.useState(false);
     const [categories, setCategories] = React.useState<Category[]>([]);
+    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
     const [title, setTitle] = React.useState("");
     const [excerpt, setExcerpt] = React.useState("");
@@ -78,6 +80,13 @@ export default function EditArticlePage() {
 
     React.useEffect(() => {
         let isMounted = true;
+
+        if (!permissionsLoading && !hasPermission('Makale Düzenleme')) {
+            toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Makale düzenleme yetkiniz yok." });
+            router.push('/admin/articles');
+            return;
+        }
+
 
         const fetchData = async () => {
             if (!articleId) {
@@ -118,7 +127,7 @@ export default function EditArticlePage() {
                          setSlug(articleResult.slug);
                          setKeywords(articleResult.keywords || []);
                          setCanonicalUrl(articleResult.canonicalUrl || "");
-                         setTemplateApplied(false);
+                         setTemplateApplied(false); // Reset template applied state on load
                      } else {
                          setError("Makale bulunamadı.");
                      }
@@ -135,18 +144,21 @@ export default function EditArticlePage() {
                  }
              }
         };
+        if (!permissionsLoading && hasPermission('Makale Düzenleme')) {
+            fetchData();
+        }
 
-        fetchData();
 
         return () => { isMounted = false };
-    }, [articleId]);
+    }, [articleId, permissionsLoading, hasPermission, router]);
 
      const debouncedSetSlug = useDebouncedCallback((newTitle: string, originalTitle: string, currentSlug: string) => {
          if (newTitle && newTitle !== originalTitle) {
+             // Only auto-generate slug if it hasn't been manually edited or was based on the old title
              if (!currentSlug || currentSlug === generateSlugUtil(originalTitle)) {
                  setSlug(generateSlugUtil(newTitle));
              }
-         } else if (newTitle && !currentSlug) {
+         } else if (newTitle && !currentSlug) { // If slug is empty, generate it
             setSlug(generateSlugUtil(newTitle));
          }
      }, 500);
@@ -154,7 +166,7 @@ export default function EditArticlePage() {
      React.useEffect(() => {
          if (articleData) {
              debouncedSetSlug(title, articleData.title, slug);
-         } else if (title && !slug) {
+         } else if (title && !slug) { // For new articles, or if slug somehow got cleared
             setSlug(generateSlugUtil(title));
          }
      }, [title, articleData, slug, debouncedSetSlug]);
@@ -262,7 +274,7 @@ export default function EditArticlePage() {
              const updatedArticle = await updateArticle(articleId, currentData);
 
              if (updatedArticle) {
-                 setArticleData(updatedArticle);
+                 setArticleData(updatedArticle); // Update local state with the response from mock-data
                  setTitle(updatedArticle.title);
                  setExcerpt(updatedArticle.excerpt || '');
                  setCategory(updatedArticle.category);
@@ -292,6 +304,10 @@ export default function EditArticlePage() {
     };
 
      const handleDelete = async () => {
+        if (!hasPermission('Makale Silme')) {
+            toast({ variant: "destructive", title: "Yetki Yok", description: "Makale silme yetkiniz bulunmamaktadır." });
+            return;
+        }
         if (window.confirm(`"${title}" başlıklı makaleyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
             setSaving(true);
             try {
@@ -345,21 +361,21 @@ export default function EditArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: articleId || 'preview_edit_article',
+            id: articleId || 'preview_edit_article', // Use existing ID or a placeholder
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
-            status: status,
+            status: status, // Send current status for visibility rules in preview
             isFeatured: isFeatured,
             isHero: isHero,
-            authorId: articleData?.authorId || 'admin001',
+            authorId: articleData?.authorId || 'admin001', // Use existing or default
             createdAt: articleData?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            slug: slug || generateSlugUtil(title),
+            slug: slug || generateSlugUtil(title), // Ensure slug exists
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
@@ -367,19 +383,19 @@ export default function EditArticlePage() {
         console.log(`[EditArticlePage/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            const previewUrl = `/admin/preview`;
+            const previewUrl = `/admin/preview`; // Ensure this matches the preview page route
             
-            setTimeout(() => {
+            setTimeout(() => { // Added small delay to ensure localStorage write completes
                  const newWindow = window.open(previewUrl, '_blank');
                  if (!newWindow) {
                       toast({
                           variant: "destructive",
                           title: "Önizleme Penceresi Açılamadı",
                           description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                          duration: 10000,
+                          duration: 10000, // Longer duration for important messages
                       });
                  }
-            }, 250);
+            }, 250); // 150ms delay
 
         } catch (error: any) {
             toast({
@@ -427,7 +443,7 @@ export default function EditArticlePage() {
     };
 
 
-    if (loading) {
+    if (permissionsLoading || loading) {
         return (
              <div className="flex flex-col h-full">
                  <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
@@ -477,7 +493,7 @@ export default function EditArticlePage() {
                     {articleData ? `Makaleyi Düzenle` : 'Yeni Makale'}
                 </h1>
                 <div className="flex items-center gap-2">
-                     {articleData && (
+                     {articleData && hasPermission('Makale Silme') && (
                         <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
@@ -639,7 +655,7 @@ export default function EditArticlePage() {
                                              <Input
                                                  id="slug"
                                                  value={slug}
-                                                 onChange={(e) => setSlug(generateSlug(e.target.value))}
+                                                 onChange={(e) => setSlug(generateSlugUtil(e.target.value))}
                                                  placeholder="makale-basligi-url"
                                                  required
                                              />
@@ -802,4 +818,3 @@ export default function EditArticlePage() {
               />
          </div>
     );
-}
