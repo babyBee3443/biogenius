@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -119,8 +120,6 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
-    // { href: "/categories/teknoloji", label: "Teknoloji" }, // Teknoloji kaldırıldı
-    { href: "/categories/biyoloji", label: "Biyoloji" },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -232,7 +231,7 @@ const Header = () => {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-               <div className="relative w-full max-w-[180px] sm:max-w-[200px]"> {/* Adjusted max-width */}
+               <div className="relative w-full max-w-[160px] sm:max-w-[180px]"> {/* Adjusted max-width for more space */}
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
@@ -293,7 +292,7 @@ const Header = () => {
           {isMounted && isAdminOrEditor && (
              <Button variant="ghost" size="sm" asChild className="ml-1 shrink-0">
                 <Link href="/admin" passHref legacyBehavior>
-                  <a className="flex items-center"> {/* Explicit <a> tag */}
+                  <a className="flex items-center">
                     <ShieldCheck className="mr-1.5 h-4 w-4" />
                     <span className="hidden sm:inline">Admin Paneli</span>
                     <span className="sm:hidden">Admin</span>

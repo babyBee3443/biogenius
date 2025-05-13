@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -115,7 +116,7 @@ function createMarkup(htmlContent: string) {
 
 export default function ArticlePage() {
   const params = useParams();
-  const articleId = params?.id as string; 
+  const articleId = React.use(params).id as string; 
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
@@ -159,6 +160,7 @@ export default function ArticlePage() {
                     .filter(a =>
                         (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) &&
                         a.category === fetchedArticle.category &&
+                        a.category !== 'Teknoloji' && // Exclude Teknoloji category
                         a.id !== articleId
                     )
                     .slice(0, 2);

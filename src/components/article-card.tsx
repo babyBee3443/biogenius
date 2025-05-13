@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -16,9 +17,7 @@ interface ArticleCardProps {
 }
 
 const ArticleCardComponent: React.FC<ArticleCardProps> = ({ article, priority = false, imageLoading, imageHint = "article abstract" }) => {
-  const categoryClass = article.category === 'Teknoloji'
-    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+  const categoryClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
 
   return (
     <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out flex flex-col group h-full">

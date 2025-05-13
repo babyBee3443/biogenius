@@ -126,10 +126,10 @@ export default function Home() {
       let visibleArticles;
       if (currentUserRole === 'Admin' || currentUserRole === 'Editor') {
         visibleArticles = allArticles.filter(article =>
-          article.status === 'Yayınlandı' || article.status === 'Hazır'
+          (article.status === 'Yayınlandı' || article.status === 'Hazır') && article.category === 'Biyoloji'
         );
       } else {
-        visibleArticles = allArticles.filter(article => article.status === 'Yayınlandı');
+        visibleArticles = allArticles.filter(article => article.status === 'Yayınlandı' && article.category === 'Biyoloji');
       }
       setFilteredArticlesForDisplay(visibleArticles);
     }
