@@ -10,14 +10,14 @@ import dynamic from 'next/dynamic';
 
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
-  loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
+  loading: () => <Skeleton className="h-[50vh] md:h-[55vh] w-full mb-12 rounded-lg" />,
   ssr: false
 });
 
 const FeaturedArticlesSection = dynamic(() => import('@/components/featured-articles-section'), {
   loading: () => (
     <section className="w-full py-8">
-      <Skeleton className="h-8 w-48 mb-8" />
+      <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <Skeleton className="h-72 w-full rounded-lg" />
         <Skeleton className="h-72 w-full rounded-lg" />
@@ -31,7 +31,7 @@ const FeaturedArticlesSection = dynamic(() => import('@/components/featured-arti
 const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser-section'), {
   loading: () => (
     <section className="w-full py-8">
-      <Skeleton className="h-8 w-40 mb-8" />
+      <Skeleton className="h-8 w-40 mb-8 rounded-lg" />
       <div className="grid grid-cols-1 md:grid-cols-1 gap-8"> {/* Ensure single column for biyoloji only */}
         <Skeleton className="h-40 w-full rounded-lg" />
       </div>
@@ -40,10 +40,31 @@ const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser
   ssr: false
 });
 
+const RecommendedContentSection = dynamic(() => import('@/components/recommended-content-section'), {
+  loading: () => (
+    <section className="w-full py-12">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+        <div>
+          <Skeleton className="h-10 w-72 mb-2 rounded-lg" />
+          <Skeleton className="h-5 w-96 rounded-lg" />
+        </div>
+        <Skeleton className="h-10 w-36 mt-4 md:mt-0 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <Skeleton className="h-64 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
+    </section>
+  ),
+  ssr: false
+});
+
+
 const RecentArticlesSection = dynamic(() => import('@/components/recent-articles-section'), {
   loading: () => (
     <section className="w-full py-8">
-      <Skeleton className="h-8 w-56 mb-8" />
+      <Skeleton className="h-8 w-56 mb-8 rounded-lg" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <Skeleton className="h-72 w-full rounded-lg" />
         <Skeleton className="h-72 w-full rounded-lg" />
@@ -85,16 +106,13 @@ const WelcomeScreen = () => {
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center text-center py-8 px-4 overflow-hidden mb-8"> {/* Reduced mb from 16 to 8 */}
-      {/* Removed dark background classes, rounded-lg, shadow-2xl, border */}
-      {/* Removed background SVG and particle animations as they were designed for dark background */}
-
+    <section className="relative flex flex-col items-center justify-center text-center py-8 px-4 overflow-hidden mb-8">
       <div className="relative z-10">
         <motion.h1
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-primary" // Reduced mb from 6 to 4
+          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-primary"
         >
           {title}
         </motion.h1>
@@ -103,7 +121,7 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mt-2" // Added mt-2 for spacing
+          className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mt-2"
         >
           {subtitleParts.map((part, partIndex) => (
             <span key={`subpart-${partIndex}`} className={part.colorClass}>
@@ -113,7 +131,7 @@ const WelcomeScreen = () => {
                   variants={subtitleCharVariants}
                   className="inline-block"
                 >
-                  {char === ' ' ? '\u00A0' : char} {/* Replace space with non-breaking space */}
+                  {char === ' ' ? '\u00A0' : char}
                 </motion.span>
               ))}
             </span>
@@ -196,9 +214,9 @@ export default function Home() {
 
   if (pageIsLoading) {
      return (
-        <div className="space-y-12"> {/* Adjusted from space-y-16 */}
-            <Skeleton className="h-[30vh] w-full mb-8 rounded-lg" /> {/* Adjusted welcome screen skeleton height and mb */}
-            <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-12 rounded-lg" /> {/* Adjusted mb */}
+        <div className="space-y-12">
+            <Skeleton className="h-[30vh] w-full mb-8 rounded-lg" />
+            <Skeleton className="h-[50vh] md:h-[55vh] w-full mb-12 rounded-lg" />
              <section className="w-full py-8">
                 <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -209,8 +227,23 @@ export default function Home() {
             </section>
             <section className="w-full py-8">
                  <Skeleton className="h-8 w-40 mb-8 rounded-lg" />
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-8"> {/* Single column skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
                     <Skeleton className="h-40 w-full rounded-lg" />
+                </div>
+            </section>
+            {/* Skeleton for RecommendedContentSection */}
+            <section className="w-full py-12">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+                    <div>
+                    <Skeleton className="h-10 w-72 mb-2 rounded-lg" />
+                    <Skeleton className="h-5 w-96 rounded-lg" />
+                    </div>
+                    <Skeleton className="h-10 w-36 mt-4 md:mt-0 rounded-lg" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <Skeleton className="h-64 w-full rounded-lg" />
+                    <Skeleton className="h-64 w-full rounded-lg" />
+                    <Skeleton className="h-64 w-full rounded-lg" />
                 </div>
             </section>
             <section className="w-full py-8">
@@ -226,7 +259,7 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-12"> {/* Reduced space-y from 16 to 12 */}
+    <div className="space-y-12">
       <WelcomeScreen />
 
        <Hero articles={heroArticles} />
@@ -243,6 +276,7 @@ export default function Home() {
          <CategoryTeaserSection />
        </section>
 
+      <RecommendedContentSection />
 
       {recentArticles.length > 0 && (
         <section>
@@ -254,5 +288,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
