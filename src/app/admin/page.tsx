@@ -45,9 +45,8 @@ import { toast } from "@/hooks/use-toast";
 // --- Mock Data Fetching Functions ---
 // Simulate fetching total comment count
 async function getTotalCommentCount(): Promise<number> {
-  // await new Promise(resolve => setTimeout(resolve, 250)); // Removed delay
    // Replace with: const snapshot = await getDocs(collection(db, 'comments')); return snapshot.size;
-  return 12; // Mock value
+  return 0; // Mock value
 }
 
 
@@ -65,10 +64,9 @@ export default function AdminDashboard() {
   const [totalComments, setTotalComments] = React.useState(0);
   const [recentArticles, setRecentArticles] = React.useState<ArticleData[]>([]);
   const [activeUsers, setActiveUsers] = React.useState<User[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // Added to pass to usePermissions
+  const [loadingData, setLoadingData] = React.useState(true); // Renamed from 'loading'
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
 
-  // Get current user ID from localStorage to pass to usePermissions
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('currentUser');
@@ -85,11 +83,12 @@ export default function AdminDashboard() {
   }, []);
 
 
-  const { hasPermission, isLoading: permissionsLoading } = usePermissions(currentUserId);
+  const { hasPermission, isLoading: permissionsLoading, error: permissionsError } = usePermissions(currentUserId);
   const router = useRouter();
 
   const fetchData = React.useCallback(async () => {
-    setLoading(true);
+    console.log("[AdminDashboard] Starting data fetch...");
+    setLoadingData(true);
     try {
       const [
         articlesData,
@@ -100,12 +99,12 @@ export default function AdminDashboard() {
         getUsers(),
         getTotalCommentCount(),
       ]);
+      console.log("[AdminDashboard] Data fetched:", { articles: articlesData.length, users: usersData.length, comments: commentsData });
 
       setTotalArticles(articlesData.length);
       setTotalUsers(usersData.length);
       setTotalComments(commentsData);
 
-      // Filter and sort for recent articles
       setRecentArticles(
         articlesData
           .filter(a => a.status === 'Yayınlandı')
@@ -113,7 +112,6 @@ export default function AdminDashboard() {
           .slice(0, 5)
       );
 
-      // Filter and sort for active users (by lastLogin)
       setActiveUsers(
         usersData
           .filter(u => u.lastLogin)
@@ -122,43 +120,44 @@ export default function AdminDashboard() {
       );
 
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("[AdminDashboard] Error fetching dashboard data:", error);
       toast({ variant: "destructive", title: "Veri Yükleme Hatası", description: "Gösterge paneli verileri yüklenemedi."})
     } finally {
-      setLoading(false);
+      setLoadingData(false);
+      console.log("[AdminDashboard] Data fetch complete.");
     }
   }, []);
 
   React.useEffect(() => {
-    // Wait for permissions to load before fetching data or redirecting
+    console.log("[AdminDashboard] Permissions effect: loading=", permissionsLoading, "hasPerm=", hasPermission('Dashboard Görüntüleme'));
     if (permissionsLoading) {
-        return; // Still loading permissions, do nothing yet
+        console.log("[AdminDashboard] Waiting for permissions to load...");
+        return;
     }
 
     if (!hasPermission('Dashboard Görüntüleme')) {
+        console.log("[AdminDashboard] No permission to view dashboard, redirecting to profile.");
         toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Gösterge panelini görüntüleme yetkiniz yok." });
-        router.push('/admin/profile'); // Redirect to a safe page like profile
+        router.push('/admin/profile');
         return;
     }
-    // If permissions are loaded and user has permission, fetch data
+    console.log("[AdminDashboard] User has permission, fetching data.");
     fetchData();
 
   }, [fetchData, permissionsLoading, hasPermission, router]);
 
+  if (permissionsError) {
+    return (
+        <div className="flex flex-col items-center justify-center h-screen">
+            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+            <p className="text-destructive text-lg mb-2">İzin Hatası</p>
+            <p className="text-muted-foreground max-w-md text-center">{permissionsError}</p>
+            <Button onClick={() => router.push('/login')} className="mt-6">Giriş Sayfasına Dön</Button>
+        </div>
+    );
+  }
 
-  // --- Data for placeholders that require real analytics ---
-  // These values would come from an analytics service or more complex backend tracking
-  const pageViews = 0; // Placeholder
-  const uniqueVisitors = 0; // Placeholder
-  const bounceRate = "0.00%"; // Placeholder
-  const conversionRate = "0.00%"; // Placeholder
-  const avgReadTime = "0:00"; // Placeholder
-  const pageLoadTime = "0ms"; // Placeholder
-  const serverResponseTime = "0ms"; // Placeholder
-  const subscriberConversionRate = "0.00%"; // Placeholder
-  const errorRate = "0.00%"; // Placeholder
-
-  if (loading || permissionsLoading) { // Check permissionsLoading as well
+  if (permissionsLoading || loadingData) {
     return (
         <div className="flex justify-center items-center h-screen">
             <Loader2 className="mr-2 h-8 w-8 animate-spin" />
@@ -168,13 +167,25 @@ export default function AdminDashboard() {
   }
 
 
+  // --- Data for placeholders that require real analytics ---
+  const pageViews = 0; 
+  const uniqueVisitors = 0; 
+  const bounceRate = "0.00%"; 
+  const conversionRate = "0.00%"; 
+  const avgReadTime = "0:00"; 
+  const pageLoadTime = "0ms"; 
+  const serverResponseTime = "0ms"; 
+  const subscriberConversionRate = "0.00%"; 
+  const errorRate = "0.00%"; 
+
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">İstatistikler</h1>
         <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchData} disabled={loading}>
+            <Button variant="outline" onClick={fetchData} disabled={loadingData}>
                <RefreshCw className="mr-2 h-4 w-4" /> Verileri Yenile
             </Button>
             <Button variant="outline" asChild>
