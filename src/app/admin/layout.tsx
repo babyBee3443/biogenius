@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import type { Metadata } from 'next';
@@ -43,7 +41,6 @@ export default function AdminLayout({
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
-  const [initialLoadAttempted, setInitialLoadAttempted] = React.useState(false);
   const router = useRouter();
   const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions();
 
@@ -58,7 +55,7 @@ export default function AdminLayout({
           const userData = JSON.parse(storedUserString);
           if (userData && userData.id) {
             setCurrentUserName(userData.name || "Kullanıcı");
-            setCurrentUserAvatar(userData.avatar || "https://picsum.photos/seed/default-avatar/32/32");
+            setCurrentUserAvatar(userData.avatar || `https://picsum.photos/seed/${userData.username || 'avatar'}/32/32`);
             setCurrentUserId(userData.id);
             userFound = true;
             console.log("[AdminLayout] User data loaded from localStorage:", userData.id, userData.name);
@@ -71,7 +68,7 @@ export default function AdminLayout({
           setCurrentUserName("Kullanıcı");
           setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
           setCurrentUserId(null);
-          localStorage.removeItem('currentUser');
+          localStorage.removeItem('currentUser'); // Clear corrupted data
         }
       } else {
         setCurrentUserId(null);
@@ -82,18 +79,14 @@ export default function AdminLayout({
       if (storedTimeout) {
         const timeoutValue = parseInt(storedTimeout, 10);
         setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
-      } else {
-        // setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    setAuthCheckComplete(true);
-    if (!initialLoadAttempted) setInitialLoadAttempted(true);
+    setAuthCheckComplete(true); // Mark auth check as complete
     return userFound;
-  }, [initialLoadAttempted]); // Removed sessionTimeoutMinutes from dependencies as it's set within this callback
+  }, []);
 
 
   React.useEffect(() => {
-    // document.title = 'BiyoHox Admin'; // This might cause issues if run on server
     if (typeof window !== 'undefined') {
         document.title = 'BiyoHox Admin Panel';
     }
@@ -102,14 +95,14 @@ export default function AdminLayout({
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setAuthCheckComplete(false);
+            setAuthCheckComplete(false); // Re-trigger auth check
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
-        setAuthCheckComplete(false);
+        setAuthCheckComplete(false); // Re-trigger auth check
         loadUserDataAndSettings();
     };
 
@@ -131,16 +124,17 @@ export default function AdminLayout({
 
 
   React.useEffect(() => {
-    if (!initialLoadAttempted || !authCheckComplete || permissionsLoading) {
-      return;
+    // This effect handles redirection based on authentication status
+    if (!authCheckComplete || permissionsLoading) {
+      return; // Wait for auth check and permissions to complete
     }
 
-    if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+    if (!currentUserId && typeof window !== 'undefined' && window.location.pathname !== '/login') {
       console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to login.");
       toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
       router.replace('/login');
     }
-  }, [initialLoadAttempted, authCheckComplete, permissionsLoading, currentUserId, router]);
+  }, [authCheckComplete, permissionsLoading, currentUserId, router]);
 
 
   const handleLogout = React.useCallback(() => {
@@ -150,16 +144,16 @@ export default function AdminLayout({
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null);
-    setAuthCheckComplete(true); // Set to true to allow immediate redirection check
+    setAuthCheckComplete(false); // Re-trigger auth check which will lead to redirection
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/login');
+    // Redirection is now handled by the useEffect above
   }, [router]);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
 
-  if (!initialLoadAttempted || !authCheckComplete || permissionsLoading) {
+  if (!authCheckComplete || permissionsLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -167,18 +161,27 @@ export default function AdminLayout({
       </div>
     );
   }
-
-  if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-     // This logic should ideally be covered by the useEffect above,
-     // but acts as a final check before rendering the layout.
-     // It prevents rendering the admin layout if user is not authenticated.
-     // router.replace('/login') has been moved to useEffect to avoid "setstate in render"
+  
+  // If not authenticated and not already on login page, don't render admin layout
+  // This check might be redundant due to the redirection effect but adds an extra layer of safety
+  if (!currentUserId && typeof window !== 'undefined' && window.location.pathname !== '/login') {
      return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Yönlendiriliyor...</p>
+            <p className="text-muted-foreground">Giriş sayfasına yönlendiriliyor...</p>
         </div>
      );
+  }
+
+  // If on login page and authenticated, redirect to admin dashboard
+  if (currentUserId && typeof window !== 'undefined' && window.location.pathname === '/login') {
+    router.replace('/admin');
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Yönlendiriliyor...</p>
+      </div>
+    );
   }
 
 
@@ -422,7 +425,7 @@ export default function AdminLayout({
                    <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Profil">
                         <Link href={currentUserId ? `/admin/profile` : '/login'}>
-                          <span className="flex items-center gap-2"> {/* Wrapper span */}
+                          <span className="flex items-center gap-2">
                             <Avatar className="size-5">
                               <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
                               <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
@@ -454,8 +457,8 @@ export default function AdminLayout({
                 </Link>
             </Button>
             <ThemeToggle />
-            <Link href="/admin/profile" passHref>
-                <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
+            <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
+                 <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">
                     <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
                     <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
@@ -471,4 +474,3 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
-
