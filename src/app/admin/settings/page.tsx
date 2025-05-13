@@ -11,9 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle } from "lucide-react"; // Added UploadCloud, AlertTriangle
+import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon } from "lucide-react"; // Added SettingsIcon
 import { toast } from "@/hooks/use-toast";
-import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, loadInitialData as reloadMockData } from '@/lib/mock-data'; // Import storage keys and reloadMockData
+import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, loadInitialData as reloadMockData } from '@/lib/mock-data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +23,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"; // Import AlertDialog components
+} from "@/components/ui/alert-dialog";
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
+const MAINTENANCE_MODE_KEY = 'maintenanceModeActive'; // Key for localStorage
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
 
 export default function AdminSettingsPage() {
@@ -42,8 +43,6 @@ export default function AdminSettingsPage() {
 
   const importFileInputRef = React.useRef<HTMLInputElement>(null);
 
-
-  // Load existing settings on mount
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
@@ -53,18 +52,26 @@ export default function AdminSettingsPage() {
           setSessionTimeout(timeoutValue);
         }
       }
-      // TODO: Load other settings from localStorage or a settings service if they were saved
+      const storedMaintenanceMode = localStorage.getItem(MAINTENANCE_MODE_KEY);
+      setMaintenanceMode(storedMaintenanceMode === 'true');
     }
   }, []);
 
+  const handleMaintenanceModeChange = (checked: boolean) => {
+    setMaintenanceMode(checked);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(MAINTENANCE_MODE_KEY, String(checked));
+      // Optionally, dispatch an event if other parts of the app need to react immediately
+      // window.dispatchEvent(new CustomEvent('maintenanceModeChanged', { detail: checked }));
+    }
+  };
 
   const handleGeneralSettingsSave = () => {
-    // TODO: Implement saving of general settings (siteName, siteDescription, etc.)
-    // For now, we'll focus on saving the session timeout.
     if (typeof window !== 'undefined') {
         localStorage.setItem(SESSION_TIMEOUT_KEY, sessionTimeout.toString());
-        // Dispatch a custom event to notify AdminLayout about the change
+        localStorage.setItem(MAINTENANCE_MODE_KEY, String(maintenanceMode)); // Ensure maintenance mode is also saved here
         window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
+        // window.dispatchEvent(new CustomEvent('maintenanceModeChanged', { detail: maintenanceMode }));
     }
     toast({ title: "Ayarlar Kaydedildi", description: "Genel ayarlar başarıyla güncellendi." });
     console.log("Genel ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout });
@@ -91,10 +98,10 @@ export default function AdminSettingsPage() {
             allData[key] = JSON.parse(storedItem);
           } catch (e) {
             console.warn(`Could not parse ${key} from localStorage:`, e);
-            allData[key] = []; // Default to empty array if parsing fails
+            allData[key] = [];
           }
         } else {
-          allData[key] = []; // Default to empty array if not found
+          allData[key] = [];
         }
       }
 
@@ -127,7 +134,7 @@ export default function AdminSettingsPage() {
         return;
       }
       setFileToImport(file);
-      setIsImportConfirmOpen(true); // Open confirmation dialog
+      setIsImportConfirmOpen(true);
     }
   };
 
@@ -142,7 +149,6 @@ export default function AdminSettingsPage() {
         const content = e.target?.result as string;
         const importedData = JSON.parse(content);
 
-        // Basic validation for expected keys
         const requiredKeys = ['articles', 'notes', 'categories', 'users', 'roles', 'pages'];
         const missingKeys = requiredKeys.filter(key => !(key in importedData));
 
@@ -152,7 +158,6 @@ export default function AdminSettingsPage() {
           return;
         }
         
-        // Store imported data into localStorage
         localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(importedData.articles || []));
         localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(importedData.notes || []));
         localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(importedData.categories || []));
@@ -160,12 +165,9 @@ export default function AdminSettingsPage() {
         localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(importedData.roles || []));
         localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(importedData.pages || []));
 
-        // Reload mock data from updated localStorage
         reloadMockData(); 
 
         toast({ title: "Veri İçe Aktarıldı", description: "Veriler başarıyla içe aktarıldı. Değişikliklerin yansıması için sayfa yenilenebilir." });
-        // Optionally, force a reload or redirect to refresh application state
-        // window.location.reload(); 
       } catch (error) {
         console.error("Error importing data:", error);
         toast({ variant: "destructive", title: "İçe Aktarma Hatası", description: "Veriler içe aktarılırken bir sorun oluştu. Dosya formatını kontrol edin." });
@@ -173,7 +175,7 @@ export default function AdminSettingsPage() {
         setImporting(false);
         setFileToImport(null);
         if (importFileInputRef.current) {
-          importFileInputRef.current.value = ""; // Reset file input
+          importFileInputRef.current.value = "";
         }
       }
     };
@@ -188,27 +190,34 @@ export default function AdminSettingsPage() {
   return (
     <>
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Ayarlar</h1>
-      <p className="text-muted-foreground">Site yapılandırmasını ve tercihlerini yönetin.</p>
+        <div className="flex items-center justify-between">
+             <div>
+                <h1 className="text-3xl font-bold flex items-center gap-2">
+                    <SettingsIcon className="h-7 w-7 text-primary"/> Ayarlar
+                </h1>
+                <p className="text-muted-foreground">Site yapılandırmasını ve tercihlerini yönetin.</p>
+             </div>
+             {/* Add any top-level action buttons here if needed */}
+        </div>
+
 
         <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6"> {/* Adjusted grid for more tabs */}
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6">
                 <TabsTrigger value="general">Genel</TabsTrigger>
-                <TabsTrigger value="navigation">Navigasyon</TabsTrigger> {/* Changed Appearance to Navigation */}
+                <TabsTrigger value="navigation">Navigasyon</TabsTrigger>
                 <TabsTrigger value="appearance">Görünüm</TabsTrigger>
                 <TabsTrigger value="security">Güvenlik</TabsTrigger>
                 <TabsTrigger value="integrations">Entegrasyonlar</TabsTrigger>
                 <TabsTrigger value="email">E-posta</TabsTrigger>
             </TabsList>
 
-            {/* General Settings Tab */}
             <TabsContent value="general">
                  <Card>
                     <CardHeader>
                         <CardTitle>Genel Ayarlar</CardTitle>
                         <CardDescription>Site temel bilgilerini ve durumunu yapılandırın.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6"> {/* Increased spacing */}
+                    <CardContent className="space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="site-name">Site Adı</Label>
                             <Input id="site-name" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
@@ -226,12 +235,11 @@ export default function AdminSettingsPage() {
                             <Input id="admin-email" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
                             <p className="text-xs text-muted-foreground">Önemli sistem bildirimleri bu adrese gönderilir.</p>
                          </div>
-                        <div className="flex items-center space-x-3"> {/* Adjusted spacing */}
-                            <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
+                        <div className="flex items-center space-x-3">
+                            <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={handleMaintenanceModeChange} />
                             <Label htmlFor="maintenance-mode" className="cursor-pointer">Bakım Modu Aktif</Label>
                         </div>
                         <Separator />
-                        {/* Session Timeout Setting */}
                         <div className="space-y-2">
                             <Label htmlFor="session-timeout" className="flex items-center gap-2">
                                 <Timer className="h-4 w-4"/>
@@ -241,7 +249,7 @@ export default function AdminSettingsPage() {
                                 id="session-timeout"
                                 type="number"
                                 min="1"
-                                max="120" // Example max
+                                max="120"
                                 value={sessionTimeout}
                                 onChange={(e) => setSessionTimeout(Math.max(1, parseInt(e.target.value, 10) || DEFAULT_SESSION_TIMEOUT_MINUTES))}
                             />
@@ -250,7 +258,6 @@ export default function AdminSettingsPage() {
                             </p>
                         </div>
                         <Separator />
-                        {/* Data Management Section */}
                         <div>
                             <h3 className="text-md font-medium mb-2">Veri Yönetimi</h3>
                             <p className="text-sm text-muted-foreground mb-3">
@@ -288,7 +295,6 @@ export default function AdminSettingsPage() {
                 </Card>
             </TabsContent>
 
-            {/* Navigation Settings Tab Placeholder */}
             <TabsContent value="navigation">
                 <Card>
                     <CardHeader>
@@ -307,8 +313,6 @@ export default function AdminSettingsPage() {
                  </Card>
              </TabsContent>
 
-
-            {/* Appearance Settings Tab */}
             <TabsContent value="appearance">
                  <Card>
                     <CardHeader>
@@ -319,20 +323,17 @@ export default function AdminSettingsPage() {
                         <CardDescription>Sitenin görünümünü ve kullanıcı arayüzü tercihlerini yönetin.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                         {/* Theme settings handled by ThemeToggle, mention it here */}
                         <div>
                             <Label>Site Teması</Label>
                             <p className="text-sm text-muted-foreground">Tema (Açık/Koyu/Sistem) sağ üst köşedeki düğme ile değiştirilebilir.</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="logo-upload">Site Logosu</Label>
-                            {/* TODO: Add actual file upload component */}
                             <Input id="logo-upload" type="file" />
                              <p className="text-xs text-muted-foreground">Önerilen boyut: 200x50 piksel. SVG, PNG, JPG formatları desteklenir.</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="favicon-upload">Site Favicon</Label>
-                             {/* TODO: Add actual file upload component */}
                             <Input id="favicon-upload" type="file" accept=".ico, .png, .svg"/>
                              <p className="text-xs text-muted-foreground">.ico, .png veya .svg formatında kare bir görsel yükleyin.</p>
                         </div>
@@ -349,7 +350,6 @@ export default function AdminSettingsPage() {
                  </Card>
             </TabsContent>
 
-            {/* Security Settings Tab */}
             <TabsContent value="security">
                  <Card>
                     <CardHeader>
@@ -374,7 +374,6 @@ export default function AdminSettingsPage() {
                             <Textarea id="allowed-ips" placeholder="Her IP adresini yeni bir satıra girin (örneğin, 192.168.1.1)" />
                             <p className="text-xs text-muted-foreground">Boş bırakılırsa tüm IP adreslerine izin verilir. Sadece admin paneline erişimi kısıtlar.</p>
                         </div>
-                        {/* Add more security settings: Login attempt limits, Captcha config etc. */}
                          <Separator />
                          <div className="flex justify-end">
                             <Button>Güvenlik Ayarlarını Kaydet</Button>
@@ -383,7 +382,6 @@ export default function AdminSettingsPage() {
                  </Card>
             </TabsContent>
 
-             {/* Integrations Settings Tab */}
             <TabsContent value="integrations">
                 <Card>
                     <CardHeader>
@@ -402,9 +400,7 @@ export default function AdminSettingsPage() {
                         <div className="space-y-2">
                             <Label htmlFor="google-maps-key">Google Maps API Anahtarı</Label>
                             <Input id="google-maps-key" type="password" placeholder="API Anahtarını buraya girin" />
-                            {/* Add link to relevant Google Cloud console */}
                         </div>
-                         {/* Add more integrations: Mailchimp API Key, Social Media App IDs etc. */}
                         <Separator />
                         <div className="flex justify-end">
                             <Button>Entegrasyonları Kaydet</Button>
@@ -413,7 +409,6 @@ export default function AdminSettingsPage() {
                 </Card>
             </TabsContent>
 
-             {/* Email Settings Tab */}
             <TabsContent value="email">
                  <Card>
                     <CardHeader>
@@ -443,11 +438,9 @@ export default function AdminSettingsPage() {
                                     <SelectItem value="smtp">SMTP</SelectItem>
                                     <SelectItem value="sendmail">Sendmail</SelectItem>
                                     <SelectItem value="log">Log (Test için)</SelectItem>
-                                    {/* Add other drivers like SES, Mailgun etc. */}
                                 </SelectContent>
                             </Select>
                          </div>
-                         {/* Conditionally show SMTP settings based on driver selection */}
                          <Card className="bg-muted/50 p-4 space-y-4">
                              <h4 className="font-medium text-sm">SMTP Ayarları</h4>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -463,7 +456,7 @@ export default function AdminSettingsPage() {
                              <div className="space-y-2">
                                     <Label htmlFor="smtp-username">SMTP Kullanıcı Adı</Label>
                                     <Input id="smtp-username" />
-                                </div>
+                             </div>
                              <div className="space-y-2">
                                     <Label htmlFor="smtp-password">SMTP Şifresi</Label>
                                     <Input id="smtp-password" type="password" />
@@ -482,7 +475,6 @@ export default function AdminSettingsPage() {
                                     </Select>
                                 </div>
                          </Card>
-                         {/* TODO: Add Email Template Management Link/Section */}
                         <Separator />
                         <div className="flex justify-between items-center">
                              <Button variant="outline">Test E-postası Gönder</Button>
@@ -515,4 +507,3 @@ export default function AdminSettingsPage() {
     </>
   );
 }
-
