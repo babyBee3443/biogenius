@@ -1,11 +1,10 @@
-
 "use client";
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { ArrowRight, Pause, Play, BadgePercent } from 'lucide-react';
+import { ArrowRight, Pause, Play, Sparkles, Atom, Brain, Dna } from 'lucide-react'; // Added new icons
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import type { ArticleData } from '@/lib/mock-data';
@@ -13,6 +12,43 @@ import type { ArticleData } from '@/lib/mock-data';
 interface HeroProps {
   articles: ArticleData[];
 }
+
+const AnimatedDnaBackground = () => (
+  <div className="absolute inset-0 overflow-hidden z-0">
+    {[...Array(15)].map((_, i) => {
+      const Icon = [Atom, Brain, Dna, Sparkles][i % 4];
+      const size = Math.random() * 20 + 10;
+      return (
+        <motion.div
+          key={`particle-${i}`}
+          className="absolute text-primary/10 dark:text-teal-400/10"
+          initial={{
+            x: `${Math.random() * 100}%`,
+            y: `${Math.random() * 100}%`,
+            opacity: 0,
+            scale: Math.random() * 0.5 + 0.5,
+          }}
+          animate={{
+            x: `calc(${Math.random() * 100}% - ${size / 2}px)`,
+            y: `calc(${Math.random() * 100}% - ${size / 2}px)`,
+            opacity: [0, 0.3, 0.5, 0.3, 0],
+            rotate: Math.random() * 360,
+          }}
+          transition={{
+            duration: Math.random() * 10 + 10,
+            repeat: Infinity,
+            repeatType: "loop",
+            ease: "linear",
+            delay: Math.random() * 5,
+          }}
+        >
+          <Icon style={{ width: size, height: size }} strokeWidth={0.5 + Math.random()} />
+        </motion.div>
+      );
+    })}
+  </div>
+);
+
 
 const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -38,7 +74,7 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
     if (displayArticles.length > 0 && currentIndex >= displayArticles.length) {
       setCurrentIndex(0);
     } else if (displayArticles.length === 0) {
-      setCurrentIndex(0);
+      setCurrentIndex(0); // Reset index if no articles to display
     }
   }, [displayArticles, currentIndex]);
 
@@ -46,18 +82,32 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
 
   if (shouldShowAd) {
       return (
-           <section className="relative overflow-hidden bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner border border-primary/10">
-              <div className="container relative z-10 px-4">
+           <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/80 to-teal-900/70 h-[65vh] md:h-[70vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-2xl border border-primary/20">
+              <AnimatedDnaBackground />
+              <div className="container relative z-10 px-4 text-white">
                  <motion.div
-                     initial={{ opacity: 0, scale: 0.9 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     transition={{ duration: 0.5, ease: "easeOut" }}
+                     initial={{ opacity: 0, y: 30 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.8, ease: "easeOut" }}
+                     className="space-y-6"
                  >
-                     <BadgePercent className="h-16 w-16 text-primary mb-4 mx-auto" />
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">TeknoBiyo'ya Özel İndirimler!</h2>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-6">Bilim ve teknoloji dünyasını keşfederken avantajlı fırsatları kaçırmayın.</p>
-                    <Button size="lg">
-                        Fırsatları Gör <ArrowRight className="ml-2 h-5 w-5" />
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-shadow-md">
+                      Bilimin ışığında hücrelerden evrene bir yolculuk.
+                    </h1>
+                    <p className="text-lg md:text-xl text-teal-200/90 max-w-2xl mx-auto text-shadow-sm">
+                      Biyohox, biyoloji severler için bir alan – yaşam dünyasını keşfetmek için notlar, quizler ve kısa derslerle dolu.
+                    </p>
+                    <p className="text-base md:text-lg text-purple-300/80 max-w-xl mx-auto font-light">
+                      Hox genleri canlıyı şekillendirir, biz öğrenmeyi.
+                    </p>
+                    <Button
+                        size="lg"
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-900 font-semibold px-8 py-3 text-lg rounded-lg shadow-lg hover:shadow-teal-500/40 transition-all duration-300 ease-in-out transform hover:scale-105 focus:ring-4 focus:ring-teal-500/50 active:bg-teal-600"
+                        asChild
+                    >
+                        <Link href="/biyoloji-notlari">
+                            Derse Başla <ArrowRight className="ml-2 h-5 w-5" />
+                        </Link>
                     </Button>
                  </motion.div>
               </div>
@@ -67,7 +117,7 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
 
   const currentArticle = displayArticles[currentIndex];
 
-  if (!currentArticle) return null;
+  if (!currentArticle) return null; // Should not happen if shouldShowAd logic is correct
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index);
