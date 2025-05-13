@@ -1,10 +1,9 @@
-
 "use client";
 
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react'; // Reverted UserShield to ShieldCheck
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
@@ -138,14 +137,14 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10">
+        <Link href="/" className="mr-6 flex items-center space-x-2 group">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10 group-hover:animate-spin-slow">
             <defs>
               <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="cyan">
-                  <animate attributeName="stop-color" values="cyan;lime;magenta;cyan" dur="4s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor="cyan" className="group-hover:[stop-color:magenta] transition-all duration-500 ease-in-out">
+                  <animate attributeName="stop-color" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="lime">
+                <stop offset="100%" stopColor="lime" className="group-hover:[stop-color:cyan] transition-all duration-500 ease-in-out">
                   <animate attributeName="stop-color" values="lime;cyan;magenta;lime" dur="4s" repeatCount="indefinite" />
                 </stop>
               </linearGradient>
@@ -157,6 +156,7 @@ const Header = () => {
                 strokeWidth="5"
                 fill="none"
                 strokeLinecap="round"
+                className="transition-all duration-500 ease-in-out group-hover:stroke-[magenta]"
               >
                 <animateTransform
                   attributeName="transform"
@@ -173,6 +173,7 @@ const Header = () => {
                 strokeWidth="5"
                 fill="none"
                 strokeLinecap="round"
+                 className="transition-all duration-500 ease-in-out group-hover:stroke-[lime]"
               >
                 <animateTransform
                   attributeName="transform"
@@ -193,6 +194,7 @@ const Header = () => {
                   y2={-35 + i * 10}
                   strokeWidth="2.5"
                   strokeLinecap="round"
+                  className="transition-all duration-300 ease-in-out group-hover:stroke-[cyan]"
                 >
                   <animate attributeName="stroke" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" begin={`${i * 0.2}s`} />
                    <animateTransform
@@ -207,7 +209,7 @@ const Header = () => {
               ))}
             </g>
           </svg>
-          <span className="font-bold text-lg">BiyoHox</span>
+          <span className="font-bold text-lg group-hover:text-primary transition-colors">BiyoHox</span>
         </Link>
 
         <nav className="hidden md:flex flex-1 items-center space-x-1">
@@ -286,11 +288,13 @@ const Header = () => {
           <ThemeToggle />
 
           {isMounted && isAdminOrEditor && (
-            <Button variant="outline" size="sm" asChild className="ml-1"> {/* Adjusted margin */}
-              <Link href="/admin">
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Admin Paneli
-              </Link>
+            <Button variant="outline" size="sm" asChild className="ml-1">
+              <span> {/* Wrap Link in a span to resolve Slot issue */}
+                <Link href="/admin">
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Admin Paneli
+                </Link>
+              </span>
             </Button>
           )}
 
