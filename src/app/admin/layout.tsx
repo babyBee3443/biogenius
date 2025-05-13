@@ -82,7 +82,7 @@ export default function AdminLayout({
         const timeoutValue = parseInt(storedTimeout, 10);
         setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
       } else {
-        // setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES); // This was causing the error, removed it.
+        // setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
     setAuthCheckComplete(true);
@@ -92,26 +92,29 @@ export default function AdminLayout({
 
 
   React.useEffect(() => {
-    document.title = 'BiyoHox Admin';
+    // document.title = 'BiyoHox Admin'; // This might cause issues if run on server
+    if (typeof window !== 'undefined') {
+        document.title = 'BiyoHox Admin';
+    }
     loadUserDataAndSettings();
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setAuthCheckComplete(false); // Re-trigger auth check
+            setAuthCheckComplete(false);
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
-        setAuthCheckComplete(false); // Re-trigger auth check
+        setAuthCheckComplete(false);
         loadUserDataAndSettings();
     };
 
     const handleSessionTimeoutChanged = () => {
         console.log("AdminLayout: 'sessionTimeoutChanged' event received, reloading settings.");
-        loadUserDataAndSettings(); // Reload settings which includes session timeout
+        loadUserDataAndSettings();
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -126,10 +129,9 @@ export default function AdminLayout({
   }, [loadUserDataAndSettings]);
 
 
-  // Effect for redirection logic, dependent on states being settled
   React.useEffect(() => {
     if (!initialLoadAttempted || !authCheckComplete || permissionsLoading) {
-      return; // Wait for initial load, auth check, and permissions to complete
+      return;
     }
 
     if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
@@ -147,7 +149,7 @@ export default function AdminLayout({
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null);
-    setAuthCheckComplete(true);
+    setAuthCheckComplete(true); // Set to true to allow immediate redirection check
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.replace('/login');
   }, [router]);
@@ -165,13 +167,11 @@ export default function AdminLayout({
     );
   }
 
-  // This explicit check might be redundant if the useEffect for redirection works correctly,
-  // but can serve as a fallback or to show a "Redirecting..." message.
   if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-     console.log("[AdminLayout] Render-time check: No user ID, rendering redirect placeholder.");
-      if (!window.location.pathname.startsWith('/login')) { // Extra check to prevent loop on login page
-        router.replace('/login');
-      }
+     // This logic should ideally be covered by the useEffect above,
+     // but acts as a final check before rendering the layout.
+     // It prevents rendering the admin layout if user is not authenticated.
+     // router.replace('/login') has been moved to useEffect to avoid "setstate in render"
      return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -186,21 +186,74 @@ export default function AdminLayout({
       <Sidebar collapsible="icon">
         <SidebarHeader className="flex flex-col items-center justify-center p-4 mt-2">
           <Link href="/admin" className="flex flex-col items-center group" title="Gösterge Paneline Git">
-             <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 transition-all">
+            <defs>
+              <linearGradient id="adminDnaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="cyan">
+                  <animate attributeName="stop-color" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" stopColor="lime">
+                  <animate attributeName="stop-color" values="lime;cyan;magenta;lime" dur="4s" repeatCount="indefinite" />
+                </stop>
+              </linearGradient>
+            </defs>
+            <g transform="translate(50,50) scale(0.8)">
+              <path
+                d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
+                stroke="url(#adminDnaGradient)"
+                strokeWidth="6" 
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
                 strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
-            >
-                {/* Simplified SVG for brevity, original SVG can be kept */}
-                <path d="M12 2a10 10 0 0 0-10 10c0 2.5 1 4.8 2.6 6.4A10 10 0 0 0 12 22a10 10 0 0 0 10-10c0-2.5-1-4.8-2.6-6.4A10 10 0 0 0 12 2z" />
-                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
-                <path d="M15.7 15.7a4 4 0 1 0-7.4 0" />
-            </svg>
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 0 0"
+                  to="360 0 0"
+                  dur="12s" 
+                  repeatCount="indefinite"
+                />
+              </path>
+              <path
+                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
+                stroke="url(#adminDnaGradient)"
+                strokeWidth="6" 
+                fill="none"
+                strokeLinecap="round"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 0 0"
+                  to="360 0 0"
+                  dur="12s" 
+                  repeatCount="indefinite"
+                />
+                 <animate attributeName="stroke-width" values="6;7;6" dur="2.5s" repeatCount="indefinite" />
+              </path>
+              {[...Array(7)].map((_, i) => (
+                <line
+                  key={`admin-dna-base-${i}`}
+                  x1={Math.sin(i * Math.PI / 3.5) * (12 + (i%2 === 0 ? 2: 0) )}
+                  y1={-35 + i * (70/6)} 
+                  x2={Math.sin(i * Math.PI / 3.5 + Math.PI) * (12 + (i%2 === 0 ? 2: 0))}
+                  y2={-35 + i * (70/6)}
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                >
+                  <animate attributeName="stroke" values="cyan;magenta;lime;green;blue;cyan" dur="5s" repeatCount="indefinite" begin={`${i * 0.25}s`} />
+                   <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 0 0"
+                    to="360 0 0"
+                    dur="12s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+              ))}
+            </g>
+          </svg>
           </Link>
         </SidebarHeader>
 
@@ -353,7 +406,7 @@ export default function AdminLayout({
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Kullanım Kılavuzu">
                         <Link href="/admin/pages/edit/kullanim-kilavuzu">
-                           <Layers />
+                           <Layers /> {/* Assuming Layers icon for guide or choose another like BookOpen */}
                            <span>Kullanım Kılavuzu</span>
                         </Link>
                     </SidebarMenuButton>
@@ -398,13 +451,13 @@ export default function AdminLayout({
                 </Link>
             </Button>
             <ThemeToggle />
-            <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
-              <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
+            <Link href="/admin/profile" passHref>
+                <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">
                     <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
                     <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                   </Avatar>
-              </Button>
+                </Button>
             </Link>
            </div>
          </header>

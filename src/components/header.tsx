@@ -4,10 +4,10 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react'; // Added BookCopy and ShieldCheck icons
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet components
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Import Popover
-import { Input } from '@/components/ui/input'; // Import Input
+import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import * as React from 'react';
 import { ScrollArea } from './ui/scroll-area';
@@ -127,7 +127,6 @@ const Header = () => {
   ];
 
   const getCategoryClass = (category: string): string => {
-     // Simplified as only Biyoloji is expected or a default
      const lowerCaseName = category.toLowerCase();
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
@@ -140,32 +139,74 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" className="h-8 w-8 text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10">
             <defs>
-                <linearGradient id="bioGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{stopColor: "hsl(var(--primary))", stopOpacity:1}} />
-                    <stop offset="100%" style={{stopColor: "hsl(120, 70%, 40%)", stopOpacity:1}} />
-                </linearGradient>
-                 <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-                    <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
+              <linearGradient id="dnaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="cyan">
+                  <animate attributeName="stop-color" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" stopColor="lime">
+                  <animate attributeName="stop-color" values="lime;cyan;magenta;lime" dur="4s" repeatCount="indefinite" />
+                </stop>
+              </linearGradient>
             </defs>
-            <path fill="url(#bioGradient)" filter="url(#glow)" d="M100,10 C140,10 190,60 190,100 C190,140 140,190 100,190 C60,190 10,140 10,100 C10,60 60,10 100,10 Z M100,30 C70,30 30,70 30,100 C30,130 70,170 100,170 C130,170 170,130 170,100 C170,70 130,30 100,30 Z" />
-            <circle cx="100" cy="100" r="60" fill="hsl(var(--background))"/>
-            <path stroke="url(#bioGradient)" strokeWidth="5" strokeLinecap="round" d="M100,60 Q80,80 100,100 Q120,120 100,140">
-                <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="15s" repeatCount="indefinite" />
-            </path>
-            <path stroke="hsl(var(--primary))" strokeWidth="5" strokeLinecap="round" d="M100,60 Q120,80 100,100 Q80,120 100,140">
-                 <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="-360 100 100" dur="18s" repeatCount="indefinite" />
-            </path>
-            <circle cx="100" cy="100" r="5" fill="url(#bioGradient)">
-                 <animate attributeName="r" values="3;7;3" dur="2s" repeatCount="indefinite" />
-            </circle>
-        </svg>
+            <g transform="translate(50,50) scale(0.8)">
+              <path
+                d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
+                stroke="url(#dnaGradient)"
+                strokeWidth="5"
+                fill="none"
+                strokeLinecap="round"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 0 0"
+                  to="360 0 0"
+                  dur="10s"
+                  repeatCount="indefinite"
+                />
+              </path>
+              <path
+                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
+                stroke="url(#dnaGradient)"
+                strokeWidth="5"
+                fill="none"
+                strokeLinecap="round"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 0 0"
+                  to="360 0 0"
+                  dur="10s"
+                  repeatCount="indefinite"
+                />
+                 <animate attributeName="stroke-width" values="5;6;5" dur="2s" repeatCount="indefinite" />
+              </path>
+              {[...Array(8)].map((_, i) => (
+                <line
+                  key={i}
+                  x1={Math.sin(i * Math.PI / 4) * (10 + (i%2 === 0 ? 2: 0) )}
+                  y1={-35 + i * 10}
+                  x2={Math.sin(i * Math.PI / 4 + Math.PI) * (10 + (i%2 === 0 ? 2: 0))}
+                  y2={-35 + i * 10}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <animate attributeName="stroke" values="cyan;magenta;lime;cyan" dur="4s" repeatCount="indefinite" begin={`${i * 0.2}s`} />
+                   <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 0 0"
+                    to="360 0 0"
+                    dur="10s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+              ))}
+            </g>
+          </svg>
           <span className="font-bold text-lg">BiyoHox</span>
         </Link>
 
