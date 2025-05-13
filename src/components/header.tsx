@@ -1,18 +1,19 @@
+
 "use client";
 
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus } from 'lucide-react'; // Added UserPlus
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus } from 'lucide-react';
+import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import * as React from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { LoginModal } from '@/components/login-modal';
-import { CreateAccountModal } from '@/components/create-account-modal'; // Import CreateAccountModal
+import { CreateAccountModal } from '@/components/create-account-modal';
 
 interface ArticleStub {
   id: string;
@@ -22,19 +23,16 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
-  // This is mock data. In a real application, you would fetch this from an API.
   const mockData: ArticleStub[] = [
-    // { id: '1', title: 'Yapay Zeka Devrimi', category: 'Teknoloji' }, // Removed Teknoloji
     { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
-    // { id: '3', title: 'Kuantum Bilgisayarlar', category: 'Teknoloji' }, // Removed Teknoloji
     { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
-    // Add more mock articles as needed, focusing on Biyoloji
     { id: 's1', title: 'İnsan Bağışıklık Sistemi', category: 'Biyoloji' },
     { id: 's2', title: 'Beyin Nöroplastisitesi', category: 'Biyoloji' },
   ];
   return mockData.filter(article =>
-    article.title.toLowerCase().includes(query.toLowerCase()) ||
-    article.category.toLowerCase().includes(query.toLowerCase())
+    (article.title.toLowerCase().includes(query.toLowerCase()) ||
+    article.category.toLowerCase().includes(query.toLowerCase())) &&
+    article.category === 'Biyoloji' // Only show Biyoloji articles
   ).slice(0, 5);
 };
 
@@ -47,11 +45,11 @@ const DnaLogo = () => (
     >
         <defs>
             <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--primary))">
-                    <animate attributeName="stop-color" values="hsl(var(--primary));hsl(var(--accent));hsl(var(--primary))" dur="8s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor="cyan">
+                    <animate attributeName="stop-color" values="cyan;magenta;lime;cyan" dur="6s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="hsl(var(--accent))">
-                    <animate attributeName="stop-color" values="hsl(var(--accent));hsl(var(--primary));hsl(var(--accent))" dur="8s" repeatCount="indefinite" />
+                <stop offset="100%" stopColor="lime">
+                    <animate attributeName="stop-color" values="lime;cyan;magenta;lime" dur="6s" repeatCount="indefinite" />
                 </stop>
             </linearGradient>
         </defs>
@@ -68,10 +66,10 @@ const DnaLogo = () => (
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="12s"
+                    dur="10s"
                     repeatCount="indefinite"
                 />
-                <animate attributeName="stroke-width" values="5;6.5;5" dur="3.5s" repeatCount="indefinite" />
+                <animate attributeName="stroke-width" values="5;7;5" dur="3s" repeatCount="indefinite" />
             </path>
             <path
                 d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
@@ -85,17 +83,17 @@ const DnaLogo = () => (
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="12s"
+                    dur="10s"
                     repeatCount="indefinite"
                 />
-                <animate attributeName="stroke-width" values="5;6.5;5" dur="3.5s" repeatCount="indefinite" begin="0.5s" />
+                <animate attributeName="stroke-width" values="5;7;5" dur="3s" repeatCount="indefinite" begin="0.5s" />
             </path>
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
                 let dynamicAmplitude = 0;
-                if (typeof window !== 'undefined') { // Ensure window is defined (client-side)
-                    dynamicAmplitude = Math.sin(Date.now() / 800 + i) * 2.5;
+                if (typeof window !== 'undefined') {
+                    dynamicAmplitude = Math.sin(Date.now() / 700 + i) * 2;
                 }
                 const amplitude = 10 + dynamicAmplitude;
                 const x1 = Math.sin(angle) * amplitude;
@@ -107,22 +105,23 @@ const DnaLogo = () => (
                         y1={yPos}
                         x2={x2}
                         y2={yPos}
-                        strokeWidth="2.5"
+                        strokeWidth="3"
                         strokeLinecap="round"
                     >
                         <animate
                             attributeName="stroke"
-                            values="hsl(var(--primary)/0.7);hsl(var(--accent)/0.7);hsl(var(--primary)/0.7)"
-                            dur="7s"
+                            values="cyan;magenta;lime;green;blue;cyan" // Vibrant RGB cycle
+                            dur="5s" // Faster cycle for more dynamism
                             repeatCount="indefinite"
-                            begin={`${i * 0.25}s`}
+                            begin={`${i * 0.2}s`} // Staggered start
                         />
+                         <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin={`${i*0.15}s`} />
                         <animateTransform
                             attributeName="transform"
                             type="rotate"
                             from="0 0 0"
                             to="360 0 0"
-                            dur="12s"
+                            dur="10s"
                             repeatCount="indefinite"
                         />
                     </line>
@@ -153,10 +152,10 @@ const Header = () => {
           setCurrentUser(user);
         } catch (e) {
           console.error("Error parsing current user from localStorage in Header", e);
-          setCurrentUser(null); // Reset on error
+          setCurrentUser(null);
         }
       } else {
-        setCurrentUser(null); // No user in localStorage
+        setCurrentUser(null);
       }
     }
   }, []);
@@ -166,14 +165,12 @@ const Header = () => {
     checkUserStatus();
 
     const handleStorageChange = (event: StorageEvent) => {
-        // Listen for changes from other tabs
         if (event.key === 'currentUser') {
             console.log("Header: 'currentUser' changed in localStorage (another tab), checking user status.");
             checkUserStatus();
         }
     };
 
-    // Listen for custom event when user logs in/out via modal or admin panel
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('currentUserUpdated', checkUserStatus);
 
@@ -185,9 +182,9 @@ const Header = () => {
 
 
   React.useEffect(() => {
-    setIsPopoverOpen(searchQuery.length > 0); // Open popover if there's a query
+    setIsPopoverOpen(searchQuery.length > 0);
     const handler = setTimeout(async () => {
-      if (searchQuery.length > 1) { // Start searching after 1 character
+      if (searchQuery.length > 1) {
         setIsSearching(true);
         const results = await searchArticles(searchQuery);
         setSearchResults(results);
@@ -195,7 +192,7 @@ const Header = () => {
       } else {
         setSearchResults([]);
       }
-    }, 300); // Debounce search for 300ms
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -210,25 +207,25 @@ const Header = () => {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
-    setIsPopoverOpen(false); // Close popover when search is cleared
+    setIsPopoverOpen(false);
   };
 
    const closePopover = () => {
-    // We might not need this explicit close if onOpenChange handles it,
-    // but keeping it ensures the popover closes on item click
     setIsPopoverOpen(false);
-    setSearchQuery(''); // Optionally clear search on selecting an item
+    setSearchQuery('');
     setSearchResults([]);
   }
 
   const handleLoginSuccess = () => {
-    checkUserStatus(); // Re-check user status after successful login
-    setIsLoginModalOpen(false); // Close the modal
+    checkUserStatus();
+    setIsLoginModalOpen(false);
   };
 
   const handleCreateAccountSuccess = () => {
-    checkUserStatus(); // Re-check user status
-    setIsCreateAccountModalOpen(false); // Close the modal
+    checkUserStatus();
+    setIsCreateAccountModalOpen(false);
+    // Automatically open login modal after successful account creation
+    setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
   const openCreateAccountModal = () => {
@@ -244,7 +241,6 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
-    // { href: "/categories/biyoloji", label: "Biyoloji" }, // Removed as per previous request
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -255,7 +251,6 @@ const Header = () => {
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
-     // Removed Teknoloji category specific class
      return 'bg-muted text-muted-foreground';
   }
 
@@ -266,7 +261,7 @@ const Header = () => {
         <div className="container flex h-16 items-center">
           <Link href="/" className="mr-6 flex items-center group">
             <DnaLogo />
-            <div className="flex flex-col items-start ml-1 -mt-1">
+             <div className="flex flex-col items-start ml-1 -mt-0.5"> {/* Adjusted -mt-1 to -mt-0.5 */}
                 <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
                 <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
                     Öğrenmenin DNA’sı
@@ -291,7 +286,7 @@ const Header = () => {
           <div className="flex flex-1 items-center justify-end space-x-2">
             <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
               <PopoverTrigger asChild>
-                 <div className="relative w-full max-w-[120px] sm:max-w-[140px]"> {/* Slightly reduced width */}
+                 <div className="relative w-full max-w-[120px] sm:max-w-[140px]">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="text"
@@ -299,7 +294,7 @@ const Header = () => {
                       value={searchQuery}
                       onChange={handleSearchChange}
                       className="pl-9 pr-8 h-9 rounded-full bg-secondary/70 border-transparent focus:bg-background focus:border-border"
-                      onFocus={() => setIsPopoverOpen(true)} // Ensure popover opens on focus
+                      onFocus={() => setIsPopoverOpen(true)}
                     />
                     {searchQuery && (
                         <Button
@@ -316,7 +311,7 @@ const Header = () => {
               <PopoverContent
                   className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                   align="end"
-                  onOpenAutoFocus={(e) => e.preventDefault()} // Prevent focus stealing
+                  onOpenAutoFocus={(e) => e.preventDefault()}
                >
                 {isSearching && searchQuery && (
                    <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -332,7 +327,7 @@ const Header = () => {
                               <Link
                                   href={`/articles/${result.id}`}
                                   className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                  onClick={closePopover} // Close popover on item click
+                                  onClick={closePopover}
                                >
                                  <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                  <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -350,16 +345,16 @@ const Header = () => {
             <ThemeToggle />
 
              {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
-               <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
-                  <Link href="/admin" passHref>
-                      <ShieldCheck className="mr-1.5 h-4 w-4" />
-                      <span className="hidden sm:inline">Admin Paneli</span>
-                      <span className="sm:hidden">Admin</span>
-                  </Link>
-              </Button>
-            )}
+                <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
+                    <Link href="/admin" passHref>
+                        <ShieldCheck className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Admin Paneli</span>
+                        <span className="sm:hidden">Admin</span>
+                    </Link>
+                </Button>
+             )}
             {isMounted && !currentUser && (
-                <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
+                 <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
                     <LogIn className="mr-1.5 h-4 w-4" />
                     Giriş Yap
                 </Button>
