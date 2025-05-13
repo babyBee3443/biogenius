@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -58,9 +57,9 @@ const RecentArticlesSection = dynamic(() => import('@/components/recent-articles
 const WelcomeScreen = () => {
   const title = "Öğrenmenin genetik temeli.";
   const subtitleParts = [
-    { text: "Hox genleri canlıyı şekillendirir, ", colorClass: "text-gray-300 dark:text-gray-400" },
-    { text: "Biyohox", colorClass: "text-cyan-400 animate-text-rgb-cycle-fast" },
-    { text: " ise öğrenmeni.", colorClass: "text-gray-300 dark:text-gray-400" },
+    { text: "Hox genleri canlıyı şekillendirir, ", colorClass: "text-muted-foreground" },
+    { text: "Biyohox", colorClass: "text-primary animate-text-rgb-cycle-fast" }, // Changed to text-primary
+    { text: " ise öğrenmeni.", colorClass: "text-muted-foreground" },
   ];
 
   const titleVariants = {
@@ -85,75 +84,18 @@ const WelcomeScreen = () => {
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center text-center min-h-[60vh] md:min-h-[70vh] py-16 px-4 overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white mb-16 rounded-lg shadow-2xl border border-purple-700/50">
-      {/* Subtle Animated Background Elements */}
-      <div className="absolute inset-0 z-0 opacity-20">
-        {/* Minimal DNA Helix (conceptual representation) */}
-        <motion.svg
-          className="absolute top-1/2 left-1/2 w-[150%] h-[150%] -translate-x-1/2 -translate-y-1/2 opacity-30"
-          viewBox="0 0 400 400"
-          initial={{ rotate: 0 }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-        >
-          <path
-            d="M100,50 Q150,100 100,150 Q50,200 100,250 Q150,300 100,350"
-            stroke="url(#dna-gradient-1)"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <path
-            d="M300,50 Q250,100 300,150 Q350,200 300,250 Q250,300 300,350"
-            stroke="url(#dna-gradient-2)"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <defs>
-            <linearGradient id="dna-gradient-1" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(0, 255, 255, 0.5)" />
-              <stop offset="100%" stopColor="rgba(128, 0, 128, 0.5)" />
-            </linearGradient>
-            <linearGradient id="dna-gradient-2" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(0, 255, 128, 0.5)" />
-              <stop offset="100%" stopColor="rgba(75, 0, 130, 0.5)" />
-            </linearGradient>
-          </defs>
-        </motion.svg>
-        {/* Floating Particles (conceptual representation) */}
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={`particle-${i}`}
-            className="absolute rounded-full bg-cyan-400/30"
-            style={{
-              width: Math.random() * 4 + 2,
-              height: Math.random() * 4 + 2,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, Math.random() * 20 - 10, 0],
-              y: [0, Math.random() * 20 - 10, 0],
-              opacity: [0, 0.5, 0],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              repeatType: "mirror",
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-      </div>
+    <section className="relative flex flex-col items-center justify-center text-center min-h-[60vh] md:min-h-[70vh] py-16 px-4 overflow-hidden mb-16">
+      {/* Removed dark background classes, rounded-lg, shadow-2xl, border */}
+      {/* Removed background SVG and particle animations as they were designed for dark background */}
 
       <div className="relative z-10">
         <motion.h1
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-green-400 animate-text-glow"
-          style={{ filter: "drop-shadow(0 0 0.75rem rgba(0, 255, 255, 0.3))" }}
+          // Updated title styling for light background
+          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-primary" // Changed to solid primary color
+          // Removed text-transparent, bg-clip-text, bg-gradient-to-r, animate-text-glow, filter
         >
           {title}
         </motion.h1>
@@ -162,7 +104,8 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          className="text-lg sm:text-xl md:text-2xl text-gray-300 dark:text-gray-400 max-w-2xl mx-auto"
+          // Updated subtitle text color for light background
+          className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto"
         >
           {subtitleParts.map((part, partIndex) => (
             <span key={`subpart-${partIndex}`} className={part.colorClass}>
