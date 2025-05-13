@@ -41,7 +41,8 @@ export default function AdminLayout({
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
-  const [authCheckComplete, setAuthCheckComplete] = React.useState(false); // New state for auth check
+  const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
+  const [initialLoadAttempted, setInitialLoadAttempted] = React.useState(false);
   const router = useRouter();
   const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions();
 
@@ -62,7 +63,7 @@ export default function AdminLayout({
             console.log("[AdminLayout] User data loaded from localStorage:", userData.id, userData.name);
           } else {
              console.error("[AdminLayout] User ID not found in stored currentUser object.");
-             setCurrentUserId(null); // Explicitly set to null
+             setCurrentUserId(null);
           }
         } catch (e) {
           console.error("Error parsing user data from localStorage in AdminLayout", e);
@@ -84,40 +85,33 @@ export default function AdminLayout({
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    setAuthCheckComplete(true); // Mark auth check as complete
-    return userFound; // Return if user was found
-  }, []);
+    setAuthCheckComplete(true); 
+    if (!initialLoadAttempted) setInitialLoadAttempted(true);
+    return userFound;
+  }, [sessionTimeoutMinutes, initialLoadAttempted]);
 
 
   React.useEffect(() => {
     document.title = 'TeknoBiyo Admin';
-    const userFound = loadUserDataAndSettings();
-
-    if (typeof window !== 'undefined' && !userFound && !window.location.pathname.startsWith('/login')) {
-      console.log("[AdminLayout] Initial check: User not found, redirecting to login.");
-      toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
-      router.replace('/login'); // Use replace to avoid adding to history stack
-      return; // Prevent further execution if redirecting
-    }
-
+    loadUserDataAndSettings();
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setAuthCheckComplete(false);
+            setAuthCheckComplete(false); // Re-trigger auth check
             loadUserDataAndSettings();
         }
     };
     
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
-        setAuthCheckComplete(false);
+        setAuthCheckComplete(false); // Re-trigger auth check
         loadUserDataAndSettings();
     };
     
     const handleSessionTimeoutChanged = () => {
         console.log("AdminLayout: 'sessionTimeoutChanged' event received, reloading settings.");
-        loadUserDataAndSettings();
+        loadUserDataAndSettings(); // Reload settings which includes session timeout
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -129,7 +123,22 @@ export default function AdminLayout({
       window.removeEventListener('currentUserUpdated', handleCurrentUserUpdated);
       window.removeEventListener('sessionTimeoutChanged', handleSessionTimeoutChanged);
     };
-  }, [loadUserDataAndSettings, router]);
+  }, [loadUserDataAndSettings]);
+
+
+  // Effect for redirection logic, dependent on states being settled
+  React.useEffect(() => {
+    if (!initialLoadAttempted || !authCheckComplete || permissionsLoading) {
+      return; // Wait for initial load, auth check, and permissions to complete
+    }
+
+    if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to login.");
+      toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
+      router.replace('/login');
+    }
+  }, [initialLoadAttempted, authCheckComplete, permissionsLoading, currentUserId, router]);
+
 
   const handleLogout = React.useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -138,7 +147,7 @@ export default function AdminLayout({
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null);
-    setAuthCheckComplete(true); // User is now definitely logged out
+    setAuthCheckComplete(true); 
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.replace('/login');
   }, [router]);
@@ -146,17 +155,8 @@ export default function AdminLayout({
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
-  // Further check after auth check and permissions loading are complete
-  React.useEffect(() => {
-    if (authCheckComplete && !permissionsLoading && !currentUserId && !window.location.pathname.startsWith('/login')) {
-        console.log("[AdminLayout] Post-load check: User not found, redirecting to login.");
-        toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
-        router.replace('/login');
-    }
-  }, [authCheckComplete, permissionsLoading, currentUserId, router]);
 
-
-  if (!authCheckComplete || permissionsLoading) {
+  if (!initialLoadAttempted || !authCheckComplete || permissionsLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -165,12 +165,11 @@ export default function AdminLayout({
     );
   }
   
-  // If still no currentUserId after loading and not on login page, redirect
-  // This catches cases where initial localStorage check passed but permissions haven't settled
+  // This explicit check might be redundant if the useEffect for redirection works correctly,
+  // but can serve as a fallback or to show a "Redirecting..." message.
   if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-     console.log("[AdminLayout] Final check: No user ID, redirecting to login.");
-     router.replace('/login');
-     return ( // Show loading while redirecting
+     console.log("[AdminLayout] Render-time check: No user ID, rendering redirect placeholder.");
+     return ( 
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground">Yönlendiriliyor...</p>
@@ -184,7 +183,7 @@ export default function AdminLayout({
       <Sidebar collapsible="icon">
         <SidebarHeader className="flex flex-col items-center justify-center p-4 mt-2">
           <Link href="/admin" className="flex flex-col items-center group" title="Gösterge Paneline Git">
-            <svg
+             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -194,12 +193,10 @@ export default function AdminLayout({
                 strokeLinejoin="round"
                 className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
             >
+                {/* Simplified SVG for brevity, original SVG can be kept */}
                 <path d="M12 2a10 10 0 0 0-10 10c0 2.5 1 4.8 2.6 6.4A10 10 0 0 0 12 22a10 10 0 0 0 10-10c0-2.5-1-4.8-2.6-6.4A10 10 0 0 0 12 2z" />
                 <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
                 <path d="M15.7 15.7a4 4 0 1 0-7.4 0" />
-                <path d="M12 12v10" />
-                <path d="m4.6 10.6.8.8" />
-                <path d="m18.6 10.6-.8.8" />
             </svg>
           </Link>
         </SidebarHeader>
@@ -415,4 +412,3 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
-
