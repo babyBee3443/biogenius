@@ -40,9 +40,9 @@ export default function AdminLayout({
   const [currentUserName, setCurrentUserName] = React.useState("Kullanıcı");
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
-  const [currentUserRoleName, setCurrentUserRoleName] = React.useState<string | null>(null); // Store role name
+  const [currentUserRoleName, setCurrentUserRoleName] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
-  const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = React.useState(false); // To ensure initial load is done
   const router = useRouter();
   const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId);
 
@@ -60,11 +60,11 @@ export default function AdminLayout({
       if (storedUserString) {
         try {
           const userData = JSON.parse(storedUserString);
-          if (userData && userData.id && userData.role) { // Ensure role is also present
+          if (userData && userData.id && userData.role) {
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://picsum.photos/seed/${userData.username || 'avatar'}/32/32`;
             newUserId = userData.id;
-            newUserRoleName = userData.role; // Store the role name
+            newUserRoleName = userData.role;
             userFound = true;
             console.log("[AdminLayout] User data loaded from localStorage:", {id: newUserId, name: newUserName, role: newUserRoleName });
           } else {
@@ -76,7 +76,7 @@ export default function AdminLayout({
           console.error("Error parsing user data from localStorage in AdminLayout", e);
           newUserId = null;
           newUserRoleName = null;
-          localStorage.removeItem('currentUser'); // Clear corrupted data
+          // localStorage.removeItem('currentUser'); // Consider clearing corrupted data
         }
       } else {
         newUserId = null;
@@ -84,10 +84,10 @@ export default function AdminLayout({
         console.log("[AdminLayout] No currentUser in localStorage.");
       }
 
-      setCurrentUserId(newUserId);
+      setCurrentUserId(newUserId); // Update currentUserId state
       setCurrentUserName(newUserName);
       setCurrentUserAvatar(newUserAvatar);
-      setCurrentUserRoleName(newUserRoleName); // Set the role name
+      setCurrentUserRoleName(newUserRoleName);
 
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
@@ -97,9 +97,9 @@ export default function AdminLayout({
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    if (isMountedRef.current) { // Ensure component is still mounted before setting authCheckComplete
-        setAuthCheckComplete(true);
-        console.log("[AdminLayout] Auth check complete.");
+    if (isMountedRef.current) {
+        setAuthCheckComplete(true); // Mark auth check as complete
+        console.log("[AdminLayout] Auth check complete. User ID:", newUserId);
     }
     return userFound;
   }, []);
@@ -116,20 +116,29 @@ export default function AdminLayout({
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`[AdminLayout] '${event.key}' changed in localStorage, reloading user data and settings.`);
-            if (isMountedRef.current) setAuthCheckComplete(false); // Reset for re-check
+            if (isMountedRef.current) setAuthCheckComplete(false);
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
         console.log("[AdminLayout] 'currentUserUpdated' event received, reloading user data.");
-        if (isMountedRef.current) setAuthCheckComplete(false); // Reset for re-check
+        if (isMountedRef.current) setAuthCheckComplete(false);
         loadUserDataAndSettings();
     };
 
     const handleSessionTimeoutChanged = () => {
         console.log("[AdminLayout] 'sessionTimeoutChanged' event received, reloading settings.");
-        loadUserDataAndSettings(); // No need to reset authCheckComplete for this
+        // Only reload session timeout, not full user data to avoid re-triggering authCheck
+         if (typeof window !== 'undefined') {
+            const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
+            if (storedTimeout) {
+                const timeoutValue = parseInt(storedTimeout, 10);
+                setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
+            } else {
+                setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
+            }
+        }
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -150,56 +159,52 @@ export default function AdminLayout({
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
     }
+    setCurrentUserId(null); // Explicitly set to null
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
-    setCurrentUserId(null);
     setCurrentUserRoleName(null);
-    if (isMountedRef.current) setAuthCheckComplete(false); // Re-trigger auth check process
-    loadUserDataAndSettings(); // This will now set authCheckComplete after loading
+    if (isMountedRef.current) setAuthCheckComplete(false); // Reset auth check
+    // loadUserDataAndSettings(); // This will be called by useEffect due to currentUserId change if needed, or direct redirect
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/login'); // Redirect to login page after logout
-  }, [router, loadUserDataAndSettings]);
+    router.push('/login');
+  }, [router]);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
   React.useEffect(() => {
-    console.log(`[AdminLayout] Redirection Effect: authComplete=${authCheckComplete}, permLoading=${permissionsLoading}, userId=${currentUserId}, roleName=${currentUserRoleName}, pathname=${typeof window !== 'undefined' ? window.location.pathname : 'server'}`);
+    console.log(`[AdminLayout] Redirection Effect Triggered: authComplete=${authCheckComplete}, currentUserId=${currentUserId}, path=${typeof window !== 'undefined' ? window.location.pathname : 'N/A'}`);
 
-    if (!authCheckComplete) { // Only check this first
+    if (!authCheckComplete) {
       console.log("[AdminLayout] Redirection Effect: Waiting for auth check to complete.");
-      return;
+      return; // Wait for initial loadUserDataAndSettings to finish
     }
 
-    // If auth check is complete, then check for user ID
+    // If auth check is complete and there's no user ID, redirect to login
     if (!currentUserId) {
       if (typeof window !== 'undefined' && window.location.pathname !== '/login' && !window.location.pathname.startsWith('/admin/preview')) {
-        console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to /login from:", window.location.pathname);
+        console.log("[AdminLayout] Redirection Effect: No currentUserId after auth check, redirecting to /login from:", window.location.pathname);
         toast({
             title: "Erişim Reddedildi",
             description: "Lütfen admin paneline erişmek için giriş yapın.",
             variant: "destructive"
         });
-        router.replace('/login');
+        router.replace('/login'); // Use replace to avoid adding to history
       }
-      return; // Stop further checks if no user ID
-    }
-
-    // If user ID exists, then wait for permissions to load
-    if (permissionsLoading) {
-      console.log("[AdminLayout] Redirection Effect: User authenticated, waiting for permissions check.");
       return;
     }
 
-    // At this point, auth is complete, user ID exists, and permissions are loaded (or failed to load)
-    // Specific page permission checks are handled by the pages themselves.
-    // The main purpose here is to ensure non-logged-in users are redirected.
-    // If a logged-in user (e.g. Admin) still can't see content, it's a permission definition issue (usePermissions or mock-data)
+    // If user ID exists, but permissions are still loading, wait (loader is shown below)
+    // If permissions failed to load, that's handled by the permissionsError display
+    // No further redirection logic here needed if user is logged in; page-specific checks are elsewhere.
+    console.log("[AdminLayout] Redirection Effect: User ID present, permissions loading:", permissionsLoading);
 
-  }, [authCheckComplete, permissionsLoading, currentUserId, currentUserRoleName, router]);
+  }, [authCheckComplete, currentUserId, router]);
 
 
-  if (!authCheckComplete || (currentUserId && permissionsLoading)) { // Show loading if auth not complete OR user logged in but perms still loading
+  // Combined loading state for initial auth check and subsequent permission loading
+  if (!authCheckComplete || (currentUserId && permissionsLoading)) {
+    console.log(`[AdminLayout] Render: Showing loader. authCheckComplete=${authCheckComplete}, currentUserId=${currentUserId}, permissionsLoading=${permissionsLoading}`);
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -208,10 +213,11 @@ export default function AdminLayout({
     );
   }
 
-  // This case should be handled by the redirect in useEffect now
+  // If auth check is complete, but there's no user ID (should have been redirected by effect, but as a fallback)
   if (!currentUserId && typeof window !== 'undefined' && window.location.pathname !== '/login' && !window.location.pathname.startsWith('/admin/preview')) {
-     console.warn("[AdminLayout] Render block: Attempting to render admin layout without user ID and not on login/preview. Redirecting...");
-     // router.replace('/login'); // This might cause issues if called during render cycle. Effect handles it.
+     console.warn("[AdminLayout] Render: Fallback redirect to /login. currentUserId is null.");
+     // router.replace('/login'); // This can cause "Cannot update a component (`Router`) while rendering a different component (`AdminLayout`)"
+     // The useEffect handles redirection more safely. For render, show minimal loading/message.
      return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -505,7 +511,19 @@ export default function AdminLayout({
            </div>
          </header>
          <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)+theme(spacing.6))] md:pt-[calc(theme(spacing.14)+theme(spacing.6))]">
-            {children}
+            {/* Render children only if user ID is present and permissions are not in error state */}
+            {currentUserId && !permissionsError ? children : (
+                permissionsError && (
+                     <div className="flex flex-col items-center justify-center h-full">
+                         <p className="text-destructive text-lg mb-2">İzin Hatası</p>
+                         <p className="text-muted-foreground max-w-md text-center">{permissionsError}</p>
+                         <Button onClick={handleLogout} className="mt-6">Giriş Sayfasına Dön</Button>
+                     </div>
+                )
+                // If no currentUserId but also no error, it implies redirection is or was in progress.
+                // Loader is handled above. If it reaches here without currentUserId, it's an edge case,
+                // but children shouldn't render.
+            )}
          </main>
       </SidebarInset>
     </SidebarProvider>

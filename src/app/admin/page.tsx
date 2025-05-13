@@ -64,22 +64,27 @@ export default function AdminDashboard() {
   const [totalComments, setTotalComments] = React.useState(0);
   const [recentArticles, setRecentArticles] = React.useState<ArticleData[]>([]);
   const [activeUsers, setActiveUsers] = React.useState<User[]>([]);
-  const [loadingData, setLoadingData] = React.useState(true); // Renamed from 'loading'
+  const [loadingData, setLoadingData] = React.useState(true);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = React.useState(false);
+
 
   React.useEffect(() => {
+    let isMounted = true;
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('currentUser');
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          setCurrentUserId(user.id || null);
+          if (isMounted) setCurrentUserId(user.id || null);
         } catch (e) {
           console.error("Error parsing currentUser in AdminDashboard", e);
-          setCurrentUserId(null);
+          if (isMounted) setCurrentUserId(null);
         }
       }
+      if (isMounted) setIsInitialLoadComplete(true); // Mark initial localStorage check as complete
     }
+    return () => { isMounted = false; };
   }, []);
 
 
@@ -129,22 +134,33 @@ export default function AdminDashboard() {
   }, []);
 
   React.useEffect(() => {
-    console.log("[AdminDashboard] Permissions effect: loading=", permissionsLoading, "hasPerm=", hasPermission('Dashboard Görüntüleme'));
-    if (permissionsLoading) {
-        console.log("[AdminDashboard] Waiting for permissions to load...");
+    console.log("[AdminDashboard] Effect Triggered: isInitialLoadComplete=", isInitialLoadComplete, "currentUserId=", currentUserId, "permissionsLoading=", permissionsLoading);
+    if (!isInitialLoadComplete) {
+        console.log("[AdminDashboard] Waiting for initial user ID load from localStorage...");
+        return;
+    }
+    if (!currentUserId) { // If no user ID after initial load, means user is not logged in from AdminLayout's perspective
+        console.log("[AdminDashboard] No currentUserId, assuming AdminLayout will handle redirect. Aborting permission check/fetch.");
+        // setLoadingData(false); // No data to load if no user
         return;
     }
 
+    if (permissionsLoading) {
+        console.log("[AdminDashboard] User ID present, waiting for permissions to load...");
+        return;
+    }
+
+    console.log("[AdminDashboard] Permissions loaded. Has 'Dashboard Görüntüleme':", hasPermission('Dashboard Görüntüleme'));
     if (!hasPermission('Dashboard Görüntüleme')) {
         console.log("[AdminDashboard] No permission to view dashboard, redirecting to profile.");
         toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Gösterge panelini görüntüleme yetkiniz yok." });
         router.push('/admin/profile');
         return;
     }
-    console.log("[AdminDashboard] User has permission, fetching data.");
+    console.log("[AdminDashboard] User has permission, fetching dashboard data.");
     fetchData();
 
-  }, [fetchData, permissionsLoading, hasPermission, router]);
+  }, [isInitialLoadComplete, currentUserId, fetchData, permissionsLoading, hasPermission, router]);
 
   if (permissionsError) {
     return (
@@ -157,7 +173,8 @@ export default function AdminDashboard() {
     );
   }
 
-  if (permissionsLoading || loadingData) {
+  // Show loader if initial localStorage check is not done, or if permissions are loading for a valid user, or if data is loading
+  if (!isInitialLoadComplete || (currentUserId && permissionsLoading) || loadingData) {
     return (
         <div className="flex justify-center items-center h-screen">
             <Loader2 className="mr-2 h-8 w-8 animate-spin" />
@@ -168,15 +185,15 @@ export default function AdminDashboard() {
 
 
   // --- Data for placeholders that require real analytics ---
-  const pageViews = 0; 
-  const uniqueVisitors = 0; 
-  const bounceRate = "0.00%"; 
-  const conversionRate = "0.00%"; 
-  const avgReadTime = "0:00"; 
-  const pageLoadTime = "0ms"; 
-  const serverResponseTime = "0ms"; 
-  const subscriberConversionRate = "0.00%"; 
-  const errorRate = "0.00%"; 
+  const pageViews = 0;
+  const uniqueVisitors = 0;
+  const bounceRate = "0.00%";
+  const conversionRate = "0.00%";
+  const avgReadTime = "0:00";
+  const pageLoadTime = "0ms";
+  const serverResponseTime = "0ms";
+  const subscriberConversionRate = "0.00%";
+  const errorRate = "0.00%";
 
 
   return (
@@ -188,11 +205,7 @@ export default function AdminDashboard() {
             <Button variant="outline" onClick={fetchData} disabled={loadingData}>
                <RefreshCw className="mr-2 h-4 w-4" /> Verileri Yenile
             </Button>
-            <Button variant="outline" asChild>
-                <Link href="/" target="_blank">
-                    <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
-                </Link>
-            </Button>
+            {/* Siteyi Görüntüle button is now in AdminLayout header */}
         </div>
       </div>
 
