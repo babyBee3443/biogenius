@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -88,13 +89,13 @@ export default function AdminLayout({
     setAuthCheckComplete(true);
     if (!initialLoadAttempted) setInitialLoadAttempted(true);
     return userFound;
-  }, [sessionTimeoutMinutes, initialLoadAttempted]);
+  }, [initialLoadAttempted]); // Removed sessionTimeoutMinutes from dependencies as it's set within this callback
 
 
   React.useEffect(() => {
     // document.title = 'BiyoHox Admin'; // This might cause issues if run on server
     if (typeof window !== 'undefined') {
-        document.title = 'BiyoHox Admin';
+        document.title = 'BiyoHox Admin Panel';
     }
     loadUserDataAndSettings();
 
@@ -421,11 +422,13 @@ export default function AdminLayout({
                    <SidebarMenuItem>
                      <SidebarMenuButton asChild tooltip="Profil">
                         <Link href={currentUserId ? `/admin/profile` : '/login'}>
-                          <Avatar className="size-5">
-                            <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
-                            <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <span>{currentUserName}</span>
+                          <span className="flex items-center gap-2"> {/* Wrapper span */}
+                            <Avatar className="size-5">
+                              <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
+                              <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span>{currentUserName}</span>
+                          </span>
                         </Link>
                      </SidebarMenuButton>
                    </SidebarMenuItem>
@@ -468,3 +471,4 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
+
