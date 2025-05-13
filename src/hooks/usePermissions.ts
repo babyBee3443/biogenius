@@ -50,7 +50,7 @@ export function usePermissions(currentUserId: string | null) {
 
       try {
         const currentUser: User = JSON.parse(storedUserString);
-        console.log("[usePermissions] Current user from localStorage:", currentUser);
+        console.log("[usePermissions] Current user from localStorage:", JSON.stringify(currentUser));
 
         if (!currentUser || currentUser.id !== currentUserId) {
             console.warn(`[usePermissions] Mismatch or invalid currentUser in localStorage. Expected ID: ${currentUserId}, Found:`, currentUser);
@@ -59,26 +59,27 @@ export function usePermissions(currentUserId: string | null) {
             }
             return;
         }
-        if (!currentUser.role) {
-            console.warn(`[usePermissions] User role is missing for user: ${currentUser.id}`);
+        if (!currentUser.role || typeof currentUser.role !== 'string') {
+            console.warn(`[usePermissions] User role is missing or not a string for user: ${currentUser.id}. Role:`, currentUser.role);
              if (isMounted) {
-                setState({ permissions: new Set(), isLoading: false, error: "Kullanıcı rolü tanımsız." });
+                setState({ permissions: new Set(), isLoading: false, error: `Kullanıcı rolü tanımsız veya geçersiz. Kullanıcı Rolü: ${currentUser.role}` });
             }
             return;
         }
 
-
         const allRoles = await getRoles();
-        console.log("[usePermissions] Fetched allRoles:", JSON.stringify(allRoles.map(r => ({id: r.id, name: r.name, permCount: r.permissions.length}))));
-        console.log("[usePermissions] Current user role to match:", currentUser.role);
+        console.log("[usePermissions] All roles fetched:", JSON.stringify(allRoles.map(r => ({id: r.id, name: r.name}))));
+        const userRoleString = currentUser.role.toLowerCase();
+        console.log("[usePermissions] Attempting to match currentUser.role (lowercase):", userRoleString);
 
         const userRoleData = allRoles.find(r =>
-            r.name.toLowerCase() === currentUser.role.toLowerCase() ||
-            r.id.toLowerCase() === currentUser.role.toLowerCase()
+            r.name.toLowerCase() === userRoleString ||
+            r.id.toLowerCase() === userRoleString
         );
 
+        console.log("[usePermissions] Found userRoleData for role string '" + currentUser.role + "':", userRoleData ? JSON.stringify({id: userRoleData.id, name: userRoleData.name, permsCount: userRoleData.permissions?.length}) : "NOT FOUND");
+
         if (userRoleData) {
-            console.log("[usePermissions] Found userRoleData:", JSON.stringify({id: userRoleData.id, name: userRoleData.name, permCount: userRoleData.permissions?.length || 0}));
             if (userRoleData.permissions && Array.isArray(userRoleData.permissions)) {
                 if (isMounted) {
                     setState({ permissions: new Set(userRoleData.permissions), isLoading: false, error: null });
@@ -93,7 +94,7 @@ export function usePermissions(currentUserId: string | null) {
         } else {
             console.warn(`[usePermissions] No role data found for role string: '${currentUser.role}'. Searched in roles:`, allRoles.map(r => ({ id: r.id, name: r.name })));
             if (isMounted) {
-                setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" rolü bulunamadı veya rol için izin tanımlanmamış.` });
+                setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" rolü bulunamadı veya rol için izin tanımlanmamış. Tanımlı roller: ${allRoles.map(r => r.name).join(', ')}` });
             }
         }
       } catch (err: any) {

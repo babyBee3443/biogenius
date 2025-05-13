@@ -81,6 +81,8 @@ export default function AdminDashboard() {
           console.error("Error parsing currentUser in AdminDashboard", e);
           if (isMounted) setCurrentUserId(null);
         }
+      } else {
+        if (isMounted) setCurrentUserId(null); // No user, explicitly set to null
       }
       if (isMounted) setIsInitialLoadComplete(true); // Mark initial localStorage check as complete
     }
@@ -134,33 +136,44 @@ export default function AdminDashboard() {
   }, []);
 
   React.useEffect(() => {
-    console.log("[AdminDashboard] Effect Triggered: isInitialLoadComplete=", isInitialLoadComplete, "currentUserId=", currentUserId, "permissionsLoading=", permissionsLoading);
+    console.log(`[AdminDashboard] Effect Triggered: isInitialLoadComplete=${isInitialLoadComplete}, currentUserId=${currentUserId}, permissionsLoading=${permissionsLoading}, permissionsError=${permissionsError}`);
     if (!isInitialLoadComplete) {
         console.log("[AdminDashboard] Waiting for initial user ID load from localStorage...");
         return;
     }
-    if (!currentUserId) { // If no user ID after initial load, means user is not logged in from AdminLayout's perspective
-        console.log("[AdminDashboard] No currentUserId, assuming AdminLayout will handle redirect. Aborting permission check/fetch.");
-        // setLoadingData(false); // No data to load if no user
+    // If no user ID after initial load, AdminLayout should handle redirection.
+    // Dashboard specific logic should only run if there's a user and permissions are loading or loaded.
+    if (!currentUserId) {
+        console.log("[AdminDashboard] No currentUserId. AdminLayout should redirect to login if not already on /login.");
+        setLoadingData(false); // No data to load
         return;
     }
 
     if (permissionsLoading) {
         console.log("[AdminDashboard] User ID present, waiting for permissions to load...");
-        return;
+        return; // Wait for permissions to load
     }
 
-    console.log("[AdminDashboard] Permissions loaded. Has 'Dashboard Görüntüleme':", hasPermission('Dashboard Görüntüleme'));
-    if (!hasPermission('Dashboard Görüntüleme')) {
-        console.log("[AdminDashboard] No permission to view dashboard, redirecting to profile.");
+    if (permissionsError) {
+        console.error("[AdminDashboard] Permissions error:", permissionsError);
+        // Error is handled by the main return block below
+        return;
+    }
+    
+    const canViewDashboard = hasPermission('Dashboard Görüntüleme');
+    console.log("[AdminDashboard] Permissions loaded. Has 'Dashboard Görüntüleme':", canViewDashboard);
+
+    if (!canViewDashboard) {
+        console.log("[AdminDashboard] No permission to view dashboard, redirecting to /admin/profile.");
         toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Gösterge panelini görüntüleme yetkiniz yok." });
         router.push('/admin/profile');
         return;
     }
+    
     console.log("[AdminDashboard] User has permission, fetching dashboard data.");
     fetchData();
 
-  }, [isInitialLoadComplete, currentUserId, fetchData, permissionsLoading, hasPermission, router]);
+  }, [isInitialLoadComplete, currentUserId, fetchData, permissionsLoading, hasPermission, router, permissionsError]);
 
   if (permissionsError) {
     return (
@@ -205,7 +218,11 @@ export default function AdminDashboard() {
             <Button variant="outline" onClick={fetchData} disabled={loadingData}>
                <RefreshCw className="mr-2 h-4 w-4" /> Verileri Yenile
             </Button>
-            {/* Siteyi Görüntüle button is now in AdminLayout header */}
+            <Button variant="outline" asChild size="sm">
+                <Link href="/" target="_blank">
+                    <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
+                </Link>
+            </Button>
         </div>
       </div>
 
