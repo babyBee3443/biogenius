@@ -54,35 +54,135 @@ const RecentArticlesSection = dynamic(() => import('@/components/recent-articles
   ssr: false
 });
 
-// Define the text parts and their styles
-const titleParts = [
-    {
-        text: "Biyolojinin",
-        colorClass: "text-green-600 dark:text-green-400",
-        animationClass: "animate-text-shimmer-green",
+// --- Welcome Screen Component ---
+const WelcomeScreen = () => {
+  const title = "Öğrenmenin genetik temeli.";
+  const subtitleParts = [
+    { text: "Hox genleri canlıyı şekillendirir, ", colorClass: "text-gray-300 dark:text-gray-400" },
+    { text: "Biyohox", colorClass: "text-cyan-400 animate-text-rgb-cycle-fast" },
+    { text: " ise öğrenmeni.", colorClass: "text-gray-300 dark:text-gray-400" },
+  ];
+
+  const titleVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
+  };
+
+  const subtitleContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.5,
+      },
     },
-    { text: " Derinliklerine Yolculuk", colorClass: "text-foreground" },
-];
+  };
 
+  const subtitleCharVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+  };
 
-// Simplified animation variants for the title
-const titleContainerVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.8,
-      ease: "easeOut",
-      staggerChildren: 0.1,
-    },
-  },
+  return (
+    <section className="relative flex flex-col items-center justify-center text-center min-h-[60vh] md:min-h-[70vh] py-16 px-4 overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white mb-16 rounded-lg shadow-2xl border border-purple-700/50">
+      {/* Subtle Animated Background Elements */}
+      <div className="absolute inset-0 z-0 opacity-20">
+        {/* Minimal DNA Helix (conceptual representation) */}
+        <motion.svg
+          className="absolute top-1/2 left-1/2 w-[150%] h-[150%] -translate-x-1/2 -translate-y-1/2 opacity-30"
+          viewBox="0 0 400 400"
+          initial={{ rotate: 0 }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+        >
+          <path
+            d="M100,50 Q150,100 100,150 Q50,200 100,250 Q150,300 100,350"
+            stroke="url(#dna-gradient-1)"
+            strokeWidth="3"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <path
+            d="M300,50 Q250,100 300,150 Q350,200 300,250 Q250,300 300,350"
+            stroke="url(#dna-gradient-2)"
+            strokeWidth="3"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <defs>
+            <linearGradient id="dna-gradient-1" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(0, 255, 255, 0.5)" />
+              <stop offset="100%" stopColor="rgba(128, 0, 128, 0.5)" />
+            </linearGradient>
+            <linearGradient id="dna-gradient-2" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(0, 255, 128, 0.5)" />
+              <stop offset="100%" stopColor="rgba(75, 0, 130, 0.5)" />
+            </linearGradient>
+          </defs>
+        </motion.svg>
+        {/* Floating Particles (conceptual representation) */}
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={`particle-${i}`}
+            className="absolute rounded-full bg-cyan-400/30"
+            style={{
+              width: Math.random() * 4 + 2,
+              height: Math.random() * 4 + 2,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              x: [0, Math.random() * 20 - 10, 0],
+              y: [0, Math.random() * 20 - 10, 0],
+              opacity: [0, 0.5, 0],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              repeatType: "mirror",
+              delay: Math.random() * 5,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10">
+        <motion.h1
+          variants={titleVariants}
+          initial="hidden"
+          animate="visible"
+          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-green-400 animate-text-glow"
+          style={{ filter: "drop-shadow(0 0 0.75rem rgba(0, 255, 255, 0.3))" }}
+        >
+          {title}
+        </motion.h1>
+
+        <motion.h2
+          variants={subtitleContainerVariants}
+          initial="hidden"
+          animate="visible"
+          className="text-lg sm:text-xl md:text-2xl text-gray-300 dark:text-gray-400 max-w-2xl mx-auto"
+        >
+          {subtitleParts.map((part, partIndex) => (
+            <span key={`subpart-${partIndex}`} className={part.colorClass}>
+              {part.text.split("").map((char, charIndex) => (
+                <motion.span
+                  key={`char-${charIndex}`}
+                  variants={subtitleCharVariants}
+                  className="inline-block"
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </span>
+          ))}
+        </motion.h2>
+      </div>
+    </section>
+  );
 };
-
-const wordVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
-};
+// --- End Welcome Screen ---
 
 
 export default function Home() {
@@ -156,7 +256,7 @@ export default function Home() {
   if (pageIsLoading) {
      return (
         <div className="space-y-16">
-            <Skeleton className="h-16 w-3/4 mx-auto mb-8 rounded-lg" />
+            <Skeleton className="h-[60vh] md:h-[70vh] w-full mb-16 rounded-lg" />
             <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />
              <section className="w-full py-8">
                 <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
@@ -186,31 +286,7 @@ export default function Home() {
 
   return (
     <div className="space-y-16">
-      <motion.h1
-        className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-8 overflow-hidden py-2"
-        variants={titleContainerVariants}
-        initial="hidden"
-        animate="visible"
-        aria-label="Biyolojinin Derinliklerine Yolculuk"
-      >
-        {titleParts.map((part, partIndex) => (
-          <motion.span
-            key={`part-${partIndex}`}
-            variants={wordVariants}
-            className={cn("inline-block", part.colorClass, part.animationClass)}
-          >
-            {part.text.split("").map((char, charIndex) => (
-              <motion.span
-                key={`char-${charIndex}`}
-                className="inline-block"
-                variants={wordVariants} // You can create a specific charVariant if needed
-              >
-                {char}
-              </motion.span>
-            ))}
-          </motion.span>
-        ))}
-      </motion.h1>
+      <WelcomeScreen />
 
        <Hero articles={heroArticles} />
 
