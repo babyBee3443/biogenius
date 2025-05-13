@@ -40,12 +40,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers, FileText } from "lucide-react";
 
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key for preview
+const PREVIEW_STORAGE_KEY = 'preview_data'; 
 
 export default function NewArticlePage() {
     const router = useRouter();
@@ -74,6 +74,7 @@ export default function NewArticlePage() {
 
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+    const mainImageInputRef = React.useRef<HTMLInputElement>(null);
 
      React.useEffect(() => {
         if (!permissionsLoading && !hasPermission('Makale Oluşturma')) {
@@ -247,7 +248,7 @@ export default function NewArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: 'preview_new', // Static ID for new article preview
+            id: 'preview_new_article', 
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
@@ -256,8 +257,8 @@ export default function NewArticlePage() {
             isFeatured: isFeatured,
             isHero: isHero,
             status: status,
-            authorId: 'admin001', // Default or logged-in user ID
-            createdAt: new Date().toISOString(), // Use current time for new
+            authorId: 'admin001', 
+            createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
@@ -293,6 +294,26 @@ export default function NewArticlePage() {
         }
     };
 
+    const handleMainImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          if (file.size > 5 * 1024 * 1024) { // Max 5MB
+            toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 5MB'den küçük bir resim dosyası seçin." });
+            return;
+          }
+          if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+            toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG, GIF veya WEBP formatında bir resim seçin." });
+            return;
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setMainImageUrl(reader.result as string);
+            toast({ title: "Ana Görsel Yüklendi (Önizleme)", description: "Değişiklikleri kaydetmeyi unutmayın." });
+          };
+          reader.readAsDataURL(file);
+        }
+    };
+
     if (permissionsLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -320,6 +341,7 @@ export default function NewArticlePage() {
                             <TabsTrigger value="template" onClick={() => setIsTemplateSelectorOpen(true)}>Şablon Seç</TabsTrigger>
                             <TabsTrigger value="media">Medya</TabsTrigger>
                             <TabsTrigger value="seo">SEO</TabsTrigger>
+                            <TabsTrigger value="guide">Kullanım Kılavuzu</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="content" className="space-y-6">
@@ -359,8 +381,23 @@ export default function NewArticlePage() {
                             <div className="space-y-2">
                                 <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                 <div className="flex gap-2">
-                                     <Input id="main-image-url" value={mainImageUrl} onChange={(e) => setMainImageUrl(e.target.value)} placeholder="https://..." />
-                                     <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button>
+                                     <Input 
+                                        id="main-image-url" 
+                                        value={mainImageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : mainImageUrl} 
+                                        onChange={(e) => setMainImageUrl(e.target.value)} 
+                                        placeholder="https://... veya dosya yükleyin"
+                                        disabled={mainImageUrl.startsWith('data:')}
+                                    />
+                                     <Button variant="outline" onClick={() => mainImageInputRef.current?.click()}>
+                                        <Upload className="mr-2 h-4 w-4"/> Yükle
+                                     </Button>
+                                     <input
+                                        type="file"
+                                        ref={mainImageInputRef}
+                                        className="hidden"
+                                        onChange={handleMainImageFileChange}
+                                        accept="image/png, image/jpeg, image/gif, image/webp"
+                                     />
                                 </div>
                                 {mainImageUrl && (
                                     <div className="mt-2 rounded border p-2 w-fit">
@@ -369,7 +406,7 @@ export default function NewArticlePage() {
                                             alt="Ana Görsel Önizleme"
                                             width={200}
                                             height={100}
-                                            className="object-cover rounded"
+                                            className="object-cover rounded max-h-[150px]"
                                             data-ai-hint="article cover placeholder"
                                             loading="lazy"
                                         />
@@ -416,7 +453,8 @@ export default function NewArticlePage() {
                                  </CardHeader>
                                  <CardContent>
                                      <p className="text-muted-foreground">Medya kütüphanesi burada yer alacak.</p>
-                                     <Button className="mt-4"><Upload className="mr-2 h-4 w-4"/> Medya Yükle</Button>
+                                     {/* Placeholder for future media library upload button */}
+                                     {/* <Button className="mt-4"><Upload className="mr-2 h-4 w-4"/> Medya Yükle</Button> */}
                                  </CardContent>
                              </Card>
                         </TabsContent>
@@ -497,6 +535,44 @@ export default function NewArticlePage() {
                                  </CardContent>
                              </Card>
                         </TabsContent>
+                         <TabsContent value="guide">
+                             <Card>
+                                 <CardHeader>
+                                     <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5"/> Kullanım Kılavuzu: Yeni Makale</CardTitle>
+                                     <CardDescription>Bu sayfadaki alanları ve özellikleri nasıl kullanacağınızı öğrenin.</CardDescription>
+                                 </CardHeader>
+                                 <CardContent className="prose dark:prose-invert max-w-none">
+                                     <h4>Temel Alanlar</h4>
+                                     <ul>
+                                         <li><strong>Makale Başlığı:</strong> Makalenizin ana başlığı. SEO için de önemlidir. URL metni (slug) otomatik olarak bu başlıktan türetilir.</li>
+                                         <li><strong>Kategori:</strong> Makalenizin ait olduğu ana kategori. "Kategorileri Yönet" bağlantısı ile yeni kategori ekleyebilir veya mevcutları düzenleyebilirsiniz.</li>
+                                         <li><strong>Özet:</strong> Makalenin kısa bir özeti. Listeleme sayfalarında ve SEO için meta açıklama olarak kullanılır (eğer özel bir SEO açıklaması girilmezse).</li>
+                                         <li><strong>Ana Görsel URL:</strong> Makalenin ana listeleme görseli. URL yapıştırabilir veya "Yükle" butonu ile bilgisayarınızdan seçebilirsiniz.</li>
+                                         <li><strong>Öne Çıkarılmış Makale:</strong> İşaretlenirse, makale anasayfadaki "Öne Çıkanlar" bölümünde gösterilir.</li>
+                                         <li><strong>Hero'da Göster:</strong> İşaretlenirse, makale anasayfanın en üstündeki Hero (kayan) bölümde gösterilir.</li>
+                                     </ul>
+                                     <h4>İçerik Blokları</h4>
+                                     <p>Makalenizin içeriğini oluşturmak için çeşitli bloklar ekleyebilirsiniz. "Bölüm Ekle" düğmesiyle yeni bloklar ekleyebilir, blokları sürükleyip bırakarak sıralayabilir ve her bloğun sağ üst köşesindeki kontrollerle silebilirsiniz.</p>
+                                     <h4>Yayın Durumu (Sağ Panel)</h4>
+                                     <ul>
+                                         <li><strong>Taslak:</strong> Makale üzerinde çalışılıyor, yayınlanmadı.</li>
+                                         <li><strong>İncelemede:</strong> Makale hazır, yayınlanmadan önce incelenmesi gerekiyor (Bu özellik daha sonra eklenebilir).</li>
+                                         <li><strong>Hazır:</strong> Makale yayınlanmaya hazır. Sadece Admin ve Editörler önizleyebilir.</li>
+                                         <li><strong>Yayınlandı:</strong> Makale tüm kullanıcılara görünür.</li>
+                                         <li><strong>Arşivlendi:</strong> Makale yayından kaldırıldı ama sistemde duruyor.</li>
+                                     </ul>
+                                     <h4>Aksiyonlar (Sağ Panel)</h4>
+                                     <ul>
+                                         <li><strong>Önizle:</strong> Değişikliklerinizi canlı sitede nasıl görüneceğini gösterir.</li>
+                                         <li><strong>Kaydet:</strong> Mevcut durumuyla makaleyi kaydeder. Durum "Taslak", "İncelemede" veya "Hazır" ise bu şekilde kalır.</li>
+                                         <li><strong>Yayınla:</strong> Makaleyi "Yayınlandı" durumuna getirir ve herkese görünür yapar. Eğer makale zaten "Yayınlandı" ise, yapılan değişiklikleri kaydeder.</li>
+                                         <li><strong>Şablonu Kaldır:</strong> Eğer bir şablon seçildiyse ve içerik şablondan yüklendiyse, bu buton görünür. Mevcut içeriği silip varsayılan boş metin bloğuna döndürür.</li>
+                                     </ul>
+                                     <h4>SEO Ayarları Sekmesi</h4>
+                                     <p>Makalenizin arama motorlarındaki görünürlüğünü artırmak için SEO başlığı, meta açıklaması, URL metni (slug) ve anahtar kelimeleri buradan düzenleyebilirsiniz.</p>
+                                 </CardContent>
+                             </Card>
+                         </TabsContent>
                     </Tabs>
                 </div>
 
@@ -514,10 +590,10 @@ export default function NewArticlePage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Taslak">Taslak</SelectItem>
-                                        <SelectItem value="İncelemede">İncelemede</SelectItem>
+                                        {/* <SelectItem value="İncelemede">İncelemede</SelectItem> */}
                                         <SelectItem value="Hazır">Hazır (Admin/Editör Görsün)</SelectItem>
                                         <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
-                                        <SelectItem value="Arşivlendi">Arşivlendi</SelectItem>
+                                        {/* <SelectItem value="Arşivlendi">Arşivlendi</SelectItem> */}
                                     </SelectContent>
                                 </Select>
                             </div>

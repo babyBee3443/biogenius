@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation"; // Keep useRouter if needed for other actions
+import { useRouter } from "next/navigation"; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,20 +11,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon, Newspaper, BookCopy, Eye } from 'lucide-react'; // Added icons for stats
+import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon, Newspaper, BookCopy, Eye } from 'lucide-react'; 
 import { getUserById, updateUser, type User, getArticles, getNotes, type ArticleData, type NoteData } from '@/lib/mock-data';
 
 interface UserContentStats {
     articlesCount: number;
     notesCount: number;
-    totalArticleViews: number; // Placeholder for now
-    totalNoteViews: number; // Placeholder for now
+    totalArticleViews: number; 
+    totalNoteViews: number; 
 }
 
 export default function AdminProfilePage() {
-  const router = useRouter(); // Keep for potential future use
+  const router = useRouter(); 
 
-  const [userId, setUserId] = React.useState<string | null>(null); // This will be fetched from localStorage
+  const [userId, setUserId] = React.useState<string | null>(null); 
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
@@ -67,7 +67,7 @@ export default function AdminProfilePage() {
             setUserId(storedUser.id);
           } else {
             toast({ variant: "destructive", title: "Hata", description: "Oturum bilgileri bulunamadı. Lütfen tekrar giriş yapın." });
-            router.push('/login'); // Redirect to login if no valid user ID
+            router.push('/login'); 
           }
         } catch (e) {
           console.error("Error parsing currentUser from localStorage:", e);
@@ -76,7 +76,7 @@ export default function AdminProfilePage() {
         }
       } else {
         toast({ variant: "destructive", title: "Oturum Yok", description: "Lütfen giriş yapın." });
-        router.push('/login'); // Redirect if no currentUser in localStorage
+        router.push('/login'); 
       }
     }
   }, [router]);
@@ -105,10 +105,8 @@ export default function AdminProfilePage() {
             setXProfile(userData.xProfile || "");
             setAvatarUrl(userData.avatar || "https://picsum.photos/seed/default-avatar/128/128");
 
-            // Calculate content stats
             const userArticles = allArticles.filter(article => article.authorId === userId);
             const userNotes = allNotes.filter(note => note.authorId === userId);
-            // Mock views for now
             const totalArticleViews = userArticles.reduce((sum, _) => sum + Math.floor(Math.random() * 500) + 50, 0);
             const totalNoteViews = userNotes.reduce((sum, _) => sum + Math.floor(Math.random() * 200) + 20, 0);
 
@@ -121,7 +119,6 @@ export default function AdminProfilePage() {
 
           } else {
             toast({ variant: "destructive", title: "Hata", description: "Kullanıcı profili bulunamadı." });
-            // Potentially redirect or show a "not found" state within the profile page
           }
         })
         .catch(err => {
@@ -156,23 +153,19 @@ export default function AdminProfilePage() {
     try {
       const result = await updateUser(userId, updatedData);
       if (result) {
-        setUser(result); // Update local user state
-         // Also update localStorage if needed, especially name/avatar for header
+        setUser(result); 
         if (typeof window !== 'undefined') {
             const storedCurrentUser = localStorage.getItem('currentUser');
             if (storedCurrentUser) {
                 try {
                     const currentUserData = JSON.parse(storedCurrentUser);
-                    // Ensure we update the correct user in localStorage
                     if (currentUserData.id === userId) {
                         localStorage.setItem('currentUser', JSON.stringify({
-                            ...currentUserData, // Keep existing relevant fields like ID, email, role
+                            ...currentUserData, 
                             name: result.name,
                             avatar: result.avatar,
-                            username: result.username, // Persist username if it's part of currentUser
-                            // Persist other fields if they are part of what 'currentUser' stores
+                            username: result.username, 
                         }));
-                        // Trigger a custom event to notify header to update (if header listens)
                         window.dispatchEvent(new CustomEvent('currentUserUpdated'));
                     }
                 } catch (e) { console.error("Failed to update localStorage user", e); }
@@ -204,7 +197,6 @@ export default function AdminProfilePage() {
       setIsSavingPassword(false);
       return;
     }
-    // Simulate API call
     setTimeout(() => {
       toast({ title: "Şifre Değiştirildi (Simülasyon)", description: "Şifreniz başarıyla güncellendi." });
       setCurrentPassword("");
@@ -221,8 +213,8 @@ export default function AdminProfilePage() {
         toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 2MB'den küçük bir resim dosyası seçin." });
         return;
       }
-      if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type)) {
-        toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG veya GIF formatında bir resim seçin." });
+      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+        toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG, GIF veya WEBP formatında bir resim seçin." });
         return;
       }
       const reader = new FileReader();
@@ -272,10 +264,10 @@ export default function AdminProfilePage() {
                   ref={fileInputRef}
                   className="hidden"
                   onChange={handleAvatarChange}
-                  accept="image/png, image/jpeg, image/gif"
+                  accept="image/png, image/jpeg, image/gif, image/webp"
                   disabled={isSavingProfile}
                 />
-                <p className="text-xs text-muted-foreground">PNG, JPG veya GIF. Maks. 2MB.</p>
+                <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WEBP. Maks. 2MB.</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -421,12 +413,9 @@ export default function AdminProfilePage() {
                         </p>
                     </CardContent>
                 </Card>
-                 {/* Add more detailed stats or links to user's content if needed */}
             </CardContent>
         </Card>
 
     </div>
   );
 }
-
-    

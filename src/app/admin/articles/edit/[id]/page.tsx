@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { useRouter, useParams } from 'next/navigation'; // Removed notFound as it's not used here
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -39,7 +39,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers, FileText } from "lucide-react";
-import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
+import { Skeleton } from '@/components/ui/skeleton';
 
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
@@ -49,7 +49,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data';
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = React.use(params)?.id as string; // Using React.use
+    const articleId = React.use(params).id as string;
 
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -74,6 +74,7 @@ export default function EditArticlePage() {
 
     const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = React.useState(false);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+    const mainImageInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         let isMounted = true;
@@ -344,7 +345,7 @@ export default function EditArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: articleId || 'preview_edit',
+            id: articleId || 'preview_edit_article',
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
@@ -396,13 +397,33 @@ export default function EditArticlePage() {
      };
 
      const handleRevertToDraftOrReady = () => {
-        setStatus('Taslak');
+        setStatus('Taslak'); // Always revert to Taslak
         handleSave(false);
      };
 
       const handleMarkAsReady = () => {
         setStatus('Hazır');
         handleSave(false);
+    };
+
+    const handleMainImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          if (file.size > 5 * 1024 * 1024) { // Max 5MB
+            toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 5MB'den küçük bir resim dosyası seçin." });
+            return;
+          }
+          if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+            toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG, GIF veya WEBP formatında bir resim seçin." });
+            return;
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setMainImageUrl(reader.result as string);
+            toast({ title: "Ana Görsel Yüklendi (Önizleme)", description: "Değişiklikleri kaydetmeyi unutmayın." });
+          };
+          reader.readAsDataURL(file);
+        }
     };
 
 
@@ -506,8 +527,23 @@ export default function EditArticlePage() {
                              <div className="space-y-2">
                                  <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                  <div className="flex gap-2">
-                                      <Input id="main-image-url" value={mainImageUrl ?? ""} onChange={(e) => setMainImageUrl(e.target.value)} placeholder="https://..."/>
-                                      <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button>
+                                      <Input 
+                                        id="main-image-url" 
+                                        value={mainImageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : mainImageUrl} 
+                                        onChange={(e) => setMainImageUrl(e.target.value)} 
+                                        placeholder="https://... veya dosya yükleyin"
+                                        disabled={mainImageUrl.startsWith('data:')}
+                                       />
+                                      <Button variant="outline" onClick={() => mainImageInputRef.current?.click()}>
+                                        <Upload className="mr-2 h-4 w-4"/> Yükle
+                                      </Button>
+                                      <input
+                                        type="file"
+                                        ref={mainImageInputRef}
+                                        className="hidden"
+                                        onChange={handleMainImageFileChange}
+                                        accept="image/png, image/jpeg, image/gif, image/webp"
+                                     />
                                  </div>
                                  {mainImageUrl && (
                                      <div className="mt-2 rounded border p-2 w-fit">
@@ -516,9 +552,9 @@ export default function EditArticlePage() {
                                             alt="Ana Görsel Önizleme"
                                             width={200}
                                             height={100}
-                                            className="object-cover rounded"
+                                            className="object-cover rounded max-h-[150px]"
                                             data-ai-hint="article cover placeholder"
-                                            priority={false} // Main image in editor can be lazy
+                                            priority={false}
                                             loading="lazy"
                                         />
                                      </div>
@@ -603,7 +639,7 @@ export default function EditArticlePage() {
                                              <Input
                                                  id="slug"
                                                  value={slug}
-                                                 onChange={(e) => setSlug(generateSlugUtil(e.target.value))}
+                                                 onChange={(e) => setSlug(generateSlug(e.target.value))}
                                                  placeholder="makale-basligi-url"
                                                  required
                                              />
@@ -655,7 +691,7 @@ export default function EditArticlePage() {
                                          <li><strong>Makale Başlığı:</strong> Makalenizin ana başlığı. SEO için de önemlidir.</li>
                                          <li><strong>Kategori:</strong> Makalenizin ait olduğu ana kategori.</li>
                                          <li><strong>Özet:</strong> Makalenin kısa bir özeti. Listeleme sayfalarında ve SEO için kullanılır.</li>
-                                         <li><strong>Ana Görsel URL:</strong> Makalenin ana listeleme görseli.</li>
+                                         <li><strong>Ana Görsel URL:</strong> Makalenin ana listeleme görseli. URL yapıştırabilir veya "Yükle" butonu ile bilgisayarınızdan seçebilirsiniz.</li>
                                          <li><strong>Öne Çıkarılmış Makale:</strong> İşaretlenirse, makale anasayfadaki "Öne Çıkanlar" bölümünde gösterilir.</li>
                                          <li><strong>Hero'da Göster:</strong> İşaretlenirse, makale anasayfanın en üstündeki Hero (kayan) bölümde gösterilir.</li>
                                      </ul>
@@ -683,7 +719,8 @@ export default function EditArticlePage() {
                                          <li><strong>Önizle:</strong> Değişikliklerinizi canlı sitede nasıl görüneceğini gösterir.</li>
                                          <li><strong>Kaydet:</strong> Mevcut durumuyla makaleyi kaydeder (Yayınla'dan farklı).</li>
                                          <li><strong>Yayınla:</strong> Makaleyi "Yayınlandı" durumuna getirir ve herkese görünür yapar.</li>
-                                         <li><strong>Taslağa/Hazıra Geri Al:</strong> "Yayınlandı" durumundaki bir makaleyi "Taslak" veya "Hazır" durumuna döndürür.</li>
+                                         <li><strong>Taslağa Geri Al:</strong> "Yayınlandı" veya "Hazır" durumundaki bir makaleyi "Taslak" durumuna döndürür.</li>
+                                         <li><strong>Hazır Olarak İşaretle:</strong> "Taslak" veya "İncelemede" durumundaki makaleyi "Hazır" durumuna getirir.</li>
                                          <li><strong>Şablonu Kaldır:</strong> Uygulanan bir şablon varsa, içeriği varsayılan boş metin bloğuna döndürür.</li>
                                      </ul>
                                      <h4>SEO Ayarları Sekmesi</h4>
@@ -704,10 +741,10 @@ export default function EditArticlePage() {
                                      <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                                      <SelectContent>
                                          <SelectItem value="Taslak">Taslak</SelectItem>
-                                         <SelectItem value="İncelemede">İncelemede</SelectItem>
+                                         {/* <SelectItem value="İncelemede">İncelemede</SelectItem> */}
                                          <SelectItem value="Hazır">Hazır (Admin/Editör Görsün)</SelectItem>
                                          <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
-                                         <SelectItem value="Arşivlendi">Arşivlendi</SelectItem>
+                                         {/* <SelectItem value="Arşivlendi">Arşivlendi</SelectItem> */}
                                      </SelectContent>
                                  </Select>
                              </div>

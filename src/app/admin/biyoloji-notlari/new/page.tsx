@@ -49,7 +49,7 @@ import { Badge } from '@/components/ui/badge';
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key for preview
+const PREVIEW_STORAGE_KEY = 'preview_data'; 
 
 // --- AI Message Types ---
 interface AiAssistantMessage {
@@ -83,6 +83,7 @@ export default function NewBiyolojiNotuPage() {
     const [slug, setSlug] = React.useState("");
     const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+    const mainImageInputRef = React.useRef<HTMLInputElement>(null);
 
     // --- AI Note Assistant State ---
     const [isAiAssistantPanelOpen, setIsAiAssistantPanelOpen] = React.useState(false);
@@ -187,8 +188,6 @@ export default function NewBiyolojiNotuPage() {
              title, slug, category, level, tags, summary,
              contentBlocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
              imageUrl: imageUrl || null,
-             authorId: 'admin001', // Default or logged-in user ID
-             status: 'Taslak', // Default status for new notes
          };
          try {
              const newNote = await createNote(newNoteData);
@@ -234,7 +233,6 @@ export default function NewBiyolojiNotuPage() {
             category: category, level: level, tags: tags, summary: summary || '', contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-            authorId: 'admin001', status: 'Taslak',
         };
 
         console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
@@ -304,7 +302,7 @@ export default function NewBiyolojiNotuPage() {
             currentBlocksStructure: blocks.map(b => ({
                 type: b.type,
                 contentPreview: (b as any).content?.substring(0, 50) || (b as any).url?.substring(0,50) || `[${b.type} bloğu]`
-            }) as GenerateNoteAiBlockStructure) // Added type assertion
+            }) as GenerateNoteAiBlockStructure)
         };
 
         const userInput: GenerateBiologyNoteSuggestionInput = {
@@ -418,6 +416,26 @@ export default function NewBiyolojiNotuPage() {
         }
     };
 
+    const handleMainImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          if (file.size > 5 * 1024 * 1024) { // Max 5MB
+            toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 5MB'den küçük bir resim dosyası seçin." });
+            return;
+          }
+          if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+            toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG, GIF veya WEBP formatında bir resim seçin." });
+            return;
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImageUrl(reader.result as string);
+            toast({ title: "Kapak Görseli Yüklendi (Önizleme)", description: "Değişiklikleri kaydetmeyi unutmayın." });
+          };
+          reader.readAsDataURL(file);
+        }
+    };
+
 
     return (
         <div className="flex flex-col h-full">
@@ -472,8 +490,6 @@ export default function NewBiyolojiNotuPage() {
                                                 <SelectContent>
                                                      {loadingCategories ? (
                                                         <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
-                                                     ) : categories.length === 0 ? (
-                                                        <SelectItem value="no_categories_placeholder" disabled>Kategori bulunamadı.</SelectItem>
                                                      ) : (
                                                         categories.map(cat => (
                                                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
@@ -513,8 +529,23 @@ export default function NewBiyolojiNotuPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="image-url">Kapak Görsel URL</Label>
                                         <div className="flex gap-2">
-                                             <Input id="image-url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
-                                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Yükle</Button>
+                                             <Input 
+                                                id="image-url" 
+                                                value={imageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : imageUrl} 
+                                                onChange={(e) => setImageUrl(e.target.value)} 
+                                                placeholder="https://... veya dosya yükleyin"
+                                                disabled={imageUrl.startsWith('data:')}
+                                            />
+                                             <Button variant="outline" onClick={() => mainImageInputRef.current?.click()}>
+                                                <Upload className="mr-2 h-4 w-4"/> Yükle
+                                             </Button>
+                                             <input
+                                                type="file"
+                                                ref={mainImageInputRef}
+                                                className="hidden"
+                                                onChange={handleMainImageFileChange}
+                                                accept="image/png, image/jpeg, image/gif, image/webp"
+                                             />
                                         </div>
                                         {imageUrl && (
                                             <div className="mt-2 rounded border p-2 w-fit">
@@ -523,7 +554,7 @@ export default function NewBiyolojiNotuPage() {
                                                   alt="Kapak Görsel Önizleme" 
                                                   width={200} 
                                                   height={100} 
-                                                  className="object-cover rounded" 
+                                                  className="object-cover rounded max-h-[150px]" 
                                                   data-ai-hint="biology note cover placeholder"
                                                 />
                                             </div>
