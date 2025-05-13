@@ -120,7 +120,6 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
-    // { href: "/categories/biyoloji", label: "Biyoloji" }, // Removed Biyoloji from main nav
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -138,94 +137,99 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2 group">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 100 100"
-            className="h-10 w-10 group-hover:animate-spin-slow"
-          >
-            <defs>
-              <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="cyan">
-                  <animate attributeName="stop-color" values="cyan;magenta;lime;green;blue;cyan" dur="8s" repeatCount="indefinite" />
-                </stop>
-                <stop offset="100%" stopColor="lime">
-                  <animate attributeName="stop-color" values="lime;green;blue;cyan;magenta;lime" dur="8s" repeatCount="indefinite" />
-                </stop>
-              </linearGradient>
-            </defs>
-            <g transform="translate(50,50) scale(0.8) rotate(15)">
-              <path
-                d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
-                stroke="url(#dnaGradientHeader)"
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
-              >
-                <animateTransform
-                  attributeName="transform"
-                  type="rotate"
-                  from="0 0 0"
-                  to="360 0 0"
-                  dur="10s"
-                  repeatCount="indefinite"
-                />
-                <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" />
-              </path>
-              <path
-                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
-                stroke="url(#dnaGradientHeader)"
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
-              >
-                <animateTransform
-                  attributeName="transform"
-                  type="rotate"
-                  from="0 0 0"
-                  to="360 0 0"
-                  dur="10s"
-                  repeatCount="indefinite"
-                />
-                 <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" begin="0.5s" />
-              </path>
-              {[...Array(7)].map((_, i) => {
-                const yPos = -35 + i * (70 / 6);
-                const angle = (i * Math.PI) / 3.5; 
-                const amplitude = 10 + Math.sin(Date.now() / 1000 + i) * 2; 
-                const x1 = Math.sin(angle) * amplitude;
-                const x2 = Math.sin(angle + Math.PI) * amplitude;
-                return (
-                  <line
-                    key={`header-dna-base-${i}`}
-                    x1={x1}
-                    y1={yPos}
-                    x2={x2}
-                    y2={yPos}
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  >
-                    <animate
-                      attributeName="stroke"
-                      values="yellow;green;magenta;cyan;blue;yellow"
-                      dur="7s"
-                      repeatCount="indefinite"
-                      begin={`${i * 0.2}s`}
-                    />
-                     <animateTransform
-                      attributeName="transform"
-                      type="rotate"
-                      from="0 0 0"
-                      to="360 0 0"
-                      dur="10s"
-                      repeatCount="indefinite"
-                    />
-                  </line>
-                );
-              })}
-            </g>
-          </svg>
-          <span className="font-bold text-lg group-hover:text-primary transition-colors">BiyoHox</span>
+        <Link href="/" className="mr-6 flex flex-col items-center group"> {/* Changed to flex-col and items-center */}
+          <div className="flex items-center space-x-2"> {/* Logo and BiyoHox text */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 100 100"
+              className="h-10 w-10 group-hover:animate-spin-slow"
+            >
+              <defs>
+                <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="cyan">
+                    <animate attributeName="stop-color" values="cyan;magenta;lime;green;blue;cyan" dur="8s" repeatCount="indefinite" />
+                  </stop>
+                  <stop offset="100%" stopColor="lime">
+                    <animate attributeName="stop-color" values="lime;green;blue;cyan;magenta;lime" dur="8s" repeatCount="indefinite" />
+                  </stop>
+                </linearGradient>
+              </defs>
+              <g transform="translate(50,50) scale(0.8) rotate(15)">
+                <path
+                  d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
+                  stroke="url(#dnaGradientHeader)"
+                  strokeWidth="5"
+                  fill="none"
+                  strokeLinecap="round"
+                >
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 0 0"
+                    to="360 0 0"
+                    dur="10s"
+                    repeatCount="indefinite"
+                  />
+                  <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" />
+                </path>
+                <path
+                  d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
+                  stroke="url(#dnaGradientHeader)"
+                  strokeWidth="5"
+                  fill="none"
+                  strokeLinecap="round"
+                >
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 0 0"
+                    to="360 0 0"
+                    dur="10s"
+                    repeatCount="indefinite"
+                  />
+                   <animate attributeName="stroke-width" values="5;6;5" dur="3s" repeatCount="indefinite" begin="0.5s" />
+                </path>
+                {[...Array(7)].map((_, i) => {
+                  const yPos = -35 + i * (70 / 6);
+                  const angle = (i * Math.PI) / 3.5;
+                  const amplitude = 10 + Math.sin(Date.now() / 1000 + i) * 2;
+                  const x1 = Math.sin(angle) * amplitude;
+                  const x2 = Math.sin(angle + Math.PI) * amplitude;
+                  return (
+                    <line
+                      key={`header-dna-base-${i}`}
+                      x1={x1}
+                      y1={yPos}
+                      x2={x2}
+                      y2={yPos}
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    >
+                      <animate
+                        attributeName="stroke"
+                        values="hsl(180,100%,50%);hsl(300,100%,50%);hsl(120,100%,50%);hsl(120,100%,25%);hsl(240,100%,50%);hsl(180,100%,50%)" // Explicit HSL values for vibrancy
+                        dur="7s"
+                        repeatCount="indefinite"
+                        begin={`${i * 0.2}s`}
+                      />
+                       <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 0 0"
+                        to="360 0 0"
+                        dur="10s"
+                        repeatCount="indefinite"
+                      />
+                    </line>
+                  );
+                })}
+              </g>
+            </svg>
+            <span className="font-bold text-lg group-hover:text-primary transition-colors">BiyoHox</span>
+          </div>
+          <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors mt-0.5">
+            Öğrenmenin DNA’sı
+          </span>
         </Link>
 
         <nav className="hidden md:flex flex-1 items-center space-x-1">
@@ -245,7 +249,7 @@ const Header = () => {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-               <div className="relative w-full max-w-[140px] sm:max-w-[160px]"> {/* Reduced search bar width */}
+               <div className="relative w-full max-w-[140px] sm:max-w-[160px]">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
@@ -304,7 +308,7 @@ const Header = () => {
           <ThemeToggle />
 
           {isMounted && isAdminOrEditor && (
-             <Button variant="ghost" size="sm" asChild className="ml-1 shrink-0">
+             <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
                 <Link href="/admin" passHref>
                     <ShieldCheck className="mr-1.5 h-4 w-4" />
                     <span className="hidden sm:inline">Admin Paneli</span>
