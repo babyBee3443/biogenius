@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -36,10 +35,10 @@ export function ThemeToggle() {
       style={{ width: `${toggleWidth}px`, height: '40px' }} // Apply dimensions using style for precision
       className={cn(
         "relative flex items-center rounded-full p-1 cursor-pointer transition-all duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        // Updated gradients for more distinction
+        // Updated gradients for more distinction, inspired by the image's day/night themes
         isLight
-          ? "bg-gradient-to-r from-sky-400 to-emerald-400" // Brighter, distinct light theme gradient
-          : "bg-gradient-to-r from-slate-700 to-teal-800" // Darker, distinct dark theme gradient
+          ? "bg-gradient-to-r from-sky-400 via-blue-400 to-indigo-400" // Brighter, distinct light theme gradient (day sky)
+          : "bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-950" // Darker, distinct dark theme gradient (night sky)
       )}
       aria-label={isLight ? "Koyu temaya geç" : "Açık temaya geç"} // Updated aria-label
     >
@@ -48,7 +47,7 @@ export function ThemeToggle() {
         layout // Enables smooth layout animation
         transition={{ type: "spring", stiffness: 500, damping: 35 }}
         className={cn(
-          "absolute h-8 w-8 rounded-full bg-white shadow-md flex items-center justify-center",
+          "absolute h-8 w-8 rounded-full bg-white/90 dark:bg-slate-300/90 shadow-lg flex items-center justify-center backdrop-blur-sm", // Added backdrop-blur
            // Use absolute positioning with left defined by padding
            "top-1 left-1"
         )}
@@ -57,9 +56,9 @@ export function ThemeToggle() {
         animate={{ x: isLight ? 0 : moveDistance }} // Move indicator based on calculated distance
       >
         {isLight ? (
-          <Sun className="h-5 w-5 text-orange-500" /> // Changed Sun color for better contrast on light gradient
+          <Sun className="h-5 w-5 text-orange-500" /> // Bright sun
         ) : (
-          <Moon className="h-5 w-5 text-indigo-400" /> // Changed Moon color for better contrast on dark gradient
+          <Moon className="h-5 w-5 text-indigo-400" /> // Cool moon
         )}
       </motion.div>
 
@@ -67,14 +66,14 @@ export function ThemeToggle() {
        <span style={{ left: `${padding + indicatorSize + 8}px` }} // Position relative to indicator + padding
             className={cn(
            "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
-           isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0"
+           isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0" // Text shadow for better visibility on gradient
         )}>
            AÇIK TEMA {/* Translated text */}
        </span>
        <span style={{ right: `${padding + indicatorSize + 8}px` }} // Position relative to indicator + padding
             className={cn(
            "absolute top-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity duration-300 ease-in-out pointer-events-none",
-           !isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0"
+           !isLight ? "text-white text-shadow-sm opacity-100" : "opacity-0" // Text shadow for better visibility on gradient
         )}>
           KOYU TEMA {/* Translated text */}
       </span>
