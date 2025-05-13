@@ -1,3 +1,4 @@
+
 "use client"; 
 
 import * as React from 'react';
@@ -227,7 +228,7 @@ export default function NewBiyolojiNotuPage() {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce Kategori ve Seviye seçin." });
             return;
         }
-        const previewData: Partial<NoteData> &amp; { previewType: 'note' } = {
+        const previewData: Partial<NoteData> & { previewType: 'note' } = {
             previewType: 'note', id: 'preview_new_note', title: title || 'Başlıksız Not', slug: slug || generateSlug(title),
             category: category, level: level, tags: tags, summary: summary || '', contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
@@ -235,7 +236,7 @@ export default function NewBiyolojiNotuPage() {
             status: 'Taslak' // Default status for new note preview
         };
 
-        console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
         console.log("[NewBiyolojiNotuPage/handlePreview] Preview Data before stringify:", previewData);
 
         if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
@@ -322,48 +323,52 @@ export default function NewBiyolojiNotuPage() {
             currentFormData: currentFormData,
         };
 
-        let userMessage = `Konu: ${aiAssistantTopic}`;
-        if (aiAssistantKeywords) userMessage += `, Anahtar Kelimeler: ${aiAssistantKeywords}`;
-        if (aiAssistantOutline) userMessage += `, Taslak: ${aiAssistantOutline}`;
-
-        userMessage += `\n\nMevcut Form Alanları ve Not Yapısı (bunları dikkate alarak öneri ver):`;
-        if (currentFormData.currentTitle) userMessage += `\n- Başlık: ${currentFormData.currentTitle}`;
-        if (currentFormData.currentSummary) userMessage += `\n- Özet: ${currentFormData.currentSummary}`;
-        if (currentFormData.currentTags && currentFormData.currentTags.length > 0) userMessage += `\n- Etiketler: ${currentFormData.currentTags.join(', ')}`;
-        if (currentFormData.currentCategory) userMessage += `\n- Kategori: ${currentFormData.currentCategory}`;
-        if (currentFormData.currentLevel) userMessage += `\n- Seviye: ${currentFormData.currentLevel}`;
+        let userMessageContent = `**Konu:** ${aiAssistantTopic}`;
+        if (aiAssistantKeywords) userMessageContent += `\n**Anahtar Kelimeler:** ${aiAssistantKeywords}`;
+        if (aiAssistantOutline) userMessageContent += `\n**İstenen Taslak:** ${aiAssistantOutline}`;
+        
+        userMessageContent += `\n\n**Mevcut Form Alanları ve Not Yapısı (bunları dikkate alarak öneri ver):**`;
+        if (currentFormData.currentTitle) userMessageContent += `\n- Başlık: "${currentFormData.currentTitle}"`;
+        if (currentFormData.currentSummary) userMessageContent += `\n- Özet: "${currentFormData.currentSummary}"`;
+        if (currentFormData.currentTags && currentFormData.currentTags.length > 0) userMessageContent += `\n- Etiketler: ${currentFormData.currentTags.join(', ')}`;
+        if (currentFormData.currentCategory) userMessageContent += `\n- Kategori: ${currentFormData.currentCategory}`;
+        if (currentFormData.currentLevel) userMessageContent += `\n- Seviye: ${currentFormData.currentLevel}`;
         if (currentFormData.currentBlocksStructure && currentFormData.currentBlocksStructure.length > 0) {
-            userMessage += `\n- Mevcut Bloklar (${currentFormData.currentBlocksStructure.length} adet):`;
+            userMessageContent += `\n- Mevcut Bloklar (${currentFormData.currentBlocksStructure.length} adet):`;
             currentFormData.currentBlocksStructure.forEach((b, i) => {
-                userMessage += `\n  - Blok ${i+1}: Tip: ${b.type}, İçerik Önizlemesi: ${b.contentPreview}`;
+                userMessageContent += `\n  - Blok ${i+1}: Tip: ${b.type}, İçerik Önizlemesi: "${b.contentPreview}"`;
             });
+        } else {
+            userMessageContent += `\n- Henüz blok eklenmemiş.`;
         }
 
-        setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: userMessage }]);
+
+        setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', content: <div className="whitespace-pre-wrap">{userMessageContent}</div> }]);
         setIsAiAssistantGenerating(true);
 
         try {
             const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInput);
+            
             const aiResponseContent = (
-                <div className="space-y-2 text-left">
+                <div className="space-y-3 text-left">
                     {aiOutput.suggestedTitle && (
                         <div>
                             <strong className="block text-sm font-medium">Önerilen Başlık:</strong>
-                            <p className="text-sm">{aiOutput.suggestedTitle}</p>
+                            <p className="text-sm p-2 bg-background rounded border border-border/50">{aiOutput.suggestedTitle}</p>
                         </div>
                     )}
                     {aiOutput.suggestedSummary && (
                         <div>
                             <strong className="block text-sm font-medium">Önerilen Özet:</strong>
-                            <p className="text-sm whitespace-pre-wrap">{aiOutput.suggestedSummary}</p>
+                            <p className="text-sm whitespace-pre-wrap p-2 bg-background rounded border border-border/50">{aiOutput.suggestedSummary}</p>
                         </div>
                     )}
                     {aiOutput.suggestedTags && aiOutput.suggestedTags.length > 0 && (
                         <div>
                             <strong className="block text-sm font-medium">Önerilen Etiketler:</strong>
-                            <div className="flex flex-wrap gap-1 mt-1">
+                            <div className="flex flex-wrap gap-1 mt-1 p-2 bg-background rounded border border-border/50">
                                 {aiOutput.suggestedTags.map(tag => (
-                                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                                    <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                                 ))}
                             </div>
                         </div>
@@ -371,7 +376,7 @@ export default function NewBiyolojiNotuPage() {
                      {aiOutput.suggestedContentIdeas && (
                         <div>
                             <strong className="block text-sm font-medium">Önerilen İçerik Fikirleri/Taslak:</strong>
-                            <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '&lt;br /&gt;') }} />
+                            <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none p-2 bg-background rounded border border-border/50" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '<br />') }} />
                         </div>
                     )}
                 </div>
@@ -499,6 +504,8 @@ export default function NewBiyolojiNotuPage() {
                                                 <SelectContent>
                                                      {loadingCategories ? (
                                                         <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
+                                                     ) : categories.length === 0 ? (
+                                                        <SelectItem value="no-categories" disabled>Kategori bulunamadı.</SelectItem>
                                                      ) : (
                                                         categories.map(cat => (
                                                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
@@ -706,3 +713,4 @@ export default function NewBiyolojiNotuPage() {
 // For server actions, Next.js handles their availability.
 // import './flows/generate-biology-note-flow';
 // import './flows/biology-chat-flow';
+
