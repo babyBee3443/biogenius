@@ -1,10 +1,9 @@
-
 "use client";
 
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -14,6 +13,17 @@ import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { LoginModal } from '@/components/login-modal';
 import { CreateAccountModal } from '@/components/create-account-modal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from '@/hooks/use-toast';
+
 
 interface ArticleStub {
   id: string;
@@ -23,6 +33,7 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
+  // This is mock data. In a real application, you would fetch this from your backend.
   const mockData: ArticleStub[] = [
     { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
     { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
@@ -45,11 +56,11 @@ const DnaLogo = () => (
     >
         <defs>
             <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="cyan">
-                    <animate attributeName="stop-color" values="cyan;magenta;lime;cyan" dur="6s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor="hsl(var(--primary))">
+                    <animate attributeName="stop-color" values="hsl(var(--primary));hsl(175 80% 40%);hsl(var(--primary))" dur="4s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="lime">
-                    <animate attributeName="stop-color" values="lime;cyan;magenta;lime" dur="6s" repeatCount="indefinite" />
+                <stop offset="100%" stopColor="hsl(175 75% 45%)">
+                    <animate attributeName="stop-color" values="hsl(175 75% 45%);hsl(var(--primary));hsl(175 75% 45%)" dur="4s" repeatCount="indefinite" />
                 </stop>
             </linearGradient>
         </defs>
@@ -91,11 +102,8 @@ const DnaLogo = () => (
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                let dynamicAmplitude = 0;
-                if (typeof window !== 'undefined') {
-                    dynamicAmplitude = Math.sin(Date.now() / 700 + i) * 2;
-                }
-                const amplitude = 10 + dynamicAmplitude;
+                // Keep amplitude static if Date.now() causes issues in server components or build
+                const amplitude = 10 + (typeof window !== 'undefined' ? Math.sin(Date.now() / 700 + i) * 2 : 0);
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
@@ -107,13 +115,14 @@ const DnaLogo = () => (
                         y2={yPos}
                         strokeWidth="3"
                         strokeLinecap="round"
+                        className="stroke-primary/50 dark:stroke-primary/30"
                     >
-                        <animate
+                         <animate
                             attributeName="stroke"
-                            values="cyan;magenta;lime;green;blue;cyan" // Vibrant RGB cycle
-                            dur="5s" // Faster cycle for more dynamism
+                            values="hsl(var(--primary)/0.5);hsl(175 80% 40% / 0.7);hsl(175 75% 45% / 0.5);hsl(var(--primary)/0.5)"
+                            dur="5s" 
                             repeatCount="indefinite"
-                            begin={`${i * 0.2}s`} // Staggered start
+                            begin={`${i * 0.2}s`} 
                         />
                          <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin={`${i*0.15}s`} />
                         <animateTransform
@@ -172,7 +181,7 @@ const Header = () => {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('currentUserUpdated', checkUserStatus);
+    window.addEventListener('currentUserUpdated', checkUserStatus); // Listen for custom event
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -221,6 +230,15 @@ const Header = () => {
     setIsLoginModalOpen(false);
   };
 
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser');
+    }
+    setCurrentUser(null); // Update state immediately
+    toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
+    // No need to dispatch event if state is updated directly and other components listen to it
+  };
+
   const handleCreateAccountSuccess = () => {
     checkUserStatus();
     setIsCreateAccountModalOpen(false);
@@ -241,6 +259,7 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
+    // { href: "/categories/biyoloji", label: "Biyoloji" }, // Removed "Biyoloji" category link
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -261,7 +280,7 @@ const Header = () => {
         <div className="container flex h-16 items-center">
           <Link href="/" className="mr-6 flex items-center group">
             <DnaLogo />
-             <div className="flex flex-col items-start ml-1 -mt-0.5"> {/* Adjusted -mt-1 to -mt-0.5 */}
+             <div className="flex flex-col items-start ml-1 -mt-0.5">
                 <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
                 <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
                     Öğrenmenin DNA’sı
@@ -353,6 +372,44 @@ const Header = () => {
                     </Link>
                 </Button>
              )}
+            {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={currentUser.avatar || `https://picsum.photos/seed/${currentUser.username || 'user'}/32/32`} alt={currentUser.name || 'Kullanıcı'} />
+                                <AvatarFallback>{(currentUser.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                                <p className="text-xs leading-none text-muted-foreground">
+                                    @{currentUser.username}
+                                </p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href="/profile">
+                                <UserCircle className="mr-2 h-4 w-4" />
+                                Profilim
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast({ title: "Yakında!", description: "Kullanıcı ayarları yakında aktif olacak." })}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            Ayarlarım
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout}>
+                            <LogOutIcon className="mr-2 h-4 w-4" />
+                            Çıkış Yap
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
             {isMounted && !currentUser && (
                  <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
                     <LogIn className="mr-1.5 h-4 w-4" />
@@ -394,6 +451,22 @@ const Header = () => {
                               </Link>
                           </Button>
                         </SheetClose>
+                     )}
+                     {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
+                        <>
+                          <SheetClose asChild>
+                              <Button variant="ghost" asChild className="justify-start flex items-center gap-2 text-base w-full">
+                                  <Link href="/profile">
+                                      <UserCircle className="mr-2 h-4 w-4" /> Profilim
+                                  </Link>
+                              </Button>
+                          </SheetClose>
+                           <SheetClose asChild>
+                             <Button variant="ghost" onClick={handleLogout} className="justify-start flex items-center gap-2 text-base w-full text-destructive hover:text-destructive">
+                                <LogOutIcon className="mr-2 h-4 w-4" /> Çıkış Yap
+                             </Button>
+                           </SheetClose>
+                        </>
                      )}
                      {isMounted && !currentUser && (
                        <>
