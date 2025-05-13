@@ -139,10 +139,10 @@ export const getCategories = async (): Promise<Category[]> => {
             return JSON.parse(storedCategories);
         } catch (e) {
             console.error("Error parsing categories from localStorage", e);
-            return []; 
+            return [];
         }
     }
-    return []; 
+    return [];
 };
 
 export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category> => {
@@ -156,7 +156,7 @@ export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category>
     if (typeof window !== 'undefined') {
         localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
     }
-    mockCategories = currentCategories; 
+    mockCategories = currentCategories;
     return JSON.parse(JSON.stringify(newCategory));
 };
 
@@ -169,7 +169,7 @@ export const updateCategory = async (id: string, data: Partial<Omit<Category, 'i
         if (typeof window !== 'undefined') {
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
         }
-        mockCategories = currentCategories; 
+        mockCategories = currentCategories;
         return JSON.parse(JSON.stringify(currentCategories[index]));
     }
     return null;
@@ -184,7 +184,7 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
         if (typeof window !== 'undefined') {
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
         }
-        mockCategories = currentCategories; 
+        mockCategories = currentCategories;
         return true;
     }
     return false;
@@ -204,21 +204,21 @@ let mockPages: PageData[] = [
     {
         id: 'anasayfa',
         title: 'Anasayfa',
-        slug: '', 
+        slug: '',
         blocks: [
             { id: generateId(), type: 'text', content: 'TeknoBiyo\'ya hoş geldiniz! İçeriğinizi buraya ekleyebilirsiniz.' }
         ],
         status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        heroSettings: { enabled: false, articleSource: 'latest', intervalSeconds: 5, maxArticles: 0 } 
+        heroSettings: { enabled: false, articleSource: 'latest', intervalSeconds: 5, maxArticles: 0 }
     },
     {
         id: 'hakkimizda',
         title: 'Hakkımızda',
         slug: 'hakkimizda',
         blocks: [{id: generateId(), type: 'text', content: 'Hakkımızda sayfa içeriği buraya gelecek.'}],
-        status: 'Taslak', 
+        status: 'Taslak',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -227,7 +227,7 @@ let mockPages: PageData[] = [
         title: 'İletişim',
         slug: 'iletisim',
         blocks: [{id: generateId(), type: 'text', content: 'İletişim sayfa içeriği buraya gelecek.'}],
-        status: 'Taslak', 
+        status: 'Taslak',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -239,167 +239,177 @@ let mockPages: PageData[] = [
             {id: generateId(), type: 'heading', level: 1, content: 'Admin Paneli Kullanım Kılavuzu'},
             {id: generateId(), type: 'text', content: 'Bu kılavuz, admin panelinin çeşitli özelliklerini ve işlevlerini nasıl kullanacağınız konusunda size yol gösterecektir. Herhangi bir sorunuz olursa, lütfen destek ekibimizle iletişime geçmekten çekinmeyin.'}
         ],
-        status: 'Yayınlandı', 
+        status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
 ];
 
+// --- Re-populated Default Templates ---
 let defaultArticleTemplates: Template[] = [
     {
         id: 'standard-article',
         name: 'Standart Makale',
         description: 'Giriş, ana görsel, alt başlıklar ve sonuç bölümü içeren temel makale düzeni.',
-        previewImageUrl: 'https://picsum.photos/seed/standard-article/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/std-article-bio/300/200',
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: 'Giriş Bölümü' },
-            { id: generateId(), type: 'text', content: 'Makalenizin ana konusunu ve amacını tanıtan ilgi çekici bir giriş yazısı.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/article-main/800/450', alt: 'Ana Makale Görseli', caption: 'Makalenin ana görseli için açıklama.' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Alt Başlık 1' },
-            { id: generateId(), type: 'text', content: 'İlk alt başlık altında detaylı açıklamalar ve bilgiler.' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Alt Başlık 2' },
-            { id: generateId(), type: 'text', content: 'İkinci alt başlık altında farklı bir konuya değinin veya mevcut konuyu derinleştirin.' },
-            { id: generateId(), type: 'quote', content: 'Konuyla ilgili etkileyici bir alıntı veya önemli bir söz.', citation: 'Alıntı Kaynağı' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Sonuç' },
-            { id: generateId(), type: 'text', content: 'Makalenizi özetleyen ve okuyucuya son bir mesaj veren sonuç bölümü.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Yapay Zeka ve Etik Sorumluluklar' },
+            { id: generateId(), type: 'text', content: 'Yapay zeka (AI) hayatımızı dönüştürürken, beraberinde önemli etik soruları ve toplumsal sorumlulukları da getiriyor. Bu makalede, AI etiğinin temel ilkelerini ve karşılaşılan zorlukları inceleyeceğiz.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/ai-ethics-main/800/450', alt: 'Yapay Zeka Etiği Ana Görsel', caption: 'AI ve etik karar alma süreçleri.' },
+            { id: generateId(), type: 'text', content: 'AI sistemlerinin karar alma süreçlerindeki **şeffaflık**, **hesap verebilirlik** ve **adalet** gibi ilkeler, etik tartışmaların merkezinde yer alıyor. Algoritmik önyargılar, veri gizliliği ve otonom sistemlerin sorumluluğu gibi konular acil çözümler gerektiriyor.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Algoritmik Önyargılar ve Adalet' },
+            { id: generateId(), type: 'text', content: 'AI modelleri, eğitildikleri verilerdeki mevcut toplumsal önyargıları yansıtabilir ve hatta güçlendirebilir. Bu durum, işe alım süreçlerinden kredi başvurularına kadar birçok alanda ayrımcılığa yol açabilir. Önyargısız veri setleri oluşturmak ve adil algoritmalar geliştirmek kritik önem taşımaktadır.' },
+            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Geleceğe Yönelik Çözümler' },
+            { id: generateId(), type: 'text', content: 'Yapay zeka etiği konusunda küresel standartların oluşturulması, multidisipliner yaklaşımların benimsenmesi ve kamuoyu bilincinin artırılması gerekiyor. Teknoloji geliştiricileri, politika yapıcılar ve toplum olarak birlikte çalışarak AI\'ın insanlık yararına kullanılmasını sağlamalıyız.' },
+            { id: generateId(), type: 'quote', content: 'Etik olmayan bir yapay zeka, insanlığın karşılaştığı en büyük tehditlerden biri olabilir.', citation: 'Elon Musk (Uyarlanmıştır)' },
+            { id: generateId(), type: 'text', content: 'Sonuç olarak, yapay zeka etiği, teknolojinin geleceğini şekillendirecek en önemli tartışma alanlarından biridir ve sürekli dikkat gerektirir.' },
         ],
-        seoTitle: 'Standart Makale Başlığı',
-        seoDescription: 'Bu standart makale şablonunun SEO açıklamasıdır.',
-        keywords: ['standart', 'makale', 'şablon'],
-        excerpt: 'Başlık, ana görsel ve metin içeriği için temel düzen.'
+        seoTitle: 'Yapay Zeka ve Etik Sorumluluklar',
+        seoDescription: 'Yapay zeka etiğinin temel ilkeleri, karşılaşılan zorluklar ve geleceğe yönelik çözümler.',
+        keywords: ['yapay zeka', 'etik', 'algoritma', 'önyargı', 'adalet', 'sorumluluk'],
+        excerpt: 'Yapay zeka etiğinin temel ilkeleri, karşılaşılan zorluklar ve geleceğe yönelik çözümler.'
     },
     {
         id: 'listicle',
         name: 'Listeleme Makalesi',
         description: 'Belirli bir konuda numaralı veya madde işaretli öneriler/bilgiler sunan format.',
-        previewImageUrl: 'https://picsum.photos/seed/listicle-article/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/list-article-bio/300/200',
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Sayı] Adımda [Konu]' },
-            { id: generateId(), type: 'text', content: 'Bu listeleme makalesinde, [konu] hakkında bilmeniz gereken [sayı] önemli noktayı ele alacağız.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-intro/800/400', alt: 'Liste Makalesi Giriş Görseli', caption: 'Listeleme formatına uygun bir görsel.' },
-            { id: generateId(), type: 'heading', level: 3, content: '1. [Madde Başlığı]' },
-            { id: generateId(), type: 'text', content: 'İlk maddenin detaylı açıklaması. Önemli bilgiler ve örnekler içerebilir.' },
-            { id: generateId(), type: 'heading', level: 3, content: '2. [Madde Başlığı]' },
-            { id: generateId(), type: 'text', content: 'İkinci maddenin detaylı açıklaması.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-item2/600/350', alt: 'İkinci Madde Görseli' },
-            { id: generateId(), type: 'heading', level: 3, content: '3. [Madde Başlığı]' },
-            { id: generateId(), type: 'text', content: 'Üçüncü maddenin detaylı açıklaması. Bu madde bir video içerebilir.' },
-            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', youtubeId: 'dQw4w9WgXcQ' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Özet ve Ek Bilgiler' },
-            { id: generateId(), type: 'text', content: 'Listelenen maddeleri özetleyen ve okuyucuya ek kaynaklar veya ipuçları sunan bölüm.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Sağlıklı Yaşam İçin 5 Altın Kural' },
+            { id: generateId(), type: 'text', content: 'Sağlıklı ve dengeli bir yaşam sürdürmek için dikkat etmeniz gereken 5 temel prensip:' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/healthy-lifestyle/800/400', alt: 'Sağlıklı Yaşam İpuçları', caption: 'Sağlıklı yaşam tarzı ve alışkanlıkları.' },
+            { id: generateId(), type: 'heading', level: 3, content: '1. Dengeli Beslenme' },
+            { id: generateId(), type: 'text', content: 'Vücudunuzun ihtiyaç duyduğu tüm besin ögelerini içeren çeşitli ve dengeli bir diyet uygulayın. Bol sebze, meyve, tam tahıl ve yağsız protein tüketin.' },
+            { id: generateId(), type: 'heading', level: 3, content: '2. Düzenli Egzersiz' },
+            { id: generateId(), type: 'text', content: 'Haftada en az 150 dakika orta yoğunlukta veya 75 dakika yüksek yoğunlukta aerobik egzersiz yapmayı hedefleyin. Kas güçlendirme aktivitelerini de unutmayın.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/exercise-benefits/600/350', alt: 'Egzersizin Faydaları' },
+            { id: generateId(), type: 'heading', level: 3, content: '3. Yeterli Uyku' },
+            { id: generateId(), type: 'text', content: 'Her gece 7-9 saat kaliteli uyku, fiziksel ve zihinsel sağlığınız için kritik öneme sahiptir. Düzenli bir uyku programı oluşturun.' },
+            { id: generateId(), type: 'heading', level: 3, content: '4. Stres Yönetimi' },
+            { id: generateId(), type: 'text', content: 'Kronik stres, sağlığınızı olumsuz etkileyebilir. Meditasyon, yoga, derin nefes egzersizleri gibi stres azaltma tekniklerini deneyin.' },
+            { id: generateId(), type: 'heading', level: 3, content: '5. Düzenli Sağlık Kontrolleri' },
+            { id: generateId(), type: 'text', content: 'Potansiyel sağlık sorunlarını erken teşhis etmek için düzenli olarak doktor kontrolünden geçin ve önerilen taramaları yaptırın.' },
         ],
-        seoTitle: 'Harika Bir Liste Makalesi',
-        seoDescription: 'Bu liste makalesi şablonu ile kolayca dikkat çekici listeler oluşturun.',
-        keywords: ['liste', 'adım adım', 'rehber'],
-        excerpt: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.'
+        seoTitle: 'Sağlıklı Yaşam İçin 5 Altın Kural',
+        seoDescription: 'Dengeli beslenme, egzersiz, uyku, stres yönetimi ve sağlık kontrolleri ile daha sağlıklı bir yaşam sürün.',
+        keywords: ['sağlıklı yaşam', 'beslenme', 'egzersiz', 'uyku', 'stres'],
+        excerpt: 'Dengeli beslenme, egzersiz, uyku, stres yönetimi ve sağlık kontrolleri ile daha sağlıklı bir yaşam sürün.'
     },
     {
         id: 'image-gallery-article',
-        name: 'Görsel Galerisi',
+        name: 'Görsel Galerisi Makalesi',
         description: 'Görsellerin ön planda olduğu, açıklamalı ve tematik galeri düzeni.',
-        previewImageUrl: 'https://picsum.photos/seed/gallery-article/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/gallery-article-nature/300/200',
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Konu] Görsel Galerisi' },
-            { id: generateId(), type: 'text', content: 'Bu galeride [konu] ile ilgili etkileyici görselleri bir araya getirdik. Galeri hakkında kısa bir açıklama.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery1/800/500', alt: 'Görsel 1', caption: 'Görsel 1: Kısa ve açıklayıcı bir başlık. Bu görselin ne hakkında olduğunu veya neyi gösterdiğini anlatan birkaç cümle.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Evrenin Derinliklerinden: James Webb Teleskobu Görüntüleri' },
+            { id: generateId(), type: 'text', content: 'James Webb Uzay Teleskobu (JWST), evrenin şimdiye kadar görülmemiş detaylarını gözler önüne seriyor. İşte bu güçlü teleskop tarafından yakalanan en büyüleyici görüntülerden bazıları:' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-carina/800/500', alt: 'Karina Bulutsusu', caption: 'Karina Bulutsusu\'ndaki "Kozmik Uçurumlar". JWST, yıldız doğum bölgelerini eşsiz bir netlikte gösteriyor.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery2/800/500', alt: 'Görsel 2', caption: 'Görsel 2: Başka bir açıklayıcı başlık. Görselle ilgili ilginç detaylar veya bağlam bilgisi.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-stephan/800/500', alt: 'Stephan Beşlisi', caption: 'Stephan Beşlisi galaksi grubu. Galaksilerin etkileşimini ve birleşmesini detaylı bir şekilde inceleme fırsatı sunuyor.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery3/800/500', alt: 'Görsel 3', caption: 'Görsel 3: Üçüncü görsel için başlık ve açıklama.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-southern-ring/800/500', alt: 'Güney Halka Bulutsusu', caption: 'Ölen bir yıldızın etrafındaki gaz ve toz bulutlarını gösteren Güney Halka Bulutsusu.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery4/800/500', alt: 'Görsel 4', caption: 'Görsel 4: Dördüncü görsel ve onunla ilgili bilgiler.' },
-            { id: generateId(), type: 'text', content: 'Galeriyi sonlandıran veya ek bilgi veren bir paragraf.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-exoplanet/800/500', alt: 'WASP-96 b Ötegezegen Spektrumu', caption: 'WASP-96 b adlı bir ötegezegenin atmosferindeki su buharının tespiti, yaşam arayışında önemli bir adım.' },
+            { id: generateId(), type: 'text', content: 'JWST, kızılötesi gözlem yetenekleri sayesinde evrenin ilk zamanlarına ışık tutuyor ve yıldızların, galaksilerin oluşumu hakkındaki bilgilerimizi derinleştiriyor.' },
         ],
-        seoTitle: 'Etkileyici Görsel Galerisi',
-        seoDescription: 'Görsel galerisi şablonu ile hikayelerinizi zenginleştirin.',
-        keywords: ['galeri', 'görsel', 'fotoğraf'],
-        excerpt: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.'
+        seoTitle: 'James Webb Teleskobu: Evrenin Muhteşem Görüntüleri',
+        seoDescription: 'James Webb Uzay Teleskobu tarafından çekilen en büyüleyici ve bilimsel açıdan önemli uzay görüntüleri galerisi.',
+        keywords: ['james webb', 'uzay teleskobu', 'galaksi', 'bulutsu', 'evren', 'astronomi'],
+        excerpt: 'James Webb Uzay Teleskobu tarafından çekilen en büyüleyici uzay görüntüleri galerisi.'
     },
-    {
+     {
         id: 'faq-article',
         name: 'SSS Makalesi',
-        description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
-        previewImageUrl: 'https://picsum.photos/seed/faq-article/300/200',
+        description: 'Belirli bir konudaki sıkça sorulan sorulara net cevaplar veren format.',
+        previewImageUrl: 'https://picsum.photos/seed/faq-article-genetics/300/200',
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Konu] Hakkında Sıkça Sorulan Sorular (SSS)' },
-            { id: generateId(), type: 'text', content: 'Bu bölümde, [konu] ile ilgili en sık karşılaşılan soruları ve cevaplarını bulabilirsiniz.' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: [İlk Soru Metni]?' },
-            { id: generateId(), type: 'text', content: 'Cevap 1: Bu soruya verilecek detaylı ve açıklayıcı cevap. Örnekler ve referanslar eklenebilir.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Genetik ve Kalıtım Hakkında Sıkça Sorulan Sorular' },
+            { id: generateId(), type: 'text', content: 'Genetik ve kalıtım konuları hakkında merak edilen yaygın sorular ve bilimsel cevapları:' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: Gen nedir ve ne işe yarar?' },
+            { id: generateId(), type: 'text', content: 'Cevap: Gen, DNA\'nın belirli bir bölümüdür ve canlıların özelliklerini (örneğin göz rengi, boy) belirleyen proteinlerin sentezlenmesi için talimatlar içerir. Kalıtımın temel birimidir.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: [İkinci Soru Metni]?' },
-            { id: generateId(), type: 'text', content: 'Cevap 2: İkinci soruya yönelik kapsamlı bir yanıt. Madde işaretleri kullanılabilir:\n- Madde 1\n- Madde 2' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: Alel nedir? Dominant ve resesif alel ne anlama gelir?' },
+            { id: generateId(), type: 'text', content: 'Cevap: Alel, bir genin farklı versiyonlarıdır. Örneğin, bezelyelerde çiçek rengi geninin mor ve beyaz olmak üzere iki aleli olabilir. Dominant alel, etkisini tek bir kopyasıyla bile gösterebilen aleldir (örn: Mor çiçek). Resesif alel ise etkisini ancak iki kopyası bulunduğunda gösterebilir (örn: Beyaz çiçek).' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: [Üçüncü Soru Metni]?' },
-            { id: generateId(), type: 'text', content: 'Cevap 3: Üçüncü soru ve cevabı. Burada farklı bir formata veya detaya odaklanılabilir.' },
-            { id: generateId(), type: 'text', content: 'Daha fazla sorunuz varsa, lütfen bizimle iletişime geçmekten çekinmeyin.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: Genetik hastalıklar nasıl ortaya çıkar?' },
+            { id: generateId(), type: 'text', content: 'Cevap: Genetik hastalıklar, genlerdeki mutasyonlar (değişiklikler) veya kromozom sayısındaki ya da yapısındaki anormallikler nedeniyle ortaya çıkabilir. Bazı genetik hastalıklar ebeveynlerden çocuklara aktarılırken, bazıları ise sonradan gelişebilir.' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 4: CRISPR nedir ve gen düzenlemede nasıl kullanılır?' },
+            { id: generateId(), type: 'text', content: 'Cevap: CRISPR-Cas9, DNA dizilerini hassas bir şekilde kesip değiştirebilen bir gen düzenleme teknolojisidir. Genetik hastalıkların tedavisi, tarımda verimliliğin artırılması gibi birçok potansiyel uygulaması bulunmaktadır.' },
+            { id: generateId(), type: 'text', content: 'Genetik ve kalıtım hakkında daha fazla sorunuz varsa, uzman bir genetik danışmanına başvurmanız önerilir.' },
         ],
-        seoTitle: '[Konu] SSS - Merak Edilenler',
-        seoDescription: '[Konu] hakkında sıkça sorulan sorular ve cevapları.',
-        keywords: ['sss', 'soru', 'cevap', 'yardım'],
-        excerpt: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.'
+        seoTitle: 'Genetik ve Kalıtım SSS - Merak Edilen Tüm Sorular ve Cevapları',
+        seoDescription: 'Gen, alel, genetik hastalıklar ve CRISPR gibi genetik ve kalıtım konuları hakkında sıkça sorulan soruların detaylı ve anlaşılır cevapları.',
+        keywords: ['genetik', 'kalıtım', 'DNA', 'alel', 'CRISPR', 'genetik hastalıklar', 'sss'],
+        excerpt: 'Gen, alel, genetik hastalıklar ve CRISPR gibi genetik ve kalıtım konuları hakkında sıkça sorulan soruların cevapları.'
     },
     {
         id: 'how-to-guide',
         name: 'Nasıl Yapılır Rehberi',
-        description: 'Adım adım talimatlar içeren öğretici makaleler için.',
-        previewImageUrl: 'https://picsum.photos/seed/howto-article/300/200',
+        description: 'Belirli bir işlemi adım adım anlatan, öğretici içerikler için ideal.',
+        previewImageUrl: 'https://picsum.photos/seed/howto-microscope/300/200',
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[İşlem/Konu] Nasıl Yapılır?' },
-            { id: generateId(), type: 'text', content: 'Bu rehberde, [işlem/konu] adım adım nasıl yapacağınızı öğreneceksiniz. Başlamadan önce [gerekli malzemeler/ön bilgiler] olduğundan emin olun.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-main/700/300', alt: 'Rehber Ana Görseli', caption: 'İşlemin genel bir görünümü.' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [İlk Adımın Başlığı]' },
-            { id: generateId(), type: 'text', content: 'İlk adımın detaylı açıklaması. Gerekirse alt adımlar veya ipuçları eklenebilir.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-step1/500/250', alt: 'Adım 1 Görseli' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [İkinci Adımın Başlığı]' },
-            { id: generateId(), type: 'text', content: 'İkinci adımın açıklaması. Farklı bir görsel veya video eklenebilir.' },
-            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=VIDEO_ID_BURAYA', youtubeId: 'VIDEO_ID_BURAYA' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 3: [Üçüncü Adımın Başlığı]' },
-            { id: generateId(), type: 'text', content: 'Üçüncü adım ve sonraki adımlar için açıklamalar.' },
-            { id: generateId(), type: 'quote', content: 'Önemli bir ipucu veya dikkat edilmesi gereken bir nokta.', citation: 'Uzman Tavsiyesi' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Sonuç ve İpuçları' },
-            { id: generateId(), type: 'text', content: 'Rehberi tamamladıktan sonra elde edilecek sonuçlar ve ek ipuçları.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Basit Bir Mikroskop Preparatı Nasıl Hazırlanır?' },
+            { id: generateId(), type: 'text', content: 'Bu rehberde, okul laboratuvarında veya evde basit bir mikroskop preparatının nasıl hazırlanacağını adım adım öğreneceksiniz. Başlamadan önce temiz bir lam, lamel, damlalık, su ve incelenecek örneğe (örneğin soğan zarı) ihtiyacınız olacak.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/microscope-setup/700/300', alt: 'Mikroskop Preparatı Hazırlama Malzemeleri', caption: 'Gerekli malzemeler: Lam, lamel, damlalık, su, örnek.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: Lamı Temizleyin' },
+            { id: generateId(), type: 'text', content: 'Temiz bir bez veya kağıt havlu ile lamın (dikdörtgen cam) her iki yüzeyini de silerek parmak izi ve tozlardan arındırın.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: Örneği Lama Yerleştirin' },
+            { id: generateId(), type: 'text', content: 'İncelenecek örnekten küçük bir parça alın (örneğin, soğan zarını cımbızla dikkatlice soyun) ve lamın ortasına yerleştirin.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/onion-peel/500/250', alt: 'Soğan Zarı Lama Yerleştiriliyor' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 3: Bir Damla Su Ekleyin' },
+            { id: generateId(), type: 'text', content: 'Damlalık kullanarak örneğin üzerine bir damla su damlatın. Su, örneğin kurumasını önler ve daha net görüntü sağlar.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 4: Lameli Kapatın' },
+            { id: generateId(), type: 'text', content: 'Lameli (küçük kare cam) bir kenarından başlayarak 45 derecelik bir açıyla yavaşça su damlasının üzerine doğru indirin. Bu, hava kabarcığı oluşumunu engeller. Lamel tamamen kapandığında fazla suyu kenardan bir kağıt havlu ile alın.' },
+            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=-b3E6MDgoP0', youtubeId: '-b3E6MDgoP0', }, // Placeholder video for coverslip
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 5: Mikroskopta İnceleyin' },
+            { id: generateId(), type: 'text', content: 'Hazırladığınız preparatı mikroskop tablasına yerleştirin ve en düşük büyütme ayarıyla başlayarak incelemeye başlayın. Net bir görüntü elde etmek için odaklama ayarlarını kullanın.' },
+            { id: generateId(), type: 'quote', content: 'Unutmayın: Preparat hazırlarken dikkatli ve nazik olun. Lam ve lamel kırılgandır.', citation: 'Laboratuvar Güvenliği' },
+            { id: generateId(), type: 'heading', level: 2, content: 'İpuçları ve Sonuç' },
+            { id: generateId(), type: 'text', content: 'Başarılı bir preparat hazırladınız! Artık mikroskop altında hücreleri ve dokuları inceleyebilirsiniz. Gerekirse metilen mavisi gibi boyalar kullanarak hücre yapılarını daha belirgin hale getirebilirsiniz.' },
         ],
-        seoTitle: '[İşlem/Konu] Adım Adım Nasıl Yapılır Rehberi',
-        seoDescription: '[İşlem/Konu] hakkında detaylı nasıl yapılır rehberi.',
-        keywords: ['nasıl yapılır', 'rehber', 'adım adım', 'öğretici'],
-        excerpt: 'Adım adım talimatlar içeren öğretici makaleler için ideal.'
+        seoTitle: 'Adım Adım Mikroskop Preparatı Hazırlama Rehberi',
+        seoDescription: 'Okul veya evde basit mikroskop preparatlarını nasıl hazırlayacağınızı öğrenin. Soğan zarı örneği ile detaylı anlatım.',
+        keywords: ['mikroskop', 'preparat', 'nasıl yapılır', 'biyoloji deneyi', 'soğan zarı', 'lam lamel'],
+        excerpt: 'Okul veya evde basit mikroskop preparatlarını nasıl hazırlayacağınızı öğrenin.'
     },
     {
         id: 'interview-article',
         name: 'Röportaj Makalesi',
-        description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
-        previewImageUrl: 'https://picsum.photos/seed/interview-article/300/200',
+        description: 'Bir uzmanla yapılan söyleşiyi soru-cevap formatında detaylı bir şekilde sunar.',
+        previewImageUrl: 'https://picsum.photos/seed/interview-expert/300/200',
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Kişi Adı] ile [Konu] Üzerine Özel Röportaj' },
-            { id: generateId(), type: 'text', content: '[Kişi Adı], [Kişinin Alanı/Unvanı] alanında önde gelen isimlerden biri. Kendisiyle [konu] hakkında keyifli bir sohbet gerçekleştirdik.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interviewee/600/400', alt: '[Kişi Adı]', caption: '[Kişi Adı], [Kısa Bilgi]' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: [İlk Soru Metni]' },
-            { id: generateId(), type: 'quote', content: '[Kişi Adı]\'nın ilk soruya verdiği cevap. Cevap uzunsa birkaç paragrafa bölünebilir.', citation: '[Kişi Adı]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Prof. Dr. Canan Dağdeviren ile Biyomedikal Teknolojiler Üzerine' },
+            { id: generateId(), type: 'text', content: 'Medikal teknoloji alanında çığır açan çalışmalarıyla tanınan Prof. Dr. Canan Dağdeviren ile giyilebilir ve yutulabilir sensörler, yapay zeka destekli teşhis yöntemleri ve biyomedikal mühendisliğin geleceği hakkında konuştuk.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/canan-dagdeviren/600/400', alt: 'Prof. Dr. Canan Dağdeviren', caption: 'Prof. Dr. Canan Dağdeviren, MIT Media Lab Öğretim Üyesi.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru: Biyomedikal teknolojiler alanındaki en heyecan verici gelişmeler nelerdir?' },
+            { id: generateId(), type: 'quote', content: 'Şu anda en heyecan verici gelişmelerden biri, kişiye özel tıp ve giyilebilir teknolojilerin birleşimi. Vücudumuzla uyumlu, sürekli veri toplayabilen ve hastalıkları erken teşhis edebilen sensörler geliştiriyoruz. Bu, tedavi süreçlerini kökten değiştirebilir.', citation: 'Prof. Dr. Canan Dağdeviren' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: [İkinci Soru Metni]' },
-            { id: generateId(), type: 'quote', content: '[Kişi Adı]\'nın ikinci soruya verdiği cevap. Bu cevapta farklı bir noktaya değinilmiş olabilir.', citation: '[Kişi Adı]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru: Genç araştırmacılara bu alanda neler tavsiye edersiniz?' },
+            { id: generateId(), type: 'quote', content: 'Meraklarını asla kaybetmesinler ve hayallerinin peşinden gitsinler. Multidisipliner çalışmanın önemi çok büyük; farklı alanlardan insanlarla işbirliği yapmaktan çekinmesinler. En önemlisi, başarısızlıktan korkmasınlar, çünkü her başarısızlık yeni bir öğrenme fırsatıdır.', citation: 'Prof. Dr. Canan Dağdeviren' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: [Üçüncü Soru Metni]' },
-            { id: generateId(), type: 'quote', content: '[Kişi Adı]\'nın üçüncü soruya verdiği cevap. Geleceğe yönelik bir değerlendirme veya tavsiye içerebilir.', citation: '[Kişi Adı]' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Röportajdan Öne Çıkanlar' },
-            { id: generateId(), type: 'text', content: 'Röportajın genel bir özeti veya en önemli noktaların vurgulandığı bir bölüm.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru: Yapay zekanın biyomedikal alandaki rolü hakkında ne düşünüyorsunuz?' },
+            { id: generateId(), type: 'quote', content: 'Yapay zeka, teşhis ve tedavide devrim yaratma potansiyeline sahip. Özellikle büyük veri analizinde ve karmaşık hastalıkların anlaşılmasında bize inanılmaz olanaklar sunuyor. Ancak etik kurallar ve veri güvenliği konularına da büyük özen göstermemiz gerekiyor.', citation: 'Prof. Dr. Canan Dağdeviren' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Röportajdan Notlar' },
+            { id: generateId(), type: 'text', content: 'Prof. Dr. Dağdeviren, biyomedikal teknolojilerin gelecekte sağlık alanında büyük dönüşümlere yol açacağını ve gençlerin bu alana yönelmesinin önemini vurguladı.' },
         ],
-        seoTitle: '[Kişi Adı] ile [Konu] Röportajı',
-        seoDescription: '[Kişi Adı] ile yapılan [konu] odaklı özel röportaj.',
-        keywords: ['röportaj', 'söyleşi', 'uzman görüşü', '[Kişi Adı]'],
-        excerpt: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.'
+        seoTitle: 'Prof. Dr. Canan Dağdeviren ile Biyomedikal Teknolojiler Röportajı',
+        seoDescription: 'MIT Media Lab Öğretim Üyesi Prof. Dr. Canan Dağdeviren ile giyilebilir sensörler, yapay zeka ve biyomedikal mühendisliğin geleceği üzerine özel bir röportaj.',
+        keywords: ['Canan Dağdeviren', 'biyomedikal', 'teknoloji', 'röportaj', 'MIT', 'giyilebilir teknoloji', 'yapay zeka'],
+        excerpt: 'Prof. Dr. Canan Dağdeviren ile giyilebilir sensörler, yapay zeka ve biyomedikal mühendisliğin geleceği üzerine özel bir röportaj.'
     }
 ];
 
@@ -408,55 +418,52 @@ let defaultNoteTemplates: Template[] = [
         id: 'standard-note',
         name: 'Standart Not Şablonu',
         description: 'Başlık, özet, anahtar kavramlar ve detaylı açıklamalar için temel not düzeni.',
-        previewImageUrl: 'https://picsum.photos/seed/standard-note/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/std-note-bio/300/200',
         type: 'note',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Konu Başlığı]' },
-            { id: generateId(), type: 'text', content: '[Konunun genel bir özeti veya tanıtımı.]' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Anahtar Kavramlar' },
-            { id: generateId(), type: 'text', content: '- [Kavram 1]: [Kısa Açıklama]\n- [Kavram 2]: [Kısa Açıklama]\n- [Kavram 3]: [Kısa Açıklama]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-concept/600/300', alt: 'Konsept Görseli', caption: 'Konuyu destekleyen bir görsel.' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Detaylı Açıklama' },
-            { id: generateId(), type: 'text', content: '[Konunun alt başlıkları ve detaylı açıklamaları burada yer alacak. Paragraflar ve listeler kullanılabilir.]' },
-            { id: generateId(), type: 'quote', content: '[Konuyla ilgili önemli bir bilgi veya hatırlatma.]', citation: 'Kaynak veya Not' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Örnekler (varsa)' },
-            { id: generateId(), type: 'text', content: '[Konuyu pekiştirmek için örnekler veya vaka çalışmaları.]' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Özet ve Sonuç' },
-            { id: generateId(), type: 'text', content: '[Notun genel bir özeti ve önemli çıkarımlar.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Hücre Teorisi ve Temel Kavramlar' },
+            { id: generateId(), type: 'text', content: 'Hücre teorisi, biyolojinin temel taşlarından biridir ve tüm canlıların hücrelerden oluştuğunu belirtir. Bu notta, hücre teorisinin temel ilkelerini ve hücrelerle ilgili önemli kavramları inceleyeceğiz.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Hücre Teorisinin Temel İlkeleri' },
+            { id: generateId(), type: 'text', content: '- Tüm canlılar bir veya daha fazla hücreden oluşur.\n- Hücre, canlılığın temel yapısal ve işlevsel birimidir.\n- Tüm hücreler, var olan diğer hücrelerin bölünmesiyle meydana gelir.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/cell-theory-diagram/600/300', alt: 'Hücre Tipleri Şeması', caption: 'Prokaryotik ve ökaryotik hücrelerin temel farkları.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Hücre Çeşitleri' },
+            { id: generateId(), type: 'text', content: '**Prokaryotik Hücreler:** Zarla çevrili organelleri ve çekirdeği bulunmayan basit yapılı hücrelerdir (örn: bakteriler).\n**Ökaryotik Hücreler:** Zarla çevrili organellere ve belirgin bir çekirdeğe sahip daha karmaşık yapılı hücrelerdir (örn: bitki ve hayvan hücreleri).' },
+            { id: generateId(), type: 'quote', content: 'Unutmayın: Virüsler, hücresel yapıya sahip olmadıkları için canlı olarak kabul edilmezler.', citation: 'Biyoloji Notları' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Özet' },
+            { id: generateId(), type: 'text', content: 'Hücre teorisi, yaşamın temelini anlamamız için kritik bir çerçeve sunar. Prokaryotik ve ökaryotik hücreler arasındaki farkları bilmek, canlıların çeşitliliğini ve karmaşıklığını anlamamıza yardımcı olur.' },
         ],
-        seoTitle: '[Konu Başlığı] Ders Notları',
-        seoDescription: '[Konu Başlığı] hakkında detaylı ve anlaşılır ders notları.',
-        keywords: ['ders notu', 'biyoloji', '[konu]'],
-        excerpt: 'Temel not düzeni.'
+        seoTitle: 'Hücre Teorisi ve Temel Kavramlar Ders Notları',
+        seoDescription: 'Hücre teorisinin temel ilkeleri, prokaryotik ve ökaryotik hücreler arasındaki farklar ve hücrelerle ilgili önemli kavramlar.',
+        keywords: ['hücre teorisi', 'prokaryot', 'ökaryot', 'hücre', 'biyoloji notları'],
+        excerpt: 'Hücre teorisinin temel ilkeleri ve hücrelerle ilgili önemli kavramlar.'
     },
     {
         id: 'process-explanation-note',
         name: 'Süreç Açıklama Notu',
         description: 'Bir biyolojik süreci adım adım açıklayan, şemalar ve görsellerle desteklenmiş not düzeni.',
-        previewImageUrl: 'https://picsum.photos/seed/process-note/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/photosynthesis-note/300/200',
         type: 'note',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Süreç Adı]' },
-            { id: generateId(), type: 'text', content: '[Sürecin genel bir özeti veya amacı.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-overview/700/350', alt: 'Süreç Genel Bakış Şeması', caption: 'Sürecin genel akışını gösteren bir şema.' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [Adımın Adı]' },
-            { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-step1/500/250', alt: 'Adım 1 Görseli' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Fotosentez Süreci' },
+            { id: generateId(), type: 'text', content: 'Fotosentez, bitkilerin ve bazı diğer organizmaların ışık enerjisini kimyasal enerjiye dönüştürerek besin ürettiği hayati bir süreçtir. Bu notta fotosentezin aşamalarını inceleyeceğiz.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/photosynthesis-overview/700/350', alt: 'Fotosentez Genel Bakış Şeması', caption: 'Fotosentezin ışığa bağımlı ve ışıktan bağımsız reaksiyonları.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Aşama 1: Işığa Bağımlı Reaksiyonlar' },
+            { id: generateId(), type: 'text', content: 'Kloroplastların tilakoit zarlarında gerçekleşir. Işık enerjisi emilir, su molekülleri parçalanır (oksijen açığa çıkar) ve ATP ile NADPH gibi enerji taşıyıcı moleküller üretilir.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/light-reactions/500/250', alt: 'Işığa Bağımlı Reaksiyonlar Şeması' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [Adımın Adı]' },
-            { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-step2/500/250', alt: 'Adım 2 Görseli' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Aşama 2: Işıktan Bağımsız Reaksiyonlar (Calvin Döngüsü)' },
+            { id: generateId(), type: 'text', content: 'Kloroplastların stroma sıvısında gerçekleşir. Işığa bağımlı reaksiyonlarda üretilen ATP ve NADPH kullanılarak karbondioksit, glikoz gibi organik moleküllere dönüştürülür.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/calvin-cycle/500/250', alt: 'Calvin Döngüsü Şeması' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: '[... Diğer Adımlar ...]' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Sürecin Önemi/Sonuçları' },
-            { id: generateId(), type: 'text', content: '[Sürecin sonucu veya önemi.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Fotosentezin Önemi' },
+            { id: generateId(), type: 'text', content: 'Fotosentez, yeryüzündeki yaşamın devamı için temeldir. Atmosferdeki oksijenin ana kaynağıdır ve besin zincirinin temelini oluşturur.' },
         ],
-        seoTitle: '[Süreç Adı] Adım Adım Açıklaması',
-        seoDescription: '[Süreç Adı] biyolojik sürecinin detaylı ve görsel açıklaması.',
-        keywords: ['süreç', 'biyoloji', 'adım adım', '[süreç adı]'],
-        excerpt: 'Bir biyolojik süreci adım adım açıklar.'
+        seoTitle: 'Fotosentez Süreci Adım Adım Anlatım',
+        seoDescription: 'Fotosentezin ışığa bağımlı ve ışıktan bağımsız reaksiyonlarının detaylı açıklaması ve önemi.',
+        keywords: ['fotosentez', 'kloroplast', 'ışık reaksiyonları', 'calvin döngüsü', 'ATP', 'NADPH', 'biyoloji'],
+        excerpt: 'Fotosentezin ışığa bağımlı ve ışıktan bağımsız reaksiyonlarının detaylı açıklaması.'
     },
 ];
 
@@ -465,56 +472,62 @@ let defaultPageTemplates: Template[] = [
         id: 'standard-page',
         name: 'Standart Sayfa',
         description: 'Genel amaçlı sayfalar için başlık, metin ve görsel içeren temel düzen.',
-        previewImageUrl: 'https://picsum.photos/seed/standard-page/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/std-page-gen/300/200',
         type: 'page',
         category: 'Genel Sayfa',
         blocks: [
-            { id: generateId(), type: 'heading', level: 1, content: 'Sayfa Başlığı' },
-            { id: generateId(), type: 'text', content: 'Bu standart bir sayfa şablonudur. İçeriğinizi buraya ekleyebilirsiniz. Paragraflar, listeler ve diğer metin formatlarını kullanabilirsiniz.' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-image1/800/400', alt: 'Sayfa Görseli', caption: 'Sayfanızla ilgili bir görsel.' },
-            { id: generateId(), type: 'text', content: 'Daha fazla metin veya farklı içerik blokları ekleyebilirsiniz.' },
+            { id: generateId(), type: 'heading', level: 1, content: 'Standart Sayfa Başlığı' },
+            { id: generateId(), type: 'text', content: 'Bu, standart bir sayfa şablonudur ve çeşitli içerik türleri için kullanılabilir. Metin paragrafları, başlıklar, görseller ve diğer blokları ekleyerek sayfanızı zenginleştirebilirsiniz.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-main-image/800/400', alt: 'Sayfa Ana Görseli', caption: 'Sayfanızla ilgili açıklayıcı bir görsel.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 1' },
+            { id: generateId(), type: 'text', content: 'Bu alt başlık altında daha detaylı bilgiler sunabilirsiniz. Örneğin, bir hizmeti, ürünü veya konsepti açıklayabilirsiniz.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Alt Başlık 2' },
+            { id: generateId(), type: 'text', content: 'Farklı bir konuya değinmek veya mevcut konuyu daha da derinleştirmek için bu bölümü kullanın. Liste elemanları da ekleyebilirsiniz:\n- Önemli nokta 1\n- Önemli nokta 2\n- Önemli nokta 3' },
+            { id: generateId(), type: 'quote', content: 'Sayfanızla ilgili vurgulamak istediğiniz önemli bir alıntı veya mesaj.', citation: 'Kaynak veya Yazar' },
         ],
     },
     {
         id: 'contact-page',
         name: 'İletişim Sayfası',
         description: 'İletişim formu ve iletişim bilgileri için düzenlenmiş sayfa yapısı.',
-        previewImageUrl: 'https://picsum.photos/seed/contact-page/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/contact-page-gen/300/200',
         type: 'page',
         category: 'Genel Sayfa',
         blocks: [
             { id: generateId(), type: 'heading', level: 1, content: 'Bizimle İletişime Geçin' },
-            { id: generateId(), type: 'text', content: 'Soru, öneri veya işbirliği talepleriniz için aşağıdaki formu kullanabilir veya iletişim bilgilerimizden bize ulaşabilirsiniz.' },
-            { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'Mesaj Gönderin', recipientEmail: 'iletisim@example.com'} },
+            { id: generateId(), type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için aşağıdaki formu doldurarak veya doğrudan iletişim bilgilerimiz üzerinden bize ulaşabilirsiniz. En kısa sürede size geri dönüş yapacağız.' },
+            { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'Mesaj Gönderin', recipientEmail: 'info@teknobiyo.example.com'} },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 2, content: 'İletişim Bilgilerimiz' },
-            { id: generateId(), type: 'text', content: '**E-posta:** iletisim@teknobiyo.com\n**Telefon:** +90 (XXX) XXX XX XX\n**Adres:** Örnek Mah. Teknoloji Cad. No:123, İstanbul' },
-            // Potansiyel olarak buraya bir harita bloğu da eklenebilir.
+            { id: generateId(), type: 'heading', level: 2, content: 'Diğer İletişim Kanalları' },
+            { id: generateId(), type: 'text', content: '**E-posta:** info@teknobiyo.example.com\n**Telefon:** +90 (212) 123 45 67\n**Adres:** Teknoloji Vadisi, Biyoloji Sokak No:1, İstanbul, Türkiye' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/map-placeholder/800/300', alt: 'Konum Haritası Placeholder', caption: 'Ofisimizin konumu (Harita entegrasyonu eklenebilir).' },
         ],
     },
      {
         id: 'about-us-page',
         name: 'Hakkımızda Sayfası',
         description: 'Ekip, misyon ve vizyon gibi bilgileri içeren kurumsal sayfa düzeni.',
-        previewImageUrl: 'https://picsum.photos/seed/about-us-page/300/200',
+        previewImageUrl: 'https://picsum.photos/seed/about-us-team/300/200',
         type: 'page',
         category: 'Genel Sayfa',
         blocks: [
-            { id: generateId(), type: 'heading', level: 1, content: 'Hakkımızda' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/team-photo/800/350', alt: 'Ekip Görseli', caption: 'TeknoBiyo Ekibi' },
-            { id: generateId(), type: 'text', content: 'TeknoBiyo, teknoloji ve biyoloji alanlarındaki en son gelişmeleri ve bilgileri herkes için erişilebilir kılmayı amaçlayan bir platformdur.' },
+            { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Hakkında' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/team-collaboration/800/350', alt: 'TeknoBiyo Ekip Çalışması', caption: 'Yenilikçi çözümler üreten dinamik bir ekibiz.' },
+            { id: generateId(), type: 'text', content: 'TeknoBiyo, teknoloji ve biyoloji dünyalarının heyecan verici kesişim noktasında bilgi ve ilham sunan bir platformdur. Amacımız, karmaşık bilimsel ve teknolojik konuları herkes için anlaşılır ve erişilebilir kılmaktır.' },
             { id: generateId(), type: 'heading', level: 2, content: 'Misyonumuz' },
-            { id: generateId(), type: 'text', content: 'Bilimsel merakı teşvik etmek ve karmaşık konuları anlaşılır bir şekilde sunmak.' },
+            { id: generateId(), type: 'text', content: 'En güncel ve doğru bilgileri sunarak, bilimsel merakı teşvik etmek, öğrenmeyi kolaylaştırmak ve geleceği şekillendiren yenilikler hakkında toplumu bilinçlendirmek.' },
             { id: generateId(), type: 'heading', level: 2, content: 'Vizyonumuz' },
-            { id: generateId(), type: 'text', content: 'Teknoloji ve biyoloji alanlarında güvenilir bir referans kaynağı olmak.' },
-             { id: generateId(), type: 'heading', level: 2, content: 'Değerlerimiz' },
-            { id: generateId(), type: 'text', content: '- Doğruluk\n- Erişilebilirlik\n- Yenilikçilik\n- Topluma Katkı' },
+            { id: generateId(), type: 'text', content: 'Teknoloji ve biyoloji alanlarında Türkiye\'nin ve dünyanın önde gelen, güvenilir ve yenilikçi bilgi kaynağı olmak; bilim ve teknoloji okuryazarlığını artırarak daha bilinçli bir toplum oluşumuna katkıda bulunmak.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Değerlerimiz' },
+            { id: generateId(), type: 'text', content: '- **Doğruluk ve Güvenilirlik:** Bilgiyi titizlikle araştırır ve doğruluğunu teyit ederiz.\n- **Erişilebilirlik:** Herkesin anlayabileceği açık ve sade bir dil kullanırız.\n- **Yenilikçilik:** Alanımızdaki en son gelişmeleri takip eder ve okuyucularımıza sunarız.\n- **Merak ve Keşif:** Öğrenme tutkusunu ve bilimsel merakı destekleriz.\n- **Topluma Katkı:** Bilginin gücüyle toplumsal fayda sağlamayı hedefleriz.' },
+            { id: generateId(), type: 'quote', content: 'Bilim, gerçeğe giden yoldur.', citation: 'Carl Sagan (Uyarlanmıştır)'}
         ],
     },
     // Daha fazla sayfa şablonu eklenebilir...
 ];
 
 let allMockTemplates: Template[] = [...defaultArticleTemplates, ...defaultNoteTemplates, ...defaultPageTemplates];
+// --- End Re-populated Default Templates ---
 
 // --- Article CRUD ---
 export const getArticles = async (): Promise<ArticleData[]> => {
@@ -614,7 +627,7 @@ export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'upda
         ...data,
         id: `note-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         status: data.status || 'Taslak',
-        authorId: data.authorId || 'unknown-author', 
+        authorId: data.authorId || 'unknown-author',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
@@ -686,7 +699,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
         id: `user-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         joinedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`, 
+        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`,
     };
     const currentUsers = await getUsers();
     currentUsers.push(newUser);
@@ -776,10 +789,10 @@ export const getRoles = async (): Promise<Role[]> => {
           return JSON.parse(storedRoles);
       } catch (e) {
           console.error("Error parsing roles from localStorage", e);
-          return mockRoles; 
+          return mockRoles;
       }
   }
-  return mockRoles; 
+  return mockRoles;
 };
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
@@ -813,7 +826,7 @@ export const updateRole = async (id: string, data: Partial<Omit<Role, 'id'>>): P
       let updatedUserCount = currentRoles[index].userCount;
       if (data.userCount !== undefined) {
           updatedUserCount = data.userCount;
-      } 
+      }
       currentRoles[index] = { ...currentRoles[index], ...data, userCount: updatedUserCount };
       if (typeof window !== 'undefined') {
           localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
@@ -904,10 +917,10 @@ export const getPages = async (): Promise<PageData[]> => {
             return JSON.parse(storedPages);
         } catch (e) {
             console.error("Error parsing pages from localStorage", e);
-            return mockPages; 
+            return mockPages;
         }
     }
-    return mockPages; 
+    return mockPages;
 };
 
 export const getPageById = async (id: string): Promise<PageData | null> => {
@@ -953,7 +966,7 @@ export const updatePage = async (id: string, data: Partial<Omit<PageData, 'id' |
 
 export const deletePage = async (id: string): Promise<boolean> => {
     await delay(80);
-    if (id === 'anasayfa' || id === 'kullanim-kilavuzu' || id === 'hakkimizda' || id === 'iletisim') return false; 
+    if (id === 'anasayfa' || id === 'kullanim-kilavuzu' || id === 'hakkimizda' || id === 'iletisim') return false;
     let currentPages = await getPages();
     const initialLength = currentPages.length;
     currentPages = currentPages.filter(p => p.id !== id);
@@ -984,13 +997,13 @@ export const allMockTemplatesGetter = async (): Promise<Template[]> => {
 };
 
 
-export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles_v3'; 
+export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles_v3';
 export const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes_v3';
 export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories_v3';
 export const USER_STORAGE_KEY = 'teknobiyo_mock_users_v3';
 export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles_v3';
 export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages_v3';
-export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3'; 
+export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3';
 
 export const loadInitialData = () => {
     if (typeof window !== 'undefined') {
@@ -1004,12 +1017,23 @@ export const loadInitialData = () => {
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
         }
         if (!localStorage.getItem(USER_STORAGE_KEY)) {
-            const defaultAdmin = {id: 'admin001', name: 'Admin User', username: 'admin', email: 'admin@teknobiyo.example.com', role: 'Admin', joinedAt: new Date().toISOString(), avatar: ''};
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdmin]));
+            const defaultAdminUser: User = {
+                 id: 'admin001', name: 'Admin User', username: 'admin',
+                 email: 'admin@teknobiyo.example.com', role: 'Admin',
+                 joinedAt: new Date().toISOString(),
+                 avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
+            };
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
             console.log("Default admin user created in localStorage for initial login.");
         }
         if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
+            // Ensure user counts are updated based on default users
+            const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]');
+            const rolesWithCounts = mockRoles.map(role => {
+                const count = users.filter((u: User) => u.role.toLowerCase() === role.name.toLowerCase() || u.role === role.id).length;
+                return {...role, userCount: count};
+            });
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(rolesWithCounts));
         }
         if (!localStorage.getItem(PAGE_STORAGE_KEY)) {
             localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages));
@@ -1023,5 +1047,3 @@ export const loadInitialData = () => {
 loadInitialData();
 
 export { loadInitialData as reloadMockData };
-
-    
