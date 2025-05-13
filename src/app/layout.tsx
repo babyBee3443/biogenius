@@ -13,7 +13,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: 'TeknoBiyo | Teknoloji ve Biyoloji Makaleleri',
+  title: 'BiyoHox | Teknoloji ve Biyoloji Makaleleri',
   description: 'Teknoloji ve biyoloji alanlarındaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici makaleleri keşfedin.',
 };
 

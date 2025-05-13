@@ -7,11 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea"; 
-import { Switch } from "@/components/ui/switch"; 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye, Film } from "lucide-react"; 
+import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye, Film } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor";
@@ -20,8 +20,8 @@ import SeoPreview from "@/components/admin/seo-preview";
 import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { PageData as PageDataType, HeroSettings as HeroSettingsType } from "@/lib/mock-data"; 
-import { getPageById as fetchPageById, updatePage } from "@/lib/mock-data"; 
+import type { PageData as PageDataType, HeroSettings as HeroSettingsType } from "@/lib/mock-data";
+import { getPageById as fetchPageById, updatePage } from "@/lib/mock-data";
 
 const PREVIEW_STORAGE_KEY = 'preview_data';
 
@@ -179,14 +179,14 @@ export default function EditPage() {
             seoDescription,
             keywords,
             canonicalUrl,
-            status: pageData?.status || 'Taslak', 
+            status: pageData?.status || 'Taslak',
             ...(pageId === 'anasayfa' && { heroSettings }),
         };
-        
+
         try {
             const updated = await updatePage(pageId, saveData);
             if (updated) {
-                setPageData(updated); 
+                setPageData(updated);
                 toast({
                     title: "Sayfa Güncellendi",
                     description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,
@@ -321,7 +321,7 @@ export default function EditPage() {
             </div>
 
              <div className="flex flex-1 overflow-hidden">
-                 <ScrollArea className="flex-shrink-0 border-r w-[500px] h-full"> 
+                 <ScrollArea className="flex-shrink-0 border-r w-[500px] h-full">
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -372,7 +372,7 @@ export default function EditPage() {
                                                  />
                                              </div>
                                               <Separator />
-                                             {heroSettings.enabled && ( 
+                                             {heroSettings.enabled && (
                                                  <>
                                                      <div className="space-y-2">
                                                          <Label htmlFor="hero-source">Gösterilecek Makaleler</Label>
@@ -480,7 +480,7 @@ export default function EditPage() {
                                             type="url"
                                             value={canonicalUrl}
                                             onChange={(e) => setCanonicalUrl(e.target.value)}
-                                            placeholder="https://teknobiyo.com/orijinal-sayfa-url"
+                                            placeholder="https://biyohox.com/orijinal-sayfa-url"
                                         />
                                         <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
                                     </div>
@@ -497,7 +497,7 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                   <div className="flex-1 bg-muted/30 p-4 overflow-auto flex flex-col items-center justify-start relative"> 
+                   <div className="flex-1 bg-muted/30 p-4 overflow-auto flex flex-col items-center justify-start relative">
                      <div className={cn(
                          "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative w-full h-full max-w-full max-h-full",
                      )}>
@@ -505,8 +505,8 @@ export default function EditPage() {
                              "transition-transform duration-300 ease-in-out origin-top",
                              {
                                  'scale-[0.5] w-[750px] h-[1334px] mx-auto': previewDevice === 'mobile',
-                                 'scale-[0.7] w-[1097px] h-[1463px] mx-auto': previewDevice === 'tablet', 
-                                 'scale-100 w-full h-full': previewDevice === 'desktop', 
+                                 'scale-[0.7] w-[1097px] h-[1463px] mx-auto': previewDevice === 'tablet',
+                                 'scale-100 w-full h-full': previewDevice === 'desktop',
                              }
                         )}>
                            <PagePreviewRenderer

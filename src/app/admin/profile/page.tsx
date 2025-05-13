@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,20 +11,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon, Newspaper, BookCopy, Eye } from 'lucide-react'; 
+import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon, Newspaper, BookCopy, Eye } from 'lucide-react';
 import { getUserById, updateUser, type User, getArticles, getNotes, type ArticleData, type NoteData } from '@/lib/mock-data';
 
 interface UserContentStats {
     articlesCount: number;
     notesCount: number;
-    totalArticleViews: number; 
-    totalNoteViews: number; 
+    totalArticleViews: number;
+    totalNoteViews: number;
 }
 
 export default function AdminProfilePage() {
-  const router = useRouter(); 
+  const router = useRouter();
 
-  const [userId, setUserId] = React.useState<string | null>(null); 
+  const [userId, setUserId] = React.useState<string | null>(null);
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
@@ -66,8 +66,9 @@ export default function AdminProfilePage() {
           if (storedUser && storedUser.id) {
             setUserId(storedUser.id);
           } else {
+            console.error("User ID not found in stored currentUser object.");
             toast({ variant: "destructive", title: "Hata", description: "Oturum bilgileri bulunamadı. Lütfen tekrar giriş yapın." });
-            router.push('/login'); 
+            router.push('/login');
           }
         } catch (e) {
           console.error("Error parsing currentUser from localStorage:", e);
@@ -76,7 +77,7 @@ export default function AdminProfilePage() {
         }
       } else {
         toast({ variant: "destructive", title: "Oturum Yok", description: "Lütfen giriş yapın." });
-        router.push('/login'); 
+        router.push('/login');
       }
     }
   }, [router]);
@@ -153,7 +154,7 @@ export default function AdminProfilePage() {
     try {
       const result = await updateUser(userId, updatedData);
       if (result) {
-        setUser(result); 
+        setUser(result);
         if (typeof window !== 'undefined') {
             const storedCurrentUser = localStorage.getItem('currentUser');
             if (storedCurrentUser) {
@@ -161,10 +162,10 @@ export default function AdminProfilePage() {
                     const currentUserData = JSON.parse(storedCurrentUser);
                     if (currentUserData.id === userId) {
                         localStorage.setItem('currentUser', JSON.stringify({
-                            ...currentUserData, 
+                            ...currentUserData,
                             name: result.name,
                             avatar: result.avatar,
-                            username: result.username, 
+                            username: result.username,
                         }));
                         window.dispatchEvent(new CustomEvent('currentUserUpdated'));
                     }

@@ -11,7 +11,7 @@ import dynamic from 'next/dynamic';
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
   loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
-  ssr: false // SSR for Hero might be complex with its client-side logic for slides
+  ssr: false
 });
 
 const FeaturedArticlesSection = dynamic(() => import('@/components/featured-articles-section'), {
@@ -32,9 +32,8 @@ const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser
   loading: () => (
     <section className="w-full py-8">
       <Skeleton className="h-8 w-40 mb-8" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-8"> {/* Ensure single column for biyoloji only */}
         <Skeleton className="h-40 w-full rounded-lg" />
-        {/* Only one skeleton as Teknoloji category is removed */}
       </div>
     </section>
   ),
@@ -96,11 +95,10 @@ export default function Home() {
   React.useEffect(() => {
     getArticles()
       .then(data => {
-        setAllArticles(data.filter(article => article.category !== 'Teknoloji'));
+        setAllArticles(data);
       })
       .catch(err => {
         console.error("Error fetching articles:", err);
-        // Optionally, set an error state to display to the user
       })
       .finally(() => {
         setLoadingArticles(false);
@@ -119,7 +117,7 @@ export default function Home() {
       }
       setLoadingRole(false);
     } else {
-      setLoadingRole(false); // Still need to set loading to false if not in browser
+      setLoadingRole(false);
     }
   }, []);
 
@@ -139,17 +137,17 @@ export default function Home() {
 
 
   const heroArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isHero === true && article.status === 'Yayınlandı') // Ensure hero articles are published
+    .filter(article => article.isHero === true && article.status === 'Yayınlandı')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
   const featuredArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isFeatured === true && !article.isHero && article.status === 'Yayınlandı') // Ensure featured are published
+    .filter(article => article.isFeatured === true && !article.isHero && article.status === 'Yayınlandı')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
   const recentArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => !article.isHero && !article.isFeatured && article.status === 'Yayınlandı') // Ensure recent are published
+    .filter(article => !article.isHero && !article.isFeatured && article.status === 'Yayınlandı')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
@@ -170,7 +168,7 @@ export default function Home() {
             </section>
             <section className="w-full py-8">
                  <Skeleton className="h-8 w-40 mb-8 rounded-lg" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-8"> {/* Single column skeleton */}
                     <Skeleton className="h-40 w-full rounded-lg" />
                 </div>
             </section>

@@ -82,17 +82,17 @@ export default function AdminLayout({
         const timeoutValue = parseInt(storedTimeout, 10);
         setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
       } else {
-        setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
+        // setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES); // This was causing the error, removed it.
       }
     }
-    setAuthCheckComplete(true); 
+    setAuthCheckComplete(true);
     if (!initialLoadAttempted) setInitialLoadAttempted(true);
     return userFound;
   }, [sessionTimeoutMinutes, initialLoadAttempted]);
 
 
   React.useEffect(() => {
-    document.title = 'TeknoBiyo Admin';
+    document.title = 'BiyoHox Admin';
     loadUserDataAndSettings();
 
     const handleStorageChange = (event: StorageEvent) => {
@@ -102,18 +102,18 @@ export default function AdminLayout({
             loadUserDataAndSettings();
         }
     };
-    
+
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
         setAuthCheckComplete(false); // Re-trigger auth check
         loadUserDataAndSettings();
     };
-    
+
     const handleSessionTimeoutChanged = () => {
         console.log("AdminLayout: 'sessionTimeoutChanged' event received, reloading settings.");
         loadUserDataAndSettings(); // Reload settings which includes session timeout
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('currentUserUpdated', handleCurrentUserUpdated);
     window.addEventListener('sessionTimeoutChanged', handleSessionTimeoutChanged);
@@ -147,7 +147,7 @@ export default function AdminLayout({
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null);
-    setAuthCheckComplete(true); 
+    setAuthCheckComplete(true);
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.replace('/login');
   }, [router]);
@@ -164,12 +164,15 @@ export default function AdminLayout({
       </div>
     );
   }
-  
+
   // This explicit check might be redundant if the useEffect for redirection works correctly,
   // but can serve as a fallback or to show a "Redirecting..." message.
   if (!currentUserId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
      console.log("[AdminLayout] Render-time check: No user ID, rendering redirect placeholder.");
-     return ( 
+      if (!window.location.pathname.startsWith('/login')) { // Extra check to prevent loop on login page
+        router.replace('/login');
+      }
+     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground">Yönlendiriliyor...</p>
@@ -222,7 +225,7 @@ export default function AdminLayout({
                 </SidebarMenuButton>
                 </SidebarMenuItem>
             )}
-            
+
             {(hasPermission('Makaleleri Görüntüleme') || hasPermission('Makale Oluşturma') || hasPermission('Biyoloji Notlarını Görüntüleme') || hasPermission('Yeni Biyoloji Notu Ekleme') || hasPermission('Kategorileri Yönetme') || hasPermission('Sayfaları Yönetme')) && (
                 <SidebarGroup className="p-0">
                 <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
@@ -394,7 +397,7 @@ export default function AdminLayout({
                     <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
                 </Link>
             </Button>
-            <ThemeToggle /> 
+            <ThemeToggle />
             <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
               <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
                   <Avatar className="size-7">

@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="md:flex md:justify-between md:items-center">
           <div className="mb-6 md:mb-0">
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} TeknoBiyo. Tüm hakları saklıdır.
+              &copy; {new Date().getFullYear()} BiyoHox. Tüm hakları saklıdır.
             </p>
             <p className="text-xs text-muted-foreground/70 mt-1">
               Teknoloji ve biyoloji dünyasındaki en son gelişmeler.

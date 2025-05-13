@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -108,7 +109,7 @@ const MaintenancePage = () => {
                 </div>
                 <div className="container mx-auto px-4 py-16 z-10 text-center">
                     <div className="mb-8">
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6 glow-text">TeknoBiyo</h1>
+                        <h1 className="text-5xl md:text-7xl font-bold mb-6 glow-text">BiyoHox</h1>
                         <h2 className="text-4xl md:text-6xl font-bold mb-8 glow-text">We'll Be Back Soon</h2>
                         <h3 className="text-2xl md:text-4xl font-semibold mb-8 glow-text">Yakında Döneceğiz</h3>
                     </div>
@@ -147,7 +148,7 @@ const MaintenancePage = () => {
                         <a href="#" className="social-icon text-2xl hover:text-cyan-400" title="YouTube"><Youtube size={24} /></a>
                     </div>
                     <div className="text-sm text-gray-400">
-                        &copy; {new Date().getFullYear()} TeknoBiyo. All rights reserved.
+                        &copy; {new Date().getFullYear()} BiyoHox. All rights reserved.
                     </div>
                 </div>
             </div>

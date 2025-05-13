@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Users, Target, Eye } from "lucide-react";
@@ -8,7 +9,7 @@ export default function HakkimizdaPage() {
       <header className="text-center pt-8 pb-4">
         <h1 className="text-4xl font-bold tracking-tight">Hakkımızda</h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
-          TeknoBiyo'nun arkasındaki vizyonu, misyonu ve değerleri keşfedin.
+          BiyoHox'un arkasındaki vizyonu, misyonu ve değerleri keşfedin.
         </p>
       </header>
 
@@ -16,7 +17,7 @@ export default function HakkimizdaPage() {
         <div className="space-y-4">
           <h2 className="text-3xl font-semibold">Biz Kimiz?</h2>
           <p className="text-muted-foreground leading-relaxed">
-            TeknoBiyo, teknoloji ve biyoloji dünyalarının kesişim noktasında yer alan, meraklı zihinler için hazırlanmış bir bilgi platformudur. Amacımız, bu iki dinamik alandaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici içerikleri okuyucularımıza sunmaktır.
+            BiyoHox, teknoloji ve biyoloji dünyalarının kesişim noktasında yer alan, meraklı zihinler için hazırlanmış bir bilgi platformudur. Amacımız, bu iki dinamik alandaki en son gelişmeleri, derinlemesine analizleri ve ilgi çekici içerikleri okuyucularımıza sunmaktır.
           </p>
           <p className="text-muted-foreground leading-relaxed">
             Bilimin ve teknolojinin hızla ilerlediği bu çağda, karmaşık konuları anlaşılır ve erişilebilir bir dilde aktarmayı hedefliyoruz. Uzman yazarlarımız ve araştırmacılarımızla, güvenilir ve güncel bilgiler sunarak bilgi kirliliğinin önüne geçmeyi amaçlıyoruz.
@@ -89,4 +90,3 @@ export default function HakkimizdaPage() {
     </div>
   );
 }
-

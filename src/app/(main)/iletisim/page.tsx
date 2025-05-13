@@ -1,3 +1,4 @@
+
 "use client"; // Mark as client component for form handling (even if basic)
 
 import * as React from "react";
@@ -90,7 +91,7 @@ export default function IletisimPage() {
                 <Mail className="h-5 w-5 mt-1 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-foreground">E-posta</h3>
-                  <a href="mailto:iletisim@teknobiyo.example.com" className="hover:text-primary transition-colors">iletisim@teknobiyo.example.com</a> (Yanıt süresi: 1-2 iş günü)
+                  <a href="mailto:iletisim@biyohox.example.com" className="hover:text-primary transition-colors">iletisim@biyohox.example.com</a> (Yanıt süresi: 1-2 iş günü)
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -130,4 +131,3 @@ export default function IletisimPage() {
     </div>
   );
 }
-

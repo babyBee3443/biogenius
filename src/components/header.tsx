@@ -4,10 +4,10 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
+import { Menu, Search, X, BookCopy, ShieldCheck } from 'lucide-react'; // Added BookCopy and ShieldCheck icons
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet components
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Import Popover
+import { Input } from '@/components/ui/input'; // Import Input
 import { Badge } from '@/components/ui/badge';
 import * as React from 'react';
 import { ScrollArea } from './ui/scroll-area';
@@ -21,8 +21,8 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
+  // This is mock data. Replace with actual API call.
   const mockData: ArticleStub[] = [
-    // Removed Teknoloji articles
     { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
     { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
     { id: 's1', title: 'İnsan Bağışıklık Sistemi', category: 'Biyoloji' },
@@ -120,7 +120,6 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
-    // { href: "/categories/teknoloji", label: "Teknoloji" }, // Removed Teknoloji
     { href: "/categories/biyoloji", label: "Biyoloji" },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
@@ -141,24 +140,33 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-7 w-7 text-primary animate-spin-slow"
-          >
-            <path d="M12 2a10 10 0 0 0-10 10c0 2.5 1 4.8 2.6 6.4A10 10 0 0 0 12 22a10 10 0 0 0 10-10c0-2.5-1-4.8-2.6-6.4A10 10 0 0 0 12 2z" />
-            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
-            <path d="M15.7 15.7a4 4 0 1 0-7.4 0" />
-            <path d="M12 12v10" />
-            <path d="m4.6 10.6.8.8" />
-            <path d="m18.6 10.6-.8.8" />
-          </svg>
-          <span className="font-bold text-lg">TeknoBiyo</span>
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" className="h-8 w-8 text-primary">
+            <defs>
+                <linearGradient id="bioGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: "hsl(var(--primary))", stopOpacity:1}} />
+                    <stop offset="100%" style={{stopColor: "hsl(120, 70%, 40%)", stopOpacity:1}} />
+                </linearGradient>
+                 <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            <path fill="url(#bioGradient)" filter="url(#glow)" d="M100,10 C140,10 190,60 190,100 C190,140 140,190 100,190 C60,190 10,140 10,100 C10,60 60,10 100,10 Z M100,30 C70,30 30,70 30,100 C30,130 70,170 100,170 C130,170 170,130 170,100 C170,70 130,30 100,30 Z" />
+            <circle cx="100" cy="100" r="60" fill="hsl(var(--background))"/>
+            <path stroke="url(#bioGradient)" strokeWidth="5" strokeLinecap="round" d="M100,60 Q80,80 100,100 Q120,120 100,140">
+                <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="15s" repeatCount="indefinite" />
+            </path>
+            <path stroke="hsl(var(--primary))" strokeWidth="5" strokeLinecap="round" d="M100,60 Q120,80 100,100 Q80,120 100,140">
+                 <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="-360 100 100" dur="18s" repeatCount="indefinite" />
+            </path>
+            <circle cx="100" cy="100" r="5" fill="url(#bioGradient)">
+                 <animate attributeName="r" values="3;7;3" dur="2s" repeatCount="indefinite" />
+            </circle>
+        </svg>
+          <span className="font-bold text-lg">BiyoHox</span>
         </Link>
 
         <nav className="hidden md:flex flex-1 items-center space-x-1">

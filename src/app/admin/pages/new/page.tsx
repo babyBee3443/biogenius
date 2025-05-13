@@ -8,22 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Eye, LayoutGrid, Layers } from "lucide-react"; 
+import { ArrowLeft, Save, Eye, LayoutGrid, Layers } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { BlockEditor } from "@/components/admin/block-editor"; 
-import { TemplateSelector, type Block } from "@/components/admin/template-selector"; 
-import SeoPreview from "@/components/admin/seo-preview"; 
-import { Textarea } from "@/components/ui/textarea"; 
-import { createPage, type PageData, generateSlug as generateSlugUtil } from "@/lib/mock-data"; 
+import { BlockEditor } from "@/components/admin/block-editor";
+import { TemplateSelector, type Block } from "@/components/admin/template-selector";
+import SeoPreview from "@/components/admin/seo-preview";
+import { Textarea } from "@/components/ui/textarea";
+import { createPage, type PageData, generateSlug as generateSlugUtil } from "@/lib/mock-data";
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; 
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 export default function NewPage() {
     const router = useRouter();
     const [title, setTitle] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [blocks, setBlocks] = React.useState<Block[]>([]); 
+    const [blocks, setBlocks] = React.useState<Block[]>([]);
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [keywords, setKeywords] = React.useState<string[]>([]);
@@ -207,13 +207,13 @@ export default function NewPage() {
 
         console.log(`[NewPage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
         console.log("[NewPage/handlePreview] Preview Data before stringify:", previewData);
-        
+
         if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
             console.error("[NewPage/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
             return;
         }
-        
+
         try {
             const stringifiedData = JSON.stringify(previewData);
             console.log("[NewPage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
@@ -224,7 +224,7 @@ export default function NewPage() {
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
             console.log(`[NewPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
-            
+
             // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             console.log(`[NewPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
@@ -376,7 +376,7 @@ export default function NewPage() {
                                         type="url"
                                         value={canonicalUrl}
                                         onChange={(e) => setCanonicalUrl(e.target.value)}
-                                        placeholder="https://teknobiyo.com/orijinal-sayfa-url"
+                                        placeholder="https://biyohox.com/orijinal-sayfa-url"
                                     />
                                     <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
                                 </div>

@@ -31,9 +31,9 @@ const MAINTENANCE_MODE_KEY = 'maintenanceModeActive'; // Key for localStorage
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
 
 export default function AdminSettingsPage() {
-  const [siteName, setSiteName] = React.useState("TeknoBiyo");
+  const [siteName, setSiteName] = React.useState("BiyoHox");
   const [siteDescription, setSiteDescription] = React.useState("Teknoloji ve Biyoloji Makaleleri");
-  const [siteUrl, setSiteUrl] = React.useState("https://teknobiyo.example.com");
+  const [siteUrl, setSiteUrl] = React.useState("https://biyohox.example.com");
   const [adminEmail, setAdminEmail] = React.useState("admin@example.com");
   const [maintenanceMode, setMaintenanceMode] = React.useState(false);
   const [sessionTimeout, setSessionTimeout] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
@@ -115,7 +115,7 @@ export default function AdminSettingsPage() {
       const a = document.createElement('a');
       a.href = url;
       const date = new Date().toISOString().slice(0, 10);
-      a.download = `teknobiyo_data_${date}.json`;
+      a.download = `biyohox_data_${date}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -161,7 +161,7 @@ export default function AdminSettingsPage() {
           setImporting(false);
           return;
         }
-        
+
         localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(importedData.articles || []));
         localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(importedData.notes || []));
         localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(importedData.categories || []));
@@ -171,7 +171,7 @@ export default function AdminSettingsPage() {
         localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(importedData.templates || []));
 
 
-        reloadMockData(); 
+        reloadMockData();
 
         toast({ title: "Veri İçe Aktarıldı", description: "Veriler başarıyla içe aktarıldı. Değişikliklerin yansıması için sayfa yenilenebilir." });
       } catch (error) {
@@ -278,11 +278,11 @@ export default function AdminSettingsPage() {
                                     <UploadCloud className="mr-2 h-4 w-4" />
                                     {importing ? "Veriler İçe Aktarılıyor..." : "Veri İçe Aktar (.json)"}
                                 </Button>
-                                <Input 
-                                    type="file" 
-                                    className="hidden" 
-                                    ref={importFileInputRef} 
-                                    onChange={handleImportFileSelect} 
+                                <Input
+                                    type="file"
+                                    className="hidden"
+                                    ref={importFileInputRef}
+                                    onChange={handleImportFileSelect}
                                     accept=".json"
                                 />
                             </div>
@@ -432,7 +432,7 @@ export default function AdminSettingsPage() {
                          </div>
                          <div className="space-y-2">
                             <Label htmlFor="mail-from-name">Gönderen Adı</Label>
-                            <Input id="mail-from-name" placeholder="TeknoBiyo Bildirimleri" />
+                            <Input id="mail-from-name" placeholder="BiyoHox Bildirimleri" />
                          </div>
                           <div className="space-y-2">
                             <Label htmlFor="mail-driver">E-posta Sürücüsü</Label>

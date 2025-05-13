@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -44,7 +45,7 @@ const AnimatedLogo = () => (
       />
     </svg>
     <span className="ml-3 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-green-500 to-blue-500">
-      TeknoBiyo
+      BiyoHox
     </span>
   </motion.div>
 );
@@ -62,7 +63,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // await new Promise(resolve => setTimeout(resolve, 1000)); // Removed delay for faster login
 
     try {
         const allUsers = await getUsers();
@@ -211,7 +212,7 @@ export default function LoginPage() {
         </Card>
       </motion.div>
        <footer className="mt-12 text-center text-xs text-muted-foreground">
-        &copy; {new Date().getFullYear()} TeknoBiyo. Tüm hakları saklıdır.
+        &copy; {new Date().getFullYear()} BiyoHox. Tüm hakları saklıdır.
         <br />
          <Link href="/" className="hover:text-primary">Ana Sayfaya Dön</Link>
       </footer>

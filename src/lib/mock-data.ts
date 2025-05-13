@@ -1,3 +1,4 @@
+
 import type { Block } from "@/components/admin/template-selector";
 
 // --- Category Data Structure ---
@@ -210,7 +211,7 @@ let mockPages: PageData[] = [
         title: 'Anasayfa',
         slug: '',
         blocks: [
-            { id: generateId(), type: 'text', content: 'TeknoBiyo\'ya hoş geldiniz! İçeriğinizi buraya ekleyebilirsiniz.' }
+            { id: generateId(), type: 'text', content: 'BiyoHox\'a hoş geldiniz! İçeriğinizi buraya ekleyebilirsiniz.' }
         ],
         status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
@@ -526,10 +527,10 @@ const defaultPageTemplates: Template[] = [
         blocks: [
             { id: generateId(), type: 'heading', level: 1, content: 'Bizimle İletişime Geçin' },
             { id: generateId(), type: 'text', content: 'Sorularınız, önerileriniz veya işbirliği talepleriniz için aşağıdaki formu doldurarak veya doğrudan iletişim bilgilerimiz üzerinden bize ulaşabilirsiniz. En kısa sürede size geri dönüş yapacağız.' },
-            { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'Mesaj Gönderin', recipientEmail: 'info@teknobiyo.example.com'} },
+            { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'Mesaj Gönderin', recipientEmail: 'info@biyohox.example.com'} },
             { id: generateId(), type: 'divider' },
             { id: generateId(), type: 'heading', level: 2, content: 'Diğer İletişim Kanalları' },
-            { id: generateId(), type: 'text', content: '**E-posta:** info@teknobiyo.example.com\n**Telefon:** +90 (212) 123 45 67\n**Adres:** Teknoloji Vadisi, Biyoloji Sokak No:1, İstanbul, Türkiye' },
+            { id: generateId(), type: 'text', content: '**E-posta:** info@biyohox.example.com\n**Telefon:** +90 (212) 123 45 67\n**Adres:** Teknoloji Vadisi, Biyoloji Sokak No:1, İstanbul, Türkiye' },
             { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/map-placeholder/800/300', alt: 'Konum Haritası Placeholder', caption: 'Ofisimizin konumu (Harita entegrasyonu eklenebilir).' },
         ],
     },
@@ -541,9 +542,9 @@ const defaultPageTemplates: Template[] = [
         type: 'page',
         category: 'Genel Sayfa',
         blocks: [
-            { id: generateId(), type: 'heading', level: 1, content: 'TeknoBiyo Hakkında' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/team-collaboration/800/350', alt: 'TeknoBiyo Ekip Çalışması', caption: 'Yenilikçi çözümler üreten dinamik bir ekibiz.' },
-            { id: generateId(), type: 'text', content: 'TeknoBiyo, teknoloji ve biyoloji dünyalarının heyecan verici kesişim noktasında bilgi ve ilham sunan bir platformdur. Amacımız, karmaşık bilimsel ve teknolojik konuları herkes için anlaşılır ve erişilebilir kılmaktır.' },
+            { id: generateId(), type: 'heading', level: 1, content: 'BiyoHox Hakkında' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/team-collaboration/800/350', alt: 'BiyoHox Ekip Çalışması', caption: 'Yenilikçi çözümler üreten dinamik bir ekibiz.' },
+            { id: generateId(), type: 'text', content: 'BiyoHox, teknoloji ve biyoloji dünyalarının heyecan verici kesişim noktasında bilgi ve ilham sunan bir platformdur. Amacımız, karmaşık bilimsel ve teknolojik konuları herkes için anlaşılır ve erişilebilir kılmaktır.' },
             { id: generateId(), type: 'heading', level: 2, content: 'Misyonumuz' },
             { id: generateId(), type: 'text', content: 'En güncel ve doğru bilgileri sunarak, bilimsel merakı teşvik etmek, öğrenmeyi kolaylaştırmak ve geleceği şekillendiren yenilikler hakkında toplumu bilinçlendirmek.' },
             { id: generateId(), type: 'heading', level: 2, content: 'Vizyonumuz' },
@@ -662,12 +663,12 @@ const defaultPageTemplates: Template[] = [
         blocks: [
             { id: generateId(), type: 'heading', level: 1, content: 'Bize Katılın!' },
             { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/team-working/800/350', alt: 'Çalışan Ekip', caption: 'Dinamik ve yenilikçi bir ortamda kariyerinize yön verin.' },
-            { id: generateId(), type: 'text', content: 'TeknoBiyo olarak, tutkulu ve yetenekli bireylerle büyümeye devam ediyoruz. Şirket kültürümüz, değerlerimiz ve açık pozisyonlarımız hakkında daha fazla bilgi edinin.' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Neden TeknoBiyo?' },
+            { id: generateId(), type: 'text', content: 'BiyoHox olarak, tutkulu ve yetenekli bireylerle büyümeye devam ediyoruz. Şirket kültürümüz, değerlerimiz ve açık pozisyonlarımız hakkında daha fazla bilgi edinin.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Neden BiyoHox?' },
             { id: generateId(), type: 'text', content: '- Yenilikçi projelerde çalışma fırsatı.\n- Sürekli öğrenme ve gelişim imkanları.\n- Destekleyici ve işbirlikçi bir ekip ortamı.\n- Rekabetçi maaş ve yan haklar.' },
             { id: generateId(), type: 'heading', level: 2, content: 'Açık Pozisyonlar' },
-            { id: generateId(), type: 'text', content: 'Şu anda aktif bir pozisyon bulunmamaktadır. Ancak, gelecekteki fırsatlar için CV\'nizi [kariyer@teknobiyo.example.com](mailto:kariyer@teknobiyo.example.com) adresine gönderebilirsiniz.' }, // Placeholder for dynamic job listings
-            { id: generateId(), type: 'text', content: 'TeknoBiyo ailesinin bir parçası olmak için sabırsızlanıyoruz!' },
+            { id: generateId(), type: 'text', content: 'Şu anda aktif bir pozisyon bulunmamaktadır. Ancak, gelecekteki fırsatlar için CV\'nizi [kariyer@biyohox.example.com](mailto:kariyer@biyohox.example.com) adresine gönderebilirsiniz.' }, // Placeholder for dynamic job listings
+            { id: generateId(), type: 'text', content: 'BiyoHox ailesinin bir parçası olmak için sabırsızlanıyoruz!' },
         ],
     }
 ];
@@ -886,7 +887,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
     return JSON.parse(JSON.stringify(newUser));
 };
 
-export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'joinedAt' | 'email'>>): Promise<User | null> => {
+export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'email' | 'joinedAt' | 'lastLogin' | 'role'>>): Promise<User | null> => {
     await delay(50);
     const currentUsers = await getUsers();
     const index = currentUsers.findIndex(u => u.id === id);
@@ -1160,7 +1161,7 @@ export const deletePage = async (id: string): Promise<boolean> => {
 // --- End Page CRUD ---
 
 // --- Templates ---
-export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3';
+export const TEMPLATE_STORAGE_KEY = 'biyohox_mock_templates_v3';
 
 export const allMockTemplatesGetter = async (): Promise<Template[]> => {
     await delay(5);
@@ -1191,12 +1192,12 @@ export const allMockTemplatesGetter = async (): Promise<Template[]> => {
 };
 
 
-export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles_v3';
-export const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes_v3';
-export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories_v3';
-export const USER_STORAGE_KEY = 'teknobiyo_mock_users_v3';
-export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles_v3';
-export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages_v3';
+export const ARTICLE_STORAGE_KEY = 'biyohox_mock_articles_v3';
+export const NOTE_STORAGE_KEY = 'biyohox_mock_notes_v3';
+export const CATEGORY_STORAGE_KEY = 'biyohox_mock_categories_v3';
+export const USER_STORAGE_KEY = 'biyohox_mock_users_v3';
+export const ROLE_STORAGE_KEY = 'biyohox_mock_roles_v3';
+export const PAGE_STORAGE_KEY = 'biyohox_mock_pages_v3';
 
 
 export const loadInitialData = () => {
@@ -1226,13 +1227,13 @@ export const loadInitialData = () => {
         if (!localStorage.getItem(USER_STORAGE_KEY)) {
             const defaultAdminUser: User = {
                  id: 'admin001', name: 'Admin User', username: 'admin',
-                 email: 'admin@teknobiyo.example.com', role: 'Admin',
+                 email: 'admin@biyohox.example.com', role: 'Admin',
                  joinedAt: new Date().toISOString(),
                  avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
             };
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
         }
-        
+
         if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
             const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
             const rolesWithCounts = mockRoles.map(role => {
