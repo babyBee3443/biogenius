@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -50,7 +50,9 @@ const PREVIEW_STORAGE_KEY = 'preview_data';
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = params.id as string; 
+    // const articleId = params.id as string; 
+    const articleId = React.use(params).id as string;
+
 
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -130,6 +132,7 @@ export default function EditArticlePage() {
                          setTemplateApplied(false); // Reset template applied state on load
                      } else {
                          setError("Makale bulunamadı.");
+                         notFound(); // Use Next.js notFound for critical errors
                      }
                  }
              } catch (err) {
@@ -358,7 +361,7 @@ export default function EditArticlePage() {
             return;
         }
 
-        const previewData: Partial<ArticleData> & { previewType: 'article' } = {
+        const previewData: Partial<ArticleData> &amp; { previewType: 'article' } = {
             previewType: 'article',
             id: articleId || 'preview_edit_article', 
             title: title || 'Başlıksız Makale',
@@ -390,15 +393,18 @@ export default function EditArticlePage() {
 
         try {
             const stringifiedData = JSON.stringify(previewData);
+            console.log("[EditArticlePage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
             if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
                  console.error("[EditArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
                  toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
                  return;
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
-            
+            console.log(`[EditArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
+
+            // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            console.log(`[EditArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+            console.log(`[EditArticlePage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
             if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
                 console.error(`[EditArticlePage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
                 throw new Error("Verification failed: No data found in localStorage after setItem.");
@@ -498,7 +504,7 @@ export default function EditArticlePage() {
                              <Skeleton className="h-48 w-full rounded-md" />
                          </div>
                      </div>
-                     <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
+                     <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
                          <Skeleton className="h-48 w-full rounded-md" />
                          <Skeleton className="h-32 w-full rounded-md" />
                      </aside>
@@ -780,9 +786,9 @@ export default function EditArticlePage() {
                      </Tabs>
                  </div>
 
-                  <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
+                  <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
                       <Card>
-                         <CardHeader><CardTitle>Durum</CardTitle></CardHeader>
+                         <CardHeader><CardTitle>Durum ve Aksiyonlar</CardTitle></CardHeader>
                          <CardContent className="space-y-4">
                               <div className="space-y-2">
                                  <Label htmlFor="status">Yayın Durumu</Label>
@@ -801,12 +807,12 @@ export default function EditArticlePage() {
                                <Button variant="outline" className="w-full justify-center" onClick={handlePreview} disabled={saving}>
                                  <Eye className="mr-2 h-4 w-4" /> Önizle
                              </Button>
-                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving || !slug}>
+                              <Button className="w-full" onClick={() => handleSave(false)} disabled={saving || !slug || !title || !category}>
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 Kaydet
                              </Button>
                              {status !== 'Yayınlandı' && (
-                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving || !slug}>
+                                 <Button className="w-full" onClick={() => handleSave(true)} disabled={saving || !slug || !title || !category}>
                                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                      Yayınla
                                  </Button>

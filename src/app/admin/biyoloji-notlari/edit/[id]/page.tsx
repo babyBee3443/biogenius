@@ -1,4 +1,3 @@
-
 "use client"; 
 
 import * as React from 'react';
@@ -109,6 +108,7 @@ export default function EditBiyolojiNotuPage() {
                          setBlocks(noteResult.contentBlocks && noteResult.contentBlocks.length > 0 ? noteResult.contentBlocks : [createDefaultBlock()]);
                      } else {
                          setError("Not bulunamadı.");
+                         notFound(); // Use Next.js notFound for critical errors
                      }
                  }
              } catch (err) {
@@ -137,7 +137,7 @@ export default function EditBiyolojiNotuPage() {
              if (!currentSlug || currentSlug === generateSlug(originalTitle)) {
                  setSlug(generateSlug(newTitle));
              }
-         } else if (newTitle && !currentSlug) {
+         } else if (newTitle && !slug) {
             setSlug(generateSlug(newTitle));
          }
      }, 500);
@@ -278,7 +278,7 @@ export default function EditBiyolojiNotuPage() {
             return;
         }
 
-        const previewData: Partial<NoteData> & { previewType: 'note' } = { 
+        const previewData: Partial<NoteData> &amp; { previewType: 'note' } = { 
             previewType: 'note',
             id: noteId || 'preview_edit_note',
             title: title || 'Başlıksız Not',
@@ -306,15 +306,18 @@ export default function EditBiyolojiNotuPage() {
 
         try {
             const stringifiedData = JSON.stringify(previewData);
+            console.log("[EditBiyolojiNotuPage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
             if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
                  console.error("[EditBiyolojiNotuPage/handlePreview] Error: Stringified preview data is empty or null.");
                  toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
                  return;
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            console.log(`[EditBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
             
+            // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            console.log(`[EditBiyolojiNotuPage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+            console.log(`[EditBiyolojiNotuPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
              if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
                  console.error(`[EditBiyolojiNotuPage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
                  throw new Error("Verification failed: No data found in localStorage after setItem.");

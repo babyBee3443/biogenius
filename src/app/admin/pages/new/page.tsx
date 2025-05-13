@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -189,7 +188,7 @@ export default function NewPage() {
      const handlePreview = () => {
         if (typeof window === 'undefined') return;
 
-        const previewData: Partial<PageData> & { previewType: 'page' } = {
+        const previewData: Partial<PageData> &amp; { previewType: 'page' } = {
             previewType: 'page',
             id: 'preview_new_page',
             title: title || 'Başlıksız Sayfa',
@@ -216,15 +215,18 @@ export default function NewPage() {
         
         try {
             const stringifiedData = JSON.stringify(previewData);
+            console.log("[NewPage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
             if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
                  console.error("[NewPage/handlePreview] Error: Stringified preview data is empty or null.");
                  toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
                  return;
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            console.log(`[NewPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
             
+            // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            console.log(`[NewPage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+            console.log(`[NewPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
 
             if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
                  console.error(`[NewPage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);

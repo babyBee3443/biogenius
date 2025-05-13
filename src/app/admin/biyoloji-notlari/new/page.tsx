@@ -1,4 +1,3 @@
-
 "use client"; 
 
 import * as React from 'react';
@@ -228,7 +227,7 @@ export default function NewBiyolojiNotuPage() {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Lütfen önizlemeden önce Kategori ve Seviye seçin." });
             return;
         }
-        const previewData: Partial<NoteData> & { previewType: 'note' } = {
+        const previewData: Partial<NoteData> &amp; { previewType: 'note' } = {
             previewType: 'note', id: 'preview_new_note', title: title || 'Başlıksız Not', slug: slug || generateSlug(title),
             category: category, level: level, tags: tags, summary: summary || '', contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
@@ -247,15 +246,18 @@ export default function NewBiyolojiNotuPage() {
 
         try {
             const stringifiedData = JSON.stringify(previewData);
+            console.log("[NewBiyolojiNotuPage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
             if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
                  console.error("[NewBiyolojiNotuPage/handlePreview] Error: Stringified preview data is empty or null.");
                  toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
                  return;
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
             
+            // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+            console.log(`[NewBiyolojiNotuPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
 
 
             if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
@@ -369,7 +371,7 @@ export default function NewBiyolojiNotuPage() {
                      {aiOutput.suggestedContentIdeas && (
                         <div>
                             <strong className="block text-sm font-medium">Önerilen İçerik Fikirleri/Taslak:</strong>
-                            <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '<br />') }} />
+                            <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '&lt;br /&gt;') }} />
                         </div>
                     )}
                 </div>
