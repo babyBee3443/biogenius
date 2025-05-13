@@ -58,7 +58,7 @@ const WelcomeScreen = () => {
   const title = "Öğrenmenin genetik temeli.";
   const subtitleParts = [
     { text: "Hox genleri canlıyı şekillendirir, ", colorClass: "text-muted-foreground" },
-    { text: "Biyohox", colorClass: "text-primary animate-text-rgb-cycle-fast" }, // Changed to text-primary
+    { text: "Biyohox", colorClass: "text-primary animate-text-rgb-cycle-fast" },
     { text: " ise öğrenmeni.", colorClass: "text-muted-foreground" },
   ];
 
@@ -84,7 +84,7 @@ const WelcomeScreen = () => {
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center text-center min-h-[60vh] md:min-h-[70vh] py-16 px-4 overflow-hidden mb-16">
+    <section className="relative flex flex-col items-center justify-center text-center py-8 px-4 overflow-hidden mb-16">
       {/* Removed dark background classes, rounded-lg, shadow-2xl, border */}
       {/* Removed background SVG and particle animations as they were designed for dark background */}
 
@@ -93,9 +93,7 @@ const WelcomeScreen = () => {
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          // Updated title styling for light background
-          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-primary" // Changed to solid primary color
-          // Removed text-transparent, bg-clip-text, bg-gradient-to-r, animate-text-glow, filter
+          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-primary"
         >
           {title}
         </motion.h1>
@@ -104,7 +102,6 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          // Updated subtitle text color for light background
           className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto"
         >
           {subtitleParts.map((part, partIndex) => (
@@ -199,7 +196,7 @@ export default function Home() {
   if (pageIsLoading) {
      return (
         <div className="space-y-16">
-            <Skeleton className="h-[60vh] md:h-[70vh] w-full mb-16 rounded-lg" />
+            <Skeleton className="h-[40vh] w-full mb-8 rounded-lg" /> {/* Adjusted welcome screen skeleton */}
             <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />
              <section className="w-full py-8">
                 <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
