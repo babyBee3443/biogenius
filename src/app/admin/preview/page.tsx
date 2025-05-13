@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Eye, Loader2, AlertTriangle, Tag, BookCopy } from 'lucide-react';
 import type { Block } from '@/components/admin/template-selector';
-import type { ArticleData, NoteData, PageData as PageDataType } from '@/lib/mock-data'; // Import PageData as PageDataType
+import type { ArticleData, NoteData, PageData as PageDataType } from '@/lib/mock-data'; 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import PagePreviewRenderer from "@/components/admin/page-preview-renderer"; // For rendering page blocks
+import PagePreviewRenderer from "@/components/admin/page-preview-renderer"; 
 
 // --- Block Rendering Components (Simplified versions for preview) ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -133,7 +133,7 @@ export default function PreviewPage() {
 
   React.useEffect(() => {
     let isMounted = true;
-    console.log("[PreviewPage] useEffect triggered.");
+    console.log("[PreviewPage] useEffect triggered. Attempting to load preview data.");
 
     if (typeof window === 'undefined') {
       console.log("[PreviewPage] Running on server, skipping localStorage logic.");
@@ -144,48 +144,48 @@ export default function PreviewPage() {
 
     const loadPreview = () => {
         if (!isMounted) return;
-        setIsLoading(true); // Start loading
-        setError(null); // Reset error
+        setIsLoading(true); 
+        setError(null); 
 
         console.log(`[PreviewPage] Attempting to load data from localStorage with key: ${PREVIEW_STORAGE_KEY}`);
         try {
             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
 
             if (storedData) {
-                console.log(`[PreviewPage] Found data in localStorage. Length: ${storedData.length}.`);
+                console.log(`[PreviewPage] Found data in localStorage. Length: ${storedData.length}. Attempting to parse...`);
                 let parsedData: CombinedPreviewData;
                 try {
-                    parsedData = JSON.parse(storedData) as CombinedPreviewData; // Type assertion
+                    parsedData = JSON.parse(storedData) as CombinedPreviewData; 
                     console.log("[PreviewPage] Parsed data successfully:", parsedData);
 
                     if (!parsedData || typeof parsedData !== 'object' || Object.keys(parsedData).length === 0) {
-                         const errorMsg = `Geçersiz veya boş önizleme verisi yapısı.`;
-                         console.error("[PreviewPage]", errorMsg, parsedData);
+                         const errorMsg = `Geçersiz veya boş önizleme verisi yapısı. Veri: ${JSON.stringify(parsedData)}`;
+                         console.error("[PreviewPage]", errorMsg);
                          if (isMounted) setError(errorMsg);
                          return;
                     }
-                    // Validate based on previewType
+                    
                      if (!parsedData.previewType || !['article', 'note', 'page'].includes(parsedData.previewType)) {
-                         const errorMsg = `Önizleme verisi geçersiz 'previewType' içeriyor: ${parsedData.previewType}.`;
-                         console.error("[PreviewPage]", errorMsg, parsedData);
+                         const errorMsg = `Önizleme verisi geçersiz 'previewType' içeriyor: ${parsedData.previewType}. Veri: ${JSON.stringify(parsedData)}`;
+                         console.error("[PreviewPage]", errorMsg);
                          if (isMounted) setError(errorMsg);
                          return;
                      }
 
-                    // Basic validation for common fields
+                    
                     if (typeof parsedData.title !== 'string' || !Array.isArray(parsedData.blocks)) {
-                         const errorMsg = `Önizleme verisi beklenen yapıda değil (eksik title veya blocks).`;
-                         console.error("[PreviewPage]", errorMsg, parsedData);
+                         const errorMsg = `Önizleme verisi beklenen yapıda değil (eksik title veya blocks). Veri: ${JSON.stringify(parsedData)}`;
+                         console.error("[PreviewPage]", errorMsg);
                          if (isMounted) setError(errorMsg);
                          return;
                     }
 
-                    console.log("[PreviewPage] Data appears to be valid.");
+                    console.log("[PreviewPage] Data appears to be valid and is being set to state.");
                     if (isMounted) setPreviewData(parsedData);
 
                 } catch (parseError: any) {
-                    console.error("[PreviewPage] JSON parse error:", parseError);
-                    if (isMounted) setError(`Önizleme verisi okunamadı (JSON Parse Hatası): ${parseError.message}.`);
+                    console.error("[PreviewPage] JSON parse error:", parseError, "Stored Data:", storedData.substring(0, 500) + "..."); // Log part of storedData
+                    if (isMounted) setError(`Önizleme verisi okunamadı (JSON Parse Hatası): ${parseError.message}. Veri (ilk 500 karakter): ${storedData.substring(0, 500)}...`);
                     return;
                 }
             } else {
@@ -194,21 +194,28 @@ export default function PreviewPage() {
                 if (isMounted) setError(errorMsg);
             }
         } catch (e: any) {
-            console.error("[PreviewPage] LocalStorage erişim hatası:", e);
+            console.error("[PreviewPage] LocalStorage erişim hatası veya başka bir genel hata:", e);
             if (isMounted) setError(`Önizleme verisi yüklenirken bir hata oluştu: ${e.message}`);
         } finally {
              if (isMounted) setIsLoading(false);
+             console.log("[PreviewPage] Loading finished.");
         }
     };
 
     loadPreview();
 
-    return () => {
-      isMounted = false;
-      console.log("[PreviewPage] Component unmounted.");
-    };
+    // Cleanup function to remove the preview data from localStorage when the component unmounts
+    // This is important so that an old preview isn't shown if the page is revisited directly.
+    // return () => {
+    //   isMounted = false;
+    //   if (typeof window !== 'undefined') {
+    //       localStorage.removeItem(PREVIEW_STORAGE_KEY);
+    //       console.log(`[PreviewPage] Cleaned up preview data for key: ${PREVIEW_STORAGE_KEY}`);
+    //   }
+    //   console.log("[PreviewPage] Component unmounted.");
+    // };
 
-  }, []); // Removed searchParams from dependency as key is fixed
+  }, []); 
 
    if (isLoading) {
      console.log("[PreviewPage] Rendering loading state.");

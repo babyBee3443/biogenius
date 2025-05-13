@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Added import for AlertDialogTrigger
+  AlertDialogTrigger, 
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -180,20 +180,54 @@ export function TemplateSelector({
                 return;
         }
 
-        console.log(`[TemplateSelector/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
+        console.log(`[TemplateSelector/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log("[TemplateSelector/handlePreview] Preview Data before stringify:", previewData);
+
+        if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
+            console.error("[TemplateSelector/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
+            return;
+        }
+        
         try {
-            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
+            const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                 console.error("[TemplateSelector/handlePreview] Error: Stringified preview data is empty or null.");
+                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                 return;
+            }
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[TemplateSelector/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+
+            if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
+                 console.error(`[TemplateSelector/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
+                 throw new Error("Verification failed: No data found in localStorage after setItem.");
+            }
+            const parsedVerify = JSON.parse(checkStoredData);
+            if (!parsedVerify || !parsedVerify.previewType) {
+                console.error(`[TemplateSelector/handlePreview] Verification FAILED: Invalid data structure or previewType in localStorage after setItem. Parsed:`, parsedVerify);
+                throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
+            }
+            console.log("[TemplateSelector/handlePreview] Verification SUCCESS after setItem");
+            
             const previewUrl = `/admin/preview`;
+            console.log(`[TemplateSelector/handlePreview] Opening preview window with URL: ${previewUrl}`);
             
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
+                    console.error("[TemplateSelector/handlePreview] Failed to open preview window.");
                     toast({ variant: "destructive", title: "Önizleme Penceresi Açılamadı", description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.", duration: 10000 });
+                } else {
+                     console.log("[TemplateSelector/handlePreview] Preview window opened successfully.");
                 }
-            }, 250); 
+            }, 300); 
 
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi: ${error.message}`, duration: 10000 });
+            console.error("[TemplateSelector/handlePreview] Error during preview process:", error);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`, duration: 10000 });
         }
     };
 
@@ -240,9 +274,9 @@ export function TemplateSelector({
                                                 <Image
                                                     src={template.previewImageUrl || 'https://picsum.photos/seed/default-template/300/200'}
                                                     alt={template.name}
-                                                    fill // Changed from layout="fill"
-                                                    objectFit="cover"
-                                                    className="rounded"
+                                                    fill 
+                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Example sizes
+                                                    className="rounded object-cover" // Ensure object-cover
                                                     data-ai-hint={template.category?.toLowerCase() || 'abstract content design'}
                                                 />
                                             </div>

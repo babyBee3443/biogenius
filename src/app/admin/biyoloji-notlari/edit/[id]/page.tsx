@@ -208,6 +208,7 @@ export default function EditBiyolojiNotuPage() {
              summary,
              contentBlocks: blocks.length > 0 ? blocks : [createDefaultBlock()],
              imageUrl: imageUrl || null,
+             // status will be handled by a separate mechanism if needed
          };
 
          console.log("[EditBiyolojiNotuPage/handleSave] Preparing to save note:", noteId, "with data:", updateData);
@@ -290,20 +291,40 @@ export default function EditBiyolojiNotuPage() {
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: noteData?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            status: noteData?.status || 'Taslak' // include status
         };
 
 
-        console.log(`[EditBiyolojiNotuPage/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
+        console.log(`[EditBiyolojiNotuPage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log("[EditBiyolojiNotuPage/handlePreview] Preview Data before stringify:", previewData);
+
+        if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
+            console.error("[EditBiyolojiNotuPage/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
+            return;
+        }
 
         try {
-            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            console.log(`[EditBiyolojiNotuPage/handlePreview] Successfully saved preview data`);
-
-             const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-             if (!storedData) throw new Error("Verification failed: No data found in localStorage.");
-             const parsed = JSON.parse(storedData);
-             if (!parsed || parsed.previewType !== 'note') throw new Error("Verification failed: Invalid data structure in localStorage.");
-             console.log("[EditBiyolojiNotuPage/handlePreview] Verification SUCCESS");
+            const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                 console.error("[EditBiyolojiNotuPage/handlePreview] Error: Stringified preview data is empty or null.");
+                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                 return;
+            }
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[EditBiyolojiNotuPage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+             if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
+                 console.error(`[EditBiyolojiNotuPage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
+                 throw new Error("Verification failed: No data found in localStorage after setItem.");
+             }
+             const parsedVerify = JSON.parse(checkStoredData);
+             if (!parsedVerify || parsedVerify.previewType !== 'note') { // Check for correct previewType
+                console.error(`[EditBiyolojiNotuPage/handlePreview] Verification FAILED: Invalid data structure or previewType in localStorage after setItem. Parsed:`, parsedVerify);
+                throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
+            }
+            console.log("[EditBiyolojiNotuPage/handlePreview] Verification SUCCESS after setItem");
              
 
             const previewUrl = `/admin/preview`;
@@ -317,11 +338,11 @@ export default function EditBiyolojiNotuPage() {
                 } else {
                      console.log("[EditBiyolojiNotuPage/handlePreview] Preview window opened.");
                 }
-            }, 150);
+            }, 300);
 
         } catch (error: any) {
             console.error("[EditBiyolojiNotuPage/handlePreview] Error:", error);
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: error.message, duration: 10000 });
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`, duration: 10000 });
         }
     };
 

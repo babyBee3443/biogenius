@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea"; // Import Textarea
-import { Switch } from "@/components/ui/switch"; // Import Switch
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select
+import { Textarea } from "@/components/ui/textarea"; 
+import { Switch } from "@/components/ui/switch"; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye, Film } from "lucide-react"; // Added Film icon for Hero
+import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye, Film } from "lucide-react"; 
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor";
@@ -19,15 +19,17 @@ import SeoPreview from "@/components/admin/seo-preview";
 import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { PageData as PageDataType, HeroSettings as HeroSettingsType } from "@/lib/mock-data"; // Renamed for clarity
-import { getPageById as fetchPageById, updatePage } from "@/lib/mock-data"; // Import actual functions
+import type { PageData as PageDataType, HeroSettings as HeroSettingsType } from "@/lib/mock-data"; 
+import { getPageById as fetchPageById, updatePage } from "@/lib/mock-data"; 
+
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 
 // --- Main Page Component ---
 export default function EditPage() {
     const router = useRouter();
     const params = useParams();
-    const pageId = params.id as string;
+    const pageId = React.use(params).id as string;
 
     const [pageData, setPageData] = React.useState<PageDataType | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -176,14 +178,14 @@ export default function EditPage() {
             seoDescription,
             keywords,
             canonicalUrl,
-            status: pageData?.status || 'Taslak', // Preserve existing status or default
+            status: pageData?.status || 'Taslak', 
             ...(pageId === 'anasayfa' && { heroSettings }),
         };
         
         try {
             const updated = await updatePage(pageId, saveData);
             if (updated) {
-                setPageData(updated); // Update local state with response
+                setPageData(updated); 
                 toast({
                     title: "Sayfa Güncellendi",
                     description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,

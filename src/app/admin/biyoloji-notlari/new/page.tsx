@@ -233,10 +233,17 @@ export default function NewBiyolojiNotuPage() {
             category: category, level: level, tags: tags, summary: summary || '', contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            status: 'Taslak' // Default status for new note preview
         };
 
-        console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[NewBiyolojiNotuPage/handlePreview] Preview Data:`, previewData);
+        console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log("[NewBiyolojiNotuPage/handlePreview] Preview Data before stringify:", previewData);
+
+        if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
+            console.error("[NewBiyolojiNotuPage/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
+            return;
+        }
 
         try {
             const stringifiedData = JSON.stringify(previewData);
@@ -246,21 +253,21 @@ export default function NewBiyolojiNotuPage() {
                  return;
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             console.log(`[NewBiyolojiNotuPage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
 
 
-            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            if (!storedData || storedData === 'null' || storedData === 'undefined') {
-                 console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
-                 throw new Error("Verification failed: No data found in localStorage.");
+            if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
+                 console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
+                 throw new Error("Verification failed: No data found in localStorage after setItem.");
             }
-            const parsed = JSON.parse(storedData);
-            if (!parsed || parsed.previewType !== 'note') {
-                console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: Invalid data structure or previewType. Parsed:`, parsed);
-                throw new Error("Verification failed: Invalid data structure.");
+            const parsedVerify = JSON.parse(checkStoredData);
+            if (!parsedVerify || parsedVerify.previewType !== 'note') {
+                console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: Invalid data structure or previewType in localStorage after setItem. Parsed:`, parsedVerify);
+                throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
             }
-            console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS");
+            console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS after setItem");
 
             const previewUrl = `/admin/preview`; 
             console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window: ${previewUrl}`);
@@ -273,11 +280,11 @@ export default function NewBiyolojiNotuPage() {
                 } else {
                     console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened successfully.");
                 }
-            }, 250); 
+            }, 300); 
 
         } catch (error: any) {
             console.error("[NewBiyolojiNotuPage/handlePreview] Error during preview process:", error);
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: error.message, duration: 10000 });
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`, duration: 10000 });
         }
     };
 
@@ -496,7 +503,9 @@ export default function NewBiyolojiNotuPage() {
                                                         ))
                                                      )}
                                                       <Separator />
-                                                      <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                                      {hasPermission('Kategorileri Yönetme') && (
+                                                        <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
+                                                      )}
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -556,6 +565,7 @@ export default function NewBiyolojiNotuPage() {
                                                   height={100} 
                                                   className="object-cover rounded max-h-[150px]" 
                                                   data-ai-hint="biology note cover placeholder"
+                                                  loading="lazy"
                                                 />
                                             </div>
                                         )}
@@ -691,8 +701,6 @@ export default function NewBiyolojiNotuPage() {
 }
 // Ensure flows are imported for side effects if they register themselves with Genkit.
 // This is typically done in a central `dev.ts` or similar, but if not, ensure they are loaded.
-// If generateBiologyNoteSuggestion or biologyChat are defined inline or don't need registration,
-// these imports might not be strictly necessary here.
 // For server actions, Next.js handles their availability.
 // import './flows/generate-biology-note-flow';
 // import './flows/biology-chat-flow';

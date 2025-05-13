@@ -50,7 +50,7 @@ const PREVIEW_STORAGE_KEY = 'preview_data';
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = params.id as string;
+    const articleId = React.use(params).id as string;
 
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -154,11 +154,10 @@ export default function EditArticlePage() {
 
      const debouncedSetSlug = useDebouncedCallback((newTitle: string, originalTitle: string, currentSlug: string) => {
          if (newTitle && newTitle !== originalTitle) {
-             // Only auto-generate slug if it hasn't been manually edited or was based on the old title
              if (!currentSlug || currentSlug === generateSlugUtil(originalTitle)) {
                  setSlug(generateSlugUtil(newTitle));
              }
-         } else if (newTitle && !currentSlug) { // If slug is empty, generate it
+         } else if (newTitle && !currentSlug) { 
             setSlug(generateSlugUtil(newTitle));
          }
      }, 500);
@@ -166,7 +165,7 @@ export default function EditArticlePage() {
      React.useEffect(() => {
          if (articleData) {
              debouncedSetSlug(title, articleData.title, slug);
-         } else if (title && !slug) { // For new articles, or if slug somehow got cleared
+         } else if (title && !slug) { 
             setSlug(generateSlugUtil(title));
          }
      }, [title, articleData, slug, debouncedSetSlug]);
@@ -274,7 +273,7 @@ export default function EditArticlePage() {
              const updatedArticle = await updateArticle(articleId, currentData);
 
              if (updatedArticle) {
-                 setArticleData(updatedArticle); // Update local state with the response from mock-data
+                 setArticleData(updatedArticle); 
                  setTitle(updatedArticle.title);
                  setExcerpt(updatedArticle.excerpt || '');
                  setCategory(updatedArticle.category);
@@ -361,47 +360,81 @@ export default function EditArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: articleId || 'preview_edit_article', // Use existing ID or a placeholder
+            id: articleId || 'preview_edit_article', 
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
             mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
             blocks,
-            status: status, // Send current status for visibility rules in preview
+            status: status, 
             isFeatured: isFeatured,
             isHero: isHero,
-            authorId: articleData?.authorId || 'admin001', // Use existing or default
+            authorId: articleData?.authorId || 'admin001', 
             createdAt: articleData?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            slug: slug || generateSlugUtil(title), // Ensure slug exists
+            slug: slug || generateSlugUtil(title), 
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
         
-        console.log(`[EditArticlePage/handlePreview] Saving preview data with key ${PREVIEW_STORAGE_KEY}:`, previewData);
+        console.log(`[EditArticlePage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log("[EditArticlePage/handlePreview] Preview Data before stringify:", previewData);
+
+        if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
+            console.error("[EditArticlePage/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
+            return;
+        }
+
         try {
-            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            const previewUrl = `/admin/preview`; // Ensure this matches the preview page route
+            const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                 console.error("[EditArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
+                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                 return;
+            }
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
             
-            setTimeout(() => { // Added small delay to ensure localStorage write completes
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[EditArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
+            if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
+                console.error(`[EditArticlePage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
+                throw new Error("Verification failed: No data found in localStorage after setItem.");
+            }
+             const parsedVerify = JSON.parse(checkStoredData);
+             if (!parsedVerify || parsedVerify.previewType !== 'article') {
+                console.error(`[EditArticlePage/handlePreview] Verification FAILED: Invalid data structure or previewType in localStorage after setItem. Parsed:`, parsedVerify);
+                throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
+            }
+            console.log("[EditArticlePage/handlePreview] Verification SUCCESS after setItem");
+
+
+            const previewUrl = `/admin/preview`; 
+            console.log(`[EditArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
+            
+            setTimeout(() => { 
                  const newWindow = window.open(previewUrl, '_blank');
                  if (!newWindow) {
+                      console.error("[EditArticlePage/handlePreview] Failed to open preview window.");
                       toast({
                           variant: "destructive",
                           title: "Önizleme Penceresi Açılamadı",
                           description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                          duration: 10000, // Longer duration for important messages
+                          duration: 10000, 
                       });
+                 } else {
+                    console.log("[EditArticlePage/handlePreview] Preview window opened successfully.");
                  }
-            }, 250); // 150ms delay
+            }, 300); 
 
         } catch (error: any) {
+             console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
             toast({
                 variant: "destructive",
                 title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi: ${error.message}`,
+                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
                 duration: 10000,
             });
         }
@@ -413,7 +446,7 @@ export default function EditArticlePage() {
      };
 
      const handleRevertToDraftOrReady = () => {
-        setStatus('Taslak'); // Always revert to Taslak
+        setStatus('Taslak'); 
         handleSave(false);
      };
 
@@ -818,3 +851,4 @@ export default function EditArticlePage() {
               />
          </div>
     );
+}

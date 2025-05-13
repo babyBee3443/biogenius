@@ -8,22 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Eye, LayoutGrid, Layers } from "lucide-react"; // Added Eye for preview, LayoutGrid for Section, Layers for remove template
+import { ArrowLeft, Save, Eye, LayoutGrid, Layers } from "lucide-react"; 
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { BlockEditor } from "@/components/admin/block-editor"; // Import BlockEditor
-import { TemplateSelector, type Block } from "@/components/admin/template-selector"; // Import Block type and TemplateSelector
-import SeoPreview from "@/components/admin/seo-preview"; // Import SEO Preview
-import { Textarea } from "@/components/ui/textarea"; // Import Textarea for SEO Description
-import { createPage, type PageData, generateSlug as generateSlugUtil } from "@/lib/mock-data"; // Import page CRUD functions
+import { BlockEditor } from "@/components/admin/block-editor"; 
+import { TemplateSelector, type Block } from "@/components/admin/template-selector"; 
+import SeoPreview from "@/components/admin/seo-preview"; 
+import { Textarea } from "@/components/ui/textarea"; 
+import { createPage, type PageData, generateSlug as generateSlugUtil } from "@/lib/mock-data"; 
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Fixed key for preview
+const PREVIEW_STORAGE_KEY = 'preview_data'; 
 
 export default function NewPage() {
     const router = useRouter();
     const [title, setTitle] = React.useState("");
     const [slug, setSlug] = React.useState("");
-    const [blocks, setBlocks] = React.useState<Block[]>([]); // Start empty, will be populated by default or template
+    const [blocks, setBlocks] = React.useState<Block[]>([]); 
     const [seoTitle, setSeoTitle] = React.useState("");
     const [seoDescription, setSeoDescription] = React.useState("");
     const [keywords, setKeywords] = React.useState<string[]>([]);
@@ -162,6 +162,7 @@ export default function NewPage() {
             seoDescription,
             keywords,
             canonicalUrl,
+            status: 'Taslak', // Default status
             // imageUrl can be set if there's a dedicated field for it
         };
 
@@ -201,20 +202,40 @@ export default function NewPage() {
             imageUrl: (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/new-page-preview/1200/600',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            status: 'Taslak'
         };
 
-        console.log(`[NewPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[NewPage/handlePreview] Preview Data:`, previewData);
-
+        console.log(`[NewPage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log("[NewPage/handlePreview] Preview Data before stringify:", previewData);
+        
+        if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
+            console.error("[NewPage/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
+            return;
+        }
+        
         try {
-            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            console.log(`[NewPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
+            const stringifiedData = JSON.stringify(previewData);
+            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
+                 console.error("[NewPage/handlePreview] Error: Stringified preview data is empty or null.");
+                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
+                 return;
+            }
+            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            
+            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            console.log(`[NewPage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
 
-            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            if (!storedData) throw new Error("Verification failed: No data found in localStorage.");
-            const parsed = JSON.parse(storedData);
-            if (!parsed || parsed.previewType !== 'page') throw new Error("Verification failed: Invalid data structure.");
-            console.log("[NewPage/handlePreview] Verification SUCCESS");
+            if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
+                 console.error(`[NewPage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
+                 throw new Error("Verification failed: No data found in localStorage after setItem.");
+            }
+            const parsedVerify = JSON.parse(checkStoredData);
+            if (!parsedVerify || parsedVerify.previewType !== 'page') {
+                console.error(`[NewPage/handlePreview] Verification FAILED: Invalid data structure or previewType in localStorage after setItem. Parsed:`, parsedVerify);
+                throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
+            }
+            console.log("[NewPage/handlePreview] Verification SUCCESS after setItem");
 
             const previewUrl = `/admin/preview`;
             console.log(`[NewPage/handlePreview] Opening preview window with URL: ${previewUrl}`);
@@ -227,11 +248,11 @@ export default function NewPage() {
                 } else {
                     console.log("[NewPage/handlePreview] Preview window opened successfully.");
                 }
-            }, 150);
+            }, 300);
 
         } catch (error: any) {
             console.error("[NewPage/handlePreview] Error during preview process:", error);
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: error.message, duration: 10000 });
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`, duration: 10000 });
         }
     };
 

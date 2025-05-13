@@ -266,9 +266,15 @@ export default function NewArticlePage() {
             canonicalUrl: canonicalUrl || "",
         };
         
-        console.log(`[NewArticlePage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log(`[NewArticlePage/handlePreview] Preview Data:`, previewData);
+        console.log(`[NewArticlePage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
+        console.log("[NewArticlePage/handlePreview] Preview Data before stringify:", previewData);
 
+        if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
+            console.error("[NewArticlePage/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
+            return;
+        }
+        
         try {
             const stringifiedData = JSON.stringify(previewData);
             if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
@@ -277,23 +283,22 @@ export default function NewArticlePage() {
                  return;
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
+            
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             console.log(`[NewArticlePage/handlePreview] Data AFTER setItem for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
 
-
-            const storedData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            if (!storedData || storedData === 'null' || storedData === 'undefined') {
-                 console.error(`[NewArticlePage/handlePreview] Verification FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY}. Actual value:`, storedData);
-                 throw new Error("Verification failed: No data found in localStorage.");
+            if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
+                 console.error(`[NewArticlePage/handlePreview] Verification FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
+                 throw new Error("Verification failed: No data found in localStorage after setItem.");
             }
-            const parsed = JSON.parse(storedData);
-            if (!parsed || parsed.previewType !== 'article') {
-                console.error(`[NewArticlePage/handlePreview] Verification FAILED: Invalid data structure or previewType. Parsed:`, parsed);
-                throw new Error("Verification failed: Invalid data structure.");
+            const parsedVerify = JSON.parse(checkStoredData);
+            if (!parsedVerify || parsedVerify.previewType !== 'article') {
+                console.error(`[NewArticlePage/handlePreview] Verification FAILED: Invalid data structure or previewType in localStorage after setItem. Parsed:`, parsedVerify);
+                throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
             }
-            console.log("[NewArticlePage/handlePreview] Verification SUCCESS");
+            console.log("[NewArticlePage/handlePreview] Verification SUCCESS after setItem");
 
-            const previewUrl = `/admin/preview`; // Single, fixed preview URL
+            const previewUrl = `/admin/preview`; 
             console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
             setTimeout(() => {
@@ -309,7 +314,7 @@ export default function NewArticlePage() {
                 } else {
                     console.log("[NewArticlePage/handlePreview] Preview window opened successfully.");
                 }
-            }, 250); // Increased delay slightly
+            }, 300); 
 
         } catch (error: any) {
             console.error("[NewArticlePage/handlePreview] Error during preview process:", error);
@@ -656,3 +661,4 @@ export default function NewArticlePage() {
              />
         </div>
     );
+}
