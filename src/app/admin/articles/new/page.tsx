@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -165,7 +166,21 @@ export default function NewArticlePage() {
      };
 
     const handleSave = async (publish: boolean = false) => {
-         const finalStatus = publish ? "Yayınlandı" : status;
+         let finalStatus = status;
+
+        if (publish && status !== 'Yayınlandı') {
+            finalStatus = "Yayınlandı";
+        } else if (!publish && status === 'Yayınlandı') {
+             finalStatus = "Hazır";
+        } else if (!publish && (status === 'Taslak' || status === 'İncelemede')) {
+            finalStatus = status;
+        } else if (status === 'Hazır' && publish) {
+            finalStatus = "Yayınlandı";
+        } else if (status === 'Hazır' && !publish) {
+            finalStatus = "Hazır";
+        }
+
+
          if (!category) {
              toast({ variant: "destructive", title: "Eksik Bilgi", description: "Lütfen bir kategori seçin." });
              return;
@@ -245,7 +260,7 @@ export default function NewArticlePage() {
             return;
         }
 
-        const previewData: Partial<ArticleData> &amp; { previewType: 'article' } = {
+        const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
             id: 'preview_new_article', 
             title: title || 'Başlıksız Makale',

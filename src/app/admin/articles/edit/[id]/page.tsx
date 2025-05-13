@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -50,7 +51,6 @@ const PREVIEW_STORAGE_KEY = 'preview_data';
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    // const articleId = params.id as string; 
     const articleId = React.use(params).id as string;
 
 
@@ -361,7 +361,7 @@ export default function EditArticlePage() {
             return;
         }
 
-        const previewData: Partial<ArticleData> &amp; { previewType: 'article' } = {
+        const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
             id: articleId || 'preview_edit_article', 
             title: title || 'Başlıksız Makale',

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -188,7 +189,7 @@ export default function NewPage() {
      const handlePreview = () => {
         if (typeof window === 'undefined') return;
 
-        const previewData: Partial<PageData> &amp; { previewType: 'page' } = {
+        const previewData: Partial<PageData> & { previewType: 'page' } = {
             previewType: 'page',
             id: 'preview_new_page',
             title: title || 'Başlıksız Sayfa',

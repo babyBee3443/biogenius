@@ -1,3 +1,4 @@
+
 "use client"; 
 
 import * as React from 'react';
@@ -278,7 +279,7 @@ export default function EditBiyolojiNotuPage() {
             return;
         }
 
-        const previewData: Partial<NoteData> &amp; { previewType: 'note' } = { 
+        const previewData: Partial<NoteData> & { previewType: 'note' } = { 
             previewType: 'note',
             id: noteId || 'preview_edit_note',
             title: title || 'Başlıksız Not',
