@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { useRouter, useParams, notFound } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation'; // Removed notFound as it's not used here
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from "@/hooks/use-toast";
@@ -39,16 +39,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Eye, Loader2, Save, Trash2, Upload, MessageSquare, Star, Layers, FileText } from "lucide-react";
+import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
 
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; // Consistent key for preview
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 export default function EditArticlePage() {
     const params = useParams();
     const router = useRouter();
-    const articleId = React.use(params)?.id as string;
+    const articleId = React.use(params)?.id as string; // Using React.use
 
     const [articleData, setArticleData] = React.useState<ArticleData | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -352,7 +353,7 @@ export default function EditArticlePage() {
             status: status,
             isFeatured: isFeatured,
             isHero: isHero,
-            authorId: articleData?.authorId || 'admin001', // Default or logged-in user ID
+            authorId: articleData?.authorId || 'admin001',
             createdAt: articleData?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
@@ -407,9 +408,31 @@ export default function EditArticlePage() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-                Makale yükleniyor...
+             <div className="flex flex-col h-full">
+                 <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
+                     <Skeleton className="h-8 w-24 rounded-md" />
+                     <Skeleton className="h-8 w-48 rounded-md" />
+                     <Skeleton className="h-8 w-8 rounded-md" />
+                 </div>
+                 <div className="flex flex-1 overflow-hidden">
+                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                         <Skeleton className="h-10 w-1/3 mb-6 rounded-md" />
+                         <div className="space-y-6">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                 <Skeleton className="h-16 w-full rounded-md" />
+                                 <Skeleton className="h-16 w-full rounded-md" />
+                             </div>
+                             <Skeleton className="h-24 w-full rounded-md" />
+                             <Skeleton className="h-24 w-full rounded-md" />
+                             <Skeleton className="h-8 w-1/4 rounded-md" />
+                             <Skeleton className="h-48 w-full rounded-md" />
+                         </div>
+                     </div>
+                     <aside className="w-72 border-l bg-card p-6 overflow-y-auto space-y-6 hidden lg:block">
+                         <Skeleton className="h-48 w-full rounded-md" />
+                         <Skeleton className="h-32 w-full rounded-md" />
+                     </aside>
+                 </div>
             </div>
         );
     }
@@ -495,7 +518,7 @@ export default function EditArticlePage() {
                                             height={100}
                                             className="object-cover rounded"
                                             data-ai-hint="article cover placeholder"
-                                            priority={false}
+                                            priority={false} // Main image in editor can be lazy
                                             loading="lazy"
                                         />
                                      </div>

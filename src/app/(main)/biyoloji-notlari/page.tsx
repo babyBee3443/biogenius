@@ -1,18 +1,18 @@
 
-"use client"; // Make this a client component for state and effects
+"use client";
 
-import * as React from "react"; // Import React for hooks
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { BookCopy, ArrowRight, Loader2 } from "lucide-react"; // Added Loader2
+import { BookCopy, ArrowRight, Loader2, Search } from "lucide-react"; // Added Search icon
 import { getNotes, type NoteData } from '@/lib/mock-data';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
-import { NoteCard } from '@/components/note-card'; // Import the new NoteCard
+import { Skeleton } from "@/components/ui/skeleton";
+import { NoteCard } from '@/components/note-card';
 
 export default function BiyolojiNotlariPage() {
   const [allNotes, setAllNotes] = React.useState<NoteData[]>([]);
@@ -22,65 +22,51 @@ export default function BiyolojiNotlariPage() {
   const [selectedLevel, setSelectedLevel] = React.useState("all");
   const [loading, setLoading] = React.useState(true);
 
-  // Fetch all notes on component mount
   React.useEffect(() => {
     setLoading(true);
     getNotes()
       .then(data => {
         setAllNotes(data);
-        setFilteredNotes(data); // Initialize filtered notes with all notes
+        setFilteredNotes(data);
       })
       .catch(err => {
         console.error("Error fetching notes:", err);
-        // TODO: Add user-facing error handling (e.g., toast notification)
+        // Consider adding user-facing error display
       })
       .finally(() => setLoading(false));
   }, []);
 
-  // Filter notes whenever searchTerm, category, or level changes
   React.useEffect(() => {
     let results = allNotes;
     const lowerSearchTerm = searchTerm.toLowerCase();
 
-    // Filter by search term
     if (lowerSearchTerm) {
       results = results.filter(note =>
         note.title.toLowerCase().includes(lowerSearchTerm) ||
-        note.summary.toLowerCase().includes(lowerSearchTerm) ||
+        (note.summary && note.summary.toLowerCase().includes(lowerSearchTerm)) || // Check if summary exists
         note.category.toLowerCase().includes(lowerSearchTerm) ||
-        note.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))
+        (note.tags && note.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) // Check if tags exist
       );
     }
 
-    // Filter by category
     if (selectedCategory !== "all") {
         results = results.filter(note => note.category === selectedCategory);
     }
 
-    // Filter by level
     if (selectedLevel !== "all") {
         results = results.filter(note => note.level === selectedLevel);
     }
-
-
     setFilteredNotes(results);
   }, [searchTerm, selectedCategory, selectedLevel, allNotes]);
 
 
-  const categories = [...new Set(allNotes.map(note => note.category))];
-  const levels = [...new Set(allNotes.map(note => note.level))];
+  const categories = React.useMemo(() => [...new Set(allNotes.map(note => note.category))], [allNotes]);
+  const levels = React.useMemo(() => [...new Set(allNotes.map(note => note.level))], [allNotes]);
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
-
-  const handleFilter = () => {
-      // The filtering now happens automatically in useEffect,
-      // but you might keep this button for explicit actions or leave it out.
-      console.log("Applying filters (handled by useEffect now)...");
-  };
-
 
   return (
     <div className="space-y-12">
@@ -92,16 +78,18 @@ export default function BiyolojiNotlariPage() {
         </p>
       </header>
 
-      {/* Filtering/Search Section */}
       <section className="mb-12">
           <Card className="bg-secondary/50 border-border/50">
             <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center">
-                <Input
-                    placeholder="Notlarda ara (başlık, etiket...)"
-                    className="flex-grow"
-                    value={searchTerm}
-                    onChange={handleSearchChange} // Bind value and onChange
-                 />
+                <div className="relative flex-grow">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Notlarda ara (başlık, etiket...)"
+                        className="pl-10" // Add padding for icon
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                     />
+                </div>
                 <div className="flex gap-3 w-full md:w-auto">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                         <SelectTrigger className="w-full md:w-[180px]">
@@ -122,37 +110,32 @@ export default function BiyolojiNotlariPage() {
                         </SelectContent>
                     </Select>
                 </div>
-                {/* Filter button is optional now as filtering is reactive */}
-                {/* <Button className="w-full md:w-auto" onClick={handleFilter}>Filtrele</Button> */}
             </CardContent>
           </Card>
       </section>
 
-      {/* Notes Grid */}
       {loading ? (
-        // Loading Skeleton
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array.from({ length: 6 }).map((_, index) => (
-                 <Card key={index} className="overflow-hidden shadow-md flex flex-col h-full">
+                 <Card key={index} className="overflow-hidden shadow-md flex flex-col h-full rounded-lg">
                     <Skeleton className="w-full h-40" />
                     <CardContent className="p-5 flex flex-col flex-grow">
-                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-6 w-3/4 mb-2 rounded-md" />
                         <div className="mb-3 space-x-1">
-                           <Skeleton className="h-5 w-20 inline-block" />
-                           <Skeleton className="h-5 w-16 inline-block" />
+                           <Skeleton className="h-5 w-20 inline-block rounded-full" />
+                           <Skeleton className="h-5 w-16 inline-block rounded-full" />
                         </div>
-                        <Skeleton className="h-4 w-full mb-1" />
-                        <Skeleton className="h-4 w-full mb-1" />
-                        <Skeleton className="h-4 w-2/3 mb-4" />
+                        <Skeleton className="h-4 w-full mb-1 rounded-md" />
+                        <Skeleton className="h-4 w-full mb-1 rounded-md" />
+                        <Skeleton className="h-4 w-2/3 mb-4 rounded-md" />
                         <div className="mt-auto flex justify-end">
-                            <Skeleton className="h-6 w-24" />
+                            <Skeleton className="h-6 w-24 rounded-md" />
                         </div>
                     </CardContent>
                  </Card>
              ))}
          </div>
       ) : filteredNotes.length === 0 ? (
-        // No Results Message
         <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">
                 {searchTerm || selectedCategory !== 'all' || selectedLevel !== 'all'
@@ -162,10 +145,9 @@ export default function BiyolojiNotlariPage() {
             </p>
         </div>
       ) : (
-        // Display Filtered Notes
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredNotes.map((note) => (
-             <NoteCard key={note.id} note={note} />
+             <NoteCard key={note.id} note={note} imageLoading="lazy" />
           ))}
         </div>
       )}

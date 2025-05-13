@@ -6,11 +6,12 @@ import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Loader2 } from 'lucide-react';
+import { ArrowLeft, Twitter, Facebook, Linkedin, Loader2, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
 import { getArticleById, getArticles, type ArticleData } from '@/lib/mock-data';
 import type { Block } from '@/components/admin/template-selector';
 import { ArticleCard } from '@/components/article-card';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
 
 // --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -31,7 +32,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             height={450}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="article content image"
-            loading="lazy"
+            loading="lazy" // Ensure images within blocks are lazy-loaded
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -67,7 +68,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    loading="lazy"
+                    loading="lazy" // Lazy load iframes
                 ></iframe>
             </div>
         );
@@ -115,11 +116,12 @@ function createMarkup(htmlContent: string) {
 
 export default function ArticlePage() {
   const params = useParams();
-  const articleId = React.use(params)?.id as string;
+  const articleId = React.use(params)?.id as string; // Using React.use
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -138,35 +140,42 @@ export default function ArticlePage() {
 
     const fetchArticleData = async () => {
       if (!articleId) {
-        if (isMounted) setLoading(false);
-        notFound();
+        if (isMounted) {
+            setError("Makale ID bulunamadı.");
+            setLoading(false);
+        }
+        // notFound(); // Removed direct call to notFound here, will handle in render
         return;
       }
 
+      setLoading(true); // Set loading true at the start of fetch
+      setError(null); // Reset error
       try {
         const fetchedArticle = await getArticleById(articleId);
 
         if (isMounted) {
             if (fetchedArticle) {
                 setArticle(fetchedArticle);
-
                 const allArticles = await getArticles();
                 const relArticles = allArticles
                     .filter(a =>
                         (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) &&
-                        a.category === fetchedArticle.category && // Category will likely always be Biyoloji now
+                        a.category === fetchedArticle.category &&
                         a.id !== articleId
                     )
                     .slice(0, 2);
                 setRelatedArticles(relArticles);
-
             } else {
-                setArticle(null);
+                setError("Makale bulunamadı.");
+                setArticle(null); // Ensure article is null if not found
             }
         }
-      } catch (error) {
-        console.error("Failed to fetch article:", error);
-        if (isMounted) setArticle(null);
+      } catch (err) {
+        console.error("Failed to fetch article:", err);
+        if (isMounted) {
+            setError("Makale yüklenirken bir hata oluştu.");
+            setArticle(null);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -187,18 +196,42 @@ export default function ArticlePage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-        Makale yükleniyor...
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Skeleton className="h-8 w-1/4 mb-4 rounded-lg" />
+        <Skeleton className="h-12 w-3/4 mb-6 rounded-lg" />
+        <Skeleton className="h-6 w-1/2 mb-10 rounded-lg" />
+        <Skeleton className="aspect-video w-full mb-10 rounded-lg" />
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full rounded-lg" />
+          <Skeleton className="h-4 w-full rounded-lg" />
+          <Skeleton className="h-4 w-5/6 rounded-lg" />
+        </div>
       </div>
     );
   }
 
-  if (!article || !isVisible) {
-    notFound();
+  if (error) {
+    return (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-destructive mb-2">Hata</h1>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button asChild variant="outline">
+               <Link href="/" className="inline-flex items-center">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Ana Sayfaya Dön
+               </Link>
+           </Button>
+        </div>
+    );
   }
 
-  // Simplified categoryLinkClass since "Teknoloji" is removed
+  if (!article || !isVisible) {
+    // This should ideally trigger Next.js's notFound behavior
+    // For client-side, we can show a message or redirect
+    notFound(); // Call notFound if article isn't found or not visible
+    return null; // Return null to prevent further rendering, notFound() will handle the rest
+  }
+
   const categoryLinkClass = 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300';
 
   return (
@@ -220,7 +253,7 @@ export default function ArticlePage() {
                 width={1200}
                 height={600}
                 className="w-full h-auto object-cover"
-                priority
+                priority // Prioritize the main article image for LCP
                 data-ai-hint="article main image"
             />
           </div>

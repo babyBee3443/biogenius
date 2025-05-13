@@ -1,53 +1,47 @@
+
 "use client";
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { ArrowRight, Pause, Play, BadgePercent } from 'lucide-react'; // Added BadgePercent for Ad
+import { ArrowRight, Pause, Play, BadgePercent } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import type { ArticleData } from '@/lib/mock-data'; // Import ArticleData type
+import type { ArticleData } from '@/lib/mock-data';
 
 interface HeroProps {
-  articles: ArticleData[]; // Accept ArticleData[]
+  articles: ArticleData[];
 }
 
 const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [isPlaying, setIsPlaying] = React.useState(true);
 
-  // Filter articles for Hero: Must be Published AND isHero
   const displayArticles = articles
-    .filter(article => article.status === 'Yayınlandı' && article.isHero === true) // Filter by isHero
-    .slice(0, 5); // Limit to max 5 for Hero display
+    .filter(article => article.status === 'Yayınlandı' && article.isHero === true)
+    .slice(0, 5);
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (isPlaying && displayArticles.length > 1) { // Only set interval if playing and more than one article
+    if (isPlaying && displayArticles.length > 1) {
       interval = setInterval(() => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % displayArticles.length);
-      }, 5000); // Change slide every 5 seconds
+      }, 5000);
     }
-
     return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
+      if (interval) clearInterval(interval);
     };
-  }, [isPlaying, displayArticles.length]); // Re-run effect if isPlaying or articles change
+  }, [isPlaying, displayArticles.length]);
 
-  // Ensure currentIndex is valid after articles might change
   React.useEffect(() => {
     if (displayArticles.length > 0 && currentIndex >= displayArticles.length) {
       setCurrentIndex(0);
     } else if (displayArticles.length === 0) {
-      setCurrentIndex(0); // Reset if no articles
+      setCurrentIndex(0);
     }
   }, [displayArticles, currentIndex]);
 
-
-  // --- Ad Display Logic ---
   const shouldShowAd = displayArticles.length === 0;
 
   if (shouldShowAd) {
@@ -70,26 +64,17 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
            </section>
       );
   }
-  // --- End Ad Display Logic ---
-
 
   const currentArticle = displayArticles[currentIndex];
 
-  if (!currentArticle) {
-    // This can happen briefly if displayArticles becomes empty due to filtering
-    // and before the useEffect to reset currentIndex kicks in.
-    // Or if there are genuinely no articles to display after filtering.
-    return null; 
-  }
+  if (!currentArticle) return null;
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index);
-    setIsPlaying(false); // Stop autoplay when a dot is clicked
+    setIsPlaying(false);
   };
 
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
+  const togglePlay = () => setIsPlaying(!isPlaying);
 
   const textVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -104,10 +89,10 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner"> {/* Reduced height */}
+    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 h-[50vh] md:h-[60vh] flex items-center justify-center text-center mb-16 rounded-lg shadow-inner">
       <AnimatePresence initial={false} mode="wait">
         <motion.div
-          key={currentIndex} // Ensure key changes to trigger animation
+          key={`bg-${currentArticle.id}`}
           className="absolute inset-0 z-0"
           variants={backgroundVariants}
           initial="hidden"
@@ -122,28 +107,27 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
             quality={85}
             className="filter brightness-50 dark:brightness-[0.4]"
             data-ai-hint="technology biology abstract background"
-            priority={currentIndex === 0}
+            priority={currentIndex === 0} // Prioritize the first image for LCP
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
         </motion.div>
       </AnimatePresence>
 
-      <div className="container relative z-10 text-white dark:text-gray-100 px-4"> {/* Adjusted dark text color for better contrast */}
-        <div className="relative h-48 md:h-40"> {/* Container for animated text */}
+      <div className="container relative z-10 text-white dark:text-gray-100 px-4">
+        <div className="relative h-48 md:h-40">
           <AnimatePresence initial={false} mode="wait">
             <motion.div
-              key={currentIndex} // Ensure key changes to trigger animation
+              key={`text-${currentArticle.id}`}
               variants={textVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
               className="absolute inset-0 flex flex-col items-center justify-center"
             >
-                {/* Removed category badge from here as per previous request to simplify Hero content */}
                 <h2 className="mt-2 text-xl font-semibold md:text-2xl text-shadow-md">
                     {currentArticle.title}
                 </h2>
-              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm line-clamp-3"> {/* Ensure consistent line-clamp */}
+              <p className="mt-3 max-w-md mx-auto text-base text-gray-200 dark:text-gray-300 sm:text-lg md:mt-4 md:text-xl md:max-w-3xl text-shadow-sm line-clamp-3">
                 {currentArticle.excerpt}
               </p>
               <Button size="lg" asChild className="mt-6">
@@ -156,8 +140,7 @@ const HeroComponent: React.FC<HeroProps> = ({ articles }) => {
         </div>
       </div>
 
-      {/* Controls (Dots and Play/Pause) */}
-      {displayArticles.length > 1 && ( // Only show controls if more than one article
+      {displayArticles.length > 1 && (
         <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-3">
           <Button variant="ghost" size="icon" onClick={togglePlay} className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-full">
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

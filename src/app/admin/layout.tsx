@@ -1,10 +1,10 @@
 
-"use client"; // Add "use client" for useState and useEffect
+"use client";
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Import useRouter for logout redirect
-import * as React from 'react'; // Import React for state
+import { useRouter } from 'next/navigation';
+import * as React from 'react';
 
 import {
   SidebarProvider,
@@ -20,12 +20,12 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home, Loader2 } from 'lucide-react'; // Added Home icon and Loader2
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useIdleTimeout } from '@/hooks/useIdleTimeout'; // Import the new hook
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { toast } from '@/hooks/use-toast';
-import { usePermissions } from '@/hooks/usePermissions'; // Import usePermissions hook
+import { usePermissions } from "@/hooks/usePermissions";
 import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
@@ -41,7 +41,7 @@ export default function AdminLayout({
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://picsum.photos/seed/default-avatar/32/32");
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
-  const [userLoaded, setUserLoaded] = React.useState(false); // New state for loading user data
+  const [userLoaded, setUserLoaded] = React.useState(false);
   const router = useRouter();
   const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions();
 
@@ -65,7 +65,7 @@ export default function AdminLayout({
           localStorage.removeItem('currentUser');
         }
       } else {
-        setCurrentUserId(null); // Ensure userId is null if no user in storage
+        setCurrentUserId(null);
         console.log("[AdminLayout] No currentUser in localStorage.");
       }
 
@@ -76,9 +76,9 @@ export default function AdminLayout({
       } else {
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
-      setUserLoaded(true); // Mark user data loading as complete
+      setUserLoaded(true);
     }
-  }, []); // Removed router from dependencies as it caused too many re-renders.
+  }, []); // Removed router from dependencies
 
 
   React.useEffect(() => {
@@ -88,12 +88,11 @@ export default function AdminLayout({
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setUserLoaded(false); // Reset loading state before reloading
+            setUserLoaded(false);
             loadUserDataAndSettings();
         }
     };
     
-    // Event for same-tab updates (e.g., login, profile update)
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
         setUserLoaded(false);
@@ -118,7 +117,7 @@ export default function AdminLayout({
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
     setCurrentUserId(null);
-    setUserLoaded(true); // User state is now known (logged out)
+    setUserLoaded(true);
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.push('/login');
   }, [router]);
@@ -126,7 +125,6 @@ export default function AdminLayout({
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
-  // Redirect to login if user data is loaded and no user is found
   React.useEffect(() => {
     if (userLoaded && !currentUserId && !window.location.pathname.startsWith('/login')) {
         console.log("[AdminLayout] User not found after loading, redirecting to login.");
@@ -161,13 +159,13 @@ export default function AdminLayout({
                 strokeLinejoin="round"
                 className="h-7 w-7 text-primary flex-shrink-0 group-data-[collapsible=icon]:ml-1 animate-spin-slow"
             >
-                <path d="M4 4C4 4 6 12 12 12C18 12 20 20 20 20" />
-                <path d="M4 20C4 20 6 12 12 12C18 12 20 4 20 4" />
-                <path d="M6.5 7.5L9.5 5.5" />
-                <path d="M14.5 18.5L17.5 16.5" />
-                <path d="M6.5 16.5L9.5 18.5" />
-                <path d="M14.5 5.5L17.5 7.5" />
-                <path d="M10 12H14" />
+                <path d="M12 2a10 10 0 0 0-10 10c0 2.5 1 4.8 2.6 6.4A10 10 0 0 0 12 22a10 10 0 0 0 10-10c0-2.5-1-4.8-2.6-6.4A10 10 0 0 0 12 2z" />
+                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+                <path d="M15.7 15.7a4 4 0 1 0-7.4 0" />
+                 {/* Additional biology-themed paths */}
+                <path d="M12 12v10" /> {/* Vertical stem */}
+                <path d="m4.6 10.6.8.8" /> {/* Leaf-like elements */}
+                <path d="m18.6 10.6-.8.8" />
             </svg>
           </Link>
         </SidebarHeader>
@@ -320,8 +318,8 @@ export default function AdminLayout({
             {hasPermission('Kullanım Kılavuzunu Görüntüleme') && (
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Kullanım Kılavuzu">
-                        <Link href="/admin/pages/edit/kullanim-kilavuzu"> {/* Direct link to the guide page */}
-                           <Layers /> {/* Using Layers as a generic icon for now */}
+                        <Link href="/admin/pages/edit/kullanim-kilavuzu">
+                           <Layers />
                            <span>Kullanım Kılavuzu</span>
                         </Link>
                     </SidebarMenuButton>

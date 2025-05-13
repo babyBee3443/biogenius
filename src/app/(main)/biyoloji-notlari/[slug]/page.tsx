@@ -1,16 +1,18 @@
+
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Tag } from 'lucide-react';
-import { getNoteById, getNotes, type NoteData } from '@/lib/mock-data'; // Import note data functions
+import { getNoteById, getNotes, type NoteData } from '@/lib/mock-data';
 import type { Block } from '@/components/admin/template-selector';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Import Card
-import { NoteCard } from '@/components/note-card'; // Import NoteCard
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { NoteCard } from '@/components/note-card';
+import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
 
-// --- Block Rendering Components (Copied from [id]/page.tsx, simplified) ---
+// --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
   <div dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br />') }} />
 );
@@ -25,11 +27,11 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
         <Image
             src={block.url}
             alt={block.alt || 'Not Görseli'}
-            width={700} // Slightly smaller width for notes
+            width={700}
             height={400}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="biology diagram illustration" 
-            loading="lazy" // Lazy load content images
+            loading="lazy" // Ensure images within blocks are lazy-loaded
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -81,7 +83,6 @@ const PlaceholderBlockRenderer: React.FC<{ type: string }> = ({ type }) => (
   </div>
 );
 
-// Function to render a single block
 const renderBlock = (block: Block) => {
     switch (block.type) {
         case 'text': return <TextBlockRenderer key={block.id} block={block} />;
@@ -93,8 +94,6 @@ const renderBlock = (block: Block) => {
         default: return <PlaceholderBlockRenderer key={block.id} type={block.type} />;
     }
 };
-// --- End Block Rendering Components ---
-
 
 interface NotePageProps {
   params: {
@@ -102,7 +101,6 @@ interface NotePageProps {
   };
 }
 
-// Generate static paths for notes
 export async function generateStaticParams() {
   const notes = await getNotes();
   return notes.map((note) => ({
@@ -113,22 +111,23 @@ export async function generateStaticParams() {
 
 export default async function NotePage({ params }: NotePageProps) {
   const noteSlug = params.slug;
-  const notes = await getNotes(); // Fetch all notes
-  const note = notes.find(n => n.slug === noteSlug); // Find the note by slug
+  // const notes = await getNotes(); // Fetching all notes can be slow if there are many
+  // const note = notes.find(n => n.slug === noteSlug);
+  const note = await getNoteById(noteSlug); // Fetch by ID or slug directly for performance
+
 
   if (!note) {
     notFound();
   }
 
-  // Find related notes (simple example: same category, different ID)
-  const relatedNotes = notes
+  const allNotes = await getNotes(); // Fetch all notes only if note is found, for related notes
+  const relatedNotes = allNotes
       .filter(n => n.category === note.category && n.id !== note.id)
-      .slice(0, 3); // Limit related notes
+      .slice(0, 3);
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
       <header className="mb-8 pt-4">
-         {/* Breadcrumbs or Category Link */}
          <Link href="/biyoloji-notlari" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center mb-2">
              <ArrowLeft className="mr-1 h-3 w-3" /> Biyoloji Notlarına Dön
          </Link>
@@ -158,20 +157,18 @@ export default async function NotePage({ params }: NotePageProps) {
                 width={800}
                 height={400}
                 className="w-full h-auto object-cover"
-                priority // Prioritize the main note image
+                priority // Prioritize the main note image for LCP
                 data-ai-hint="biology note header image"
             />
           </div>
       )}
 
-       {/* Note Summary/Introduction */}
         {note.summary && (
             <p className="text-lg text-muted-foreground mb-8 p-4 bg-secondary/40 rounded-md border border-border/50">
                 {note.summary}
             </p>
         )}
 
-      {/* Render Content Blocks */}
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {note.contentBlocks && note.contentBlocks.length > 0 ? (
              note.contentBlocks.map(renderBlock)
@@ -180,7 +177,6 @@ export default async function NotePage({ params }: NotePageProps) {
          )}
       </div>
 
-       {/* Related Notes Section */}
        {relatedNotes.length > 0 && (
           <div className="mt-16 border-t border-border/50 pt-10">
              <h2 className="text-2xl font-semibold mb-6">İlgili Notlar</h2>
@@ -192,7 +188,6 @@ export default async function NotePage({ params }: NotePageProps) {
            </div>
        )}
 
-       {/* Back Button */}
        <div className="mt-16 mb-8 text-center">
            <Button asChild variant="outline">
                <Link href="/biyoloji-notlari" className="inline-flex items-center">
@@ -203,4 +198,3 @@ export default async function NotePage({ params }: NotePageProps) {
     </article>
   );
 }
-

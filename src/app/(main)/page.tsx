@@ -11,17 +11,17 @@ import dynamic from 'next/dynamic';
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
   loading: () => <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />,
-  ssr: false
+  ssr: false // SSR for Hero might be complex with its client-side logic for slides
 });
 
 const FeaturedArticlesSection = dynamic(() => import('@/components/featured-articles-section'), {
   loading: () => (
-    <section>
+    <section className="w-full py-8">
       <Skeleton className="h-8 w-48 mb-8" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
+        <Skeleton className="h-72 w-full rounded-lg" />
+        <Skeleton className="h-72 w-full rounded-lg" />
+        <Skeleton className="h-72 w-full rounded-lg" />
       </div>
     </section>
   ),
@@ -30,11 +30,11 @@ const FeaturedArticlesSection = dynamic(() => import('@/components/featured-arti
 
 const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser-section'), {
   loading: () => (
-    <section>
+    <section className="w-full py-8">
       <Skeleton className="h-8 w-40 mb-8" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Only one skeleton if Teknoloji is removed */}
-        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        {/* Only one skeleton as Teknoloji category is removed */}
       </div>
     </section>
   ),
@@ -43,27 +43,28 @@ const CategoryTeaserSection = dynamic(() => import('@/components/category-teaser
 
 const RecentArticlesSection = dynamic(() => import('@/components/recent-articles-section'), {
   loading: () => (
-    <section>
+    <section className="w-full py-8">
       <Skeleton className="h-8 w-56 mb-8" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
+        <Skeleton className="h-72 w-full rounded-lg" />
+        <Skeleton className="h-72 w-full rounded-lg" />
+        <Skeleton className="h-72 w-full rounded-lg" />
       </div>
     </section>
   ),
   ssr: false
 });
 
-
-// Define the text parts and their styles - Teknoloji part removed
+// Define the text parts and their styles
 const titleParts = [
     {
         text: "Biyolojinin",
         colorClass: "text-green-600 dark:text-green-400",
+        animationClass: "animate-text-shimmer-green",
     },
     { text: " Derinliklerine Yolculuk", colorClass: "text-foreground" },
 ];
+
 
 // Simplified animation variants for the title
 const titleContainerVariants = {
@@ -95,11 +96,11 @@ export default function Home() {
   React.useEffect(() => {
     getArticles()
       .then(data => {
-        // Filter out Teknoloji articles at source if not already done in mock-data
         setAllArticles(data.filter(article => article.category !== 'Teknoloji'));
       })
       .catch(err => {
         console.error("Error fetching articles:", err);
+        // Optionally, set an error state to display to the user
       })
       .finally(() => {
         setLoadingArticles(false);
@@ -118,7 +119,7 @@ export default function Home() {
       }
       setLoadingRole(false);
     } else {
-      setLoadingRole(false);
+      setLoadingRole(false); // Still need to set loading to false if not in browser
     }
   }, []);
 
@@ -138,17 +139,17 @@ export default function Home() {
 
 
   const heroArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isHero === true)
+    .filter(article => article.isHero === true && article.status === 'Yayınlandı') // Ensure hero articles are published
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
   const featuredArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isFeatured === true && !article.isHero)
+    .filter(article => article.isFeatured === true && !article.isHero && article.status === 'Yayınlandı') // Ensure featured are published
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
   const recentArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => !article.isHero && !article.isFeatured)
+    .filter(article => !article.isHero && !article.isFeatured && article.status === 'Yayınlandı') // Ensure recent are published
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
@@ -157,29 +158,28 @@ export default function Home() {
   if (pageIsLoading) {
      return (
         <div className="space-y-16">
-            <Skeleton className="h-16 w-3/4 mx-auto mb-8" />
+            <Skeleton className="h-16 w-3/4 mx-auto mb-8 rounded-lg" />
             <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />
-             <section>
-                <Skeleton className="h-8 w-48 mb-8" />
+             <section className="w-full py-8">
+                <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <Skeleton className="h-72 w-full" />
-                    <Skeleton className="h-72 w-full" />
-                    <Skeleton className="h-72 w-full" />
+                    <Skeleton className="h-72 w-full rounded-lg" />
+                    <Skeleton className="h-72 w-full rounded-lg" />
+                    <Skeleton className="h-72 w-full rounded-lg" />
                 </div>
             </section>
-            <section>
-                 <Skeleton className="h-8 w-40 mb-8" />
+            <section className="w-full py-8">
+                 <Skeleton className="h-8 w-40 mb-8 rounded-lg" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Only one skeleton if Teknoloji is removed */}
-                    <Skeleton className="h-40 w-full" />
+                    <Skeleton className="h-40 w-full rounded-lg" />
                 </div>
             </section>
-            <section>
-                <Skeleton className="h-8 w-56 mb-8" />
+            <section className="w-full py-8">
+                <Skeleton className="h-8 w-56 mb-8 rounded-lg" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <Skeleton className="h-72 w-full" />
-                    <Skeleton className="h-72 w-full" />
-                    <Skeleton className="h-72 w-full" />
+                    <Skeleton className="h-72 w-full rounded-lg" />
+                    <Skeleton className="h-72 w-full rounded-lg" />
+                    <Skeleton className="h-72 w-full rounded-lg" />
                 </div>
             </section>
         </div>
@@ -193,36 +193,48 @@ export default function Home() {
         variants={titleContainerVariants}
         initial="hidden"
         animate="visible"
-        aria-label="Biyolojinin Derinliklerine Yolculuk" // Updated aria-label
+        aria-label="Biyolojinin Derinliklerine Yolculuk"
       >
         {titleParts.map((part, partIndex) => (
           <motion.span
             key={`part-${partIndex}`}
             variants={wordVariants}
-            className={cn("inline-block", part.colorClass)}
+            className={cn("inline-block", part.colorClass, part.animationClass)}
           >
-            {part.text}
+            {part.text.split("").map((char, charIndex) => (
+              <motion.span
+                key={`char-${charIndex}`}
+                className="inline-block"
+                variants={wordVariants} // You can create a specific charVariant if needed
+              >
+                {char}
+              </motion.span>
+            ))}
           </motion.span>
         ))}
       </motion.h1>
 
        <Hero articles={heroArticles} />
 
-      <section id="featured-articles">
-        <h2 className="text-3xl font-bold mb-8">Öne Çıkanlar</h2>
-        <FeaturedArticlesSection articles={featuredArticles} />
-      </section>
+      {featuredArticles.length > 0 && (
+        <section id="featured-articles">
+          <h2 className="text-3xl font-bold mb-8">Öne Çıkanlar</h2>
+          <FeaturedArticlesSection articles={featuredArticles} />
+        </section>
+      )}
 
        <section>
          <h2 className="text-3xl font-bold mb-8">Kategoriler</h2>
-         <CategoryTeaserSection /> {/* This will now only show Biyoloji */}
+         <CategoryTeaserSection />
        </section>
 
 
-      <section>
-        <h2 className="text-3xl font-bold mb-8">En Son Eklenenler</h2>
-        <RecentArticlesSection articles={recentArticles} />
-      </section>
+      {recentArticles.length > 0 && (
+        <section>
+          <h2 className="text-3xl font-bold mb-8">En Son Eklenenler</h2>
+          <RecentArticlesSection articles={recentArticles} />
+        </section>
+      )}
 
     </div>
   );
