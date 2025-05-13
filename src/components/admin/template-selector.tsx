@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -19,16 +18,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
-import { Eye, Loader2 } from 'lucide-react'; // Added Loader2
+import { Eye, Loader2 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import type { ArticleData, NoteData, Template as TemplateDefinition, PageData as PageDataType } from '@/lib/mock-data';
-import { allMockTemplatesGetter } from "@/lib/mock-data"; // Use getter
+import { allMockTemplatesGetter } from "@/lib/mock-data";
 
 // --- Block Types (Should match the editor's block types) ---
 export type Block =
@@ -71,19 +69,29 @@ export function TemplateSelector({
 
 
     React.useEffect(() => {
-        if (isOpen) {
-            setLoadingTemplates(true);
-            allMockTemplatesGetter()
-                .then(data => {
-                    setTemplates(data);
-                })
-                .catch(err => {
+        const fetchTemplates = async () => {
+            if (isOpen) {
+                setLoadingTemplates(true);
+                try {
+                    const data = await allMockTemplatesGetter();
+                     // Ensure data is an array before setting
+                    if (Array.isArray(data)) {
+                        setTemplates(data);
+                    } else {
+                        console.error("Fetched templates are not an array:", data);
+                        setTemplates([]); // Default to empty if data is invalid
+                        toast({ variant: "destructive", title: "Hata", description: "Şablon verileri geçersiz." });
+                    }
+                } catch (err) {
                     console.error("Error fetching templates:", err);
                     toast({ variant: "destructive", title: "Hata", description: "Şablonlar yüklenemedi." });
                     setTemplates([]); // Set to empty array on error
-                })
-                .finally(() => setLoadingTemplates(false));
-        }
+                } finally {
+                    setLoadingTemplates(false);
+                }
+            }
+        };
+        fetchTemplates();
     }, [isOpen]);
 
 
@@ -117,7 +125,7 @@ export function TemplateSelector({
         const basePreviewData = {
             id: `preview_template_${template.id}_${Date.now()}`,
             title: template.name,
-            blocks: template.blocks.map(b => ({...b, id: generateId()})), // Fresh IDs for preview blocks
+            blocks: template.blocks.map(b => ({...b, id: generateId()})),
             seoTitle: template.seoTitle || template.name,
             seoDescription: template.seoDescription || template.description,
             keywords: template.keywords || [],
@@ -132,7 +140,7 @@ export function TemplateSelector({
                     previewType: 'article',
                     excerpt: template.excerpt || template.description,
                     category: template.category || 'Biyoloji',
-                    status: 'Yayınlandı', // Preview as published
+                    status: 'Yayınlandı', 
                     mainImageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
                     authorId: 'template-author',
                     isFeatured: false,
@@ -146,13 +154,13 @@ export function TemplateSelector({
                     previewType: 'note',
                     slug: `template-${template.id}-preview`,
                     category: template.category || 'Genel',
-                    level: 'Lise 9', // Default level for preview
+                    level: 'Lise 9', 
                     tags: template.keywords || [],
                     summary: template.excerpt || template.description,
-                    contentBlocks: template.blocks.map(b => ({...b, id: generateId()})), // Use contentBlocks for notes
+                    contentBlocks: template.blocks.map(b => ({...b, id: generateId()})), 
                     imageUrl: template.blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')?.url || template.previewImageUrl,
-                    authorId: 'template-author', // Default author
-                    status: 'Yayınlandı', // Preview as published
+                    authorId: 'template-author', 
+                    status: 'Yayınlandı',
                 };
                 break;
             case 'page':
@@ -161,8 +169,8 @@ export function TemplateSelector({
                     previewType: 'page',
                     slug: `template-${template.id}-preview`,
                     imageUrl: template.previewImageUrl,
-                    settings: {}, // Default empty settings for page
-                    status: 'Yayınlandı', // Preview as published
+                    settings: {}, 
+                    status: 'Yayınlandı',
                 };
                 break;
             default:
@@ -172,26 +180,26 @@ export function TemplateSelector({
 
         try {
             localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
-            const previewUrl = `/admin/preview`; // Use the fixed preview URL
+            const previewUrl = `/admin/preview`;
             
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
                     toast({ variant: "destructive", title: "Önizleme Penceresi Açılamadı", description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.", duration: 10000 });
                 }
-            }, 150); // Increased delay slightly
+            }, 250); 
 
         } catch (error: any) {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi: ${error.message}`, duration: 10000 });
         }
     };
 
-    const filteredTemplates = templates.filter(t => {
+    const filteredTemplates = Array.isArray(templates) ? templates.filter(t => {
         if (templateTypeFilter) {
             return t.type === templateTypeFilter;
         }
         return true;
-    });
+    }) : [];
 
 
     let dialogTitle = "Şablon Seç";

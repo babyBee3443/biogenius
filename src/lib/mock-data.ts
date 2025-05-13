@@ -1,4 +1,3 @@
-
 import type { Block } from "@/components/admin/template-selector";
 
 // --- Category Data Structure ---
@@ -246,7 +245,7 @@ let mockPages: PageData[] = [
 ];
 
 // --- Re-populated Default Templates ---
-let defaultArticleTemplates: Template[] = [
+const defaultArticleTemplates: Template[] = [
     {
         id: 'standard-article',
         name: 'Standart Makale',
@@ -255,22 +254,22 @@ let defaultArticleTemplates: Template[] = [
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Makale Başlığı]' },
-            { id: generateId(), type: 'text', content: '[Makaleye giriş paragrafı. Konuyu tanıtın ve okuyucunun ilgisini çekin.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/std-main-image/800/450', alt: '[Ana Görsel Açıklaması]', caption: '[İsteğe Bağlı Görsel Alt Yazısı]' },
-            { id: generateId(), type: 'text', content: '[İlk ana bölüm. Konuyu detaylandırmaya başlayın. Önemli noktaları vurgulayın.]' },
-            { id: generateId(), type: 'heading', level: 3, content: '[Alt Başlık 1]' },
-            { id: generateId(), type: 'text', content: '[Alt başlıkla ilgili detaylı açıklama. Örnekler veya kanıtlar sunabilirsiniz.]' },
-            { id: generateId(), type: 'heading', level: 3, content: '[Alt Başlık 2]' },
-            { id: generateId(), type: 'text', content: '[İkinci alt başlıkla ilgili içerik. Farklı bir perspektif veya ek bilgi sağlayabilirsiniz.]' },
-            { id: generateId(), type: 'video', url: '', youtubeId: '' },
-            { id: generateId(), type: 'quote', content: '[Makalenin ana fikrini destekleyen veya vurgulayan bir alıntı.]', citation: '[Alıntı Kaynağı]' },
-            { id: generateId(), type: 'text', content: '[Sonuç paragrafı. Makaledeki ana noktaları özetleyin ve okuyucuya bir çıkarım sunun.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Yapay Zeka Etiği: Sorumluluklar ve Zorluklar' },
+            { id: generateId(), type: 'text', content: 'Yapay zeka (AI) hayatımızı dönüştürürken, beraberinde önemli etik soruları ve toplumsal sorumlulukları da getiriyor. Bu makalede, AI etiğinin temel ilkelerini ve karşılaşılan zorlukları inceleyeceğiz.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/ai-ethics-visual/800/450', alt: 'Yapay zeka ve etik kavramlarını simgeleyen bir görsel', caption: 'AI etiği, teknolojinin geleceği için kritik öneme sahip.' },
+            { id: generateId(), type: 'text', content: 'AI sistemlerinin karar alma süreçlerindeki **şeffaflık**, **hesap verebilirlik** ve **adalet** gibi ilkeler, etik tartışmaların merkezinde yer alıyor. Algoritmik önyargılar, veri gizliliği ve otonom sistemlerin sorumluluğu gibi konular acil çözümler gerektiriyor.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Algoritmik Önyargılar ve Adalet' },
+            { id: generateId(), type: 'text', content: 'AI modelleri, eğitildikleri verilerdeki mevcut toplumsal önyargıları yansıtabilir ve hatta güçlendirebilir. Bu durum, işe alım süreçlerinden kredi başvurularına kadar birçok alanda ayrımcılığa yol açabilir. Önyargısız veri setleri oluşturmak ve adil algoritmalar geliştirmek kritik önem taşımaktadır.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Veri Gizliliği ve Güvenlik' },
+            { id: generateId(), type: 'text', content: 'AI sistemleri büyük miktarda veri ile çalışır. Bu verilerin nasıl toplandığı, kullanıldığı ve korunduğu, bireylerin mahremiyeti açısından büyük önem taşır. GDPR gibi düzenlemeler bu konuda standartlar belirlese de, sürekli dikkat ve güncelleme gereklidir.' },
+            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=SJm5suVpOK0', youtubeId: 'SJm5suVpOK0' },
+            { id: generateId(), type: 'quote', content: 'Etik olmayan bir yapay zeka, insanlığın karşılaştığı en büyük tehditlerden biri olabilir.', citation: 'Stephen Hawking (Uyarlanmıştır)' },
+            { id: generateId(), type: 'text', content: 'Sonuç olarak, yapay zeka etiği, teknolojinin geleceğini şekillendirecek en önemli tartışma alanlarından biridir ve sürekli dikkat gerektirir. Teknoloji geliştiricileri, politika yapıcılar ve toplum olarak birlikte çalışarak AI\'ın insanlık yararına kullanılmasını sağlamalıyız.' },
         ],
-        seoTitle: '[SEO Başlığı]',
-        seoDescription: '[Meta Açıklama - Kısa ve ilgi çekici olmalı]',
-        keywords: ['anahtar kelime 1', 'anahtar kelime 2', 'anahtar kelime 3'],
-        excerpt: '[Makalenin kısa bir özeti, listeleme sayfalarında görünecek.]'
+        seoTitle: 'Yapay Zeka Etiği: İlkeler, Zorluklar ve Gelecek Perspektifleri',
+        seoDescription: 'Yapay zeka etiğinin temel ilkelerini, algoritmik önyargılar, veri gizliliği gibi zorlukları ve AI\'ın sorumlu gelişimi için çözüm önerilerini keşfedin.',
+        keywords: ['yapay zeka etiği', 'AI sorumluluğu', 'algoritmik önyargı', 'veri gizliliği', 'şeffaflık'],
+        excerpt: 'Yapay zeka etiği, teknolojinin hızla geliştiği günümüzde en kritik tartışma konularından biri. Temel ilkeler, zorluklar ve çözüm yolları bu makalede.'
     },
     {
         id: 'listicle',
@@ -280,22 +279,26 @@ let defaultArticleTemplates: Template[] = [
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Listeleme Makalesi Başlığı]' },
-            { id: generateId(), type: 'text', content: '[Listelemeye giriş. Listenin ne hakkında olduğunu ve neden önemli olduğunu açıklayın.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/listicle-main/800/400', alt: '[Liste Ana Görseli]', caption: '[Liste görseli için alt yazı]' },
-            { id: generateId(), type: 'heading', level: 3, content: '1. [Liste Öğesi Başlığı 1]' },
-            { id: generateId(), type: 'text', content: '[Birinci liste öğesinin detaylı açıklaması.]' },
-            { id: generateId(), type: 'heading', level: 3, content: '2. [Liste Öğesi Başlığı 2]' },
-            { id: generateId(), type: 'text', content: '[İkinci liste öğesinin detaylı açıklaması.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-item-image/600/350', alt: '[Liste Öğesi Görseli]', caption: '[İsteğe bağlı görsel alt yazısı]' },
-            { id: generateId(), type: 'heading', level: 3, content: '3. [Liste Öğesi Başlığı 3]' },
-            { id: generateId(), type: 'text', content: '[Üçüncü liste öğesinin detaylı açıklaması.]' },
-            { id: generateId(), type: 'text', content: '[Listelemeyi sonlandıran genel bir yorum veya ek bilgi.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Sağlıklı Bir Mikrobiyom İçin 5 Altın Kural' },
+            { id: generateId(), type: 'text', content: 'Bağırsak mikrobiyomumuz, genel sağlığımız üzerinde inanılmaz bir etkiye sahip. Bu makalede, mikrobiyomunuzu desteklemek ve çeşitliliğini artırmak için uygulayabileceğiniz 5 temel kuralı inceleyeceğiz.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/microbiome-health/800/400', alt: 'Sağlıklı bağırsakları simgeleyen bir görsel', caption: 'Sağlıklı bir mikrobiyom, genel refah için anahtardır.' },
+            { id: generateId(), type: 'heading', level: 3, content: '1. Çeşitli ve Lifli Beslenin' },
+            { id: generateId(), type: 'text', content: 'Farklı türde meyve, sebze, tam tahıllar ve baklagiller tüketmek, bağırsaklarınızdaki faydalı bakterilerin çeşitliliğini artırır. Lif, bu bakteriler için önemli bir besin kaynağıdır.' },
+            { id: generateId(), type: 'heading', level: 3, content: '2. Fermente Gıdaları Sofranıza Ekleyin' },
+            { id: generateId(), type: 'text', content: 'Yoğurt, kefir, lahana turşusu (sauerkraut), kimchi gibi fermente gıdalar, probiyotik açısından zengindir ve bağırsak floranızı destekler.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/fermented-foods/600/350', alt: 'Çeşitli fermente gıdalar', caption: 'Fermente gıdalar probiyotik kaynağıdır.' },
+            { id: generateId(), type: 'heading', level: 3, content: '3. İşlenmiş Gıdalardan ve Şekerden Uzak Durun' },
+            { id: generateId(), type: 'text', content: 'Aşırı işlenmiş gıdalar ve rafine şeker, zararlı bakterilerin çoğalmasına neden olarak mikrobiyom dengesini bozabilir.' },
+            { id: generateId(), type: 'heading', level: 3, content: '4. Stresi Yönetin ve Yeterince Uyuyun' },
+            { id: generateId(), type: 'text', content: 'Kronik stres ve yetersiz uyku, bağırsak sağlığınızı olumsuz etkileyebilir. Meditasyon, yoga gibi stres azaltma teknikleri ve düzenli uyku alışkanlıkları önemlidir.' },
+            { id: generateId(), type: 'heading', level: 3, content: '5. Gereksiz Antibiyotik Kullanımından Kaçının' },
+            { id: generateId(), type: 'text', content: 'Antibiyotikler, enfeksiyonlarla savaşırken faydalı bağırsak bakterilerine de zarar verebilir. Sadece doktor tavsiyesiyle ve gerektiğinde kullanılmalıdır.' },
+            { id: generateId(), type: 'text', content: 'Bu basit kuralları uygulayarak mikrobiyomunuzu güçlendirebilir ve genel sağlığınıza önemli katkılarda bulunabilirsiniz.' },
         ],
-        seoTitle: '[SEO Başlığı - Listeleme Makalesi]',
-        seoDescription: '[Meta Açıklama - Liste içeriğini özetleyin]',
-        keywords: ['listeleme', 'ipuçları', 'öneriler', 'madde işaretleri'],
-        excerpt: '[Listeleme makalesinin kısa bir tanıtımı.]'
+        seoTitle: 'Sağlıklı Mikrobiyom İçin 5 Kural | Bağırsak Sağlığı İpuçları',
+        seoDescription: 'Bağırsak mikrobiyomunuzu desteklemek için çeşitli beslenme, fermente gıdalar, stres yönetimi ve antibiyotik kullanımı hakkında 5 altın kuralı öğrenin.',
+        keywords: ['mikrobiyom', 'bağırsak sağlığı', 'probiyotik', 'prebiyotik', 'sağlıklı beslenme'],
+        excerpt: 'Bağırsak mikrobiyomunuzu güçlendirmek ve genel sağlığınızı iyileştirmek için uygulayabileceğiniz 5 etkili ve basit kural.'
     },
     {
         id: 'image-gallery-article',
@@ -305,19 +308,21 @@ let defaultArticleTemplates: Template[] = [
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Galeri Başlığı]' },
-            { id: generateId(), type: 'text', content: '[Galeriye giriş. Galerinin konusu ve içeriği hakkında kısa bilgi.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-img1/800/500', alt: '[Görsel 1 Açıklaması]', caption: '[Görsel 1 Alt Yazısı]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'James Webb Uzay Teleskobu\'nun Büyüleyici Evren Görüntüleri' },
+            { id: generateId(), type: 'text', content: 'James Webb Uzay Teleskobu (JWST), evrenin şimdiye kadar görülmemiş detaylarını gözler önüne seriyor. İşte bu güçlü teleskop tarafından yakalanan en büyüleyici görüntülerden bazıları:' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-carina/800/500', alt: 'Karina Nebulası\'nın James Webb tarafından çekilmiş görüntüsü', caption: 'Karina Nebulası\'ndaki "Kozmik Uçurumlar", yıldız doğumunun muhteşem bir görüntüsünü sunuyor.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-img2/800/500', alt: '[Görsel 2 Açıklaması]', caption: '[Görsel 2 Alt Yazısı]' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-stephans-quintet/800/500', alt: 'Stephan Beşlisi galaksi grubunun James Webb görüntüsü', caption: 'Stephan Beşlisi, birbirleriyle etkileşim halinde olan beş galaksiden oluşan çarpıcı bir grup.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery-img3/800/500', alt: '[Görsel 3 Açıklaması]', caption: '[Görsel 3 Alt Yazısı]' },
-            { id: generateId(), type: 'text', content: '[Galeri hakkında son notlar veya ek açıklamalar.]' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-southern-ring/800/500', alt: 'Güney Halka Nebulası\'nın James Webb görüntüsü', caption: 'Güney Halka Nebulası, ölmekte olan bir yıldızın etrafındaki gaz ve toz bulutlarını gösteriyor.' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/jwst-deep-field/800/500', alt: 'James Webb\'in ilk derin alan görüntüsü SMACS 0723', caption: 'JWST\'nin ilk derin alan görüntüsü olan SMACS 0723, binlerce uzak galaksiyi gözler önüne seriyor.' },
+            { id: generateId(), type: 'text', content: 'JWST, kızılötesi gözlem yetenekleri sayesinde evrenin ilk zamanlarına ışık tutuyor ve yıldızların, galaksilerin oluşumu hakkındaki bilgilerimizi derinleştiriyor.' },
         ],
-        seoTitle: '[SEO Galeri Başlığı]',
-        seoDescription: '[Meta Açıklama - Galeri içeriğini özetleyin]',
-        keywords: ['galeri', 'görsel', 'fotoğraf', 'resimler'],
-        excerpt: '[Görsel galerisinin kısa bir tanıtımı.]'
+        seoTitle: 'James Webb Teleskobu\'ndan En İyi Evren Fotoğrafları | Galeri',
+        seoDescription: 'James Webb Uzay Teleskobu tarafından çekilen Karina Nebulası, Stephan Beşlisi ve diğer büyüleyici evren görüntülerinden oluşan bir galeri.',
+        keywords: ['james webb teleskobu', 'uzay fotoğrafları', 'evren', 'galaksi', 'nebula', 'jwst'],
+        excerpt: 'James Webb Uzay Teleskobu\'nun yakaladığı en nefes kesici evren görüntülerini keşfedin.'
     },
      {
         id: 'faq-article',
@@ -327,22 +332,22 @@ let defaultArticleTemplates: Template[] = [
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[SSS Konu Başlığı]' },
-            { id: generateId(), type: 'text', content: '[SSS bölümüne giriş. Bu bölümde hangi soruların cevaplanacağını belirtin.]' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: [İlk Soru Metni]' },
-            { id: generateId(), type: 'text', content: 'Cevap: [İlk sorunun detaylı cevabı.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Genetik Testler Hakkında Sıkça Sorulan Sorular' },
+            { id: generateId(), type: 'text', content: 'Genetik testler, sağlık ve soy ağacı hakkında önemli bilgiler sunabilir. Bu bölümde, genetik testlerle ilgili en sık sorulan soruları ve cevaplarını bulabilirsiniz.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: Genetik test nedir ve ne işe yarar?' },
+            { id: generateId(), type: 'text', content: 'Cevap: Genetik testler, DNA\'nızdaki belirli değişiklikleri (mutasyonlar veya varyasyonlar) inceleyerek genetik yatkınlıklarınızı, belirli hastalıklara karşı riskinizi veya soy ağacınızı belirlemeye yardımcı olan tıbbi testlerdir.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: [İkinci Soru Metni]' },
-            { id: generateId(), type: 'text', content: 'Cevap: [İkinci sorunun detaylı cevabı.]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: Genetik test sonuçlarım gizli tutulur mu?' },
+            { id: generateId(), type: 'text', content: 'Cevap: Evet, genetik test sonuçları genellikle katı gizlilik politikaları ve yasal düzenlemelerle korunur. Test yaptırdığınız kurumun gizlilik politikalarını incelemeniz önemlidir.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: [Üçüncü Soru Metni]' },
-            { id: generateId(), type: 'text', content: 'Cevap: [Üçüncü sorunun detaylı cevabı.]' },
-            { id: generateId(), type: 'text', content: '[SSS bölümü için ek notlar veya yönlendirmeler.]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: Genetik testler %100 doğru sonuç verir mi?' },
+            { id: generateId(), type: 'text', content: 'Cevap: Hiçbir tıbbi test %100 kesin değildir. Genetik testlerin doğruluğu, testin türüne, laboratuvarın kalitesine ve incelenen genetik belirteçlere bağlı olarak değişebilir. Sonuçlar genellikle bir sağlık uzmanı tarafından yorumlanmalıdır.' },
+            { id: generateId(), type: 'text', content: 'Genetik testler hakkında daha fazla bilgi veya danışmanlık için bir genetik danışmanına veya doktorunuza başvurmanız önerilir.' },
         ],
-        seoTitle: '[SEO SSS Başlığı]',
-        seoDescription: '[Meta Açıklama - SSS içeriğini özetleyin]',
-        keywords: ['sss', 'sıkça sorulan sorular', 'cevaplar', 'bilgi'],
-        excerpt: '[SSS makalesinin kısa bir tanıtımı.]'
+        seoTitle: 'Genetik Testler SSS | DNA Testleri Hakkında Merak Edilenler',
+        seoDescription: 'Genetik testler nedir, ne işe yarar, sonuçların gizliliği ve doğruluğu gibi sıkça sorulan soruların cevaplarını bu makalede bulun.',
+        keywords: ['genetik test', 'DNA testi', 'sss', 'genetik danışmanlık', 'kalıtsal hastalıklar'],
+        excerpt: 'Genetik testler hakkında merak ettiğiniz her şey: Nedir, nasıl çalışır, gizlilik ve doğruluk oranları.'
     },
     {
         id: 'how-to-guide',
@@ -352,25 +357,25 @@ let defaultArticleTemplates: Template[] = [
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Rehber Başlığı: Nasıl Yapılır?]' },
-            { id: generateId(), type: 'text', content: '[Rehbere giriş. Ne yapılacağını ve neden önemli olduğunu açıklayın. Gerekli malzemeler veya ön bilgiler listelenebilir.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-main-image/700/300', alt: '[Rehber Ana Görseli]', caption: '[Görsel için alt yazı]' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [Birinci Adımın Açıklaması]' },
-            { id: generateId(), type: 'text', content: '[Birinci adımın detaylı anlatımı.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-step1-image/500/250', alt: '[Adım 1 Görseli]', caption: '[İsteğe bağlı adım görseli alt yazısı]' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [İkinci Adımın Açıklaması]' },
-            { id: generateId(), type: 'text', content: '[İkinci adımın detaylı anlatımı.]' },
-            { id: generateId(), type: 'video', url: '', youtubeId: '' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 3: [Üçüncü Adımın Açıklaması]' },
-            { id: generateId(), type: 'text', content: '[Üçüncü adımın detaylı anlatımı.]' },
-            { id: generateId(), type: 'quote', content: '[Rehberle ilgili önemli bir ipucu veya uyarı.]', citation: '[Kaynak veya İpucu Sahibi]' },
-            { id: generateId(), type: 'heading', level: 2, content: 'Sonuç ve İpuçları' },
-            { id: generateId(), type: 'text', content: '[Rehberi tamamladıktan sonra elde edilecek sonuç ve ek ipuçları.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Evde Basit Bir DNA İzolasyonu Nasıl Yapılır?' },
+            { id: generateId(), type: 'text', content: 'Bu rehberde, evde bulunan malzemelerle meyvelerden (örneğin çilek veya muz) DNA izolasyonu yapmanın basit adımlarını öğreneceksiniz. Bu, özellikle öğrenciler için eğlenceli ve eğitici bir deneyimdir.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/dna-extraction-setup/700/300', alt: 'DNA izolasyonu için hazırlanmış malzemeler', caption: 'Gerekli malzemeler: meyve, bulaşık deterjanı, tuz, alkol, su, kaplar.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: Meyveyi Ezme ve Çözelti Hazırlama' },
+            { id: generateId(), type: 'text', content: 'Bir poşet içinde meyveyi ezin. Ayrı bir kapta, az miktarda su, bir çay kaşığı bulaşık deterjanı ve bir tutam tuzu karıştırarak lizis çözeltisi hazırlayın.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/fruit-mashing/500/250', alt: 'Poşet içinde ezilen meyve', caption: 'Meyveyi püre haline getirin.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: Lizis Çözeltisini Ekleme ve Süzme' },
+            { id: generateId(), type: 'text', content: 'Hazırladığınız lizis çözeltisini ezilmiş meyveye ekleyin ve yavaşça karıştırın. Ardından, bu karışımı bir süzgeç veya tülbent yardımıyla süzerek katı parçaları ayırın.' },
+            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=aF3f65k_L00', youtubeId: 'aF3f65k_L00' }, // Example video
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 3: DNA\'yı Çöktürme' },
+            { id: generateId(), type: 'text', content: 'Süzülmüş sıvıya, sıvının hacminin yaklaşık iki katı kadar soğuk izopropil alkolü (veya etil alkol) yavaşça ekleyin. Alkolü sıvının kenarından akıtarak eklemeye özen gösterin. Birkaç dakika bekledikten sonra DNA\'nın beyaz, ipliksi bir yapıda alkol tabakasında toplandığını göreceksiniz.' },
+            { id: generateId(), type: 'quote', content: 'Alkolü çok yavaş eklemek, DNA\'nın daha iyi çökelmesine yardımcı olur.', citation: 'Deney İpucu' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Sonuç ve Gözlemler' },
+            { id: generateId(), type: 'text', content: 'Gözlemlediğiniz beyaz ipliksi yapı, meyvenin DNA\'sıdır. Bu basit deney, DNA\'nın varlığını ve bazı temel özelliklerini anlamak için harika bir yoldur.' },
         ],
-        seoTitle: '[SEO Nasıl Yapılır Başlığı]',
-        seoDescription: '[Meta Açıklama - Rehberin amacını ve adımlarını özetleyin]',
-        keywords: ['nasıl yapılır', 'rehber', 'adım adım', 'öğretici'],
-        excerpt: '[Nasıl yapılır rehberinin kısa bir tanıtımı.]'
+        seoTitle: 'Evde DNA İzolasyonu Nasıl Yapılır? | Adım Adım Rehber',
+        seoDescription: 'Meyvelerden basit malzemelerle evde DNA izolasyonu yapmanın adım adım rehberi. Öğrenciler için eğlenceli ve eğitici bir deney.',
+        keywords: ['dna izolasyonu', 'evde deney', 'biyoloji deneyi', 'nasıl yapılır', 'eğitici rehber'],
+        excerpt: 'Evde kolayca bulabileceğiniz malzemelerle meyvelerden DNA\'yı nasıl izole edebileceğinizi öğrenin.'
     },
     {
         id: 'interview-article',
@@ -380,56 +385,56 @@ let defaultArticleTemplates: Template[] = [
         type: 'article',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Röportaj Konusu ve Kişisi]' },
-            { id: generateId(), type: 'text', content: '[Röportaja giriş. Röportaj yapılan kişi ve konu hakkında kısa bilgi.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interviewee-photo/600/400', alt: '[Röportaj Yapılan Kişinin Fotoğrafı]', caption: '[Kişinin Adı ve Ünvanı]' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: [İlk Soru]' },
-            { id: generateId(), type: 'quote', content: '[İlk sorunun cevabı.]', citation: '[Röportaj Yapılan Kişi]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Prof. Dr. Canan Dağdeviren ile Biyonik Tıp Üzerine Bir Söyleşi' },
+            { id: generateId(), type: 'text', content: 'Giyilebilir ve yutulabilir tıbbi cihazlar alanındaki çığır açan çalışmalarıyla tanınan Prof. Dr. Canan Dağdeviren ile biyonik tıbbın bugünü ve geleceği üzerine konuştuk.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/canan-dagdeviren-portrait/600/400', alt: 'Prof. Dr. Canan Dağdeviren', caption: 'Prof. Dr. Canan Dağdeviren, MIT Media Lab' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: Biyonik tıp alanındaki çalışmalarınızın temel motivasyonu nedir?' },
+            { id: generateId(), type: 'quote', content: 'Temel motivasyonum, insan sağlığını iyileştirmek ve hastalıkların erken teşhisini sağlamak için teknolojiyi kullanmak. Özellikle kişiye özel, vücutla uyumlu ve minimal invaziv çözümler geliştirmeye odaklanıyorum.', citation: 'Prof. Dr. Canan Dağdeviren' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: [İkinci Soru]' },
-            { id: generateId(), type: 'quote', content: '[İkinci sorunun cevabı.]', citation: '[Röportaj Yapılan Kişi]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: Geliştirdiğiniz giyilebilir sensörlerin gelecekte sağlık takibini nasıl değiştireceğini düşünüyorsunuz?' },
+            { id: generateId(), type: 'quote', content: 'Bu sensörler, sürekli ve anlık sağlık verileri toplayarak hastalıkların çok daha erken evrelerde tespit edilmesine olanak tanıyacak. Kişiselleştirilmiş tıp uygulamaları yaygınlaşacak ve hastaların kendi sağlıklarını daha aktif yönetmeleri mümkün olacak.', citation: 'Prof. Dr. Canan Dağdeviren' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: [Üçüncü Soru]' },
-            { id: generateId(), type: 'quote', content: '[Üçüncü sorunun cevabı.]', citation: '[Röportaj Yapılan Kişi]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: Genç araştırmacılara ve bilim insanı adaylarına ne gibi tavsiyelerde bulunursunuz?' },
+            { id: generateId(), type: 'quote', content: 'Meraklarını asla kaybetmesinler, çok çalışsınlar ve başarısızlıklardan ders çıkarsınlar. En önemlisi, insanlığa faydalı olma hedefini her zaman göz önünde bulundursunlar.', citation: 'Prof. Dr. Canan Dağdeviren' },
             { id: generateId(), type: 'heading', level: 2, content: 'Röportajdan Önemli Notlar' },
-            { id: generateId(), type: 'text', content: '[Röportajın ana çıkarımlarını veya önemli noktalarını özetleyin.]' },
+            { id: generateId(), type: 'text', content: 'Prof. Dr. Dağdeviren, biyonik tıbbın gelecekte sağlık alanında devrim yaratacağını ve kişiselleştirilmiş tedavi yöntemlerinin yaygınlaşacağını vurguladı.' },
         ],
-        seoTitle: '[SEO Röportaj Başlığı]',
-        seoDescription: '[Meta Açıklama - Röportajın konusunu ve kiminle yapıldığını belirtin]',
-        keywords: ['röportaj', 'söyleşi', 'uzman', 'görüş'],
-        excerpt: '[Röportaj makalesinin kısa bir tanıtımı.]'
+        seoTitle: 'Prof. Dr. Canan Dağdeviren ile Biyonik Tıp Röportajı',
+        seoDescription: 'Biyonik tıp alanının öncülerinden Prof. Dr. Canan Dağdeviren ile giyilebilir teknolojiler, sağlık takibi ve genç araştırmacılara tavsiyeleri üzerine bir söyleşi.',
+        keywords: ['Canan Dağdeviren', 'biyonik tıp', 'giyilebilir teknoloji', 'sağlık sensörleri', 'röportaj'],
+        excerpt: 'Prof. Dr. Canan Dağdeviren ile biyonik tıbbın bugünü, geleceği ve sağlık teknolojilerindeki yenilikler üzerine kapsamlı bir röportaj.'
     },
     {
-        id: 'product-review-article', // New template
+        id: 'product-review-article',
         name: 'Ürün İnceleme Makalesi',
         description: 'Bir ürünü veya hizmeti detaylı bir şekilde inceleyen, artılarını ve eksilerini belirten format.',
         previewImageUrl: 'https://picsum.photos/seed/product-review-tech/300/200',
         type: 'article',
         category: 'Biyoloji', // Can be adapted
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Ürün Adı] İncelemesi' },
-            { id: generateId(), type: 'text', content: '[İncelemeye giriş. Ürünün ne olduğu, kimin için olduğu ve neden incelendiği hakkında kısa bilgi.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/product-main/700/400', alt: '[Ürün Fotoğrafı]', caption: '[Ürünün genel görünümü]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Yeni Nesil "BioScanner X" Genetik Analiz Cihazı İncelemesi' },
+            { id: generateId(), type: 'text', content: 'Piyasaya yeni sürülen BioScanner X genetik analiz cihazını sizler için detaylı bir şekilde inceledik. Bu cihaz, laboratuvar ortamında hızlı ve hassas genetik analizler yapmayı vaat ediyor. Bakalım beklentileri karşılayabiliyor mu?' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/bioscannerx-device/700/400', alt: 'BioScanner X Genetik Analiz Cihazı', caption: 'BioScanner X, kompakt tasarımı ve kullanıcı dostu arayüzü ile dikkat çekiyor.' },
             { id: generateId(), type: 'heading', level: 3, content: 'Temel Özellikler' },
-            { id: generateId(), type: 'text', content: '- Özellik 1\n- Özellik 2\n- Özellik 3' },
+            { id: generateId(), type: 'text', content: '- Yüksek Çözünürlüklü DNA Sekanslama\n- Hızlı Analiz Süresi (Ortalama 2 saat)\n- Kompakt ve Taşınabilir Tasarım\n- Bulut Tabanlı Veri Yönetimi\n- Kullanıcı Dostu Yazılım Arayüzü' },
             { id: generateId(), type: 'heading', level: 3, content: 'Artıları' },
-            { id: generateId(), type: 'text', content: '- Pozitif yön 1\n- Pozitif yön 2' },
+            { id: generateId(), type: 'text', content: '- **Hassasiyet:** Testlerimizde oldukça doğru ve tekrarlanabilir sonuçlar verdi.\n- **Hız:** Rakip cihazlara göre analiz süresi belirgin şekilde daha kısa.\n- **Kullanım Kolaylığı:** Yazılımı sezgisel ve öğrenmesi kolay.' },
             { id: generateId(), type: 'heading', level: 3, content: 'Eksileri' },
-            { id: generateId(), type: 'text', content: '- Negatif yön 1\n- Negatif yön 2' },
+            { id: generateId(), type: 'text', content: '- **Fiyat:** Piyasadaki benzer cihazlara göre biraz daha yüksek bir fiyat etiketine sahip.\n- **Sarf Malzemeleri:** Cihaza özel sarf malzemeleri kullanmak gerekiyor, bu da maliyeti artırabilir.' },
             { id: generateId(), type: 'heading', level: 3, content: 'Kullanım Deneyimi' },
-            { id: generateId(), type: 'text', content: '[Ürünün kullanımıyla ilgili detaylı deneyimleriniz ve gözlemleriniz.]' },
-            { id: generateId(), type: 'video', url: '', youtubeId: ''}, // Optional video review
+            { id: generateId(), type: 'text', content: 'BioScanner X\'i laboratuvarımızda birkaç hafta boyunca çeşitli örneklerle test ettik. Cihazın kurulumu ve kalibrasyonu oldukça basitti. Yazılım arayüzü, analizleri başlatmayı ve sonuçları yorumlamayı kolaylaştırıyor. Özellikle karmaşık olmayan genetik analizler için ideal bir çözüm sunuyor.' },
+            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=xxyz_demo_video', youtubeId: 'xxyz_demo_video'},
             { id: generateId(), type: 'heading', level: 3, content: 'Sonuç ve Değerlendirme' },
-            { id: generateId(), type: 'text', content: '[Ürün hakkındaki genel değerlendirmeniz, kimlere tavsiye ettiğiniz ve puanınız (isteğe bağlı).]' },
+            { id: generateId(), type: 'text', content: 'BioScanner X, özellikle hız ve kullanım kolaylığı arayan laboratuvarlar için dikkate değer bir genetik analiz cihazı. Fiyatı biraz yüksek olsa da, sunduğu performans ve hassasiyet bunu dengeleyebilir. Küçük ve orta ölçekli araştırma laboratuvarları ile tanı merkezleri için uygun bir seçenek olabilir. **Puanımız: 8.5/10**' },
         ],
-        seoTitle: '[Ürün Adı] Detaylı İnceleme ve Kullanıcı Deneyimi',
-        seoDescription: '[Ürün Adı] ürününün özelliklerini, artılarını, eksilerini ve kullanım deneyimini keşfedin.',
-        keywords: ['ürün incelemesi', 'teknoloji incelemesi', 'değerlendirme', '[ürün adı]'],
-        excerpt: '[Ürün Adı] için kapsamlı bir inceleme.'
+        seoTitle: 'BioScanner X Genetik Analiz Cihazı İncelemesi | Detaylı Test ve Kullanıcı Deneyimi',
+        seoDescription: 'Yeni nesil BioScanner X genetik analiz cihazının özelliklerini, artılarını, eksilerini ve kullanım deneyimini keşfedin. Laboratuvarlar için uygun mu?',
+        keywords: ['bioscanner x', 'genetik analiz cihazı', 'dna sekanslama', 'laboratuvar ekipmanı incelemesi', 'ürün incelemesi'],
+        excerpt: 'Yeni BioScanner X genetik analiz cihazını detaylıca inceledik: özellikler, performans, artılar ve eksiler.'
     }
 ];
 
-let defaultNoteTemplates: Template[] = [
+const defaultNoteTemplates: Template[] = [
     {
         id: 'standard-note',
         name: 'Standart Not Şablonu',
@@ -438,21 +443,21 @@ let defaultNoteTemplates: Template[] = [
         type: 'note',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Not Başlığı]' },
-            { id: generateId(), type: 'text', content: '[Notun genel bir özeti veya giriş cümlesi.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Hücre Zarının Yapısı ve Görevleri' },
+            { id: generateId(), type: 'text', content: 'Hücre zarı, hücreyi dış ortamdan ayıran ve madde alışverişini kontrol eden hayati bir yapıdır.' },
             { id: generateId(), type: 'heading', level: 3, content: 'Anahtar Kavramlar' },
-            { id: generateId(), type: 'text', content: '- Kavram 1\n- Kavram 2\n- Kavram 3' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-diagram/600/300', alt: '[İlgili Şema veya Görsel]', caption: '[Görsel açıklaması]' },
+            { id: generateId(), type: 'text', content: '- Fosfolipit Tabaka\n- Akıcı Mozaik Model\n- Taşıyıcı Proteinler\n- Seçici Geçirgenlik\n- Endositoz ve Ekzositoz' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/cell-membrane-diagram/600/300', alt: 'Hücre zarı yapısı şeması', caption: 'Hücre zarının akıcı mozaik modeli.' },
             { id: generateId(), type: 'heading', level: 3, content: 'Detaylı Açıklamalar' },
-            { id: generateId(), type: 'text', content: '[Konuyla ilgili daha ayrıntılı açıklamalar ve örnekler.]' },
-            { id: generateId(), type: 'quote', content: '[Konuyla ilgili önemli bir hatırlatma veya alıntı.]', citation: '[Kaynak]' },
+            { id: generateId(), type: 'text', content: 'Hücre zarı temel olarak çift katlı fosfolipit tabakasından oluşur. Bu tabaka içine gömülü veya yüzeyine bağlı proteinler bulunur. Karbonhidratlar ise genellikle proteinlere (glikoprotein) veya lipitlere (glikolipit) bağlı olarak zarın dış yüzeyinde yer alır ve hücre tanınmasında rol oynar.' },
+            { id: generateId(), type: 'quote', content: 'Hücre zarı, sadece bir bariyer değil, aynı zamanda hücrenin dış dünya ile iletişim kurduğu dinamik bir arayüzdür.', citation: 'Campbell Biyoloji' },
             { id: generateId(), type: 'heading', level: 2, content: 'Özet ve Sonuç' },
-            { id: generateId(), type: 'text', content: '[Notun ana çıkarımları ve genel bir özet.]' },
+            { id: generateId(), type: 'text', content: 'Hücre zarı, yapısındaki fosfolipitler, proteinler ve karbonhidratlar sayesinde seçici geçirgenlik, madde taşınımı, hücreler arası iletişim ve tanınma gibi birçok önemli görevi yerine getirir.' },
         ],
-        seoTitle: '[Not Başlığı] - Ders Notları',
-        seoDescription: '[Notun kısa bir özeti ve anahtar kavramları içeren açıklama.]',
-        keywords: ['ders notu', 'biyoloji', 'eğitim', '[konu]'],
-        excerpt: '[Notun kısa bir tanıtımı.]'
+        seoTitle: 'Hücre Zarının Yapısı ve Görevleri | Biyoloji Ders Notları',
+        seoDescription: 'Hücre zarının yapısı (fosfolipit tabaka, proteinler), akıcı mozaik modeli ve temel görevleri (madde alışverişi, seçici geçirgenlik) hakkında detaylı biyoloji ders notu.',
+        keywords: ['hücre zarı', 'fosfolipit', 'akıcı mozaik model', 'madde alışverişi', 'biyoloji notları'],
+        excerpt: 'Hücre zarının yapısını, bileşenlerini ve hayati görevlerini detaylı bir şekilde öğrenin.'
     },
     {
         id: 'process-explanation-note',
@@ -462,28 +467,32 @@ let defaultNoteTemplates: Template[] = [
         type: 'note',
         category: 'Biyoloji',
         blocks: [
-            { id: generateId(), type: 'heading', level: 2, content: '[Süreç Adı]' },
-            { id: generateId(), type: 'text', content: '[Sürecin genel bir özeti veya amacı.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-overview-diagram/700/350', alt: '[Süreç Genel Bakış Şeması]', caption: '[Sürecin aşamalarını gösteren genel bir şema.]' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [Adımın Adı]' },
-            { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-step1-img/500/250', alt: '[Adım 1 Görseli]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Fotosentezin Işığa Bağımlı Reaksiyonları' },
+            { id: generateId(), type: 'text', content: 'Fotosentezin ilk aşaması olan ışığa bağımlı reaksiyonlar, ışık enerjisinin kimyasal enerjiye dönüştürüldüğü bir dizi karmaşık adımdan oluşur.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/light-dependent-reactions/700/350', alt: 'Işığa bağımlı reaksiyonların şematik gösterimi', caption: 'Tilakoit zarlarda gerçekleşen ışığa bağımlı reaksiyonlar.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: Işığın Emilimi ve Elektronların Uyarılması' },
+            { id: generateId(), type: 'text', content: 'Klorofil pigmentleri (özellikle Fotosistem II ve Fotosistem I içinde yer alanlar) güneş ışığını emer. Bu enerji, elektronları daha yüksek bir enerji seviyesine uyarır.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/photosystem-diagram/500/250', alt: 'Fotosistemlerin yapısı' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [Adımın Adı]' },
-            { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
-            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-step2-img/500/250', alt: '[Adım 2 Görseli]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: Suyun Fotolizi' },
+            { id: generateId(), type: 'text', content: 'Fotosistem II\'de, emilen ışık enerjisi suyu (H₂O) oksijen (O₂), protonlar (H⁺) ve elektronlara ayırır. Açığa çıkan oksijen atmosfere verilirken, elektronlar Fotosistem II\'nin kaybettiği elektronların yerini alır.' },
             { id: generateId(), type: 'divider' },
-            { id: generateId(), type: 'heading', level: 3, content: '[... Diğer Adımlar ...]' },
-            { id: generateId(), type: 'text', content: '[Sürecin sonucu veya önemi.]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 3: Elektron Taşıma Sistemi (ETS) ve ATP Sentezi' },
+            { id: generateId(), type: 'text', content: 'Uyarılmış elektronlar, Fotosistem II\'den başlayarak bir dizi protein ve molekülden oluşan Elektron Taşıma Sistemi (ETS) boyunca hareket eder. Bu sırada açığa çıkan enerji, protonların tilakoit boşluğa pompalanmasında kullanılır. Oluşan proton gradienti, ATP sentaz enzimi aracılığıyla ATP (adenozin trifosfat) sentezini sağlar (kemiozmoz).' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/electron-transport-chain/500/300', alt: 'Elektron Taşıma Sistemi Şeması' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 4: NADPH Sentezi' },
+            { id: generateId(), type: 'text', content: 'Fotosistem I\'de tekrar ışıkla uyarılan elektronlar, ETS\'nin sonunda NADP⁺ molekülünü NADPH\'ye (nikotinamid adenin dinükleotit fosfat) indirger. NADPH, Calvin döngüsünde kullanılacak olan bir diğer enerji taşıyıcı moleküldür.' },
+            { id: generateId(), type: 'text', content: 'Işığa bağımlı reaksiyonların net ürünleri ATP, NADPH ve oksijendir. ATP ve NADPH, fotosentezin ikinci aşaması olan Calvin döngüsünde (ışıktan bağımsız reaksiyonlar) glikoz sentezi için kullanılır.' },
         ],
-        seoTitle: '[Süreç Adı] - Adım Adım Açıklama',
-        seoDescription: '[Sürecin] aşamalarının detaylı açıklaması ve önemi.',
-        keywords: ['süreç', 'biyolojik süreç', 'adım adım', '[konu]'],
-        excerpt: '[Sürecin] aşamalarının detaylı açıklaması.'
+        seoTitle: 'Fotosentezin Işığa Bağımlı Reaksiyonları Adım Adım | Biyoloji Notları',
+        seoDescription: 'Fotosentezin ışığa bağımlı reaksiyonlarının (ışığın emilimi, suyun fotolizi, ETS, ATP ve NADPH sentezi) adım adım açıklaması ve şematik gösterimi.',
+        keywords: ['fotosentez', 'ışığa bağımlı reaksiyonlar', 'klorofil', 'ATP', 'NADPH', 'elektron taşıma sistemi'],
+        excerpt: 'Fotosentezin ışık enerjisini kimyasal enerjiye dönüştürdüğü ilk aşama olan ışığa bağımlı reaksiyonların detaylı anlatımı.'
     },
 ];
 
-let defaultPageTemplates: Template[] = [
+const defaultPageTemplates: Template[] = [
     {
         id: 'standard-page',
         name: 'Standart Sayfa',
@@ -921,10 +930,10 @@ export const getRoles = async (): Promise<Role[]> => {
           return JSON.parse(storedRoles);
       } catch (e) {
           console.error("Error parsing roles from localStorage", e);
-          return mockRoles;
+          return mockRoles; // Return default if parsing fails
       }
   }
-  return mockRoles;
+  return mockRoles; // Return default if not in localStorage
 };
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
@@ -973,9 +982,14 @@ export const deleteRole = async (id: string): Promise<boolean> => {
   await delay(80);
   let currentRoles = await getRoles();
   const roleToDelete = currentRoles.find(r => r.id === id);
-  if (roleToDelete && ['admin', 'editor', 'user'].includes(roleToDelete.id.toLowerCase()) && roleToDelete.userCount > 0) {
-    console.warn(`Cannot delete core role "${roleToDelete.name}" as it has ${roleToDelete.userCount} users.`);
-    return false;
+  // Prevent deletion of core roles if they have users, or generally prevent deletion of core roles
+  if (roleToDelete && ['admin', 'editor', 'user'].includes(roleToDelete.id.toLowerCase())) {
+    // For core roles, maybe only allow deletion if userCount is 0, or disallow entirely
+    // For now, let's disallow deleting core roles if they have users for safety.
+    if (roleToDelete.userCount > 0) {
+      console.warn(`Cannot delete core role "${roleToDelete.name}" as it has ${roleToDelete.userCount} users.`);
+      return false;
+    }
   }
   const initialLength = currentRoles.length;
   currentRoles = currentRoles.filter(r => r.id !== id);
@@ -1119,9 +1133,20 @@ export const allMockTemplatesGetter = async (): Promise<Template[]> => {
      const storedTemplates = typeof window !== 'undefined' ? localStorage.getItem(TEMPLATE_STORAGE_KEY) : null;
     if (storedTemplates) {
         try {
-            return JSON.parse(storedTemplates);
+            const parsed = JSON.parse(storedTemplates);
+            // Basic validation: check if it's an array
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+            // If not an array, or some other invalid structure, re-initialize.
+            console.warn("Invalid template data in localStorage, re-initializing.");
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates));
+            }
+            return allMockTemplates;
+
         } catch (e) {
-            console.error("Error parsing templates from localStorage", e);
+            console.error("Error parsing templates from localStorage, re-initializing.", e);
             // If parsing fails, re-initialize with defaults and save them.
             if (typeof window !== 'undefined') {
                 localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates));
@@ -1184,7 +1209,10 @@ export const loadInitialData = () => {
     }
 };
 
-loadInitialData();
+// Call loadInitialData when the module is first loaded in the browser environment
+if (typeof window !== 'undefined') {
+    loadInitialData();
+}
+
 
 export { loadInitialData as reloadMockData };
-
