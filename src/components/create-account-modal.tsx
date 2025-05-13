@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -162,7 +163,9 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({ isOpen, 
           <AnimatedDnaIcon />
           <DialogTitle className="text-2xl font-bold text-foreground">Hesap Oluştur</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            BiyoHox topluluğuna katılın.
+            <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-green-500 animate-text-rgb-cycle-fast">
+              BiyoHox
+            </span> topluluğuna katılın.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleCreateAccount} className="space-y-4 px-2 py-4">
@@ -297,3 +300,4 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({ isOpen, 
     </Dialog>
   );
 };
+
