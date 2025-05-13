@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn } from 'lucide-react'; // Added LogIn icon
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus } from 'lucide-react'; // Added UserPlus
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import * as React from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { LoginModal } from '@/components/login-modal'; // Import LoginModal
+import { LoginModal } from '@/components/login-modal';
+import { CreateAccountModal } from '@/components/create-account-modal'; // Import CreateAccountModal
 
 interface ArticleStub {
   id: string;
@@ -21,9 +22,13 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
+  // This is mock data. In a real application, you would fetch this from an API.
   const mockData: ArticleStub[] = [
+    // { id: '1', title: 'Yapay Zeka Devrimi', category: 'Teknoloji' }, // Removed Teknoloji
     { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
+    // { id: '3', title: 'Kuantum Bilgisayarlar', category: 'Teknoloji' }, // Removed Teknoloji
     { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
+    // Add more mock articles as needed, focusing on Biyoloji
     { id: 's1', title: 'İnsan Bağışıklık Sistemi', category: 'Biyoloji' },
     { id: 's2', title: 'Beyin Nöroplastisitesi', category: 'Biyoloji' },
   ];
@@ -42,11 +47,11 @@ const DnaLogo = () => (
     >
         <defs>
             <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="cyan">
-                    <animate attributeName="stop-color" values="cyan;magenta;lime;green;blue;cyan" dur="8s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor="hsl(var(--primary))">
+                    <animate attributeName="stop-color" values="hsl(var(--primary));hsl(var(--accent));hsl(var(--primary))" dur="8s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="lime">
-                    <animate attributeName="stop-color" values="lime;green;blue;cyan;magenta;lime" dur="8s" repeatCount="indefinite" />
+                <stop offset="100%" stopColor="hsl(var(--accent))">
+                    <animate attributeName="stop-color" values="hsl(var(--accent));hsl(var(--primary));hsl(var(--accent))" dur="8s" repeatCount="indefinite" />
                 </stop>
             </linearGradient>
         </defs>
@@ -89,7 +94,7 @@ const DnaLogo = () => (
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
                 let dynamicAmplitude = 0;
-                if (typeof window !== 'undefined') {
+                if (typeof window !== 'undefined') { // Ensure window is defined (client-side)
                     dynamicAmplitude = Math.sin(Date.now() / 800 + i) * 2.5;
                 }
                 const amplitude = 10 + dynamicAmplitude;
@@ -107,7 +112,7 @@ const DnaLogo = () => (
                     >
                         <animate
                             attributeName="stroke"
-                            values="cyan;magenta;lime;green;blue;cyan"
+                            values="hsl(var(--primary)/0.7);hsl(var(--accent)/0.7);hsl(var(--primary)/0.7)"
                             dur="7s"
                             repeatCount="indefinite"
                             begin={`${i * 0.25}s`}
@@ -135,6 +140,7 @@ const Header = () => {
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<any | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
+  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = React.useState(false);
   const [isMounted, setIsMounted] = React.useState(false);
 
 
@@ -147,10 +153,10 @@ const Header = () => {
           setCurrentUser(user);
         } catch (e) {
           console.error("Error parsing current user from localStorage in Header", e);
-          setCurrentUser(null);
+          setCurrentUser(null); // Reset on error
         }
       } else {
-        setCurrentUser(null);
+        setCurrentUser(null); // No user in localStorage
       }
     }
   }, []);
@@ -160,14 +166,16 @@ const Header = () => {
     checkUserStatus();
 
     const handleStorageChange = (event: StorageEvent) => {
+        // Listen for changes from other tabs
         if (event.key === 'currentUser') {
             console.log("Header: 'currentUser' changed in localStorage (another tab), checking user status.");
             checkUserStatus();
         }
     };
 
+    // Listen for custom event when user logs in/out via modal or admin panel
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('currentUserUpdated', checkUserStatus); // Listen for custom event
+    window.addEventListener('currentUserUpdated', checkUserStatus);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -177,9 +185,9 @@ const Header = () => {
 
 
   React.useEffect(() => {
-    setIsPopoverOpen(searchQuery.length > 0);
+    setIsPopoverOpen(searchQuery.length > 0); // Open popover if there's a query
     const handler = setTimeout(async () => {
-      if (searchQuery.length > 1) {
+      if (searchQuery.length > 1) { // Start searching after 1 character
         setIsSearching(true);
         const results = await searchArticles(searchQuery);
         setSearchResults(results);
@@ -187,7 +195,7 @@ const Header = () => {
       } else {
         setSearchResults([]);
       }
-    }, 300);
+    }, 300); // Debounce search for 300ms
 
     return () => {
       clearTimeout(handler);
@@ -202,12 +210,14 @@ const Header = () => {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
-    setIsPopoverOpen(false);
+    setIsPopoverOpen(false); // Close popover when search is cleared
   };
 
    const closePopover = () => {
+    // We might not need this explicit close if onOpenChange handles it,
+    // but keeping it ensures the popover closes on item click
     setIsPopoverOpen(false);
-    setSearchQuery('');
+    setSearchQuery(''); // Optionally clear search on selecting an item
     setSearchResults([]);
   }
 
@@ -216,9 +226,25 @@ const Header = () => {
     setIsLoginModalOpen(false); // Close the modal
   };
 
+  const handleCreateAccountSuccess = () => {
+    checkUserStatus(); // Re-check user status
+    setIsCreateAccountModalOpen(false); // Close the modal
+  };
+
+  const openCreateAccountModal = () => {
+    setIsLoginModalOpen(false);
+    setIsCreateAccountModalOpen(true);
+  };
+
+  const openLoginModalFromCreate = () => {
+    setIsCreateAccountModalOpen(false);
+    setIsLoginModalOpen(true);
+  };
+
 
   const navItems = [
     { href: "/", label: "Anasayfa" },
+    // { href: "/categories/biyoloji", label: "Biyoloji" }, // Removed as per previous request
     { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -229,6 +255,7 @@ const Header = () => {
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
+     // Removed Teknoloji category specific class
      return 'bg-muted text-muted-foreground';
   }
 
@@ -239,7 +266,7 @@ const Header = () => {
         <div className="container flex h-16 items-center">
           <Link href="/" className="mr-6 flex items-center group">
             <DnaLogo />
-            <div className="flex flex-col items-start ml-1"> {/* Added ml-1 for spacing */}
+            <div className="flex flex-col items-start ml-1 -mt-1">
                 <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
                 <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
                     Öğrenmenin DNA’sı
@@ -264,7 +291,7 @@ const Header = () => {
           <div className="flex flex-1 items-center justify-end space-x-2">
             <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
               <PopoverTrigger asChild>
-                 <div className="relative w-full max-w-[130px] sm:max-w-[150px]">
+                 <div className="relative w-full max-w-[120px] sm:max-w-[140px]"> {/* Slightly reduced width */}
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="text"
@@ -272,7 +299,7 @@ const Header = () => {
                       value={searchQuery}
                       onChange={handleSearchChange}
                       className="pl-9 pr-8 h-9 rounded-full bg-secondary/70 border-transparent focus:bg-background focus:border-border"
-                      onFocus={() => setIsPopoverOpen(true)}
+                      onFocus={() => setIsPopoverOpen(true)} // Ensure popover opens on focus
                     />
                     {searchQuery && (
                         <Button
@@ -289,7 +316,7 @@ const Header = () => {
               <PopoverContent
                   className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                   align="end"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onOpenAutoFocus={(e) => e.preventDefault()} // Prevent focus stealing
                >
                 {isSearching && searchQuery && (
                    <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -305,7 +332,7 @@ const Header = () => {
                               <Link
                                   href={`/articles/${result.id}`}
                                   className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                  onClick={closePopover}
+                                  onClick={closePopover} // Close popover on item click
                                >
                                  <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                  <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -322,7 +349,7 @@ const Header = () => {
 
             <ThemeToggle />
 
-             {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') ? (
+             {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
                <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
                   <Link href="/admin" passHref>
                       <ShieldCheck className="mr-1.5 h-4 w-4" />
@@ -330,12 +357,13 @@ const Header = () => {
                       <span className="sm:hidden">Admin</span>
                   </Link>
               </Button>
-            ) : isMounted && !currentUser ? (
+            )}
+            {isMounted && !currentUser && (
                 <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
                     <LogIn className="mr-1.5 h-4 w-4" />
                     Giriş Yap
                 </Button>
-            ) : null}
+            )}
 
 
             <div className="md:hidden">
@@ -373,12 +401,20 @@ const Header = () => {
                         </SheetClose>
                      )}
                      {isMounted && !currentUser && (
+                       <>
                         <SheetClose asChild>
-                           <Button variant="outline" onClick={() => setIsLoginModalOpen(true)} className="mt-4">
+                           <Button variant="outline" onClick={() => setIsLoginModalOpen(true)} className="mt-4 w-full">
                                <LogIn className="mr-2 h-4 w-4" />
                                Giriş Yap
                            </Button>
                         </SheetClose>
+                        <SheetClose asChild>
+                           <Button variant="default" onClick={openCreateAccountModal} className="mt-2 w-full">
+                               <UserPlus className="mr-2 h-4 w-4" />
+                               Hesap Oluştur
+                           </Button>
+                        </SheetClose>
+                       </>
                      )}
                   </nav>
                 </SheetContent>
@@ -387,7 +423,8 @@ const Header = () => {
           </div>
         </div>
       </header>
-      <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} onLoginSuccess={handleLoginSuccess} />
+      <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} onLoginSuccess={handleLoginSuccess} openCreateAccount={openCreateAccountModal} />
+      <CreateAccountModal isOpen={isCreateAccountModalOpen} setIsOpen={setIsCreateAccountModalOpen} onAccountCreateSuccess={handleCreateAccountSuccess} openLogin={openLoginModalFromCreate} />
     </>
   );
 };

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { LogIn, User, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { LogIn, User, KeyRound, Eye, EyeOff, Loader2, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { getUsers, type User as UserData } from '@/lib/mock-data'; // Assuming UserData type is exported
@@ -67,9 +67,10 @@ interface LoginModalProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   onLoginSuccess: () => void;
+  openCreateAccount: () => void; // New prop to open create account modal
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLoginSuccess }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLoginSuccess, openCreateAccount }) => {
   const [emailOrUsername, setEmailOrUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
@@ -198,9 +199,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
           <Link href="#" className="text-xs text-primary hover:underline" onClick={() => toast({title: "Yakında!", description:"Bu özellik yakında aktif olacaktır."})}>
             Şifremi Unuttum?
           </Link>
-          <Link href="#" className="text-xs text-primary hover:underline" onClick={() => toast({title: "Yakında!", description:"Bu özellik yakında aktif olacaktır."})}>
+          <Button variant="link" className="text-xs text-primary hover:underline p-0 h-auto" onClick={openCreateAccount}>
             Hesap Oluştur
-          </Link>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
