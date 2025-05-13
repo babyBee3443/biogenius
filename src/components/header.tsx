@@ -138,21 +138,42 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2 group">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-10 w-10 group-hover:animate-spin-slow">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 100 100"
+            className="h-10 w-10 group-hover:animate-spin-slow"
+          >
             <defs>
               <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(180 100% 40%)" className="group-hover:[stop-color:hsl(140,70%,50%)] transition-all duration-500 ease-in-out">
-                  <animate attributeName="stop-color" values="hsl(180 100% 40%);hsl(140 70% 50%);hsl(200 80% 55%);hsl(180 100% 40%)" dur="5s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor="hsl(175 75% 45%)"> {/* Teal */}
+                  <animate attributeName="stop-color" values="hsl(175 75% 45%);hsl(120 60% 50%);hsl(175 75% 45%)" dur="6s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="hsl(140 70% 50%)" className="group-hover:[stop-color:hsl(180,100%,40%)] transition-all duration-500 ease-in-out">
-                  <animate attributeName="stop-color" values="hsl(140 70% 50%);hsl(180 100% 40%);hsl(200 80% 55%);hsl(140 70% 50%)" dur="5s" repeatCount="indefinite" />
+                <stop offset="100%" stopColor="hsl(120 60% 50%)"> {/* Green */}
+                  <animate attributeName="stop-color" values="hsl(120 60% 50%);hsl(175 75% 45%);hsl(120 60% 50%)" dur="6s" repeatCount="indefinite" />
                 </stop>
               </linearGradient>
             </defs>
-            <g transform="translate(50,50) scale(0.8)">
-              {/* Helix 1 (e.g., Teal to Green) */}
+            <g transform="translate(50,50) scale(0.8) rotate(15)"> {/* Slightly rotate for dynamic feel */}
+              {/* Strand 1 */}
               <path
                 d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
+                stroke="url(#dnaGradientHeader)"
+                strokeWidth="5" 
+                fill="none"
+                strokeLinecap="round"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 0 0"
+                  to="360 0 0"
+                  dur="10s" 
+                  repeatCount="indefinite"
+                />
+              </path>
+              {/* Strand 2 */}
+              <path
+                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40" // Mirrored Q values
                 stroke="url(#dnaGradientHeader)"
                 strokeWidth="5"
                 fill="none"
@@ -163,52 +184,45 @@ const Header = () => {
                   type="rotate"
                   from="0 0 0"
                   to="360 0 0"
-                  dur="12s"
+                  dur="10s"
                   repeatCount="indefinite"
                 />
               </path>
-              {/* Helix 2 (e.g., Green to Teal) */}
-              <path
-                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
-                stroke="url(#dnaGradientHeader)" 
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
-                transform="rotate(180)" // Offset the second helix
-              >
-                <animateTransform
-                  attributeName="transform"
-                  type="rotate"
-                  from="180 0 0" // Start rotated
-                  to="540 0 0" // End rotated
-                  dur="12s"
-                  repeatCount="indefinite"
-                />
-                 <animate attributeName="stroke-width" values="5;7;5" dur="3s" repeatCount="indefinite" />
-              </path>
-              {/* Bases - Adjusted for more biological feel */}
-              {[...Array(7)].map((_, i) => (
-                <line
-                  key={`header-dna-base-${i}`}
-                  x1={Math.sin(i * Math.PI / 3.5) * (12 + (i%2 === 0 ? 2: 0) )} // Varied length for bases
-                  y1={-35 + i * (70/6)} // Spread along the Y axis
-                  x2={Math.sin(i * Math.PI / 3.5 + Math.PI) * (12 + (i%2 === 0 ? 2: 0))}
-                  y2={-35 + i * (70/6)}
-                  strokeWidth="3" // Thinner bases
-                  strokeLinecap="round"
-                  className="transition-all duration-300 ease-in-out group-hover:stroke-[hsl(160,80%,45%)]" // Softer hover
-                >
-                  <animate attributeName="stroke" values="hsl(160 80% 45%);hsl(190 90% 50%);hsl(130 60% 40%);hsl(160 80% 45%)" dur="5s" repeatCount="indefinite" begin={`${i * 0.3}s`} />
-                   <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="0 0 0"
-                    to="360 0 0"
-                    dur="12s"
-                    repeatCount="indefinite"
-                  />
-                </line>
-              ))}
+              {/* Bases */}
+              {[...Array(7)].map((_, i) => {
+                const yPos = -35 + i * (70 / 6);
+                const angle = (i * Math.PI) / 3.5; // Adjust for dynamic connection points
+                const amplitude = 10 + Math.sin(Date.now() / 1000 + i) * 2; // Pulsing amplitude
+                const x1 = Math.sin(angle) * amplitude;
+                const x2 = Math.sin(angle + Math.PI) * amplitude; 
+                return (
+                  <line
+                    key={`header-dna-base-${i}`}
+                    x1={x1}
+                    y1={yPos}
+                    x2={x2}
+                    y2={yPos}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  >
+                    <animate
+                      attributeName="stroke"
+                      values="hsl(175 75% 55%);hsl(120 60% 60%);hsl(175 75% 55%)" // Brighter, cycling colors for bases
+                      dur={`${3 + Math.random() * 2}s`} // Faster, varied animation
+                      repeatCount="indefinite"
+                      begin={`${i * 0.15}s`}
+                    />
+                     <animateTransform
+                      attributeName="transform"
+                      type="rotate"
+                      from="0 0 0"
+                      to="360 0 0"
+                      dur="10s"
+                      repeatCount="indefinite"
+                    />
+                  </line>
+                );
+              })}
             </g>
           </svg>
           <span className="font-bold text-lg group-hover:text-primary transition-colors">BiyoHox</span>
@@ -231,7 +245,7 @@ const Header = () => {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-               <div className="relative w-full max-w-[160px] sm:max-w-[180px]"> {/* Adjusted max-width for more space */}
+               <div className="relative w-full max-w-[160px] sm:max-w-[180px]">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
@@ -291,12 +305,10 @@ const Header = () => {
 
           {isMounted && isAdminOrEditor && (
              <Button variant="ghost" size="sm" asChild className="ml-1 shrink-0">
-                <Link href="/admin" passHref legacyBehavior>
-                  <a className="flex items-center">
+                <Link href="/admin" passHref>
                     <ShieldCheck className="mr-1.5 h-4 w-4" />
                     <span className="hidden sm:inline">Admin Paneli</span>
                     <span className="sm:hidden">Admin</span>
-                  </a>
                 </Link>
             </Button>
           )}
