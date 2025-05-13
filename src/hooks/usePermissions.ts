@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { type User, type Role, getRoleById, getRoles } from '@/lib/mock-data'; // Assuming getRoleById or similar exists
+import { type User, type Role, getRoles } from '@/lib/mock-data';
 
 interface PermissionsState {
   permissions: Set<string>;
@@ -10,7 +10,7 @@ interface PermissionsState {
   error: string | null;
 }
 
-export function usePermissions() {
+export function usePermissions(currentUserId: string | null) { // Accept currentUserId
   const [state, setState] = React.useState<PermissionsState>({
     permissions: new Set(),
     isLoading: true,
@@ -20,6 +20,10 @@ export function usePermissions() {
   React.useEffect(() => {
     let isMounted = true;
     const fetchPermissions = async () => {
+      if (isMounted) {
+        setState(prev => ({ ...prev, isLoading: true, error: null })); // Set loading true on new fetch
+      }
+
       if (typeof window === 'undefined') {
         if (isMounted) {
           setState({ permissions: new Set(), isLoading: false, error: "Permissions can only be fetched on the client." });
@@ -27,27 +31,34 @@ export function usePermissions() {
         return;
       }
 
+      if (!currentUserId) { // If no userId (e.g., logged out)
+        if (isMounted) {
+          setState({ permissions: new Set(), isLoading: false, error: "Kullanıcı bulunamadı (oturum kapalı)." });
+        }
+        return;
+      }
+
       const storedUserString = localStorage.getItem('currentUser');
       if (!storedUserString) {
         if (isMounted) {
-          setState({ permissions: new Set(), isLoading: false, error: "Kullanıcı bulunamadı." });
+          // This case should ideally be handled by redirect if currentUserId was sourced from localStorage
+          setState({ permissions: new Set(), isLoading: false, error: "localStorage'da kullanıcı bulunamadı." });
         }
         return;
       }
 
       try {
         const currentUser: User = JSON.parse(storedUserString);
-        if (!currentUser || !currentUser.role) {
+        // Additional check if the ID from localStorage matches the passed currentUserId
+        if (!currentUser || currentUser.id !== currentUserId || !currentUser.role) {
           if (isMounted) {
-            setState({ permissions: new Set(), isLoading: false, error: "Kullanıcı rolü bulunamadı." });
+            setState({ permissions: new Set(), isLoading: false, error: "Geçerli kullanıcı rolü bulunamadı." });
           }
           return;
         }
 
-        // In a real app, you might fetch all roles once and cache them, or fetch by role name/ID
-        const allRoles = await getRoles(); // Assuming getRoles fetches all defined roles
+        const allRoles = await getRoles();
         const userRoleData = allRoles.find(r => r.name.toLowerCase() === currentUser.role.toLowerCase() || r.id === currentUser.role);
-
 
         if (userRoleData && userRoleData.permissions) {
           if (isMounted) {
@@ -69,7 +80,7 @@ export function usePermissions() {
 
     fetchPermissions();
     return () => { isMounted = false; };
-  }, []);
+  }, [currentUserId]); // Re-run when currentUserId changes
 
   const hasPermission = React.useCallback(
     (permissionName: string): boolean => {

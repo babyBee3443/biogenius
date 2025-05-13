@@ -42,12 +42,13 @@ export default function AdminLayout({
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
   const router = useRouter();
-  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions();
+  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId); // Pass currentUserId to re-trigger permissions
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
     console.log("[AdminLayout] loadUserDataAndSettings called");
     let userFound = false;
+    let newUserId: string | null = null;
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
       if (storedUserString) {
@@ -56,34 +57,41 @@ export default function AdminLayout({
           if (userData && userData.id) {
             setCurrentUserName(userData.name || "Kullanıcı");
             setCurrentUserAvatar(userData.avatar || `https://picsum.photos/seed/${userData.username || 'avatar'}/32/32`);
-            setCurrentUserId(userData.id);
+            newUserId = userData.id;
             userFound = true;
             console.log("[AdminLayout] User data loaded from localStorage:", userData.id, userData.name);
           } else {
              console.error("[AdminLayout] User ID not found in stored currentUser object.");
-             setCurrentUserId(null);
+             newUserId = null;
           }
         } catch (e) {
           console.error("Error parsing user data from localStorage in AdminLayout", e);
           setCurrentUserName("Kullanıcı");
           setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
-          setCurrentUserId(null);
+          newUserId = null;
           localStorage.removeItem('currentUser'); // Clear corrupted data
         }
       } else {
-        setCurrentUserId(null);
+        newUserId = null;
         console.log("[AdminLayout] No currentUser in localStorage.");
       }
+      // Update currentUserId state outside the main set of state updates if it changed
+      if (currentUserId !== newUserId) {
+        setCurrentUserId(newUserId);
+      }
+
 
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
         const timeoutValue = parseInt(storedTimeout, 10);
         setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
+      } else {
+        setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    setAuthCheckComplete(true); // Mark auth check as complete
+    setAuthCheckComplete(true); 
     return userFound;
-  }, []);
+  }, [currentUserId]); // Added currentUserId as dependency
 
 
   React.useEffect(() => {
@@ -95,14 +103,14 @@ export default function AdminLayout({
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
             console.log(`AdminLayout: '${event.key}' changed in localStorage (another tab), reloading user data and settings.`);
-            setAuthCheckComplete(false); // Re-trigger auth check
+            setAuthCheckComplete(false); 
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
         console.log("AdminLayout: 'currentUserUpdated' event received, reloading user data.");
-        setAuthCheckComplete(false); // Re-trigger auth check
+        setAuthCheckComplete(false); 
         loadUserDataAndSettings();
     };
 
@@ -123,34 +131,48 @@ export default function AdminLayout({
   }, [loadUserDataAndSettings]);
 
 
-  React.useEffect(() => {
-    // This effect handles redirection based on authentication status
-    if (!authCheckComplete || permissionsLoading) {
-      return; // Wait for auth check and permissions to complete
-    }
-
-    if (!currentUserId && typeof window !== 'undefined' && window.location.pathname !== '/login') {
-      console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to login.");
-      toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." });
-      router.replace('/login');
-    }
-  }, [authCheckComplete, permissionsLoading, currentUserId, router]);
-
-
   const handleLogout = React.useCallback(() => {
+    console.log("[AdminLayout] handleLogout called");
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
     }
-    setCurrentUserName("Kullanıcı");
+    setCurrentUserName("Kullanıcı"); // Reset UI immediately
     setCurrentUserAvatar("https://picsum.photos/seed/default-avatar/32/32");
-    setCurrentUserId(null);
-    setAuthCheckComplete(false); // Re-trigger auth check which will lead to redirection
+    setCurrentUserId(null); // This will trigger the redirection useEffect
+    // setAuthCheckComplete(true); // Auth state is now known (logged out)
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    // Redirection is now handled by the useEffect above
-  }, [router]);
+    // No need to call router.replace here, the useEffect below will handle it.
+  }, []);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
+
+  React.useEffect(() => {
+    // This effect handles redirection based on authentication status
+    // It runs when authCheckComplete, permissionsLoading, or currentUserId changes.
+    console.log(`[AdminLayout] Redirection Effect: authComplete=${authCheckComplete}, permLoading=${permissionsLoading}, userId=${currentUserId}, pathname=${typeof window !== 'undefined' ? window.location.pathname : 'server'}`);
+
+    if (!authCheckComplete || permissionsLoading) {
+      console.log("[AdminLayout] Redirection Effect: Waiting for auth/permissions check.");
+      return; // Wait for auth check and permissions to complete
+    }
+
+    // If here, authCheck is complete AND permissions are loaded (or error state is set for permissions)
+    if (!currentUserId) { // User is not logged in
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        console.log("[AdminLayout] Redirection Effect: User not authenticated, redirecting to login from:", window.location.pathname);
+        // toast({ variant: "destructive", title: "Oturum Gerekli", description: "Devam etmek için lütfen giriş yapın." }); // Toast can be annoying during rapid redirects
+        router.replace('/login');
+      }
+      // If already on /login, do nothing, let the login page render.
+    } else { // User IS logged in
+      if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+        console.log("[AdminLayout] Redirection Effect: User authenticated on login page, redirecting to admin.");
+        router.replace('/admin');
+      }
+      // If on an admin page and logged in, do nothing, let the admin page render.
+    }
+  }, [authCheckComplete, permissionsLoading, currentUserId, router]);
 
 
   if (!authCheckComplete || permissionsLoading) {
@@ -162,26 +184,17 @@ export default function AdminLayout({
     );
   }
   
-  // If not authenticated and not already on login page, don't render admin layout
-  // This check might be redundant due to the redirection effect but adds an extra layer of safety
+  // This check should ideally be covered by the redirection effect.
+  // If we reach here and !currentUserId, and not on /login, something is wrong with the redirect logic or it hasn't fired yet.
+  // However, to prevent rendering admin content if somehow the redirect fails or is delayed:
   if (!currentUserId && typeof window !== 'undefined' && window.location.pathname !== '/login') {
-     return (
+     console.warn("[AdminLayout] Render block: Attempting to render admin layout without user ID, but not on login page. This should have been caught by redirect.");
+     return ( // Fallback, should ideally be handled by the redirect.
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground">Giriş sayfasına yönlendiriliyor...</p>
         </div>
      );
-  }
-
-  // If on login page and authenticated, redirect to admin dashboard
-  if (currentUserId && typeof window !== 'undefined' && window.location.pathname === '/login') {
-    router.replace('/admin');
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Yönlendiriliyor...</p>
-      </div>
-    );
   }
 
 
