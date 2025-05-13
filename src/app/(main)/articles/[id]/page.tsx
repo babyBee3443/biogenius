@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -116,7 +115,7 @@ function createMarkup(htmlContent: string) {
 
 export default function ArticlePage() {
   const params = useParams();
-  const articleId = React.use(params)?.id as string; // Using React.use
+  const articleId = params?.id as string; 
   const [article, setArticle] = React.useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = React.useState<ArticleData[]>([]);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
@@ -144,12 +143,11 @@ export default function ArticlePage() {
             setError("Makale ID bulunamadı.");
             setLoading(false);
         }
-        // notFound(); // Removed direct call to notFound here, will handle in render
         return;
       }
 
-      setLoading(true); // Set loading true at the start of fetch
-      setError(null); // Reset error
+      setLoading(true); 
+      setError(null); 
       try {
         const fetchedArticle = await getArticleById(articleId);
 
@@ -167,7 +165,7 @@ export default function ArticlePage() {
                 setRelatedArticles(relArticles);
             } else {
                 setError("Makale bulunamadı.");
-                setArticle(null); // Ensure article is null if not found
+                setArticle(null); 
             }
         }
       } catch (err) {
@@ -226,10 +224,8 @@ export default function ArticlePage() {
   }
 
   if (!article || !isVisible) {
-    // This should ideally trigger Next.js's notFound behavior
-    // For client-side, we can show a message or redirect
-    notFound(); // Call notFound if article isn't found or not visible
-    return null; // Return null to prevent further rendering, notFound() will handle the rest
+    notFound(); 
+    return null; 
   }
 
   const categoryLinkClass = 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300';

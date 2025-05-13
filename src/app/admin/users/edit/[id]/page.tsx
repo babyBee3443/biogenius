@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -60,7 +59,6 @@ interface UserContentStats {
 
 export default function EditUserPage() {
     const params = useParams();
-    // Ensure params.id is accessed safely and correctly
     const userId = params.id as string;
     const router = useRouter();
 
@@ -296,7 +294,7 @@ export default function EditUserPage() {
                 </div>
                  <div className="flex flex-wrap gap-2">
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                        <Button variant="destructive" disabled={isDeleting || isSaving}>
                             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                         </Button>
                     </AlertDialogTrigger>
@@ -481,7 +479,7 @@ export default function EditUserPage() {
               <Separator />
              <div className="flex justify-end gap-2 mt-6">
                  <AlertDialogTrigger asChild>
-                     <Button variant="destructive" disabled={isDeleting || isSaving} onClick={handleDeleteInitiate}>
+                     <Button variant="destructive" disabled={isDeleting || isSaving}>
                         {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Kullanıcıyı Sil
                      </Button>
                  </AlertDialogTrigger>
