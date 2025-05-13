@@ -83,7 +83,7 @@ export interface Template {
   previewImageUrl: string;
   blocks: Block[];
   type: 'article' | 'note' | 'page';
-  category?: 'Biyoloji' | 'Genel Sayfa';
+  category?: 'Biyoloji' | 'Genel Sayfa'; // Adjusted category for templates
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string[];
@@ -139,10 +139,10 @@ export const getCategories = async (): Promise<Category[]> => {
             return JSON.parse(storedCategories);
         } catch (e) {
             console.error("Error parsing categories from localStorage", e);
-            return []; // Return empty if parsing fails
+            return []; 
         }
     }
-    return []; // Return empty if not in localStorage
+    return []; 
 };
 
 export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category> => {
@@ -156,7 +156,7 @@ export const addCategory = async (data: Omit<Category, 'id'>): Promise<Category>
     if (typeof window !== 'undefined') {
         localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
     }
-    mockCategories = currentCategories; // Update in-memory cache
+    mockCategories = currentCategories; 
     return JSON.parse(JSON.stringify(newCategory));
 };
 
@@ -169,7 +169,7 @@ export const updateCategory = async (id: string, data: Partial<Omit<Category, 'i
         if (typeof window !== 'undefined') {
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
         }
-        mockCategories = currentCategories; // Update in-memory cache
+        mockCategories = currentCategories; 
         return JSON.parse(JSON.stringify(currentCategories[index]));
     }
     return null;
@@ -184,7 +184,7 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
         if (typeof window !== 'undefined') {
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(currentCategories));
         }
-        mockCategories = currentCategories; // Update in-memory cache
+        mockCategories = currentCategories; 
         return true;
     }
     return false;
@@ -194,8 +194,6 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
 let mockArticles: ArticleData[] = [];
 let mockNotes: NoteData[] = [];
 let mockUsers: User[] = [];
-// Keep default roles for system functionality, but with userCount 0.
-// User will need to manually add an Admin user to localStorage or implement a setup flow.
 let mockRoles: Role[] = [
     { id: 'admin', name: 'Admin', description: 'Tam sistem erişimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme', 'Hazır İçeriği Görüntüleme','Kategorileri Yönetme', 'Sayfaları Yönetme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme', 'Rolleri Yönetme', 'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
     { id: 'editor', name: 'Editor', description: 'İçerik yönetimi ve düzenleme yetkileri.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Hazır İçeriği Görüntüleme', 'Kategorileri Yönetme', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
@@ -206,21 +204,21 @@ let mockPages: PageData[] = [
     {
         id: 'anasayfa',
         title: 'Anasayfa',
-        slug: '', // Empty slug for homepage
+        slug: '', 
         blocks: [
             { id: generateId(), type: 'text', content: 'TeknoBiyo\'ya hoş geldiniz! İçeriğinizi buraya ekleyebilirsiniz.' }
         ],
         status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        heroSettings: { enabled: false, articleSource: 'latest', intervalSeconds: 5, maxArticles: 0 } // Start with hero disabled/empty
+        heroSettings: { enabled: false, articleSource: 'latest', intervalSeconds: 5, maxArticles: 0 } 
     },
     {
         id: 'hakkimizda',
         title: 'Hakkımızda',
         slug: 'hakkimizda',
         blocks: [{id: generateId(), type: 'text', content: 'Hakkımızda sayfa içeriği buraya gelecek.'}],
-        status: 'Taslak', // Start as draft for user to populate
+        status: 'Taslak', 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -229,7 +227,7 @@ let mockPages: PageData[] = [
         title: 'İletişim',
         slug: 'iletisim',
         blocks: [{id: generateId(), type: 'text', content: 'İletişim sayfa içeriği buraya gelecek.'}],
-        status: 'Taslak', // Start as draft
+        status: 'Taslak', 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -241,14 +239,282 @@ let mockPages: PageData[] = [
             {id: generateId(), type: 'heading', level: 1, content: 'Admin Paneli Kullanım Kılavuzu'},
             {id: generateId(), type: 'text', content: 'Bu kılavuz, admin panelinin çeşitli özelliklerini ve işlevlerini nasıl kullanacağınız konusunda size yol gösterecektir. Herhangi bir sorunuz olursa, lütfen destek ekibimizle iletişime geçmekten çekinmeyin.'}
         ],
-        status: 'Yayınlandı', // Keep this published as it's a guide
+        status: 'Yayınlandı', 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
 ];
 
-let allMockTemplates: Template[] = [];
+let defaultArticleTemplates: Template[] = [
+    {
+        id: 'standard-article',
+        name: 'Standart Makale',
+        description: 'Giriş, ana görsel, alt başlıklar ve sonuç bölümü içeren temel makale düzeni.',
+        previewImageUrl: 'https://picsum.photos/seed/standard-article/300/200',
+        type: 'article',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: 'Giriş Bölümü' },
+            { id: generateId(), type: 'text', content: 'Makalenizin ana konusunu ve amacını tanıtan ilgi çekici bir giriş yazısı.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/article-main/800/450', alt: 'Ana Makale Görseli', caption: 'Makalenin ana görseli için açıklama.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Alt Başlık 1' },
+            { id: generateId(), type: 'text', content: 'İlk alt başlık altında detaylı açıklamalar ve bilgiler.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Alt Başlık 2' },
+            { id: generateId(), type: 'text', content: 'İkinci alt başlık altında farklı bir konuya değinin veya mevcut konuyu derinleştirin.' },
+            { id: generateId(), type: 'quote', content: 'Konuyla ilgili etkileyici bir alıntı veya önemli bir söz.', citation: 'Alıntı Kaynağı' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Sonuç' },
+            { id: generateId(), type: 'text', content: 'Makalenizi özetleyen ve okuyucuya son bir mesaj veren sonuç bölümü.' },
+        ],
+        seoTitle: 'Standart Makale Başlığı',
+        seoDescription: 'Bu standart makale şablonunun SEO açıklamasıdır.',
+        keywords: ['standart', 'makale', 'şablon'],
+        excerpt: 'Başlık, ana görsel ve metin içeriği için temel düzen.'
+    },
+    {
+        id: 'listicle',
+        name: 'Listeleme Makalesi',
+        description: 'Belirli bir konuda numaralı veya madde işaretli öneriler/bilgiler sunan format.',
+        previewImageUrl: 'https://picsum.photos/seed/listicle-article/300/200',
+        type: 'article',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: '[Sayı] Adımda [Konu]' },
+            { id: generateId(), type: 'text', content: 'Bu listeleme makalesinde, [konu] hakkında bilmeniz gereken [sayı] önemli noktayı ele alacağız.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-intro/800/400', alt: 'Liste Makalesi Giriş Görseli', caption: 'Listeleme formatına uygun bir görsel.' },
+            { id: generateId(), type: 'heading', level: 3, content: '1. [Madde Başlığı]' },
+            { id: generateId(), type: 'text', content: 'İlk maddenin detaylı açıklaması. Önemli bilgiler ve örnekler içerebilir.' },
+            { id: generateId(), type: 'heading', level: 3, content: '2. [Madde Başlığı]' },
+            { id: generateId(), type: 'text', content: 'İkinci maddenin detaylı açıklaması.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/list-item2/600/350', alt: 'İkinci Madde Görseli' },
+            { id: generateId(), type: 'heading', level: 3, content: '3. [Madde Başlığı]' },
+            { id: generateId(), type: 'text', content: 'Üçüncü maddenin detaylı açıklaması. Bu madde bir video içerebilir.' },
+            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', youtubeId: 'dQw4w9WgXcQ' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Özet ve Ek Bilgiler' },
+            { id: generateId(), type: 'text', content: 'Listelenen maddeleri özetleyen ve okuyucuya ek kaynaklar veya ipuçları sunan bölüm.' },
+        ],
+        seoTitle: 'Harika Bir Liste Makalesi',
+        seoDescription: 'Bu liste makalesi şablonu ile kolayca dikkat çekici listeler oluşturun.',
+        keywords: ['liste', 'adım adım', 'rehber'],
+        excerpt: 'Numaralı veya madde işaretli listeler içeren makaleler için uygundur.'
+    },
+    {
+        id: 'image-gallery-article',
+        name: 'Görsel Galerisi',
+        description: 'Görsellerin ön planda olduğu, açıklamalı ve tematik galeri düzeni.',
+        previewImageUrl: 'https://picsum.photos/seed/gallery-article/300/200',
+        type: 'article',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: '[Konu] Görsel Galerisi' },
+            { id: generateId(), type: 'text', content: 'Bu galeride [konu] ile ilgili etkileyici görselleri bir araya getirdik. Galeri hakkında kısa bir açıklama.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery1/800/500', alt: 'Görsel 1', caption: 'Görsel 1: Kısa ve açıklayıcı bir başlık. Bu görselin ne hakkında olduğunu veya neyi gösterdiğini anlatan birkaç cümle.' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery2/800/500', alt: 'Görsel 2', caption: 'Görsel 2: Başka bir açıklayıcı başlık. Görselle ilgili ilginç detaylar veya bağlam bilgisi.' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery3/800/500', alt: 'Görsel 3', caption: 'Görsel 3: Üçüncü görsel için başlık ve açıklama.' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/gallery4/800/500', alt: 'Görsel 4', caption: 'Görsel 4: Dördüncü görsel ve onunla ilgili bilgiler.' },
+            { id: generateId(), type: 'text', content: 'Galeriyi sonlandıran veya ek bilgi veren bir paragraf.' },
+        ],
+        seoTitle: 'Etkileyici Görsel Galerisi',
+        seoDescription: 'Görsel galerisi şablonu ile hikayelerinizi zenginleştirin.',
+        keywords: ['galeri', 'görsel', 'fotoğraf'],
+        excerpt: 'Görsellerin ön planda olduğu, açıklamalı galeri düzeni.'
+    },
+    {
+        id: 'faq-article',
+        name: 'SSS Makalesi',
+        description: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.',
+        previewImageUrl: 'https://picsum.photos/seed/faq-article/300/200',
+        type: 'article',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: '[Konu] Hakkında Sıkça Sorulan Sorular (SSS)' },
+            { id: generateId(), type: 'text', content: 'Bu bölümde, [konu] ile ilgili en sık karşılaşılan soruları ve cevaplarını bulabilirsiniz.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: [İlk Soru Metni]?' },
+            { id: generateId(), type: 'text', content: 'Cevap 1: Bu soruya verilecek detaylı ve açıklayıcı cevap. Örnekler ve referanslar eklenebilir.' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: [İkinci Soru Metni]?' },
+            { id: generateId(), type: 'text', content: 'Cevap 2: İkinci soruya yönelik kapsamlı bir yanıt. Madde işaretleri kullanılabilir:\n- Madde 1\n- Madde 2' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: [Üçüncü Soru Metni]?' },
+            { id: generateId(), type: 'text', content: 'Cevap 3: Üçüncü soru ve cevabı. Burada farklı bir formata veya detaya odaklanılabilir.' },
+            { id: generateId(), type: 'text', content: 'Daha fazla sorunuz varsa, lütfen bizimle iletişime geçmekten çekinmeyin.' },
+        ],
+        seoTitle: '[Konu] SSS - Merak Edilenler',
+        seoDescription: '[Konu] hakkında sıkça sorulan sorular ve cevapları.',
+        keywords: ['sss', 'soru', 'cevap', 'yardım'],
+        excerpt: 'Sıkça sorulan sorular ve cevapları formatında bir düzen.'
+    },
+    {
+        id: 'how-to-guide',
+        name: 'Nasıl Yapılır Rehberi',
+        description: 'Adım adım talimatlar içeren öğretici makaleler için.',
+        previewImageUrl: 'https://picsum.photos/seed/howto-article/300/200',
+        type: 'article',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: '[İşlem/Konu] Nasıl Yapılır?' },
+            { id: generateId(), type: 'text', content: 'Bu rehberde, [işlem/konu] adım adım nasıl yapacağınızı öğreneceksiniz. Başlamadan önce [gerekli malzemeler/ön bilgiler] olduğundan emin olun.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-main/700/300', alt: 'Rehber Ana Görseli', caption: 'İşlemin genel bir görünümü.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [İlk Adımın Başlığı]' },
+            { id: generateId(), type: 'text', content: 'İlk adımın detaylı açıklaması. Gerekirse alt adımlar veya ipuçları eklenebilir.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/howto-step1/500/250', alt: 'Adım 1 Görseli' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [İkinci Adımın Başlığı]' },
+            { id: generateId(), type: 'text', content: 'İkinci adımın açıklaması. Farklı bir görsel veya video eklenebilir.' },
+            { id: generateId(), type: 'video', url: 'https://www.youtube.com/watch?v=VIDEO_ID_BURAYA', youtubeId: 'VIDEO_ID_BURAYA' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 3: [Üçüncü Adımın Başlığı]' },
+            { id: generateId(), type: 'text', content: 'Üçüncü adım ve sonraki adımlar için açıklamalar.' },
+            { id: generateId(), type: 'quote', content: 'Önemli bir ipucu veya dikkat edilmesi gereken bir nokta.', citation: 'Uzman Tavsiyesi' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Sonuç ve İpuçları' },
+            { id: generateId(), type: 'text', content: 'Rehberi tamamladıktan sonra elde edilecek sonuçlar ve ek ipuçları.' },
+        ],
+        seoTitle: '[İşlem/Konu] Adım Adım Nasıl Yapılır Rehberi',
+        seoDescription: '[İşlem/Konu] hakkında detaylı nasıl yapılır rehberi.',
+        keywords: ['nasıl yapılır', 'rehber', 'adım adım', 'öğretici'],
+        excerpt: 'Adım adım talimatlar içeren öğretici makaleler için ideal.'
+    },
+    {
+        id: 'interview-article',
+        name: 'Röportaj Makalesi',
+        description: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.',
+        previewImageUrl: 'https://picsum.photos/seed/interview-article/300/200',
+        type: 'article',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: '[Kişi Adı] ile [Konu] Üzerine Özel Röportaj' },
+            { id: generateId(), type: 'text', content: '[Kişi Adı], [Kişinin Alanı/Unvanı] alanında önde gelen isimlerden biri. Kendisiyle [konu] hakkında keyifli bir sohbet gerçekleştirdik.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/interviewee/600/400', alt: '[Kişi Adı]', caption: '[Kişi Adı], [Kısa Bilgi]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 1: [İlk Soru Metni]' },
+            { id: generateId(), type: 'quote', content: '[Kişi Adı]\'nın ilk soruya verdiği cevap. Cevap uzunsa birkaç paragrafa bölünebilir.', citation: '[Kişi Adı]' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 2: [İkinci Soru Metni]' },
+            { id: generateId(), type: 'quote', content: '[Kişi Adı]\'nın ikinci soruya verdiği cevap. Bu cevapta farklı bir noktaya değinilmiş olabilir.', citation: '[Kişi Adı]' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Soru 3: [Üçüncü Soru Metni]' },
+            { id: generateId(), type: 'quote', content: '[Kişi Adı]\'nın üçüncü soruya verdiği cevap. Geleceğe yönelik bir değerlendirme veya tavsiye içerebilir.', citation: '[Kişi Adı]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Röportajdan Öne Çıkanlar' },
+            { id: generateId(), type: 'text', content: 'Röportajın genel bir özeti veya en önemli noktaların vurgulandığı bir bölüm.' },
+        ],
+        seoTitle: '[Kişi Adı] ile [Konu] Röportajı',
+        seoDescription: '[Kişi Adı] ile yapılan [konu] odaklı özel röportaj.',
+        keywords: ['röportaj', 'söyleşi', 'uzman görüşü', '[Kişi Adı]'],
+        excerpt: 'Bir kişiyle yapılan röportajı soru-cevap formatında sunar.'
+    }
+];
 
+let defaultNoteTemplates: Template[] = [
+    {
+        id: 'standard-note',
+        name: 'Standart Not Şablonu',
+        description: 'Başlık, özet, anahtar kavramlar ve detaylı açıklamalar için temel not düzeni.',
+        previewImageUrl: 'https://picsum.photos/seed/standard-note/300/200',
+        type: 'note',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: '[Konu Başlığı]' },
+            { id: generateId(), type: 'text', content: '[Konunun genel bir özeti veya tanıtımı.]' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Anahtar Kavramlar' },
+            { id: generateId(), type: 'text', content: '- [Kavram 1]: [Kısa Açıklama]\n- [Kavram 2]: [Kısa Açıklama]\n- [Kavram 3]: [Kısa Açıklama]' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/note-concept/600/300', alt: 'Konsept Görseli', caption: 'Konuyu destekleyen bir görsel.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Detaylı Açıklama' },
+            { id: generateId(), type: 'text', content: '[Konunun alt başlıkları ve detaylı açıklamaları burada yer alacak. Paragraflar ve listeler kullanılabilir.]' },
+            { id: generateId(), type: 'quote', content: '[Konuyla ilgili önemli bir bilgi veya hatırlatma.]', citation: 'Kaynak veya Not' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Örnekler (varsa)' },
+            { id: generateId(), type: 'text', content: '[Konuyu pekiştirmek için örnekler veya vaka çalışmaları.]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Özet ve Sonuç' },
+            { id: generateId(), type: 'text', content: '[Notun genel bir özeti ve önemli çıkarımlar.]' },
+        ],
+        seoTitle: '[Konu Başlığı] Ders Notları',
+        seoDescription: '[Konu Başlığı] hakkında detaylı ve anlaşılır ders notları.',
+        keywords: ['ders notu', 'biyoloji', '[konu]'],
+        excerpt: 'Temel not düzeni.'
+    },
+    {
+        id: 'process-explanation-note',
+        name: 'Süreç Açıklama Notu',
+        description: 'Bir biyolojik süreci adım adım açıklayan, şemalar ve görsellerle desteklenmiş not düzeni.',
+        previewImageUrl: 'https://picsum.photos/seed/process-note/300/200',
+        type: 'note',
+        category: 'Biyoloji',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 2, content: '[Süreç Adı]' },
+            { id: generateId(), type: 'text', content: '[Sürecin genel bir özeti veya amacı.]' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-overview/700/350', alt: 'Süreç Genel Bakış Şeması', caption: 'Sürecin genel akışını gösteren bir şema.' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 1: [Adımın Adı]' },
+            { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-step1/500/250', alt: 'Adım 1 Görseli' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: 'Adım 2: [Adımın Adı]' },
+            { id: generateId(), type: 'text', content: '[Adımın açıklaması.]' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/process-step2/500/250', alt: 'Adım 2 Görseli' },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 3, content: '[... Diğer Adımlar ...]' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Sürecin Önemi/Sonuçları' },
+            { id: generateId(), type: 'text', content: '[Sürecin sonucu veya önemi.]' },
+        ],
+        seoTitle: '[Süreç Adı] Adım Adım Açıklaması',
+        seoDescription: '[Süreç Adı] biyolojik sürecinin detaylı ve görsel açıklaması.',
+        keywords: ['süreç', 'biyoloji', 'adım adım', '[süreç adı]'],
+        excerpt: 'Bir biyolojik süreci adım adım açıklar.'
+    },
+];
+
+let defaultPageTemplates: Template[] = [
+    {
+        id: 'standard-page',
+        name: 'Standart Sayfa',
+        description: 'Genel amaçlı sayfalar için başlık, metin ve görsel içeren temel düzen.',
+        previewImageUrl: 'https://picsum.photos/seed/standard-page/300/200',
+        type: 'page',
+        category: 'Genel Sayfa',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 1, content: 'Sayfa Başlığı' },
+            { id: generateId(), type: 'text', content: 'Bu standart bir sayfa şablonudur. İçeriğinizi buraya ekleyebilirsiniz. Paragraflar, listeler ve diğer metin formatlarını kullanabilirsiniz.' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/page-image1/800/400', alt: 'Sayfa Görseli', caption: 'Sayfanızla ilgili bir görsel.' },
+            { id: generateId(), type: 'text', content: 'Daha fazla metin veya farklı içerik blokları ekleyebilirsiniz.' },
+        ],
+    },
+    {
+        id: 'contact-page',
+        name: 'İletişim Sayfası',
+        description: 'İletişim formu ve iletişim bilgileri için düzenlenmiş sayfa yapısı.',
+        previewImageUrl: 'https://picsum.photos/seed/contact-page/300/200',
+        type: 'page',
+        category: 'Genel Sayfa',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 1, content: 'Bizimle İletişime Geçin' },
+            { id: generateId(), type: 'text', content: 'Soru, öneri veya işbirliği talepleriniz için aşağıdaki formu kullanabilir veya iletişim bilgilerimizden bize ulaşabilirsiniz.' },
+            { id: generateId(), type: 'section', sectionType: 'contact-form', settings: { title: 'Mesaj Gönderin', recipientEmail: 'iletisim@example.com'} },
+            { id: generateId(), type: 'divider' },
+            { id: generateId(), type: 'heading', level: 2, content: 'İletişim Bilgilerimiz' },
+            { id: generateId(), type: 'text', content: '**E-posta:** iletisim@teknobiyo.com\n**Telefon:** +90 (XXX) XXX XX XX\n**Adres:** Örnek Mah. Teknoloji Cad. No:123, İstanbul' },
+            // Potansiyel olarak buraya bir harita bloğu da eklenebilir.
+        ],
+    },
+     {
+        id: 'about-us-page',
+        name: 'Hakkımızda Sayfası',
+        description: 'Ekip, misyon ve vizyon gibi bilgileri içeren kurumsal sayfa düzeni.',
+        previewImageUrl: 'https://picsum.photos/seed/about-us-page/300/200',
+        type: 'page',
+        category: 'Genel Sayfa',
+        blocks: [
+            { id: generateId(), type: 'heading', level: 1, content: 'Hakkımızda' },
+            { id: generateId(), type: 'image', url: 'https://picsum.photos/seed/team-photo/800/350', alt: 'Ekip Görseli', caption: 'TeknoBiyo Ekibi' },
+            { id: generateId(), type: 'text', content: 'TeknoBiyo, teknoloji ve biyoloji alanlarındaki en son gelişmeleri ve bilgileri herkes için erişilebilir kılmayı amaçlayan bir platformdur.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Misyonumuz' },
+            { id: generateId(), type: 'text', content: 'Bilimsel merakı teşvik etmek ve karmaşık konuları anlaşılır bir şekilde sunmak.' },
+            { id: generateId(), type: 'heading', level: 2, content: 'Vizyonumuz' },
+            { id: generateId(), type: 'text', content: 'Teknoloji ve biyoloji alanlarında güvenilir bir referans kaynağı olmak.' },
+             { id: generateId(), type: 'heading', level: 2, content: 'Değerlerimiz' },
+            { id: generateId(), type: 'text', content: '- Doğruluk\n- Erişilebilirlik\n- Yenilikçilik\n- Topluma Katkı' },
+        ],
+    },
+    // Daha fazla sayfa şablonu eklenebilir...
+];
+
+let allMockTemplates: Template[] = [...defaultArticleTemplates, ...defaultNoteTemplates, ...defaultPageTemplates];
 
 // --- Article CRUD ---
 export const getArticles = async (): Promise<ArticleData[]> => {
@@ -338,7 +604,7 @@ export const getNotes = async (): Promise<NoteData[]> => {
 export const getNoteById = async (id: string): Promise<NoteData | null> => {
     await delay(10);
     const notes = await getNotes();
-    const note = notes.find(n => n.id === id);
+    const note = notes.find(n => n.id === id || n.slug === id);
     return note ? JSON.parse(JSON.stringify(note)) : null;
 };
 
@@ -348,7 +614,7 @@ export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'upda
         ...data,
         id: `note-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         status: data.status || 'Taslak',
-        authorId: data.authorId || 'unknown-author', // Default author if not provided
+        authorId: data.authorId || 'unknown-author', 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
@@ -392,11 +658,6 @@ export const deleteNote = async (id: string): Promise<boolean> => {
 };
 
 // --- User CRUD Functions ---
-// IMPORTANT: After clearing mockUsers, login will not work until a user is manually added
-// to localStorage or a proper user creation/setup flow is implemented.
-// Example to manually add an admin user in browser console:
-// localStorage.setItem('teknobiyo_mock_users_v2', JSON.stringify([{id: 'admin-user', name: 'Admin User', username: 'admin', email: 'admin@example.com', role: 'Admin', joinedAt: new Date().toISOString()}]));
-// And ensure the Admin role exists in teknobiyo_mock_roles_v2.
 export const getUsers = async (): Promise<User[]> => {
     await delay(10);
     const storedUsers = typeof window !== 'undefined' ? localStorage.getItem(USER_STORAGE_KEY) : null;
@@ -425,7 +686,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
         id: `user-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
         joinedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`, // Generic default avatar
+        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`, 
     };
     const currentUsers = await getUsers();
     currentUsers.push(newUser);
@@ -515,10 +776,10 @@ export const getRoles = async (): Promise<Role[]> => {
           return JSON.parse(storedRoles);
       } catch (e) {
           console.error("Error parsing roles from localStorage", e);
-          return mockRoles; // Fallback to in-memory if parse fails
+          return mockRoles; 
       }
   }
-  return mockRoles; // Fallback to in-memory if not in localStorage
+  return mockRoles; 
 };
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
@@ -549,14 +810,10 @@ export const updateRole = async (id: string, data: Partial<Omit<Role, 'id'>>): P
   const currentRoles = await getRoles();
   const index = currentRoles.findIndex(r => r.id === id);
   if (index !== -1) {
-      // Recalculate userCount if not provided, or use provided one
       let updatedUserCount = currentRoles[index].userCount;
       if (data.userCount !== undefined) {
           updatedUserCount = data.userCount;
-      } else {
-          // If role name changes, userCount might need recalculation based on actual users
-          // For simplicity, we are not doing that here without a direct link to users based on role name changes
-      }
+      } 
       currentRoles[index] = { ...currentRoles[index], ...data, userCount: updatedUserCount };
       if (typeof window !== 'undefined') {
           localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
@@ -647,10 +904,10 @@ export const getPages = async (): Promise<PageData[]> => {
             return JSON.parse(storedPages);
         } catch (e) {
             console.error("Error parsing pages from localStorage", e);
-            return mockPages; // Fallback to in-memory minimal stubs
+            return mockPages; 
         }
     }
-    return mockPages; // Fallback to in-memory minimal stubs
+    return mockPages; 
 };
 
 export const getPageById = async (id: string): Promise<PageData | null> => {
@@ -696,7 +953,7 @@ export const updatePage = async (id: string, data: Partial<Omit<PageData, 'id' |
 
 export const deletePage = async (id: string): Promise<boolean> => {
     await delay(80);
-    if (id === 'anasayfa' || id === 'kullanim-kilavuzu' || id === 'hakkimizda' || id === 'iletisim') return false; // Prevent deletion of core pages
+    if (id === 'anasayfa' || id === 'kullanim-kilavuzu' || id === 'hakkimizda' || id === 'iletisim') return false; 
     let currentPages = await getPages();
     const initialLength = currentPages.length;
     currentPages = currentPages.filter(p => p.id !== id);
@@ -720,20 +977,20 @@ export const allMockTemplatesGetter = async (): Promise<Template[]> => {
             return JSON.parse(storedTemplates);
         } catch (e) {
             console.error("Error parsing templates from localStorage", e);
-            return [];
+            return allMockTemplates; // Fallback to in-memory if parse fails
         }
     }
-    return [];
+    return allMockTemplates; // Fallback to in-memory if not in localStorage
 };
 
 
-export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles_v3'; // Incremented version
+export const ARTICLE_STORAGE_KEY = 'teknobiyo_mock_articles_v3'; 
 export const NOTE_STORAGE_KEY = 'teknobiyo_mock_notes_v3';
 export const CATEGORY_STORAGE_KEY = 'teknobiyo_mock_categories_v3';
 export const USER_STORAGE_KEY = 'teknobiyo_mock_users_v3';
 export const ROLE_STORAGE_KEY = 'teknobiyo_mock_roles_v3';
 export const PAGE_STORAGE_KEY = 'teknobiyo_mock_pages_v3';
-export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3'; // For templates
+export const TEMPLATE_STORAGE_KEY = 'teknobiyo_mock_templates_v3'; 
 
 export const loadInitialData = () => {
     if (typeof window !== 'undefined') {
@@ -747,13 +1004,9 @@ export const loadInitialData = () => {
             localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(mockCategories));
         }
         if (!localStorage.getItem(USER_STORAGE_KEY)) {
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
-            // Add a default admin if no users exist, to prevent lockout
-            if (mockUsers.length === 0) {
-                 const defaultAdmin = {id: 'admin001', name: 'Admin User', username: 'admin', email: 'admin@teknobiyo.example.com', role: 'Admin', joinedAt: new Date().toISOString(), avatar: ''};
-                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdmin]));
-                 console.log("Default admin user created in localStorage for initial login.");
-            }
+            const defaultAdmin = {id: 'admin001', name: 'Admin User', username: 'admin', email: 'admin@teknobiyo.example.com', role: 'Admin', joinedAt: new Date().toISOString(), avatar: ''};
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdmin]));
+            console.log("Default admin user created in localStorage for initial login.");
         }
         if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
             localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(mockRoles));
@@ -762,11 +1015,13 @@ export const loadInitialData = () => {
             localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(mockPages));
         }
         if (!localStorage.getItem(TEMPLATE_STORAGE_KEY)) {
-            localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates));
+            localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(allMockTemplates)); // Initialize with default templates
         }
     }
 };
 
-loadInitialData(); // Initialize on first load if needed
+loadInitialData();
 
 export { loadInitialData as reloadMockData };
+
+    
