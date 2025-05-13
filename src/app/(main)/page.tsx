@@ -103,7 +103,7 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto"
+          className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mt-2" // Added mt-2 for spacing
         >
           {subtitleParts.map((part, partIndex) => (
             <span key={`subpart-${partIndex}`} className={part.colorClass}>
@@ -113,7 +113,7 @@ const WelcomeScreen = () => {
                   variants={subtitleCharVariants}
                   className="inline-block"
                 >
-                  {char}
+                  {char === ' ' ? '\u00A0' : char} {/* Replace space with non-breaking space */}
                 </motion.span>
               ))}
             </span>
@@ -196,9 +196,9 @@ export default function Home() {
 
   if (pageIsLoading) {
      return (
-        <div className="space-y-16">
-            <Skeleton className="h-[30vh] w-full mb-8 rounded-lg" /> {/* Adjusted welcome screen skeleton height */}
-            <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-16 rounded-lg" />
+        <div className="space-y-12"> {/* Adjusted from space-y-16 */}
+            <Skeleton className="h-[30vh] w-full mb-8 rounded-lg" /> {/* Adjusted welcome screen skeleton height and mb */}
+            <Skeleton className="h-[50vh] md:h-[60vh] w-full mb-12 rounded-lg" /> {/* Adjusted mb */}
              <section className="w-full py-8">
                 <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -254,3 +254,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
