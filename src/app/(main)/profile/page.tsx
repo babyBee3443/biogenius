@@ -16,8 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import {
-    Loader2, Edit3, Bell, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
-    Settings as SettingsIcon, Wand2, Info, Download, UserX, Languages, Save // Added Save icon
+    Loader2, Edit3, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
+    Settings as SettingsIcon, Wand2, Info, Download, UserX, Languages, Save, Clock, Eye // Added Clock, Eye
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { updateUser, type User, getUserById } from '@/lib/data/users';
@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+import { usePermissions } from "@/hooks/usePermissions";
 
 
 const DnaBackgroundPattern = () => (
@@ -69,16 +70,13 @@ export default function UserProfilePage() {
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();
+  const { permissions, isLoading: permissionsLoading } = usePermissions(currentUser?.id || null);
 
   const [fullName, setFullName] = React.useState("");
   const [userBio, setUserBio] = React.useState("");
   const [userStatus, setUserStatus] = React.useState<User['status'] | undefined>(undefined);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
-
-  const [quizReminders, setQuizReminders] = React.useState(true);
-  const [newContentAlerts, setNewContentAlerts] = React.useState(true);
-  const [emailFrequency, setEmailFrequency] = React.useState("daily");
 
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
@@ -99,7 +97,7 @@ export default function UserProfilePage() {
           try {
             const user = JSON.parse(storedUser) as User;
             if (isMounted) {
-              const fetchedUser = await getUserById(user.id); // Fetch latest data
+              const fetchedUser = await getUserById(user.id); 
               if (fetchedUser && isMounted) {
                   setCurrentUser(fetchedUser);
                   setFullName(fetchedUser.name || "");
@@ -313,55 +311,39 @@ export default function UserProfilePage() {
 
           <div className="lg:col-span-2">
             <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6 bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-border/30 rounded-xl">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6 bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-border/30 rounded-xl">
                 <TabsTrigger value="general" className="gap-1.5"><SettingsIcon className="h-4 w-4"/>Genel</TabsTrigger>
-                <TabsTrigger value="notifications" className="gap-1.5"><Bell className="h-4 w-4"/>Bildirimler</TabsTrigger>
                 <TabsTrigger value="security" className="gap-1.5"><KeyRound className="h-4 w-4"/>Güvenlik</TabsTrigger>
                 <TabsTrigger value="account" className="gap-1.5"><UserX className="h-4 w-4"/>Hesap</TabsTrigger>
               </TabsList>
 
               <TabsContent value="general">
                 <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
-                  <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Palette className="h-5 w-5 text-primary"/>Görünüm Ayarları</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Palette className="h-5 w-5 text-primary"/>Görünüm ve Diğer Ayarlar</CardTitle></CardHeader>
                   <CardContent className="space-y-6">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="theme-toggle" className="text-base">Tema Seçimi</Label>
                       <ThemeToggle />
                     </div>
-                    <div className="flex items-center justify-between">
-                       <Label className="text-base flex items-center gap-1.5"><Languages className="h-4 w-4"/>Dil</Label>
-                       <Button variant="outline" size="sm" onClick={() => toast({title:"Yakında!", description:"Dil seçimi özelliği yakında aktif olacak."})}>
-                           Türkçe (Değiştir - Yakında)
-                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="notifications">
-                <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
-                  <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Bell className="h-5 w-5 text-primary"/>Bildirim Ayarları</CardTitle></CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between p-3 border rounded-md">
-                      <Label htmlFor="quiz-reminders" className="flex-1">Quiz Hatırlatıcıları</Label>
-                      <Switch id="quiz-reminders" checked={quizReminders} onCheckedChange={setQuizReminders} />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-md">
-                      <Label htmlFor="new-content-alerts" className="flex-1">Yeni İçerik Bildirimleri</Label>
-                      <Switch id="new-content-alerts" checked={newContentAlerts} onCheckedChange={setNewContentAlerts} />
-                    </div>
-                    <div className="space-y-1.5 p-3 border rounded-md">
-                        <Label htmlFor="email-frequency">E-posta Bildirim Frekansı</Label>
-                        <Select value={emailFrequency} onValueChange={setEmailFrequency}>
-                            <SelectTrigger id="email-frequency"><SelectValue /></SelectTrigger>
+                    <div className="space-y-2">
+                        <Label htmlFor="profile-timezone" className="flex items-center gap-1.5"><Clock className="h-4 w-4"/>Saat Dilimi</Label>
+                        <Select disabled>
+                            <SelectTrigger id="profile-timezone"><SelectValue placeholder="Europe/Istanbul (Yakında)" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="instant">Anlık</SelectItem>
-                                <SelectItem value="daily">Günlük Özet</SelectItem>
-                                <SelectItem value="weekly">Haftalık Özet</SelectItem>
-                                <SelectItem value="none">Alma</SelectItem>
+                                <SelectItem value="Europe/Istanbul">Europe/Istanbul</SelectItem>
+                                <SelectItem value="America/New_York">America/New York</SelectItem>
                             </SelectContent>
                         </Select>
-                         <p className="text-xs text-muted-foreground">Bu ayar simüle edilmiştir.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="profile-visibility" className="flex items-center gap-1.5"><Eye className="h-4 w-4"/>Profil Görünürlüğü</Label>
+                         <Select disabled>
+                            <SelectTrigger id="profile-visibility"><SelectValue placeholder="Herkese Açık (Yakında)" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="public">Herkese Açık</SelectItem>
+                                <SelectItem value="private">Gizli</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                   </CardContent>
                 </Card>
@@ -402,9 +384,15 @@ export default function UserProfilePage() {
                 <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
                   <CardHeader><CardTitle className="text-xl flex items-center gap-2"><UserX className="h-5 w-5 text-destructive"/>Hesap Yönetimi</CardTitle></CardHeader>
                   <CardContent className="space-y-6">
-                    <Button variant="outline" onClick={() => toast({title:"Yakında!", description:"Veri indirme özelliği yakında!"})} className="w-full sm:w-auto justify-start gap-2">
-                        <Download className="h-4 w-4"/> Verilerimi İndir (JSON - Yakında)
+                     <Button variant="outline" onClick={() => toast({title:"Yakında!", description:"Hesabı geçici olarak devre dışı bırakma özelliği yakında!"})} className="w-full sm:w-auto justify-start gap-2">
+                        <UserCircle className="mr-2 h-4 w-4" /> Hesabı Geçici Olarak Devre Dışı Bırak (Yakında)
                     </Button>
+                    <div>
+                        <h4 className="font-medium mb-1 flex items-center gap-1.5"><Info className="h-4 w-4"/>Son Giriş Aktiviteleri (Yakında)</h4>
+                        <p className="text-xs text-muted-foreground">
+                            Hesabınıza yapılan son giriş denemeleri ve başarılı girişler burada listelenecektir.
+                        </p>
+                    </div>
                      <div className="p-4 border border-destructive/30 bg-destructive/5 rounded-md">
                         <h4 className="font-semibold text-destructive">Hesabı Kalıcı Olarak Sil</h4>
                         <p className="text-xs text-destructive/80 mt-1 mb-3">
