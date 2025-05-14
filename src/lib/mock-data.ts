@@ -140,10 +140,8 @@ export const getCategories = async (): Promise<Category[]> => {
             if (Array.isArray(parsedCategories)) {
                 return parsedCategories;
             }
-            // console.warn("Invalid categories in localStorage, returning empty array.");
             return [];
         } catch (e) {
-            // console.error("Error parsing categories from localStorage", e);
             return [];
         }
     }
@@ -199,12 +197,12 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
 let mockArticles: ArticleData[] = [];
 let mockNotes: NoteData[] = [];
 let mockUsers: User[] = [];
-const baseMockRoles: Role[] = [ 
+const baseMockRoles: ReadonlyArray<Role> = Object.freeze([
     { id: 'admin', name: 'Admin', description: 'Tam sistem erişimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme', 'Hazır İçeriği Görüntüleme','Kategorileri Yönetme', 'Sayfaları Yönetme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme', 'Rolleri Yönetme', 'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
     { id: 'editor', name: 'Editor', description: 'İçerik yönetimi ve düzenleme yetkileri.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Hazır İçeriği Görüntüleme', 'Kategorileri Yönetme', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
     { id: 'user', name: 'User', description: 'Standart kullanıcı, içerik görüntüleme ve yorum yapma.', permissions: [], userCount: 0 },
-];
-let mockRoles: Role[] = [...baseMockRoles];
+]);
+let mockRoles: Role[] = [...baseMockRoles.map(r => ({...r}))]; // Deep copy
 
 
 let mockPages: PageData[] = [
@@ -358,10 +356,8 @@ export const getArticles = async (): Promise<ArticleData[]> => {
             if (Array.isArray(parsedArticles)) {
                 return parsedArticles;
             }
-            // console.warn("Invalid articles in localStorage, returning empty array.");
             return [];
         } catch (e) {
-            // console.error("Error parsing articles from localStorage", e);
             return [];
         }
     }
@@ -434,10 +430,8 @@ export const getNotes = async (): Promise<NoteData[]> => {
             if (Array.isArray(parsedNotes)) {
                 return parsedNotes;
             }
-            // console.warn("Invalid notes in localStorage, returning empty array.");
             return [];
         } catch (e) {
-            // console.error("Error parsing notes from localStorage", e);
             return [];
         }
     }
@@ -510,10 +504,8 @@ export const getUsers = async (): Promise<User[]> => {
             if (Array.isArray(parsedUsers)) {
                 return parsedUsers;
             }
-            // console.warn("Invalid users in localStorage, returning empty array.");
             return [];
         } catch (e) {
-            // console.error("Error parsing users from localStorage", e);
             return [];
         }
     }
@@ -617,27 +609,40 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 
 // --- Role CRUD Functions ---
 export const getRoles = async (): Promise<Role[]> => {
-  await delay(10);
-  const storedRoles = typeof window !== 'undefined' ? localStorage.getItem(ROLE_STORAGE_KEY) : null;
-  if (storedRoles) {
-      try {
-          const parsedRoles = JSON.parse(storedRoles) as Role[];
-          // Ensure base roles always have their original permissions
-          const updatedRoles = parsedRoles.map(role => {
-              const baseRole = baseMockRoles.find(br => br.id === role.id || br.name.toLowerCase() === role.name.toLowerCase());
-              if (baseRole) {
-                  return { ...role, permissions: baseRole.permissions }; // Always use permissions from baseMockRoles
-              }
-              return role;
-          });
-          return updatedRoles;
-      } catch (e) {
-          // console.error("Error parsing roles from localStorage", e);
-          return [...baseMockRoles]; 
-      }
-  }
-  return [...baseMockRoles]; 
+    await delay(10);
+    const storedRoles = typeof window !== 'undefined' ? localStorage.getItem(ROLE_STORAGE_KEY) : null;
+    let rolesFromStorage: Role[] = [];
+
+    if (storedRoles) {
+        try {
+            rolesFromStorage = JSON.parse(storedRoles) as Role[];
+            if (!Array.isArray(rolesFromStorage)) {
+                rolesFromStorage = [];
+            }
+        } catch (e) {
+            rolesFromStorage = [];
+        }
+    }
+
+    // Merge base roles with stored roles, ensuring base roles' permissions are always from code
+    const mergedRoles = baseMockRoles.map(baseRole => {
+        const storedRole = rolesFromStorage.find(sr => sr.id === baseRole.id || sr.name.toLowerCase() === baseRole.name.toLowerCase());
+        return {
+            ...baseRole, // Start with base role definition (includes correct permissions)
+            description: storedRole?.description || baseRole.description, // Use stored description if available
+            userCount: storedRole?.userCount || 0, // Use stored userCount if available
+        };
+    });
+
+    // Add any custom roles from storage that are not base roles
+    rolesFromStorage.forEach(storedRole => {
+        if (!mergedRoles.some(mr => mr.id === storedRole.id || mr.name.toLowerCase() === storedRole.name.toLowerCase())) {
+            mergedRoles.push(storedRole);
+        }
+    });
+    return mergedRoles;
 };
+
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
   await delay(10);
@@ -671,7 +676,16 @@ export const updateRole = async (id: string, data: Partial<Omit<Role, 'id'>>): P
       if (data.userCount !== undefined) {
           updatedUserCount = data.userCount;
       }
-      currentRoles[index] = { ...currentRoles[index], ...data, userCount: updatedUserCount };
+      // Preserve base role permissions
+      const baseRoleMatch = baseMockRoles.find(br => br.id === currentRoles[index].id || br.name.toLowerCase() === currentRoles[index].name.toLowerCase());
+      const permissionsToKeep = baseRoleMatch ? baseRoleMatch.permissions : data.permissions || currentRoles[index].permissions;
+
+      currentRoles[index] = {
+          ...currentRoles[index],
+          ...data,
+          permissions: permissionsToKeep,
+          userCount: updatedUserCount
+      };
       if (typeof window !== 'undefined') {
           localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
       }
@@ -685,9 +699,8 @@ export const deleteRole = async (id: string): Promise<boolean> => {
   await delay(80);
   let currentRoles = await getRoles();
   const roleToDelete = currentRoles.find(r => r.id === id);
-  if (roleToDelete && ['admin', 'editor', 'user'].includes(roleToDelete.id.toLowerCase())) {
+  if (roleToDelete && (roleToDelete.id === 'admin' || roleToDelete.id === 'editor' || roleToDelete.id === 'user')) {
     if (roleToDelete.userCount > 0) {
-      // console.warn(`Cannot delete core role "${roleToDelete.name}" as it has ${roleToDelete.userCount} users.`);
       return false;
     }
   }
@@ -764,10 +777,8 @@ export const getPages = async (): Promise<PageData[]> => {
             if (Array.isArray(parsedPages)) {
                 return parsedPages;
             }
-            // console.warn("Invalid pages in localStorage, returning default mockPages.");
             return mockPages;
         } catch (e) {
-            // console.error("Error parsing pages from localStorage", e);
             return mockPages;
         }
     }
@@ -849,12 +860,10 @@ export const allMockTemplatesGetter = async (): Promise<Template[]> => {
             if (Array.isArray(parsed) && parsed.length > 0 && parsed[0] && parsed[0].id && parsed[0].name && parsed[0].blocks) {
                 return parsed;
             }
-            // console.warn("Invalid or empty template data in localStorage, re-initializing from source.");
         } catch (e) {
-            // console.error("Error parsing templates from localStorage, re-initializing from source.", e);
+            // Error parsing, will fall through to re-initialize
         }
     }
-    // console.log("Initializing templates in localStorage from ALL_MOCK_TEMPLATES_SOURCE.");
     localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(ALL_MOCK_TEMPLATES_SOURCE));
     return [...ALL_MOCK_TEMPLATES_SOURCE];
 };
@@ -870,26 +879,25 @@ export const PAGE_STORAGE_KEY = 'biyohox_mock_pages_v3';
 
 export const loadInitialData = () => {
     if (typeof window !== 'undefined') {
-        const initOrVerify = (key: string, defaultData: any[], isBaseData: boolean = false) => {
+        const initOrVerify = (key: string, defaultDataFactory: () => any[], isBaseData: boolean = false) => {
             const stored = localStorage.getItem(key);
-            if (!stored || isBaseData) {
-                localStorage.setItem(key, JSON.stringify(defaultData));
+            if (!stored || isBaseData) { // For base data, always re-evaluate against code definition.
+                localStorage.setItem(key, JSON.stringify(defaultDataFactory()));
             } else {
                 try {
                     const parsed = JSON.parse(stored);
                     if (!Array.isArray(parsed)) {
-                        localStorage.setItem(key, JSON.stringify(defaultData));
+                        localStorage.setItem(key, JSON.stringify(defaultDataFactory()));
                     }
                 } catch (e) {
-                    localStorage.setItem(key, JSON.stringify(defaultData));
+                    localStorage.setItem(key, JSON.stringify(defaultDataFactory()));
                 }
             }
         };
 
-        initOrVerify(ARTICLE_STORAGE_KEY, []);
-        initOrVerify(NOTE_STORAGE_KEY, []);
-        initOrVerify(CATEGORY_STORAGE_KEY, []);
-
+        initOrVerify(ARTICLE_STORAGE_KEY, () => []);
+        initOrVerify(NOTE_STORAGE_KEY, () => []);
+        initOrVerify(CATEGORY_STORAGE_KEY, () => []);
 
         const defaultAdminUser: User = {
              id: 'admin001', name: 'Admin User', username: 'admin',
@@ -897,45 +905,47 @@ export const loadInitialData = () => {
              joinedAt: new Date().toISOString(),
              avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
         };
-        const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
-        if (!storedUsers) {
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
-            mockUsers = [defaultAdminUser];
-        } else {
-            try {
-                const parsedUsers = JSON.parse(storedUsers);
-                 if (!Array.isArray(parsedUsers) || !parsedUsers.find(u => u.id === 'admin001')) {
-                    // console.warn("Admin user missing or invalid user data in localStorage, re-initializing users.");
-                    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
-                    mockUsers = [defaultAdminUser];
-                } else {
-                    mockUsers = parsedUsers;
-                }
-            } catch (e) {
-                 // console.error("Error parsing users from localStorage, re-initializing users.", e);
-                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
-                 mockUsers = [defaultAdminUser];
-            }
+
+        initOrVerify(USER_STORAGE_KEY, () => [defaultAdminUser], true); // Re-evaluate if admin is missing/incorrect
+        mockUsers = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
+        if (!mockUsers.find(u => u.id === 'admin001' && u.role === 'Admin')) {
+            const otherUsers = mockUsers.filter(u => u.id !== 'admin001');
+            mockUsers = [defaultAdminUser, ...otherUsers];
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
         }
 
-        // Always ensure base roles have their defined permissions and update counts
+
+        // Always ensure base roles (Admin, Editor, User) have their permissions from baseMockRoles
+        // and update user counts.
         const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
-        const rolesWithUpdatedCounts = baseMockRoles.map(canonicalRole => {
+        const rolesFromStorage = JSON.parse(localStorage.getItem(ROLE_STORAGE_KEY) || '[]') as Role[];
+
+        const updatedRoles = baseMockRoles.map(baseRole => {
             const count = users.filter((u: User) =>
-                u.role.trim().toLowerCase() === canonicalRole.name.trim().toLowerCase() ||
-                u.role.trim().toLowerCase() === canonicalRole.id.trim().toLowerCase()
+                u.role.trim().toLowerCase() === baseRole.name.trim().toLowerCase() ||
+                u.role.trim().toLowerCase() === baseRole.id.trim().toLowerCase()
             ).length;
-            return { ...canonicalRole, userCount: count }; // Permissions are always from baseMockRoles
+            // Take description from storage if a custom role with same ID/name exists, else from base
+            const storedRole = rolesFromStorage.find(sr => sr.id === baseRole.id || sr.name.toLowerCase() === baseRole.name.toLowerCase());
+            return {
+                ...baseRole, // This ensures permissions are always from the code for base roles
+                description: storedRole?.description || baseRole.description,
+                userCount: count,
+            };
         });
-        localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(rolesWithUpdatedCounts));
-        mockRoles = rolesWithUpdatedCounts; 
 
-        initOrVerify(PAGE_STORAGE_KEY, mockPages, true); 
-        initOrVerify(TEMPLATE_STORAGE_KEY, [...ALL_MOCK_TEMPLATES_SOURCE], true); 
+        // Add any custom roles from storage that are not base roles
+        rolesFromStorage.forEach(storedRole => {
+            if (!updatedRoles.some(ur => ur.id === storedRole.id || ur.name.toLowerCase() === storedRole.name.toLowerCase())) {
+                updatedRoles.push(storedRole); // Custom roles keep their stored permissions
+            }
+        });
 
-        // console.log("Initial data load/verification complete.");
-        // console.log("Roles in localStorage after init:", localStorage.getItem(ROLE_STORAGE_KEY));
-        // console.log("Admin user role:", mockUsers.find(u=>u.id === 'admin001')?.role);
+        localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(updatedRoles));
+        mockRoles = updatedRoles;
+
+        initOrVerify(PAGE_STORAGE_KEY, () => mockPages, true); // Ensure mockPages are initialized if not present or to update them
+        initOrVerify(TEMPLATE_STORAGE_KEY, () => [...ALL_MOCK_TEMPLATES_SOURCE], true);
 
     }
 };
@@ -946,3 +956,4 @@ if (typeof window !== 'undefined') {
 
 
 export { loadInitialData as reloadMockData };
+
