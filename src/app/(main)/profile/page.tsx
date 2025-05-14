@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import {
     Loader2, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
-    Settings as SettingsIcon, Clock, Eye, Save, RefreshCw, Upload, ChevronLeft, ChevronRight
+    Settings as SettingsIcon, Clock, Eye, Save, Upload, ChevronLeft, ChevronRight // Added Chevron icons
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { updateUser, type User, getUserById } from '@/lib/data/users';
@@ -105,14 +105,20 @@ export default function UserProfilePage() {
                   setFullName(fetchedUser.name || "");
                   setUserBio(fetchedUser.bio || "");
                   setUserStatus(fetchedUser.status || 'Meraklı');
-                  setAvatarUrl(fetchedUser.avatar || `https://api.dicebear.com/8.x/notionists/svg?seed=${(fetchedUser.name || 'User').replace(/\s/g, '')}&size=128`);
+                  const initialAvatar = fetchedUser.avatar || `https://api.dicebear.com/8.x/bottts/svg?seed=${(fetchedUser.name || 'User').replace(/\s/g, '')}&size=128`;
+                  setAvatarUrl(initialAvatar);
+                  setSessionAvatarHistory([initialAvatar]);
+                  setCurrentHistoryIndex(0);
               } else if (isMounted) {
                  console.warn("User from localStorage not found in DB, using localStorage data for profile.");
                  setCurrentUser(user);
                  setFullName(user.name || "");
                  setUserBio(user.bio || "");
                  setUserStatus(user.status || 'Meraklı');
-                 setAvatarUrl(user.avatar || `https://api.dicebear.com/8.x/notionists/svg?seed=${(user.name || 'User').replace(/\s/g, '')}&size=128`);
+                 const initialAvatar = user.avatar || `https://api.dicebear.com/8.x/bottts/svg?seed=${(user.name || 'User').replace(/\s/g, '')}&size=128`;
+                 setAvatarUrl(initialAvatar);
+                 setSessionAvatarHistory([initialAvatar]);
+                 setCurrentHistoryIndex(0);
               }
             }
           } catch (e) {
@@ -171,12 +177,17 @@ export default function UserProfilePage() {
     }
   };
 
-  const handleFetchRandomAvatar = () => {
+  const handleGenerateNewAvatar = () => {
     const randomSeed = Math.random().toString(36).substring(7);
-    const newAvatarUrl = `https://api.dicebear.com/8.x/notionists/svg?seed=${randomSeed}&size=128`; // Removed backgroundColor=transparent
+    const newAvatarUrl = `https://api.dicebear.com/8.x/bottts/svg?seed=${randomSeed}&size=128`;
+    
+    // Remove subsequent history if any
+    const newHistory = sessionAvatarHistory.slice(0, currentHistoryIndex + 1);
+    newHistory.push(newAvatarUrl);
+
+    setSessionAvatarHistory(newHistory);
+    setCurrentHistoryIndex(newHistory.length - 1);
     setAvatarUrl(newAvatarUrl);
-    setSessionAvatarHistory(prev => [...prev, newAvatarUrl]);
-    setCurrentHistoryIndex(sessionAvatarHistory.length); // New avatar is at the end of current history + 1 length (index is length)
     toast({ title: "Yeni Avatar Oluşturuldu", description: "Kaydetmeyi unutmayın." });
   };
 
@@ -193,6 +204,9 @@ export default function UserProfilePage() {
         const newIndex = currentHistoryIndex + 1;
         setCurrentHistoryIndex(newIndex);
         setAvatarUrl(sessionAvatarHistory[newIndex]);
+    } else {
+        // If at the end of history, generate a new one
+        handleGenerateNewAvatar();
     }
   };
 
@@ -279,17 +293,14 @@ export default function UserProfilePage() {
                 <AvatarImage src={avatarUrl || undefined} alt={currentUser.name || currentUser.username || ''} data-ai-hint="user avatar placeholder" />
                 <AvatarFallback className="text-4xl bg-muted">{(currentUser.name || currentUser.username || 'U').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <div className="flex items-center gap-2">
-                 <Button type="button" variant="outline" size="icon" onClick={handlePreviousAvatar} disabled={isSavingProfile || currentHistoryIndex <= 0} className="text-xs h-8 w-8">
-                    <ChevronLeft className="h-4 w-4" />
+              <div className="flex items-center justify-center gap-2 w-full">
+                 <Button type="button" variant="outline" size="icon" onClick={handlePreviousAvatar} disabled={isSavingProfile || currentHistoryIndex <= 0} className="text-xs h-9 w-9 rounded-full">
+                    <ChevronLeft className="h-5 w-5" />
                     <span className="sr-only">Önceki Avatar</span>
                  </Button>
-                 <Button type="button" variant="outline" size="sm" className="text-xs h-8 flex-grow" onClick={handleFetchRandomAvatar} disabled={isSavingProfile}>
-                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Rastgele Yeni Avatar
-                 </Button>
-                 <Button type="button" variant="outline" size="icon" onClick={handleNextAvatar} disabled={isSavingProfile || currentHistoryIndex >= sessionAvatarHistory.length - 1} className="text-xs h-8 w-8">
-                    <ChevronRight className="h-4 w-4" />
-                     <span className="sr-only">Sonraki Avatar</span>
+                 <Button type="button" variant="outline" size="icon" onClick={handleNextAvatar} disabled={isSavingProfile} className="text-xs h-9 w-9 rounded-full">
+                    <ChevronRight className="h-5 w-5" />
+                     <span className="sr-only">Sonraki Avatar / Yeni Üret</span>
                  </Button>
               </div>
               <CardTitle className="text-2xl font-semibold mt-3">{currentUser.name || currentUser.username}</CardTitle>
@@ -462,3 +473,4 @@ export default function UserProfilePage() {
     </>
   );
 }
+
