@@ -9,8 +9,9 @@ import { toast } from "@/hooks/use-toast";
 import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
-import { getArticleById, updateArticle, deleteArticle, type ArticleData, getCategories, type Category, ARTICLE_STORAGE_KEY } from '@/lib/data/articles'; // Changed mock-data to data/articles
-import { generateSlug as generateSlugUtil } from '@/lib/utils'; // Corrected import path for generateSlug
+import { getArticleById, updateArticle, deleteArticle, type ArticleData, ARTICLE_STORAGE_KEY } from '@/lib/data/articles';
+import { getCategories, type Category } from '@/lib/data/categories'; // Corrected import
+import { generateSlug as generateSlugUtil } from '@/lib/utils';
 import { useDebouncedCallback } from 'use-debounce';
 
 import {
@@ -161,7 +162,7 @@ export default function EditArticlePage() {
              if (!currentSlug || currentSlug === generateSlugUtil(originalTitle)) {
                  setSlug(generateSlugUtil(newTitle));
              }
-         } else if (newTitle && !currentSlug) { 
+         } else if (newTitle && !currentSlug) {
             setSlug(generateSlugUtil(newTitle));
          }
      }, 500);
@@ -169,7 +170,7 @@ export default function EditArticlePage() {
      React.useEffect(() => {
          if (articleData) {
              debouncedSetSlug(title, articleData.title, slug);
-         } else if (title && !slug) { 
+         } else if (title && !slug) {
             setSlug(generateSlugUtil(title));
          }
      }, [title, articleData, slug, debouncedSetSlug]);
@@ -277,7 +278,7 @@ export default function EditArticlePage() {
              const updatedArticle = await updateArticle(articleId, currentData);
 
              if (updatedArticle) {
-                 setArticleData(updatedArticle); 
+                 setArticleData(updatedArticle);
                  setTitle(updatedArticle.title);
                  setExcerpt(updatedArticle.excerpt || '');
                  setCategory(updatedArticle.category);
@@ -364,25 +365,25 @@ export default function EditArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: articleId || 'preview_edit_article', 
+            id: articleId || 'preview_edit_article',
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
-            mainImageUrl: mainImageUrl || 'https://placehold.co/1200x600.png', // Updated placeholder
+            mainImageUrl: mainImageUrl || 'https://placehold.co/1200x600.png',
             blocks,
-            status: status, 
+            status: status,
             isFeatured: isFeatured,
             isHero: isHero,
-            authorId: articleData?.authorId || 'admin001', 
+            authorId: articleData?.authorId || 'admin001',
             createdAt: articleData?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
             seoDescription: seoDescription || excerpt.substring(0, 160) || "",
-            slug: slug || generateSlugUtil(title), 
+            slug: slug || generateSlugUtil(title),
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
-        
+
         console.log(`[EditArticlePage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
         console.log("[EditArticlePage/handlePreview] Preview Data before stringify:", previewData);
 
@@ -394,7 +395,7 @@ export default function EditArticlePage() {
 
         try {
             const stringifiedData = JSON.stringify(previewData);
-            console.log("[EditArticlePage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
+            console.log("[EditArticlePage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "...");
             if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
                  console.error("[EditArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
                  toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
@@ -418,10 +419,10 @@ export default function EditArticlePage() {
             console.log("[EditArticlePage/handlePreview] Verification SUCCESS after setItem");
 
 
-            const previewUrl = `/admin/preview`; 
+            const previewUrl = `/admin/preview`;
             console.log(`[EditArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
-            
-            setTimeout(() => { 
+
+            setTimeout(() => {
                  const newWindow = window.open(previewUrl, '_blank');
                  if (!newWindow) {
                       console.error("[EditArticlePage/handlePreview] Failed to open preview window.");
@@ -429,12 +430,12 @@ export default function EditArticlePage() {
                           variant: "destructive",
                           title: "Önizleme Penceresi Açılamadı",
                           description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                          duration: 10000, 
+                          duration: 10000,
                       });
                  } else {
                     console.log("[EditArticlePage/handlePreview] Preview window opened successfully.");
                  }
-            }, 300); 
+            }, 300);
 
         } catch (error: any) {
              console.error("[EditArticlePage/handlePreview] Error during preview process:", error);
@@ -453,7 +454,7 @@ export default function EditArticlePage() {
      };
 
      const handleRevertToDraftOrReady = () => {
-        setStatus('Taslak'); 
+        setStatus('Taslak');
         handleSave(false);
      };
 
@@ -583,10 +584,10 @@ export default function EditArticlePage() {
                              <div className="space-y-2">
                                  <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                  <div className="flex gap-2">
-                                      <Input 
-                                        id="main-image-url" 
-                                        value={mainImageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : mainImageUrl} 
-                                        onChange={(e) => setMainImageUrl(e.target.value)} 
+                                      <Input
+                                        id="main-image-url"
+                                        value={mainImageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : mainImageUrl}
+                                        onChange={(e) => setMainImageUrl(e.target.value)}
                                         placeholder="https://... veya dosya yükleyin"
                                         disabled={mainImageUrl.startsWith('data:')}
                                        />
@@ -797,10 +798,8 @@ export default function EditArticlePage() {
                                      <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                                      <SelectContent>
                                          <SelectItem value="Taslak">Taslak</SelectItem>
-                                         {/* <SelectItem value="İncelemede">İncelemede</SelectItem> */}
                                          <SelectItem value="Hazır">Hazır (Admin/Editör Görsün)</SelectItem>
                                          <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
-                                         {/* <SelectItem value="Arşivlendi">Arşivlendi</SelectItem> */}
                                      </SelectContent>
                                  </Select>
                              </div>

@@ -10,8 +10,9 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { useDebouncedCallback } from 'use-debounce';
-import { createArticle, type ArticleData, getCategories, type Category, ARTICLE_STORAGE_KEY } from '@/lib/data/articles'; // Changed mock-data to data/articles
-import { generateSlug as generateSlugUtil } from '@/lib/utils'; // Corrected import path for generateSlug
+import { createArticle, type ArticleData, ARTICLE_STORAGE_KEY } from '@/lib/data/articles';
+import { getCategories, type Category } from '@/lib/data/categories'; // Corrected import
+import { generateSlug as generateSlugUtil } from '@/lib/utils';
 import { usePermissions } from "@/hooks/usePermissions";
 
 
@@ -46,7 +47,7 @@ import { ArrowLeft, Eye, Loader2, Save, Upload, Star, Layers, FileText } from "l
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; 
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 export default function NewArticlePage() {
     const router = useRouter();
@@ -263,16 +264,16 @@ export default function NewArticlePage() {
 
         const previewData: Partial<ArticleData> & { previewType: 'article' } = {
             previewType: 'article',
-            id: 'preview_new_article', 
+            id: 'preview_new_article',
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
-            mainImageUrl: mainImageUrl || 'https://placehold.co/1200x600.png', // Updated placeholder
+            mainImageUrl: mainImageUrl || 'https://placehold.co/1200x600.png',
             blocks,
             isFeatured: isFeatured,
             isHero: isHero,
             status: status,
-            authorId: 'admin001', 
+            authorId: 'admin001',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             seoTitle: seoTitle || title,
@@ -281,7 +282,7 @@ export default function NewArticlePage() {
             keywords: keywords || [],
             canonicalUrl: canonicalUrl || "",
         };
-        
+
         console.log(`[NewArticlePage/handlePreview] Preparing to save preview data to localStorage with key: ${PREVIEW_STORAGE_KEY}`);
         console.log("[NewArticlePage/handlePreview] Preview Data before stringify:", previewData);
 
@@ -290,10 +291,10 @@ export default function NewArticlePage() {
             toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
             return;
         }
-        
+
         try {
             const stringifiedData = JSON.stringify(previewData);
-            console.log("[NewArticlePage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
+            console.log("[NewArticlePage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "...");
             if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
                  console.error("[NewArticlePage/handlePreview] Error: Stringified preview data is empty or null.");
                  toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
@@ -301,8 +302,7 @@ export default function NewArticlePage() {
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
             console.log(`[NewArticlePage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
-            
-            // Verification step
+
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             console.log(`[NewArticlePage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
 
@@ -317,7 +317,7 @@ export default function NewArticlePage() {
             }
             console.log("[NewArticlePage/handlePreview] Verification SUCCESS after setItem");
 
-            const previewUrl = `/admin/preview`; 
+            const previewUrl = `/admin/preview`;
             console.log(`[NewArticlePage/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
             setTimeout(() => {
@@ -333,7 +333,7 @@ export default function NewArticlePage() {
                 } else {
                     console.log("[NewArticlePage/handlePreview] Preview window opened successfully.");
                 }
-            }, 300); 
+            }, 300);
 
         } catch (error: any) {
             console.error("[NewArticlePage/handlePreview] Error during preview process:", error);
@@ -433,10 +433,10 @@ export default function NewArticlePage() {
                             <div className="space-y-2">
                                 <Label htmlFor="main-image-url">Ana Görsel URL</Label>
                                 <div className="flex gap-2">
-                                     <Input 
-                                        id="main-image-url" 
-                                        value={mainImageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : mainImageUrl} 
-                                        onChange={(e) => setMainImageUrl(e.target.value)} 
+                                     <Input
+                                        id="main-image-url"
+                                        value={mainImageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : mainImageUrl}
+                                        onChange={(e) => setMainImageUrl(e.target.value)}
                                         placeholder="https://... veya dosya yükleyin"
                                         disabled={mainImageUrl.startsWith('data:')}
                                     />
@@ -642,10 +642,8 @@ export default function NewArticlePage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Taslak">Taslak</SelectItem>
-                                        {/* <SelectItem value="İncelemede">İncelemede</SelectItem> */}
                                         <SelectItem value="Hazır">Hazır (Admin/Editör Görsün)</SelectItem>
                                         <SelectItem value="Yayınlandı">Yayınlandı</SelectItem>
-                                        {/* <SelectItem value="Arşivlendi">Arşivlendi</SelectItem> */}
                                     </SelectContent>
                                 </Select>
                             </div>
