@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation'; // Added useRouter import
 
 
 interface ArticleStub {
@@ -57,10 +58,10 @@ const DnaLogo = () => (
         <defs>
             <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="hsl(var(--primary))">
-                    <animate attributeName="stop-color" values="hsl(var(--primary));hsl(175 80% 40%);hsl(var(--primary))" dur="4s" repeatCount="indefinite" />
+                    <animate attributeName="stop-color" values="hsl(var(--primary));hsl(145 60% 40%);hsl(var(--primary))" dur="4s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor="hsl(175 75% 45%)">
-                    <animate attributeName="stop-color" values="hsl(175 75% 45%);hsl(var(--primary));hsl(175 75% 45%)" dur="4s" repeatCount="indefinite" />
+                <stop offset="100%" stopColor="hsl(145 75% 45%)">
+                    <animate attributeName="stop-color" values="hsl(145 75% 45%);hsl(var(--primary));hsl(145 75% 45%)" dur="4s" repeatCount="indefinite" />
                 </stop>
             </linearGradient>
         </defs>
@@ -102,7 +103,8 @@ const DnaLogo = () => (
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                const amplitude = 10 + (typeof window !== 'undefined' ? Math.sin(Date.now() / 700 + i) * 2 : 0);
+                // const amplitude = 10 + (typeof window !== 'undefined' ? Math.sin(Date.now() / 700 + i) * 2 : 0); // Removed for SSR compatibility
+                const amplitude = 10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i) * 2 : Math.cos(Date.now() / 700 + i) * 2);
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
@@ -114,11 +116,11 @@ const DnaLogo = () => (
                         y2={yPos}
                         strokeWidth="3"
                         strokeLinecap="round"
-                        className="stroke-primary/50 dark:stroke-primary/30"
+                        className="stroke-green-500/50 dark:stroke-green-400/30"
                     >
                          <animate
                             attributeName="stroke"
-                            values="hsl(var(--primary)/0.5);hsl(175 80% 40% / 0.7);hsl(175 75% 45% / 0.5);hsl(var(--primary)/0.5)"
+                            values="hsl(var(--primary)/0.5);hsl(145 80% 40% / 0.7);hsl(145 75% 45% / 0.5);hsl(var(--primary)/0.5)"
                             dur="5s"
                             repeatCount="indefinite"
                             begin={`${i * 0.2}s`}
@@ -237,7 +239,7 @@ const Header = () => {
     setCurrentUser(null);
     window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/'); // Use replace to prevent going back
+    router.replace('/'); 
   };
 
   const handleCreateAccountSuccess = () => {
@@ -304,7 +306,7 @@ const Header = () => {
           <div className="flex flex-1 items-center justify-end space-x-2">
             <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
               <PopoverTrigger asChild>
-                 <div className="relative w-full max-w-[120px] sm:max-w-[140px]">
+                 <div className="relative w-full max-w-[100px] sm:max-w-[120px]"> {/* Reduced width */}
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="text"
@@ -363,7 +365,7 @@ const Header = () => {
             <ThemeToggle />
 
              {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
-                <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
+                  <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
                      <Link href="/admin" passHref>
                         <ShieldCheck className="mr-1.5 h-4 w-4" />
                         <span className="hidden sm:inline">Admin Paneli</span>
@@ -498,3 +500,4 @@ const Header = () => {
 };
 
 export default Header;
+
