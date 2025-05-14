@@ -26,7 +26,8 @@ import {
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from "@/components/ui/pagination";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
-import { getArticles, deleteArticle, type ArticleData, getCategories, type Category } from '@/lib/mock-data';
+import { getArticles, deleteArticle, type ArticleData } from '@/lib/data/articles'; // Updated import
+import { getCategories, type Category } from '@/lib/data/categories'; // Updated import
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -46,7 +47,7 @@ const getStatusVariant = (status: ArticleData['status']): "default" | "secondary
         case 'Yayınlandı': return 'default';
         case 'Taslak': return 'secondary';
         case 'İncelemede': return 'outline';
-        case 'Hazır': return 'secondary'; // Changed from default for better distinction
+        case 'Hazır': return 'secondary'; 
         case 'Arşivlendi': return 'destructive';
         default: return 'secondary';
     }
@@ -54,7 +55,6 @@ const getStatusVariant = (status: ArticleData['status']): "default" | "secondary
 
 const getCategoryClass = (categoryName: string): string => {
      const lowerCaseName = categoryName.toLowerCase();
-     // Only Biyoloji and Genel expected from mock-data.ts now
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
@@ -89,7 +89,7 @@ export default function AdminArticlesPage() {
         getArticles(),
         getCategories()
       ]);
-      setAllCategories(categoryData.filter(cat => cat.name !== 'Teknoloji')); // Ensure Teknoloji is not in filter options
+      setAllCategories(categoryData.filter(cat => cat.name !== 'Teknoloji')); 
 
       const filteredData = articleData.filter(article =>
           (article.title.toLowerCase().includes(searchTerm.toLowerCase())) &&

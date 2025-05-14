@@ -5,26 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import {
-  Newspaper, // Toplam Makale
-  Eye, // Sayfa Görüntülenme
-  Users, // Tekil Ziyaretçi & Aktif Kullanıcılar
-  MessageSquare, // Yorumlar
-  ArrowUpRight, // Hemen Çıkma Oranı
-  Upload, // Dönüşüm Oranı (Hedef)
-  Clock, // Ortalama Okuma Süresi
-  LineChart, // Trafik Tab
-  ExternalLink, // Kaynaklar Tab
-  Smartphone, // Cihazlar Tab
-  FileText, // İçerik Tab
-  Search, // SEO Tab
-  TrendingUp, // Popüler Makaleler & Dönüşüm Oranı (Abone)
-  Gauge, // Sayfa Yüklenme Süresi
-  Server, // Sunucu Yanıt Süresi
-  AlertTriangle, // Hata Oranı
-  RefreshCw, // Verileri Yenile
-  Activity, // Activity Icon
-  Loader2, // Loader Icon
-  Home, // Home icon for "Siteyi Görüntüle"
+  Newspaper, 
+  Eye, 
+  Users, 
+  MessageSquare, 
+  ArrowUpRight, 
+  Upload, 
+  Clock, 
+  LineChart, 
+  ExternalLink, 
+  Smartphone, 
+  FileText, 
+  Search, 
+  TrendingUp, 
+  Gauge, 
+  Server, 
+  AlertTriangle, 
+  RefreshCw, 
+  Activity, 
+  Loader2, 
+  Home, 
 } from "lucide-react";
 import {
   Table,
@@ -33,24 +33,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"; // For lists
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // For user list
-import { getArticles, getUsers, type ArticleData, type User } from "@/lib/mock-data"; // Update imports
+} from "@/components/ui/table"; 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
+import { getArticles, type ArticleData } from "@/lib/data/articles"; // Updated import
+import { getUsers, type User } from "@/lib/data/users"; // Updated import
 import * as React from "react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 
 
-// --- Mock Data Fetching Functions ---
-// Simulate fetching total comment count
 async function getTotalCommentCount(): Promise<number> {
-   // Replace with: const snapshot = await getDocs(collection(db, 'comments')); return snapshot.size;
-  return 0; // Mock value
+  return 0; 
 }
 
-
-// --- Placeholder Components ---
 const PlaceholderChart = ({ height = 'h-72' }: { height?: string }) => (
     <div className={`${height} w-full bg-muted rounded-md flex items-center justify-center text-sm text-muted-foreground`}>
         Grafik Alanı (Gerçek Analitik Verisi Gerekiyor)
@@ -82,9 +78,9 @@ export default function AdminDashboard() {
           if (isMounted) setCurrentUserId(null);
         }
       } else {
-        if (isMounted) setCurrentUserId(null); // No user, explicitly set to null
+        if (isMounted) setCurrentUserId(null); 
       }
-      if (isMounted) setIsInitialLoadComplete(true); // Mark initial localStorage check as complete
+      if (isMounted) setIsInitialLoadComplete(true); 
     }
     return () => { isMounted = false; };
   }, []);
@@ -141,22 +137,20 @@ export default function AdminDashboard() {
         console.log("[AdminDashboard] Waiting for initial user ID load from localStorage...");
         return;
     }
-    // If no user ID after initial load, AdminLayout should handle redirection.
-    // Dashboard specific logic should only run if there's a user and permissions are loading or loaded.
+    
     if (!currentUserId) {
         console.log("[AdminDashboard] No currentUserId. AdminLayout should redirect to login if not already on /login.");
-        setLoadingData(false); // No data to load
+        setLoadingData(false); 
         return;
     }
 
     if (permissionsLoading) {
         console.log("[AdminDashboard] User ID present, waiting for permissions to load...");
-        return; // Wait for permissions to load
+        return; 
     }
 
     if (permissionsError) {
         console.error("[AdminDashboard] Permissions error:", permissionsError);
-        // Error is handled by the main return block below
         return;
     }
     
@@ -186,7 +180,6 @@ export default function AdminDashboard() {
     );
   }
 
-  // Show loader if initial localStorage check is not done, or if permissions are loading for a valid user, or if data is loading
   if (!isInitialLoadComplete || (currentUserId && permissionsLoading) || loadingData) {
     return (
         <div className="flex justify-center items-center h-screen">
@@ -197,7 +190,6 @@ export default function AdminDashboard() {
   }
 
 
-  // --- Data for placeholders that require real analytics ---
   const pageViews = 0;
   const uniqueVisitors = 0;
   const bounceRate = "0.00%";
@@ -211,7 +203,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">İstatistikler</h1>
         <div className="flex gap-2">
@@ -226,7 +217,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Top Row Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -278,7 +268,6 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Second Row Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -318,7 +307,6 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Graphs Section */}
        <Card>
          <CardHeader>
             <CardTitle>Grafikler</CardTitle>
@@ -345,7 +333,6 @@ export default function AdminDashboard() {
                         </CardContent>
                      </Card>
                  </TabsContent>
-                 {/* Other Tabs - Render PlaceholderChart for now */}
                  <TabsContent value="sources"><PlaceholderChart /></TabsContent>
                  <TabsContent value="devices"><PlaceholderChart /></TabsContent>
                  <TabsContent value="content"><PlaceholderChart /></TabsContent>
@@ -355,7 +342,6 @@ export default function AdminDashboard() {
          </CardContent>
        </Card>
 
-       {/* Popular Articles and Active Users */}
        <div className="grid gap-6 lg:grid-cols-3">
            <Card className="lg:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -431,7 +417,6 @@ export default function AdminDashboard() {
             </Card>
         </div>
 
-        {/* Performance Metrics */}
         <div>
             <h2 className="text-xl font-semibold mb-4">Performans Metrikleri</h2>
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

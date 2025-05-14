@@ -12,7 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Upload, Save, KeyRound, Loader2, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube, X as XIcon, Newspaper, BookCopy, Eye } from 'lucide-react';
-import { getUserById, updateUser, type User, getArticles, getNotes, type ArticleData, type NoteData } from '@/lib/mock-data';
+import { getUserById, updateUser, type User } from '@/lib/data/users'; // Updated import
+import { getArticles, type ArticleData } from '@/lib/data/articles'; // Updated import
+import { getNotes, type NoteData } from '@/lib/data/notes'; // Updated import
 
 interface UserContentStats {
     articlesCount: number;
@@ -37,7 +39,6 @@ export default function AdminProfilePage() {
   });
 
 
-  // Form States
   const [fullName, setFullName] = React.useState("");
   const [username, setUsername] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -56,7 +57,6 @@ export default function AdminProfilePage() {
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Effect to get the logged-in user's ID from localStorage
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
@@ -379,7 +379,6 @@ export default function AdminProfilePage() {
         </CardContent>
       </Card>
 
-      {/* User Content Statistics */}
         <Card>
             <CardHeader>
                 <CardTitle>İçerik İstatistikleri</CardTitle>

@@ -1,5 +1,5 @@
 
-"use client"; // Indicate this is a Client Component
+"use client"; 
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,7 +26,7 @@ import {
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from "@/components/ui/pagination";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
-import { getNotes, deleteNote, type NoteData } from '@/lib/mock-data'; // Import note data functions
+import { getNotes, deleteNote, type NoteData } from '@/lib/data/notes'; // Updated import
 import { cn } from "@/lib/utils";
 
 export default function AdminBiyolojiNotlariPage() {
@@ -35,12 +35,11 @@ export default function AdminBiyolojiNotlariPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
-  // State for filtering, sorting, search, and pagination
-  const currentPage = 1; // Example
-  const totalPages = 1; // Example (Calculate based on total notes and items per page)
+  const currentPage = 1; 
+  const totalPages = 1; 
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [selectedCategory, setSelectedCategory] = React.useState<string[]>([]); // Allow multiple category filters
-  const [selectedLevel, setSelectedLevel] = React.useState<string[]>([]); // Allow multiple level filters
+  const [selectedCategory, setSelectedCategory] = React.useState<string[]>([]); 
+  const [selectedLevel, setSelectedLevel] = React.useState<string[]>([]); 
 
   const categories = [...new Set(notes.map(note => note.category))];
   const levels = [...new Set(notes.map(note => note.level))];
@@ -53,16 +52,14 @@ export default function AdminBiyolojiNotlariPage() {
       const data = await getNotes();
       console.log("[fetchNotes] Raw data fetched:", data.length, "notes");
 
-       // Apply filtering and sorting
        const filteredData = data.filter(note =>
           (note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           note.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+           (note.summary && note.summary.toLowerCase().includes(searchTerm.toLowerCase())) || // check if summary exists
+           (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))) && // check if tags exist
           (selectedCategory.length === 0 || selectedCategory.includes(note.category)) &&
           (selectedLevel.length === 0 || selectedLevel.includes(note.level))
        );
-       // Add sorting logic here if needed
-
+       
       setNotes(filteredData);
       console.log("[fetchNotes] Filtered data set to state:", filteredData.length, "notes");
     } catch (err) {
@@ -73,7 +70,7 @@ export default function AdminBiyolojiNotlariPage() {
       setLoading(false);
       console.log("[fetchNotes] Fetching complete, loading set to false.");
     }
-  }, [searchTerm, selectedCategory, selectedLevel]); // Include dependencies
+  }, [searchTerm, selectedCategory, selectedLevel]); 
 
   React.useEffect(() => {
     fetchNotes();
@@ -119,8 +116,8 @@ export default function AdminBiyolojiNotlariPage() {
 
        setter(prev =>
            currentValues.includes(value)
-           ? prev.filter(item => item !== value) // Remove if already selected
-           : [...prev, value] // Add if not selected
+           ? prev.filter(item => item !== value) 
+           : [...prev, value] 
        );
    };
 
@@ -144,7 +141,6 @@ export default function AdminBiyolojiNotlariPage() {
          </div>
       </div>
 
-      {/* Filtering and Search Bar */}
        <Card>
             <CardHeader>
                 <CardTitle>Filtrele ve Ara</CardTitle>
@@ -157,7 +153,6 @@ export default function AdminBiyolojiNotlariPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                  />
                  <div className="flex gap-2">
-                    {/* Category Filter Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="outline">
@@ -178,7 +173,6 @@ export default function AdminBiyolojiNotlariPage() {
                              ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    {/* Level Filter Dropdown */}
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="outline">
@@ -199,7 +193,6 @@ export default function AdminBiyolojiNotlariPage() {
                              ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    {/* Optional: Add sorting */}
                  </div>
             </CardContent>
        </Card>
@@ -249,10 +242,10 @@ export default function AdminBiyolojiNotlariPage() {
                       <Badge variant="outline" className="font-normal">{note.level}</Badge>
                     </TableCell>
                     <TableCell className="max-w-xs truncate">
-                        {note.tags.slice(0, 3).map(tag => (
+                        {note.tags && note.tags.slice(0, 3).map(tag => ( // Add null check for note.tags
                             <Badge key={tag} variant="outline" className="mr-1 text-xs font-normal">{tag}</Badge>
                         ))}
-                        {note.tags.length > 3 && <span className="text-xs text-muted-foreground">...</span>}
+                        {note.tags && note.tags.length > 3 && <span className="text-xs text-muted-foreground">...</span>}
                     </TableCell>
                     <TableCell>{note.updatedAt ? new Date(note.updatedAt).toLocaleDateString('tr-TR') : '-'}</TableCell>
                     <TableCell className="text-right">
@@ -284,7 +277,6 @@ export default function AdminBiyolojiNotlariPage() {
             </Table>
           )}
         </CardContent>
-         {/* Pagination (Only show if not loading, no error, and there are notes) */}
          {!loading && !error && notes.length > 0 && (
              <CardContent>
                  <Pagination>
@@ -292,7 +284,6 @@ export default function AdminBiyolojiNotlariPage() {
                     <PaginationItem>
                       <PaginationPrevious href={currentPage > 1 ? `/admin/biyoloji-notlari?page=${currentPage - 1}` : '#'} aria-disabled={currentPage <= 1} />
                     </PaginationItem>
-                    {/* Dynamically generate page numbers based on totalPages */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
                         <PaginationItem key={pageNumber}>
                           <PaginationLink href={`/admin/biyoloji-notlari?page=${pageNumber}`} isActive={currentPage === pageNumber}>
@@ -300,7 +291,6 @@ export default function AdminBiyolojiNotlariPage() {
                           </PaginationLink>
                         </PaginationItem>
                     ))}
-                    {/* Add Ellipsis if needed */}
                      {totalPages > 5 && currentPage < totalPages - 2 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
                     <PaginationItem>
                       <PaginationNext href={currentPage < totalPages ? `/admin/biyoloji-notlari?page=${currentPage + 1}` : '#'} aria-disabled={currentPage >= totalPages} />

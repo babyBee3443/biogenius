@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { getArticles, type ArticleData } from '@/lib/mock-data';
+import { getArticles, type ArticleData } from '@/lib/data/articles'; // Updated import
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
 
@@ -94,7 +94,7 @@ const WelcomeScreen = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
+        staggerChildren: 0.03, // Reduced stagger for faster appearance
         delayChildren: 0.5,
       },
     },
@@ -102,17 +102,17 @@ const WelcomeScreen = () => {
 
   const subtitleCharVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }, // Faster char animation
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center text-center py-8 px-4 overflow-hidden mb-8">
+    <section className="relative flex flex-col items-center justify-center text-center py-6 px-4 overflow-hidden mb-6"> {/* Reduced padding and margin */}
       <div className="relative z-10">
         <motion.h1
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-primary"
+          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-primary" // Reduced mb
         >
           {title}
         </motion.h1>
@@ -121,7 +121,7 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mt-2"
+          className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto" // Reduced max-width
         >
           {subtitleParts.map((part, partIndex) => (
             <span key={`subpart-${partIndex}`} className={part.colorClass}>

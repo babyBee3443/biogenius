@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FilePenLine, Trash2, ShieldQuestion, UserPlus, Loader2, RefreshCw } from "lucide-react"; // Added icons
+import { FilePenLine, Trash2, ShieldQuestion, UserPlus, Loader2, RefreshCw } from "lucide-react"; 
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getRoles, deleteRole as mockDeleteRole, getAllPermissions, type Role, type PermissionCategory } from "@/lib/mock-data";
+import { getRoles, deleteRole, getAllPermissions, type Role, type PermissionCategory } from '@/lib/data/roles'; // Updated import
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRouter } from "next/navigation";
 
@@ -69,10 +69,10 @@ export default function AdminRolesPage() {
     const handleDeleteRole = async (id: string, name: string) => {
         setDeletingId(id);
         try {
-            const success = await mockDeleteRole(id);
+            const success = await deleteRole(id);
             if (success) {
                 toast({ title: "Rol Silindi", description: `"${name}" rolü başarıyla silindi.` });
-                await fetchData(); // Refresh the list
+                await fetchData(); 
             } else {
                 toast({ variant: "destructive", title: "Silme Hatası", description: "Rol silinemedi." });
             }
@@ -110,7 +110,7 @@ export default function AdminRolesPage() {
                         <RefreshCw className={cn("mr-2 h-4 w-4", (loading || !!deletingId) && "animate-spin")} />
                         Yenile
                     </Button>
-                    {hasPermission('Rolleri Yönetme') && ( // Assuming this permission allows creating new roles
+                    {hasPermission('Rolleri Yönetme') && ( 
                         <Button asChild>
                             <Link href="/admin/roles/new">
                                 <UserPlus className="mr-2 h-4 w-4" /> Yeni Rol Ekle
@@ -126,13 +126,11 @@ export default function AdminRolesPage() {
                     <TabsTrigger value="permissions">İzinler Referansı</TabsTrigger>
                 </TabsList>
 
-                {/* Roles Tab */}
                 <TabsContent value="roles" className="mt-6 space-y-4">
                     {rolesData.map((role) => (
                         <Card key={role.id}>
                             <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
                                 <div className="flex items-start gap-3">
-                                    {/* Optional: Icon based on role */}
                                     <ShieldQuestion className="h-6 w-6 text-muted-foreground mt-1 flex-shrink-0" />
                                     <div>
                                         <CardTitle className="text-xl">{role.name}</CardTitle>
@@ -195,7 +193,6 @@ export default function AdminRolesPage() {
                     ))}
                 </TabsContent>
 
-                {/* Permissions Reference Tab */}
                 <TabsContent value="permissions" className="mt-6">
                     <Card>
                         <CardHeader>
