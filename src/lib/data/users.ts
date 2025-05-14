@@ -10,6 +10,7 @@ export interface User {
   username: string;
   email: string;
   role: string; // Role can be a string to accommodate custom roles
+  status?: 'Öğrenci' | 'Öğretmen' | 'Meraklı'; // Added status field
   joinedAt: string;
   avatar?: string;
   lastLogin?: string;
@@ -48,7 +49,12 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 export const initializeUsers = (initialUsers: User[]) => {
-    mockUsers = initialUsers;
+    // Ensure default admin user has a status if not provided
+    const usersWithStatus = initialUsers.map(user => ({
+        ...user,
+        status: user.status || (user.role === 'Admin' || user.role === 'Editor' ? 'Öğretmen' : 'Öğrenci') // Default status
+    }));
+    mockUsers = usersWithStatus;
     if (typeof window !== 'undefined') {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
     }
@@ -69,6 +75,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
         joinedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         avatar: data.avatar || `https://placehold.co/128x128.png?text=${(data.username || 'A').charAt(0)}`,
+        status: data.status || (data.role === 'Admin' || data.role === 'Editor' ? 'Öğretmen' : 'Öğrenci'), // Default status
     };
     const currentUsers = await getUsers();
     currentUsers.push(newUser);
@@ -82,8 +89,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
         const roleIndex = currentRoles.findIndex(r => r.id === newUser.role.toLowerCase() || r.name.toLowerCase() === newUser.role.toLowerCase());
         if (roleIndex !== -1) {
             currentRoles[roleIndex].userCount = (currentRoles[roleIndex].userCount || 0) + 1;
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
-            // No need to update mockRoles here, getRoles will handle it
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles.map(({ userCount, ...rest }) => rest)));
         }
     }
     return JSON.parse(JSON.stringify(newUser));
@@ -112,7 +118,7 @@ export const updateUser = async (id: string, data: Partial<User>): Promise<User 
             if (newRoleIndex !== -1) {
                 currentRoles[newRoleIndex].userCount = (currentRoles[newRoleIndex].userCount || 0) + 1;
             }
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles.map(({ userCount, ...rest }) => rest)));
         }
         return JSON.parse(JSON.stringify(currentUsers[index]));
     }
@@ -136,7 +142,7 @@ export const deleteUser = async (id: string): Promise<boolean> => {
         const roleIndex = currentRoles.findIndex(r => r.id === userRole.toLowerCase() || r.name.toLowerCase() === userRole.toLowerCase());
         if (roleIndex !== -1) {
             currentRoles[roleIndex].userCount = Math.max(0, (currentRoles[roleIndex].userCount || 0) - 1);
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles));
+            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles.map(({ userCount, ...rest }) => rest)));
         }
     }
     return true;
