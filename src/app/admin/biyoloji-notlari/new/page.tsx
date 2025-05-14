@@ -1,5 +1,5 @@
 
-"use client"; 
+"use client";
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,9 @@ import { toast } from "@/hooks/use-toast";
 import { BlockEditor } from "@/components/admin/block-editor";
 import { TemplateSelector, type Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
-import { createNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data';
+import { createNote, type NoteData } from '@/lib/data/notes';
+import { getCategories, type Category } from '@/lib/data/categories';
+import { generateSlug } from '@/lib/utils';
 import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput, type AiBlockStructure as GenerateNoteAiBlockStructure } from '@/ai/flows/generate-biology-note-flow';
 import { biologyChat, type BiologyChatInput, type BiologyChatOutput, type ChatMessage as AiDirectChatMessageDef } from '@/ai/flows/biology-chat-flow';
 import { usePermissions } from "@/hooks/usePermissions";
@@ -49,7 +51,7 @@ import { Badge } from '@/components/ui/badge';
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; 
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 // --- AI Message Types ---
 interface AiAssistantMessage {
@@ -103,7 +105,7 @@ export default function NewBiyolojiNotuPage() {
 
 
     React.useEffect(() => {
-        if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) { 
+        if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) {
           toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni biyoloji notu oluşturma yetkiniz yok." });
           router.push('/admin/biyoloji-notlari');
           return;
@@ -115,7 +117,7 @@ export default function NewBiyolojiNotuPage() {
         setLoadingCategories(true);
         getCategories()
             .then(data => {
-                setCategories(data.filter(cat => cat.id && cat.name)); 
+                setCategories(data.filter(cat => cat.id && cat.name));
             })
             .catch(err => {
                 console.error("Error fetching categories:", err);
@@ -255,7 +257,7 @@ export default function NewBiyolojiNotuPage() {
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
             console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
-            
+
             // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             console.log(`[NewBiyolojiNotuPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
@@ -272,7 +274,7 @@ export default function NewBiyolojiNotuPage() {
             }
             console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS after setItem");
 
-            const previewUrl = `/admin/preview`; 
+            const previewUrl = `/admin/preview`;
             console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window: ${previewUrl}`);
 
             setTimeout(() => {
@@ -283,7 +285,7 @@ export default function NewBiyolojiNotuPage() {
                 } else {
                     console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened successfully.");
                 }
-            }, 300); 
+            }, 300);
 
         } catch (error: any) {
             console.error("[NewBiyolojiNotuPage/handlePreview] Error during preview process:", error);
@@ -326,7 +328,7 @@ export default function NewBiyolojiNotuPage() {
         let userMessageContent = `**Konu:** ${aiAssistantTopic}`;
         if (aiAssistantKeywords) userMessageContent += `\n**Anahtar Kelimeler:** ${aiAssistantKeywords}`;
         if (aiAssistantOutline) userMessageContent += `\n**İstenen Taslak:** ${aiAssistantOutline}`;
-        
+
         userMessageContent += `\n\n**Mevcut Form Alanları ve Not Yapısı (bunları dikkate alarak öneri ver):**`;
         if (currentFormData.currentTitle) userMessageContent += `\n- Başlık: "${currentFormData.currentTitle}"`;
         if (currentFormData.currentSummary) userMessageContent += `\n- Özet: "${currentFormData.currentSummary}"`;
@@ -348,7 +350,7 @@ export default function NewBiyolojiNotuPage() {
 
         try {
             const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInput);
-            
+
             const aiResponseContent = (
                 <div className="space-y-3 text-left">
                     {aiOutput.suggestedTitle && (
@@ -401,8 +403,8 @@ export default function NewBiyolojiNotuPage() {
 
         try {
             const historyForAI: AiDirectChatMessageDef[] = aiChatMessages
-                .filter(m => m.role === 'user' || m.role === 'assistant') 
-                .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })); 
+                .filter(m => m.role === 'user' || m.role === 'assistant')
+                .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
 
             const response: BiologyChatOutput = await biologyChat({ query: userQuery, history: historyForAI });
@@ -418,14 +420,14 @@ export default function NewBiyolojiNotuPage() {
 
     const toggleAiAssistantPanel = () => {
         setIsAiAssistantPanelOpen(prev => !prev);
-        if (!isAiAssistantPanelOpen) { 
+        if (!isAiAssistantPanelOpen) {
             setIsAiChatPanelOpen(false);
         }
     };
 
     const toggleAiChatPanel = () => {
         setIsAiChatPanelOpen(prev => !prev);
-        if (!isAiChatPanelOpen) { 
+        if (!isAiChatPanelOpen) {
             setIsAiAssistantPanelOpen(false);
         }
     };
@@ -547,10 +549,10 @@ export default function NewBiyolojiNotuPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="image-url">Kapak Görsel URL</Label>
                                         <div className="flex gap-2">
-                                             <Input 
-                                                id="image-url" 
-                                                value={imageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : imageUrl} 
-                                                onChange={(e) => setImageUrl(e.target.value)} 
+                                             <Input
+                                                id="image-url"
+                                                value={imageUrl.startsWith('data:') ? '(Yerel Dosya Yüklendi)' : imageUrl}
+                                                onChange={(e) => setImageUrl(e.target.value)}
                                                 placeholder="https://... veya dosya yükleyin"
                                                 disabled={imageUrl.startsWith('data:')}
                                             />
@@ -567,12 +569,12 @@ export default function NewBiyolojiNotuPage() {
                                         </div>
                                         {imageUrl && (
                                             <div className="mt-2 rounded border p-2 w-fit">
-                                                <Image 
-                                                  src={imageUrl} 
-                                                  alt="Kapak Görsel Önizleme" 
-                                                  width={200} 
-                                                  height={100} 
-                                                  className="object-cover rounded max-h-[150px]" 
+                                                <Image
+                                                  src={imageUrl}
+                                                  alt="Kapak Görsel Önizleme"
+                                                  width={200}
+                                                  height={100}
+                                                  className="object-cover rounded max-h-[150px]"
                                                   data-ai-hint="biology note cover placeholder"
                                                   loading="lazy"
                                                 />
@@ -615,7 +617,7 @@ export default function NewBiyolojiNotuPage() {
                                             {typeof msg.content === 'string' ? (
                                                 <div className="whitespace-pre-wrap">{msg.content}</div>
                                             ) : (
-                                                msg.content 
+                                                msg.content
                                             )}
                                         </div>
                                     ))}

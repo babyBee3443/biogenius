@@ -1,5 +1,5 @@
 
-"use client"; 
+"use client";
 
 import * as React from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
@@ -9,7 +9,9 @@ import { toast } from "@/hooks/use-toast";
 import { BlockEditor } from "@/components/admin/block-editor";
 import type { Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
-import { getNoteById, updateNote, deleteNote, type NoteData, generateSlug, getCategories, type Category } from '@/lib/mock-data'; 
+import { getNoteById, updateNote, deleteNote, type NoteData } from '@/lib/data/notes';
+import { getCategories, type Category } from '@/lib/data/categories';
+import { generateSlug } from '@/lib/utils';
 import { usePermissions } from "@/hooks/usePermissions";
 
 import {
@@ -36,7 +38,7 @@ import { ArrowLeft, Eye, Loader2, Save, Upload, Trash2, BookCopy, Tag, AlertTria
 const generateBlockId = () => `block-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 const createDefaultBlock = (): Block => ({ id: generateBlockId(), type: 'text', content: '' });
 
-const PREVIEW_STORAGE_KEY = 'preview_data'; 
+const PREVIEW_STORAGE_KEY = 'preview_data';
 
 // --- Main Page Component ---
 export default function EditBiyolojiNotuPage() {
@@ -50,12 +52,12 @@ export default function EditBiyolojiNotuPage() {
     const [loading, setLoading] = React.useState(true);
     const [saving, setSaving] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
-    const [categories, setCategories] = React.useState<Category[]>([]); 
+    const [categories, setCategories] = React.useState<Category[]>([]);
 
     // Form Field States
     const [title, setTitle] = React.useState("");
     const [summary, setSummary] = React.useState("");
-    const [category, setCategory] = React.useState(""); 
+    const [category, setCategory] = React.useState("");
     const [level, setLevel] = React.useState<NoteData['level'] | "">("");
     const [tags, setTags] = React.useState<string[]>([]);
     const [imageUrl, setImageUrl] = React.useState<string | null>(null);
@@ -67,7 +69,7 @@ export default function EditBiyolojiNotuPage() {
     // --- Data Fetching ---
     React.useEffect(() => {
         let isMounted = true;
-        if (!permissionsLoading && !hasPermission('Biyoloji Notlarını Düzenleme')) { 
+        if (!permissionsLoading && !hasPermission('Biyoloji Notlarını Düzenleme')) {
             toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Bu notu düzenleme yetkiniz yok." });
             router.push('/admin/biyoloji-notlari');
             return;
@@ -91,17 +93,17 @@ export default function EditBiyolojiNotuPage() {
              try {
                  const [noteResult, categoriesResult] = await Promise.all([
                     getNoteById(noteId),
-                    getCategories() 
+                    getCategories()
                  ]);
 
                  if (isMounted) {
-                     setCategories(categoriesResult); 
+                     setCategories(categoriesResult);
 
                      if (noteResult) {
                          setNoteData(noteResult);
                          setTitle(noteResult.title);
                          setSummary(noteResult.summary || '');
-                         setCategory(noteResult.category); 
+                         setCategory(noteResult.category);
                          setLevel(noteResult.level);
                          setTags(noteResult.tags || []);
                          setImageUrl(noteResult.imageUrl || null);
@@ -203,7 +205,7 @@ export default function EditBiyolojiNotuPage() {
          const updateData: Partial<Omit<NoteData, 'id' | 'createdAt'>> = {
              title,
              slug,
-             category, 
+             category,
              level,
              tags,
              summary,
@@ -218,10 +220,10 @@ export default function EditBiyolojiNotuPage() {
              const updatedNote = await updateNote(noteId, updateData);
 
              if (updatedNote) {
-                 setNoteData(updatedNote); 
+                 setNoteData(updatedNote);
                  setTitle(updatedNote.title);
                  setSummary(updatedNote.summary || '');
-                 setCategory(updatedNote.category); 
+                 setCategory(updatedNote.category);
                  setLevel(updatedNote.level);
                  setTags(updatedNote.tags || []);
                  setImageUrl(updatedNote.imageUrl || null);
@@ -279,16 +281,16 @@ export default function EditBiyolojiNotuPage() {
             return;
         }
 
-        const previewData: Partial<NoteData> & { previewType: 'note' } = { 
+        const previewData: Partial<NoteData> & { previewType: 'note' } = {
             previewType: 'note',
             id: noteId || 'preview_edit_note',
             title: title || 'Başlıksız Not',
             slug: slug || generateSlug(title),
-            category: category, 
+            category: category,
             level: level,
             tags: tags,
             summary: summary || '',
-            contentBlocks: blocks, 
+            contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: noteData?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -315,7 +317,7 @@ export default function EditBiyolojiNotuPage() {
             }
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
             console.log(`[EditBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
-            
+
             // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             console.log(`[EditBiyolojiNotuPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
@@ -329,7 +331,7 @@ export default function EditBiyolojiNotuPage() {
                 throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
             }
             console.log("[EditBiyolojiNotuPage/handlePreview] Verification SUCCESS after setItem");
-             
+
 
             const previewUrl = `/admin/preview`;
             console.log(`[EditBiyolojiNotuPage/handlePreview] Opening preview window: ${previewUrl}`);
@@ -402,7 +404,7 @@ export default function EditBiyolojiNotuPage() {
                      <BookCopy className="h-6 w-6 text-green-600"/> {noteData ? `Notu Düzenle` : 'Yeni Not'}
                 </h1>
                 <div className="flex items-center gap-2">
-                     {noteData && hasPermission('Biyoloji Notlarını Silme') && ( 
+                     {noteData && hasPermission('Biyoloji Notlarını Silme') && (
                         <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
@@ -483,10 +485,10 @@ export default function EditBiyolojiNotuPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="image-url">Kapak Görsel URL</Label>
                                 <div className="flex gap-2">
-                                     <Input 
-                                        id="image-url" 
-                                        value={(imageUrl || '').startsWith('data:') ? '(Yerel Dosya Yüklendi)' : (imageUrl || '')} 
-                                        onChange={(e) => setImageUrl(e.target.value)} 
+                                     <Input
+                                        id="image-url"
+                                        value={(imageUrl || '').startsWith('data:') ? '(Yerel Dosya Yüklendi)' : (imageUrl || '')}
+                                        onChange={(e) => setImageUrl(e.target.value)}
                                         placeholder="https://... veya dosya yükleyin"
                                         disabled={(imageUrl || '').startsWith('data:')}
                                         />
@@ -503,12 +505,12 @@ export default function EditBiyolojiNotuPage() {
                                 </div>
                                 {imageUrl && (
                                     <div className="mt-2 rounded border p-2 w-fit">
-                                        <Image 
-                                            src={imageUrl} 
-                                            alt="Kapak Görsel Önizleme" 
-                                            width={200} 
-                                            height={100} 
-                                            className="object-cover rounded max-h-[150px]" 
+                                        <Image
+                                            src={imageUrl}
+                                            alt="Kapak Görsel Önizleme"
+                                            width={200}
+                                            height={100}
+                                            className="object-cover rounded max-h-[150px]"
                                             data-ai-hint="biology note cover placeholder"
                                             loading="lazy"
                                         />
