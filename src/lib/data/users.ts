@@ -1,7 +1,7 @@
 
-import { generateId } from '@/lib/utils'; // Import from utils
-import { getRoles, ROLE_STORAGE_KEY } from '@/lib/data/roles'; // Import from new roles file
-import type { Role } from '@/lib/data/roles'; // Import Role type from new roles file
+import { generateId } from '@/lib/utils';
+import { getRoles, ROLE_STORAGE_KEY } from '@/lib/data/roles';
+import type { Role } from '@/lib/data/roles';
 
 // --- User Data Structure ---
 export interface User {
@@ -9,12 +9,12 @@ export interface User {
   name: string;
   username: string;
   email: string;
-  role: string; // Role can be a string to accommodate custom roles
+  role: string;
   status?: 'Öğrenci' | 'Öğretmen' | 'Meraklı'; // Added status field
   joinedAt: string;
   avatar?: string;
   lastLogin?: string;
-  bio?: string;
+  bio?: string; // Added bio field
   website?: string;
   twitterHandle?: string;
   linkedinProfile?: string;
@@ -49,12 +49,12 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 export const initializeUsers = (initialUsers: User[]) => {
-    // Ensure default admin user has a status if not provided
-    const usersWithStatus = initialUsers.map(user => ({
+    const usersWithDefaults = initialUsers.map(user => ({
         ...user,
-        status: user.status || (user.role === 'Admin' || user.role === 'Editor' ? 'Öğretmen' : 'Öğrenci') // Default status
+        status: user.status || (user.role === 'Admin' || user.role === 'Editor' ? 'Öğretmen' : 'Öğrenci'),
+        bio: user.bio || '',
     }));
-    mockUsers = usersWithStatus;
+    mockUsers = usersWithDefaults;
     if (typeof window !== 'undefined') {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
     }
@@ -75,7 +75,8 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
         joinedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         avatar: data.avatar || `https://placehold.co/128x128.png?text=${(data.username || 'A').charAt(0)}`,
-        status: data.status || (data.role === 'Admin' || data.role === 'Editor' ? 'Öğretmen' : 'Öğrenci'), // Default status
+        status: data.status || (data.role === 'Admin' || data.role === 'Editor' ? 'Öğretmen' : 'Öğrenci'),
+        bio: data.bio || '',
     };
     const currentUsers = await getUsers();
     currentUsers.push(newUser);
@@ -95,31 +96,49 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
     return JSON.parse(JSON.stringify(newUser));
 };
 
-export const updateUser = async (id: string, data: Partial<User>): Promise<User | null> => {
+export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'email' | 'joinedAt' | 'username' | 'role'>>): Promise<User | null> => {
     await delay(50);
     const currentUsers = await getUsers();
     const index = currentUsers.findIndex(u => u.id === id);
     if (index !== -1) {
-        const oldRole = currentUsers[index].role;
-        currentUsers[index] = { ...currentUsers[index], ...data, lastLogin: new Date().toISOString() };
+        currentUsers[index] = { 
+            ...currentUsers[index], 
+            ...data, 
+            lastLogin: new Date().toISOString() 
+        };
 
         if (typeof window !== 'undefined') {
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUsers));
+
+            // Update currentUser in localStorage if the updated user is the current one
+            const storedCurrentUser = localStorage.getItem('currentUser');
+            if (storedCurrentUser) {
+                try {
+                    const currentUserData = JSON.parse(storedCurrentUser);
+                    if (currentUserData.id === id) {
+                        localStorage.setItem('currentUser', JSON.stringify({
+                            ...currentUserData, // Keep existing role, email etc.
+                            name: currentUsers[index].name,
+                            avatar: currentUsers[index].avatar,
+                            bio: currentUsers[index].bio,
+                            status: currentUsers[index].status,
+                            // Add other updatable fields from 'data' if they exist in 'currentUser' structure
+                            website: currentUsers[index].website,
+                            twitterHandle: currentUsers[index].twitterHandle,
+                            linkedinProfile: currentUsers[index].linkedinProfile,
+                            instagramProfile: currentUsers[index].instagramProfile,
+                            facebookProfile: currentUsers[index].facebookProfile,
+                            youtubeChannel: currentUsers[index].youtubeChannel,
+                            xProfile: currentUsers[index].xProfile,
+                        }));
+                        window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify header or other components
+                    }
+                } catch (e) {
+                    console.error("Failed to update localStorage currentUser during user update", e);
+                }
+            }
         }
         mockUsers = currentUsers;
-
-        if (data.role && data.role !== oldRole && typeof window !== 'undefined') {
-            const currentRoles = await getRoles();
-            const oldRoleIndex = currentRoles.findIndex(r => r.id === oldRole.toLowerCase() || r.name.toLowerCase() === oldRole.toLowerCase());
-            if (oldRoleIndex !== -1) {
-                currentRoles[oldRoleIndex].userCount = Math.max(0, (currentRoles[oldRoleIndex].userCount || 0) - 1);
-            }
-            const newRoleIndex = currentRoles.findIndex(r => r.id === data.role!.toLowerCase() || r.name.toLowerCase() === data.role!.toLowerCase());
-            if (newRoleIndex !== -1) {
-                currentRoles[newRoleIndex].userCount = (currentRoles[newRoleIndex].userCount || 0) + 1;
-            }
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(currentRoles.map(({ userCount, ...rest }) => rest)));
-        }
         return JSON.parse(JSON.stringify(currentUsers[index]));
     }
     return null;
@@ -149,3 +168,4 @@ export const deleteUser = async (id: string): Promise<boolean> => {
   }
   return false;
 };
+
