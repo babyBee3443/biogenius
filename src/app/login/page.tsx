@@ -3,8 +3,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle as ShadCNCardTitle, CardDescription as ShadCNCardDescription, CardFooter } from '@/components/ui/card'; // Added CardFooter
-import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle as ShadCNCardTitle, CardDescription as ShadCNCardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,15 +60,15 @@ export default function AdminLoginPage() {
 
       const foundUser = allUsers.find(
         (user: UserData) =>
-          (user.email?.toLowerCase() === lowercasedInput) || // Added optional chaining
-          (user.username?.toLowerCase() === lowercasedInput) // Added optional chaining
+          (user.email?.toLowerCase() === lowercasedInput) ||
+          (user.username?.toLowerCase() === lowercasedInput)
       );
 
-      if (foundUser && password) { 
+      if (foundUser && password) { // Basic password check (ideally backend validation)
         if (foundUser.role === 'Admin') {
           if (typeof window !== 'undefined') {
             localStorage.setItem('currentUser', JSON.stringify(foundUser));
-            window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+            window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify other components
           }
           toast({
             title: 'Giriş Başarılı!',
@@ -114,10 +113,10 @@ export default function AdminLoginPage() {
         <Card className="w-full max-w-md bg-card/80 backdrop-blur-md border-primary/30 shadow-2xl rounded-xl overflow-hidden">
           <CardHeader className="text-center pt-8 pb-4 bg-card/50">
             <AnimatedLockIcon />
-            <DialogTitle className="text-3xl font-bold text-foreground tracking-tight">Yönetici Girişi</DialogTitle>
-            <DialogDescription className="text-muted-foreground text-sm px-4">
+            <ShadCNCardTitle className="text-3xl font-bold text-foreground tracking-tight">Yönetici Girişi</ShadCNCardTitle>
+            <ShadCNCardDescription className="text-muted-foreground text-sm px-4">
               Lütfen BiyoHox yönetim paneline erişmek için giriş yapın.
-            </DialogDescription>
+            </ShadCNCardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <form onSubmit={handleLogin} className="space-y-6">
