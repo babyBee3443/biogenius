@@ -129,8 +129,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
         title: 'Sistem Hatası',
         description: 'Kullanıcılar yüklenemedi.',
       });
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

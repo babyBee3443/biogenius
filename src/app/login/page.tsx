@@ -43,6 +43,7 @@ export default function AdminLoginPage() {
             router.replace('/admin');
           }
         } catch (e) {
+          // If parsing fails, clear the potentially corrupted item
           localStorage.removeItem('currentUser');
         }
       }
@@ -99,8 +100,9 @@ export default function AdminLoginPage() {
         title: 'Sistem Hatası',
         description: 'Kullanıcı verileri yüklenemedi.',
       });
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

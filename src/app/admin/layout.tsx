@@ -52,6 +52,7 @@ export default function AdminLayout({
     let newUserName = "Kullanıcı";
     let newUserAvatar = "https://placehold.co/32x32.png";
     let newUserRoleName: string | null = null;
+    let isMounted = true; // Assume mounted within this callback's scope execution
 
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
@@ -69,6 +70,8 @@ export default function AdminLayout({
              newUserRoleName = null;
           }
         } catch (e) {
+          console.error("AdminLayout: Error parsing currentUser from localStorage", e);
+          localStorage.removeItem('currentUser'); // Clear corrupted data
           newUserId = null;
           newUserRoleName = null;
         }
@@ -77,20 +80,23 @@ export default function AdminLayout({
         newUserRoleName = null;
       }
 
-      setCurrentUserId(newUserId);
-      setCurrentUserName(newUserName);
-      setCurrentUserAvatar(newUserAvatar);
-      setCurrentUserRoleName(newUserRoleName);
+      if (isMounted) {
+        setCurrentUserId(newUserId);
+        setCurrentUserName(newUserName);
+        setCurrentUserAvatar(newUserAvatar);
+        setCurrentUserRoleName(newUserRoleName);
+      }
+
 
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
         const timeoutValue = parseInt(storedTimeout, 10);
-        setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
+         if(isMounted) setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
       } else {
-        setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
+         if(isMounted) setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    if (isMountedRef.current) {
+    if (isMounted) {
         setAuthCheckComplete(true);
     }
     return userFound;
@@ -107,13 +113,13 @@ export default function AdminLayout({
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
-            if (isMountedRef.current) setAuthCheckComplete(false);
+            if (isMountedRef.current) setAuthCheckComplete(false); // Re-trigger auth check
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
-        if (isMountedRef.current) setAuthCheckComplete(false);
+        if (isMountedRef.current) setAuthCheckComplete(false); // Re-trigger auth check
         loadUserDataAndSettings();
     };
 
@@ -122,9 +128,9 @@ export default function AdminLayout({
             const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
             if (storedTimeout) {
                 const timeoutValue = parseInt(storedTimeout, 10);
-                setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
+                if(isMountedRef.current) setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
             } else {
-                setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
+                if(isMountedRef.current) setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
             }
         }
     };
@@ -146,11 +152,13 @@ export default function AdminLayout({
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
     }
-    setCurrentUserId(null);
-    setCurrentUserName("Kullanıcı");
-    setCurrentUserAvatar("https://placehold.co/32x32.png");
-    setCurrentUserRoleName(null);
-    if (isMountedRef.current) setAuthCheckComplete(false); // Trigger re-check which should redirect
+    if (isMountedRef.current) {
+        setCurrentUserId(null);
+        setCurrentUserName("Kullanıcı");
+        setCurrentUserAvatar("https://placehold.co/32x32.png");
+        setCurrentUserRoleName(null);
+        setAuthCheckComplete(false); // This will trigger the redirection logic in the next effect
+    }
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.push('/login'); // Explicitly redirect to admin login
   }, [router]);
@@ -172,9 +180,9 @@ export default function AdminLayout({
         return; // Don't redirect on preview pages
     }
 
-    if (!currentUserId || currentUserRoleName !== 'Admin') { // No user or not an Admin
+    if (!currentUserId || currentUserRoleName !== 'Admin') {
       if (isAdminPage && !isLoginPage) {
-        console.log(`[AdminLayout] Redirecting: No admin user. currentUserId=${currentUserId}, currentUserRoleName=${currentUserRoleName}`);
+        console.log(`[AdminLayout Effect] Redirecting to /login: No admin user or role mismatch. currentUserId=${currentUserId}, currentUserRoleName=${currentUserRoleName}`);
         router.replace('/login'); // Redirect to admin login page
       }
       return;
@@ -183,13 +191,14 @@ export default function AdminLayout({
     // At this point, user is an Admin.
     // If on the login page as an Admin, redirect to dashboard
     if (isLoginPage) {
-        console.log("[AdminLayout] Admin on login page, redirecting to /admin");
+        console.log("[AdminLayout Effect] Admin on login page, redirecting to /admin");
         router.replace('/admin');
     }
 
   }, [authCheckComplete, currentUserId, currentUserRoleName, router]);
 
 
+  // Loading state while authCheck is in progress OR if permissions are loading for a confirmed admin
   if (!authCheckComplete || (currentUserId && currentUserRoleName === 'Admin' && permissionsLoading && !permissionsError)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -199,8 +208,22 @@ export default function AdminLayout({
     );
   }
 
-  if (currentUserId && permissionsError) {
-    console.error(`[AdminLayout] Render: Permissions error for user ${currentUserId}: ${permissionsError}`);
+  // If auth check is complete, but user is not an admin and is trying to access an admin page (other than /login or /admin/preview)
+  if (authCheckComplete && (!currentUserId || currentUserRoleName !== 'Admin')) {
+    // This case should ideally be caught by the useEffect redirection.
+    // If it's reached, it means the redirection hasn't happened yet or failed.
+    // Rendering a loading state or null is safer than attempting another redirect during render.
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Yönlendiriliyor...</p>
+        </div>
+    );
+  }
+  
+  // If there's a permissions error for a logged-in admin user
+  if (currentUserId && currentUserRoleName === 'Admin' && permissionsError) {
+    console.error(`[AdminLayout Render] Permissions error for user ${currentUserId}: ${permissionsError}`);
     return (
          <div className="flex flex-col min-h-screen"> 
             <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
@@ -213,20 +236,6 @@ export default function AdminLayout({
             </main>
          </div>
     );
-  }
-  
-  // Fallback if checks above didn't catch a non-admin or no user scenario for an admin page
-  if (authCheckComplete && (!currentUserId || currentUserRoleName !== 'Admin') && typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && !window.location.pathname.startsWith('/admin/preview') && window.location.pathname !== '/login') {
-     console.log(`[AdminLayout] Fallback Redirect: No admin user for admin page. currentUserId=${currentUserId}, currentUserRoleName=${currentUserRoleName}`);
-     // This should ideally not be hit if the useEffect redirection works, but as a safeguard:
-     // router.replace('/login'); // This would cause a loop if called during render.
-     // Instead, render a loading/redirecting state or null, and let useEffect handle redirect.
-     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Yönlendiriliyor...</p>
-        </div>
-     );
   }
 
 

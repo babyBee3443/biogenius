@@ -620,24 +620,35 @@ export const getRoles = async (): Promise<Role[]> => {
                 rolesFromStorage = [];
             }
         } catch (e) {
-            rolesFromStorage = [];
+            rolesFromStorage = []; // Fallback to empty if parsing fails
         }
     }
 
-    // Merge base roles with stored roles, ensuring base roles' permissions are always from code
+    // Merge base roles with stored roles, ensuring base roles' permissions are always from code definition
     const mergedRoles = baseMockRoles.map(baseRole => {
-        const storedRole = rolesFromStorage.find(sr => sr.id === baseRole.id || sr.name.toLowerCase() === baseRole.name.toLowerCase());
+        const storedRole = rolesFromStorage.find(sr => sr.id === baseRole.id || sr.name.trim().toLowerCase() === baseRole.name.trim().toLowerCase());
+        const currentUsers = mockUsers; // Use the in-memory mockUsers for accurate count
+        const count = currentUsers.filter((u: User) =>
+            u.role.trim().toLowerCase() === baseRole.name.trim().toLowerCase() ||
+            u.role.trim().toLowerCase() === baseRole.id.trim().toLowerCase()
+        ).length;
+
         return {
-            ...baseRole, // Start with base role definition (includes correct permissions)
+            ...baseRole, // Start with base role definition (includes correct permissions from code)
             description: storedRole?.description || baseRole.description, // Use stored description if available
-            userCount: storedRole?.userCount || 0, // Use stored userCount if available
+            userCount: count, // Use calculated user count
         };
     });
 
     // Add any custom roles from storage that are not base roles
     rolesFromStorage.forEach(storedRole => {
-        if (!mergedRoles.some(mr => mr.id === storedRole.id || mr.name.toLowerCase() === storedRole.name.toLowerCase())) {
-            mergedRoles.push(storedRole);
+        if (!mergedRoles.some(mr => mr.id === storedRole.id || mr.name.trim().toLowerCase() === storedRole.name.trim().toLowerCase())) {
+            // For custom roles, calculate user count based on in-memory users
+            const count = mockUsers.filter((u: User) =>
+                u.role.trim().toLowerCase() === storedRole.name.trim().toLowerCase() ||
+                u.role.trim().toLowerCase() === storedRole.id.trim().toLowerCase()
+            ).length;
+            mergedRoles.push({...storedRole, userCount: count }); // Custom roles keep their stored permissions but get updated count
         }
     });
     return mergedRoles;
@@ -676,7 +687,7 @@ export const updateRole = async (id: string, data: Partial<Omit<Role, 'id'>>): P
       if (data.userCount !== undefined) {
           updatedUserCount = data.userCount;
       }
-      // Preserve base role permissions
+      // Preserve base role permissions if it's a base role, otherwise use provided permissions
       const baseRoleMatch = baseMockRoles.find(br => br.id === currentRoles[index].id || br.name.toLowerCase() === currentRoles[index].name.toLowerCase());
       const permissionsToKeep = baseRoleMatch ? baseRoleMatch.permissions : data.permissions || currentRoles[index].permissions;
 
@@ -699,9 +710,12 @@ export const deleteRole = async (id: string): Promise<boolean> => {
   await delay(80);
   let currentRoles = await getRoles();
   const roleToDelete = currentRoles.find(r => r.id === id);
+  
+  // Prevent deletion of base roles if they still have users or are protected
   if (roleToDelete && (roleToDelete.id === 'admin' || roleToDelete.id === 'editor' || roleToDelete.id === 'user')) {
     if (roleToDelete.userCount > 0) {
-      return false;
+      console.warn(`Cannot delete base role "${roleToDelete.name}" as it has ${roleToDelete.userCount} users.`);
+      return false; // Or throw an error / return a specific message
     }
   }
   const initialLength = currentRoles.length;
@@ -881,7 +895,7 @@ export const loadInitialData = () => {
     if (typeof window !== 'undefined') {
         const initOrVerify = (key: string, defaultDataFactory: () => any[], isBaseData: boolean = false) => {
             const stored = localStorage.getItem(key);
-            if (!stored || isBaseData) { // For base data, always re-evaluate against code definition.
+            if (!stored || isBaseData) {
                 localStorage.setItem(key, JSON.stringify(defaultDataFactory()));
             } else {
                 try {
@@ -906,47 +920,63 @@ export const loadInitialData = () => {
              avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
         };
 
-        initOrVerify(USER_STORAGE_KEY, () => [defaultAdminUser], true); // Re-evaluate if admin is missing/incorrect
-        mockUsers = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
-        if (!mockUsers.find(u => u.id === 'admin001' && u.role === 'Admin')) {
-            const otherUsers = mockUsers.filter(u => u.id !== 'admin001');
-            mockUsers = [defaultAdminUser, ...otherUsers];
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUsers));
+        // User initialization logic
+        let currentUsers = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
+        const adminExists = currentUsers.some(u => u.id === 'admin001' && u.role === 'Admin');
+        if (!adminExists) {
+            const otherUsers = currentUsers.filter(u => u.id !== 'admin001');
+            currentUsers = [defaultAdminUser, ...otherUsers];
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUsers));
         }
+        mockUsers = currentUsers; // Update in-memory mockUsers
 
 
-        // Always ensure base roles (Admin, Editor, User) have their permissions from baseMockRoles
-        // and update user counts.
-        const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
+        // Role initialization logic
         const rolesFromStorage = JSON.parse(localStorage.getItem(ROLE_STORAGE_KEY) || '[]') as Role[];
-
         const updatedRoles = baseMockRoles.map(baseRole => {
-            const count = users.filter((u: User) =>
+            const count = currentUsers.filter((u: User) =>
                 u.role.trim().toLowerCase() === baseRole.name.trim().toLowerCase() ||
                 u.role.trim().toLowerCase() === baseRole.id.trim().toLowerCase()
             ).length;
-            // Take description from storage if a custom role with same ID/name exists, else from base
             const storedRole = rolesFromStorage.find(sr => sr.id === baseRole.id || sr.name.toLowerCase() === baseRole.name.toLowerCase());
             return {
-                ...baseRole, // This ensures permissions are always from the code for base roles
+                ...baseRole, // Permissions for base roles always come from code
                 description: storedRole?.description || baseRole.description,
                 userCount: count,
             };
         });
 
-        // Add any custom roles from storage that are not base roles
         rolesFromStorage.forEach(storedRole => {
             if (!updatedRoles.some(ur => ur.id === storedRole.id || ur.name.toLowerCase() === storedRole.name.toLowerCase())) {
-                updatedRoles.push(storedRole); // Custom roles keep their stored permissions
+                 const count = currentUsers.filter((u: User) =>
+                    u.role.trim().toLowerCase() === storedRole.name.trim().toLowerCase() ||
+                    u.role.trim().toLowerCase() === storedRole.id.trim().toLowerCase()
+                ).length;
+                updatedRoles.push({...storedRole, userCount: count});
             }
         });
-
         localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(updatedRoles));
-        mockRoles = updatedRoles;
+        mockRoles = updatedRoles; // Update in-memory mockRoles
 
-        initOrVerify(PAGE_STORAGE_KEY, () => mockPages, true); // Ensure mockPages are initialized if not present or to update them
+        initOrVerify(PAGE_STORAGE_KEY, () => mockPages, true);
         initOrVerify(TEMPLATE_STORAGE_KEY, () => [...ALL_MOCK_TEMPLATES_SOURCE], true);
 
+        // Force reload the current user from localStorage into mockUsers if it exists
+        // This ensures that if a user logs in, their data is reflected in mockUsers for other operations.
+        const currentUserString = localStorage.getItem('currentUser');
+        if (currentUserString) {
+            try {
+                const loggedInUser = JSON.parse(currentUserString) as User;
+                const userInMockIndex = mockUsers.findIndex(u => u.id === loggedInUser.id);
+                if (userInMockIndex !== -1) {
+                    mockUsers[userInMockIndex] = loggedInUser;
+                } else {
+                    mockUsers.push(loggedInUser);
+                }
+            } catch (e) {
+                console.error("Error updating mockUsers with currentUser:", e);
+            }
+        }
     }
 };
 
@@ -956,4 +986,3 @@ if (typeof window !== 'undefined') {
 
 
 export { loadInitialData as reloadMockData };
-

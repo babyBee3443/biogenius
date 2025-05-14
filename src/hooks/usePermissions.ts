@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { type User, type Role, getRoles } from '@/lib/mock-data';
+import { type User, type Role, getRoles } from '@/lib/mock-data'; // Correctly import getRoles
 
 interface PermissionsState {
   permissions: Set<string>;
@@ -23,8 +23,8 @@ export function usePermissions(currentUserId: string | null) {
       if (!isMounted) return;
 
       if (!currentUserId) {
-        // No user ID means no specific permissions to load, not necessarily an error.
-        // AdminLayout handles redirection if auth is required.
+        // If no user ID, means not logged in or session is still loading.
+        // AdminLayout should handle redirection. usePermissions will reflect no permissions.
         if (isMounted) {
           setState({ permissions: new Set(), isLoading: false, error: null });
         }
@@ -36,7 +36,6 @@ export function usePermissions(currentUserId: string | null) {
       }
 
       if (typeof window === 'undefined') {
-        // Should not happen in a client component, but as a safeguard
         if (isMounted) {
           setState({ permissions: new Set(), isLoading: false, error: "İzinler yalnızca istemci tarafında alınabilir." });
         }
@@ -46,7 +45,7 @@ export function usePermissions(currentUserId: string | null) {
       const storedUserString = localStorage.getItem('currentUser');
       if (!storedUserString) {
         if (isMounted) {
-          // This specific error message is more informative for the user if they somehow bypass AdminLayout's redirect
+          // This indicates a problem if currentUserId was provided but no localStorage item
           setState({ permissions: new Set(), isLoading: false, error: "Oturum bilgisi bulunamadı. Lütfen giriş yapın." });
         }
         return;
@@ -68,16 +67,17 @@ export function usePermissions(currentUserId: string | null) {
           return;
         }
 
-        const allRoles = await getRoles();
+        const allRoles = await getRoles(); // Fetch all roles, ensuring base roles have correct permissions
         const userRoleString = currentUser.role.trim().toLowerCase();
         
-        // Find the role data matching the user's role (case-insensitive)
+        // Find the role data matching the user's role (case-insensitive for name and id)
         const userRoleData = allRoles.find(r =>
             r.name.trim().toLowerCase() === userRoleString ||
             r.id.trim().toLowerCase() === userRoleString
         );
 
         if (userRoleData) {
+            // Crucially, use permissions from the getRoles() definition for base roles
             if (userRoleData.permissions && Array.isArray(userRoleData.permissions)) {
                 if (isMounted) {
                     setState({ permissions: new Set(userRoleData.permissions), isLoading: false, error: null });
