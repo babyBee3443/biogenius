@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -67,7 +68,7 @@ interface LoginModalProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   onLoginSuccess: () => void;
-  openCreateAccount: () => void; // New prop to open create account modal
+  openCreateAccount: () => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLoginSuccess, openCreateAccount }) => {
@@ -93,15 +94,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
       );
 
       if (foundUser && password) { // Basic password check: not empty
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('currentUser', JSON.stringify(foundUser));
-          window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+        if (foundUser.role === 'Admin') {
+          setError('Yöneticiler bu ekrandan giriş yapamaz. Lütfen /login sayfasını kullanın.');
+          toast({
+            variant: 'destructive',
+            title: 'Yönetici Girişi Reddedildi',
+            description: 'Yöneticiler bu ekrandan giriş yapamaz. Lütfen /login sayfasını kullanın.',
+          });
+        } else {
+          // User or Editor login successful
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('currentUser', JSON.stringify(foundUser));
+            window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+          }
+          toast({
+            title: 'Giriş Başarılı!',
+            description: `${foundUser.name}, hoş geldiniz!`,
+          });
+          onLoginSuccess();
         }
-        toast({
-          title: 'Giriş Başarılı!',
-          description: `${foundUser.name}, hoş geldiniz!`,
-        });
-        onLoginSuccess();
       } else {
         setError('E-posta/kullanıcı adı veya şifre yanlış.');
         toast({
@@ -136,11 +147,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
         </DialogHeader>
         <form onSubmit={handleLogin} className="space-y-6 px-2 py-4">
           <div className="space-y-2">
-            <Label htmlFor="emailOrUsernameModal" className="flex items-center text-muted-foreground">
+            <Label htmlFor="emailOrUsernameModalLogin" className="flex items-center text-muted-foreground">
               <User className="mr-2 h-4 w-4" /> E-posta veya Kullanıcı Adı
             </Label>
             <Input
-              id="emailOrUsernameModal"
+              id="emailOrUsernameModalLogin"
               type="text"
               placeholder="E-posta / Kullanıcı Adı"
               value={emailOrUsername}
@@ -152,12 +163,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="passwordModal" className="flex items-center text-muted-foreground">
+            <Label htmlFor="passwordModalLogin" className="flex items-center text-muted-foreground">
               <KeyRound className="mr-2 h-4 w-4" /> Şifre
             </Label>
             <div className="relative">
               <Input
-                id="passwordModal"
+                id="passwordModalLogin"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Şifreniz"
                 value={password}

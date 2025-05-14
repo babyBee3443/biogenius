@@ -62,7 +62,7 @@ export default function AdminLayout({
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://placehold.co/32x32.png?text=${(userData.name || 'U').charAt(0)}`;
             newUserId = userData.id;
-            newUserRoleName = userData.role; 
+            newUserRoleName = userData.role;
             userFound = true;
           } else {
              newUserId = null;
@@ -80,7 +80,7 @@ export default function AdminLayout({
       setCurrentUserId(newUserId);
       setCurrentUserName(newUserName);
       setCurrentUserAvatar(newUserAvatar);
-      setCurrentUserRoleName(newUserRoleName); 
+      setCurrentUserRoleName(newUserRoleName);
 
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
@@ -150,9 +150,9 @@ export default function AdminLayout({
     setCurrentUserName("Kullanıcı");
     setCurrentUserAvatar("https://placehold.co/32x32.png");
     setCurrentUserRoleName(null);
-    if (isMountedRef.current) setAuthCheckComplete(false);
+    if (isMountedRef.current) setAuthCheckComplete(false); // Trigger re-check which should redirect
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/login');
+    router.push('/login'); // Explicitly redirect to admin login
   }, [router]);
 
 
@@ -172,36 +172,25 @@ export default function AdminLayout({
         return; // Don't redirect on preview pages
     }
 
-    if (!currentUserId || !currentUserRoleName) { // No user or role info
+    if (!currentUserId || currentUserRoleName !== 'Admin') { // No user or not an Admin
       if (isAdminPage && !isLoginPage) {
-        router.replace('/login');
+        console.log(`[AdminLayout] Redirecting: No admin user. currentUserId=${currentUserId}, currentUserRoleName=${currentUserRoleName}`);
+        router.replace('/login'); // Redirect to admin login page
       }
-      return;
-    }
-
-    if (currentUserRoleName.toLowerCase() !== 'admin') {
-      if (isAdminPage && !isLoginPage) {
-        toast({
-            title: "Erişim Reddedildi",
-            description: "Bu alana erişim yetkiniz yok. Lütfen admin olarak giriş yapın.",
-            variant: "destructive"
-        });
-        router.replace('/login');
-      }
-      // If on a non-admin page as a non-admin, or on login page, that's fine.
       return;
     }
     
     // At this point, user is an Admin.
     // If on the login page as an Admin, redirect to dashboard
     if (isLoginPage) {
+        console.log("[AdminLayout] Admin on login page, redirecting to /admin");
         router.replace('/admin');
     }
 
   }, [authCheckComplete, currentUserId, currentUserRoleName, router]);
 
 
-  if (!authCheckComplete || (currentUserId && permissionsLoading && !permissionsError)) {
+  if (!authCheckComplete || (currentUserId && currentUserRoleName === 'Admin' && permissionsLoading && !permissionsError)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -210,9 +199,8 @@ export default function AdminLayout({
     );
   }
 
-  // If there's a permissions error *after* establishing a user, it means their role might be invalid
-  // or there was an issue fetching roles. This is different from just not being logged in.
   if (currentUserId && permissionsError) {
+    console.error(`[AdminLayout] Render: Permissions error for user ${currentUserId}: ${permissionsError}`);
     return (
          <div className="flex flex-col min-h-screen"> 
             <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
@@ -227,9 +215,12 @@ export default function AdminLayout({
     );
   }
   
-  // If no currentUserId (and auth check is complete), and not on login page, this means AdminLayout should have redirected.
-  // This is a fallback, but the useEffect above should handle redirection.
-  if (!currentUserId && authCheckComplete && typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin/preview') && window.location.pathname !== '/login') {
+  // Fallback if checks above didn't catch a non-admin or no user scenario for an admin page
+  if (authCheckComplete && (!currentUserId || currentUserRoleName !== 'Admin') && typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && !window.location.pathname.startsWith('/admin/preview') && window.location.pathname !== '/login') {
+     console.log(`[AdminLayout] Fallback Redirect: No admin user for admin page. currentUserId=${currentUserId}, currentUserRoleName=${currentUserRoleName}`);
+     // This should ideally not be hit if the useEffect redirection works, but as a safeguard:
+     // router.replace('/login'); // This would cause a loop if called during render.
+     // Instead, render a loading/redirecting state or null, and let useEffect handle redirect.
      return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -513,12 +504,10 @@ export default function AdminLayout({
             </Button>
             <ThemeToggle />
             <Link href={currentUserId ? `/admin/profile` : '/login'} passHref>
-                <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
-                  <Avatar className="size-7">
+                <Avatar className="h-8 w-8 cursor-pointer">
                     <AvatarImage src={currentUserAvatar} alt={currentUserName} data-ai-hint="user avatar placeholder"/>
                     <AvatarFallback>{currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </Button>
+                </Avatar>
             </Link>
            </div>
          </header>
@@ -529,4 +518,3 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
-
