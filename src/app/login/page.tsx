@@ -3,12 +3,13 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle as ShadCNCardTitle, CardDescription as ShadCNCardDescription } from '@/components/ui/card'; // Renamed to avoid conflict
+import { DialogTitle, DialogDescription } from '@/components/ui/dialog'; // Added imports
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { LogIn, ShieldCheck, KeyRound, Eye, EyeOff, Loader2, Mail, AtSign } from 'lucide-react'; // Changed User to ShieldCheck
+import { LogIn, ShieldCheck, KeyRound, Eye, EyeOff, Loader2, Mail, AtSign } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { getUsers, type User as UserData } from '@/lib/mock-data';
@@ -20,7 +21,7 @@ const AnimatedLockIcon = () => (
     transition={{ duration: 0.8, ease: "easeOut" }}
     className="mx-auto mb-6" // Increased margin bottom
   >
-    <ShieldCheck className="h-16 w-16 text-primary" /> 
+    <ShieldCheck className="h-16 w-16 text-primary" />
   </motion.div>
 );
 
@@ -198,3 +199,4 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+
