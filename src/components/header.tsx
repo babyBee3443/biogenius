@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -33,7 +34,6 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
-  // This is mock data. In a real application, you would fetch this from your backend.
   const mockData: ArticleStub[] = [
     { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
     { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
@@ -43,7 +43,7 @@ const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   return mockData.filter(article =>
     (article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.category.toLowerCase().includes(query.toLowerCase())) &&
-    article.category === 'Biyoloji' // Only show Biyoloji articles
+    article.category === 'Biyoloji'
   ).slice(0, 5);
 };
 
@@ -102,7 +102,6 @@ const DnaLogo = () => (
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                // Keep amplitude static if Date.now() causes issues in server components or build
                 const amplitude = 10 + (typeof window !== 'undefined' ? Math.sin(Date.now() / 700 + i) * 2 : 0);
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
@@ -181,7 +180,7 @@ const Header = () => {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('currentUserUpdated', checkUserStatus); // Listen for custom event
+    window.addEventListener('currentUserUpdated', checkUserStatus); 
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -236,8 +235,6 @@ const Header = () => {
     }
     setCurrentUser(null); 
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    // Dispatch event so AdminLayout can react if needed for immediate redirect logic.
-    // window.dispatchEvent(new CustomEvent('currentUserUpdated')); // This is handled by checkUserStatus
   };
 
   const handleCreateAccountSuccess = () => {
@@ -364,7 +361,7 @@ const Header = () => {
 
              {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
                 <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
-                    <Link href="/admin" passHref>
+                     <Link href="/admin" passHref>
                         <ShieldCheck className="mr-1.5 h-4 w-4" />
                         <span className="hidden sm:inline">Admin Paneli</span>
                         <span className="sm:hidden">Admin</span>
@@ -376,7 +373,7 @@ const Header = () => {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={currentUser.avatar || `https://picsum.photos/seed/${currentUser.username || 'user'}/32/32`} alt={currentUser.name || 'Kullanıcı'} />
+                                <AvatarImage src={currentUser.avatar || `https://placehold.co/32x32.png?text=${(currentUser.name || 'U').charAt(0)}`} alt={currentUser.name || 'Kullanıcı'} data-ai-hint="user avatar placeholder"/>
                                 <AvatarFallback>{(currentUser.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </Button>
@@ -436,6 +433,7 @@ const Header = () => {
                                  as="a"
                              >
                                 {item.href === '/biyoloji-notlari' && <BookCopy className="h-4 w-4" />}
+                                {item.href === '/' && <HomeIcon className="h-4 w-4" />} 
                                <span className="capitalize">{item.label}</span>
                              </Button>
                          </Link>
