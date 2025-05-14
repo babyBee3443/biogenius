@@ -20,8 +20,8 @@ import {
     Settings as SettingsIcon, Wand2, Info, Download, UserX, Languages 
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { getUserById, updateUser, type User } from '@/lib/data/users';
-import Link from 'next/link'; // Keep if there are any Link components
+import { updateUser, type User, getUserById } from '@/lib/data/users'; // Corrected getUserById import
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+// import { usePermissions } from "@/hooks/usePermissions"; // Commented out as it's not used here
 
 
 const DnaBackgroundPattern = () => (
@@ -42,7 +43,7 @@ const DnaBackgroundPattern = () => (
         key={`dna-pattern-${i}`}
         className="absolute animate-pulse"
         style={{
-          left: `${Math.random() * 120 - 10}%`, // Allow to go slightly off-screen
+          left: `${Math.random() * 120 - 10}%`, 
           top: `${Math.random() * 120 - 10}%`,
           width: `${Math.random() * 150 + 80}px`,
           height: `${Math.random() * 150 + 80}px`,
@@ -70,15 +71,12 @@ export default function UserProfilePage() {
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();
 
-  // Form states for Profile Card
   const [fullName, setFullName] = React.useState("");
   const [userBio, setUserBio] = React.useState("");
   const [userStatus, setUserStatus] = React.useState<User['status'] | undefined>(undefined);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
 
-
-  // Form states for Settings Tabs
   const [quizReminders, setQuizReminders] = React.useState(true);
   const [newContentAlerts, setNewContentAlerts] = React.useState(true);
   const [emailFrequency, setEmailFrequency] = React.useState("daily");
@@ -91,6 +89,8 @@ export default function UserProfilePage() {
   const [isSavingPassword, setIsSavingPassword] = React.useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = React.useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = React.useState(false);
+  
+  // const { permissions, isLoading: permissionsLoading } = usePermissions(currentUser?.id || null);
 
 
   React.useEffect(() => {
@@ -103,21 +103,34 @@ export default function UserProfilePage() {
             const user = JSON.parse(storedUser) as User;
             if (isMounted) {
               if (user.role === 'Admin' || user.role === 'Editor') {
-                router.replace('/admin/profile'); // Redirect Admin/Editor to their admin profile
-                return;
+                // For admin/editor, we might want a different profile page or redirect to admin profile.
+                // For now, let's assume this page handles all user profiles including admin/editor if they access it.
+                // router.replace('/admin/profile'); // Example: redirect to admin profile
               }
-              setCurrentUser(user);
-              setFullName(user.name || "");
-              setUserBio(user.bio || "");
-              setUserStatus(user.status || undefined);
-              setAvatarPreview(user.avatar || `https://placehold.co/128x128.png?text=${(user.name || 'U').charAt(0)}`);
+              const fetchedUser = await getUserById(user.id); // Fetch latest data
+              if (fetchedUser && isMounted) {
+                  setCurrentUser(fetchedUser);
+                  setFullName(fetchedUser.name || "");
+                  setUserBio(fetchedUser.bio || "");
+                  setUserStatus(fetchedUser.status || undefined);
+                  setAvatarPreview(fetchedUser.avatar || `https://placehold.co/128x128.png?text=${(fetchedUser.name || 'U').charAt(0)}`);
+              } else if (isMounted) {
+                 // User from localStorage not found in DB, might be an issue.
+                 // For now, proceed with localStorage data but log a warning.
+                 console.warn("User from localStorage not found in DB, using localStorage data for profile.");
+                 setCurrentUser(user);
+                 setFullName(user.name || "");
+                 setUserBio(user.bio || "");
+                 setUserStatus(user.status || undefined);
+                 setAvatarPreview(user.avatar || `https://placehold.co/128x128.png?text=${(user.name || 'U').charAt(0)}`);
+              }
             }
           } catch (e) {
             console.error("Error parsing current user from localStorage", e);
-            if (isMounted) router.push('/'); // Redirect to home if error
+            if (isMounted) router.push('/'); 
           }
         } else {
-          if (isMounted) router.push('/'); // Redirect to home if no user
+          if (isMounted) router.push('/'); 
         }
         if (isMounted) setLoading(false);
       }
@@ -133,12 +146,30 @@ export default function UserProfilePage() {
         name: fullName,
         bio: userBio,
         status: userStatus,
-        avatar: avatarPreview || undefined, // Send new avatar if changed
+        avatar: avatarPreview || undefined,
     };
     try {
         const updatedUser = await updateUser(currentUser.id, updatedData);
         if (updatedUser) {
-            setCurrentUser(updatedUser); // Update local state
+            setCurrentUser(updatedUser);
+            if (typeof window !== 'undefined') {
+              const storedCurrentUser = localStorage.getItem('currentUser');
+              if (storedCurrentUser) {
+                  try {
+                      const currentUserData = JSON.parse(storedCurrentUser);
+                      if (currentUserData.id === updatedUser.id) {
+                          localStorage.setItem('currentUser', JSON.stringify({
+                              ...currentUserData,
+                              name: updatedUser.name,
+                              avatar: updatedUser.avatar,
+                              bio: updatedUser.bio,
+                              status: updatedUser.status,
+                          }));
+                          window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+                      }
+                  } catch (e) { console.error("Failed to update localStorage user", e); }
+              }
+            }
             toast({ title: "Profil Güncellendi", description: "Bilgileriniz başarıyla kaydedildi." });
         } else {
             toast({ variant: "destructive", title: "Hata", description: "Profil güncellenemedi." });
@@ -153,7 +184,7 @@ export default function UserProfilePage() {
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 2 * 1024 * 1024) { 
         toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 2MB'den küçük bir resim seçin." });
         return;
       }
@@ -180,7 +211,6 @@ export default function UserProfilePage() {
         return;
     }
     setIsSavingPassword(true);
-    // Simulate API call
     setTimeout(() => {
         toast({ title: "Şifre Değiştirildi (Simülasyon)", description: "Şifreniz başarıyla güncellendi." });
         setCurrentPassword("");
@@ -196,7 +226,6 @@ export default function UserProfilePage() {
 
   const confirmDeleteAccount = () => {
     setIsDeletingAccount(true);
-    // Simulate API call
     setTimeout(() => {
         toast({ variant: "destructive", title: "Hesap Silindi (Simülasyon)", description: "Hesabınız silindi. Anasayfaya yönlendiriliyorsunuz." });
         if (typeof window !== 'undefined') localStorage.removeItem('currentUser');
@@ -226,11 +255,10 @@ export default function UserProfilePage() {
   }
 
   if (!currentUser) {
-    // This case should ideally be handled by the redirect in useEffect, but as a fallback:
     return (
       <div className="text-center py-10 min-h-screen flex flex-col justify-center items-center">
         <p className="text-muted-foreground">Lütfen giriş yapınız.</p>
-        <Button asChild className="mt-4" onClick={() => router.push('/')}> {/* Simpler redirect for now */}
+        <Button asChild className="mt-4" onClick={() => router.push('/')}>
           Ana Sayfaya Dön
         </Button>
       </div>
@@ -249,15 +277,14 @@ export default function UserProfilePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Sol Profil Kartı */}
           <Card className="lg:col-span-1 bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
             <CardHeader className="items-center text-center p-6">
               <Avatar className="h-32 w-32 mb-4 border-4 border-primary/50 shadow-lg">
                 <AvatarImage src={avatarPreview || undefined} alt={currentUser.name} data-ai-hint="user avatar placeholder" />
                 <AvatarFallback className="text-4xl bg-muted">{(currentUser.name || currentUser.username || 'U').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <Button variant="outline" size="sm" className="text-xs" onClick={() => avatarInputRef.current?.click()} disabled={isSavingProfile}>
-                <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Avatar Değiştir (Yakında)
+              <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => avatarInputRef.current?.click()} disabled={isSavingProfile}>
+                <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Avatar Seç (Yakında)
               </Button>
               <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
               <CardTitle className="text-2xl font-semibold mt-3">{currentUser.name || currentUser.username}</CardTitle>
@@ -294,7 +321,6 @@ export default function UserProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Sağ Ayarlar Bölümü (Sekmeli) */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6 bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-border/30 rounded-xl">
@@ -404,9 +430,11 @@ export default function UserProfilePage() {
             </Tabs>
             
             <div className="text-center mt-12">
-                <Button variant="outline" onClick={handleLogout} className="gap-2 border-border/50 hover:bg-muted/80">
-                    <LogOut className="h-4 w-4" /> Çıkış Yap
-                </Button>
+                 <Button variant="outline" onClick={handleLogout} className="border-border/50 hover:bg-muted/80">
+                     <span className="flex items-center gap-2">
+                        <LogOut className="h-4 w-4" /> Çıkış Yap
+                     </span>
+                 </Button>
             </div>
           </div>
         </div>
@@ -437,3 +465,5 @@ export default function UserProfilePage() {
     </>
   );
 }
+
+    
