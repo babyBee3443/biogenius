@@ -80,7 +80,7 @@ const WelcomeScreen = () => {
   const title = "Öğrenmenin genetik temeli";
   const subtitleParts = [
     { text: "Hox genleri canlıyı şekillendirir, ", colorClass: "text-muted-foreground" },
-    { text: "Biyohox", colorClass: "text-primary animate-text-rgb-cycle-fast" },
+    { text: "BiyoHox", colorClass: "text-primary animate-text-rgb-cycle-fast" },
     { text: " ise öğrenmeni", colorClass: "text-muted-foreground" },
   ];
 
@@ -94,7 +94,7 @@ const WelcomeScreen = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.03, // Reduced stagger for faster appearance
+        staggerChildren: 0.03,
         delayChildren: 0.5,
       },
     },
@@ -102,17 +102,17 @@ const WelcomeScreen = () => {
 
   const subtitleCharVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }, // Faster char animation
+    visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center text-center py-6 px-4 overflow-hidden mb-6"> {/* Reduced padding and margin */}
+    <section className="relative flex flex-col items-center justify-center text-center py-6 px-4 overflow-hidden mb-6">
       <div className="relative z-10">
         <motion.h1
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-primary" // Reduced mb
+          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-primary max-w-full px-2 sm:max-w-xl md:max-w-2xl lg:max-w-3xl" // Added max-width for better wrapping
         >
           {title}
         </motion.h1>
@@ -121,7 +121,7 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto" // Reduced max-width
+          className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-full px-2 sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto" // Added max-width for better wrapping
         >
           {subtitleParts.map((part, partIndex) => (
             <span key={`subpart-${partIndex}`} className={part.colorClass}>
