@@ -3,8 +3,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle as ShadCNCardTitle, CardDescription as ShadCNCardDescription } from '@/components/ui/card'; // Renamed to avoid conflict
-import { DialogTitle, DialogDescription } from '@/components/ui/dialog'; // Added imports
+import { Card, CardContent, CardHeader, CardTitle as ShadCNCardTitle, CardDescription as ShadCNCardDescription, CardFooter } from '@/components/ui/card'; // Added CardFooter
+import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,7 @@ const AnimatedLockIcon = () => (
     initial={{ opacity: 0, scale: 0.5, rotate: -180 }}
     animate={{ opacity: 1, scale: 1, rotate: 0 }}
     transition={{ duration: 0.8, ease: "easeOut" }}
-    className="mx-auto mb-6" // Increased margin bottom
+    className="mx-auto mb-6"
   >
     <ShieldCheck className="h-16 w-16 text-primary" />
   </motion.div>
@@ -44,7 +44,6 @@ export default function AdminLoginPage() {
             router.replace('/admin');
           }
         } catch (e) {
-          // Corrupted data, clear it
           localStorage.removeItem('currentUser');
         }
       }
@@ -62,22 +61,21 @@ export default function AdminLoginPage() {
 
       const foundUser = allUsers.find(
         (user: UserData) =>
-          (user.email && user.email.toLowerCase() === lowercasedInput) ||
-          (user.username && user.username.toLowerCase() === lowercasedInput)
+          (user.email?.toLowerCase() === lowercasedInput) || // Added optional chaining
+          (user.username?.toLowerCase() === lowercasedInput) // Added optional chaining
       );
 
-      if (foundUser && password) { // Basic password check
+      if (foundUser && password) { 
         if (foundUser.role === 'Admin') {
           if (typeof window !== 'undefined') {
             localStorage.setItem('currentUser', JSON.stringify(foundUser));
-            // Dispatch custom event to notify other parts of the app (like AdminLayout)
             window.dispatchEvent(new CustomEvent('currentUserUpdated'));
           }
           toast({
             title: 'Giriş Başarılı!',
             description: `Hoş geldiniz, ${foundUser.name}! Yönetim paneline yönlendiriliyorsunuz.`,
           });
-          router.push('/admin'); // Redirect to admin dashboard
+          router.push('/admin');
         } else {
           setError('Bu alan yalnızca yöneticilere özeldir.');
           toast({
@@ -199,4 +197,3 @@ export default function AdminLoginPage() {
     </div>
   );
 }
-
