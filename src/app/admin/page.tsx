@@ -35,8 +35,8 @@ import {
   TableRow,
 } from "@/components/ui/table"; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
-import { getArticles, type ArticleData } from "@/lib/data/articles"; // Updated import
-import { getUsers, type User } from "@/lib/data/users"; // Updated import
+import { getArticles, type ArticleData } from '@/lib/data/articles';
+import { getUsers, type User } from '@/lib/data/users';
 import * as React from "react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRouter } from "next/navigation";
@@ -90,7 +90,6 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   const fetchData = React.useCallback(async () => {
-    console.log("[AdminDashboard] Starting data fetch...");
     setLoadingData(true);
     try {
       const [
@@ -102,7 +101,6 @@ export default function AdminDashboard() {
         getUsers(),
         getTotalCommentCount(),
       ]);
-      console.log("[AdminDashboard] Data fetched:", { articles: articlesData.length, users: usersData.length, comments: commentsData });
 
       setTotalArticles(articlesData.length);
       setTotalUsers(usersData.length);
@@ -127,64 +125,75 @@ export default function AdminDashboard() {
       toast({ variant: "destructive", title: "Veri Yükleme Hatası", description: "Gösterge paneli verileri yüklenemedi."})
     } finally {
       setLoadingData(false);
-      console.log("[AdminDashboard] Data fetch complete.");
     }
   }, []);
 
   React.useEffect(() => {
-    console.log(`[AdminDashboard] Effect Triggered: isInitialLoadComplete=${isInitialLoadComplete}, currentUserId=${currentUserId}, permissionsLoading=${permissionsLoading}, permissionsError=${permissionsError}`);
     if (!isInitialLoadComplete) {
-        console.log("[AdminDashboard] Waiting for initial user ID load from localStorage...");
         return;
     }
     
     if (!currentUserId) {
-        console.log("[AdminDashboard] No currentUserId. AdminLayout should redirect to login if not already on /login.");
-        setLoadingData(false); 
+        // AdminLayout should handle redirecting to login if not on /login already
+        setLoadingData(false); // Stop loading as there's no user to fetch data for
         return;
     }
 
     if (permissionsLoading) {
-        console.log("[AdminDashboard] User ID present, waiting for permissions to load...");
         return; 
     }
 
     if (permissionsError) {
         console.error("[AdminDashboard] Permissions error:", permissionsError);
+        // Error is handled by the main return block below for permissions error
+        // No need to toast here again, usePermissions might already do it or AdminLayout.
+        setLoadingData(false); // Stop loading as permissions failed
         return;
     }
     
-    const canViewDashboard = hasPermission('Dashboard Görüntüleme');
-    console.log("[AdminDashboard] Permissions loaded. Has 'Dashboard Görüntüleme':", canViewDashboard);
-
-    if (!canViewDashboard) {
-        console.log("[AdminDashboard] No permission to view dashboard, redirecting to /admin/profile.");
-        toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Gösterge panelini görüntüleme yetkiniz yok." });
-        router.push('/admin/profile');
+    if (!hasPermission('Dashboard Görüntüleme')) {
+        // toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Gösterge panelini görüntüleme yetkiniz yok." });
+        // router.push('/admin/profile'); // Redirect to a safe page if no dashboard permission
+        // This redirection is now primarily handled by AdminLayout for non-admins.
+        // For admins without this specific permission, they might see a blank or restricted page.
+        setLoadingData(false); // Stop loading if no permission
         return;
     }
     
-    console.log("[AdminDashboard] User has permission, fetching dashboard data.");
     fetchData();
 
   }, [isInitialLoadComplete, currentUserId, fetchData, permissionsLoading, hasPermission, router, permissionsError]);
 
-  if (permissionsError) {
-    return (
-        <div className="flex flex-col items-center justify-center h-screen">
-            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-            <p className="text-destructive text-lg mb-2">İzin Hatası</p>
-            <p className="text-muted-foreground max-w-md text-center">{permissionsError}</p>
-            <Button onClick={() => router.push('/login')} className="mt-6">Giriş Sayfasına Dön</Button>
-        </div>
-    );
-  }
-
+  // This loading state covers: initial localStorage check, permissions check, and data fetching
   if (!isInitialLoadComplete || (currentUserId && permissionsLoading) || loadingData) {
     return (
         <div className="flex justify-center items-center h-screen">
             <Loader2 className="mr-2 h-8 w-8 animate-spin" />
             Gösterge Paneli Yükleniyor...
+        </div>
+    );
+  }
+
+  // This error rendering is now more specific to actual data loading or critical permission issues
+  if (permissionsError && currentUserId) { // Only show if there's a user and a permission error
+    return (
+        <div className="flex flex-col items-center justify-center h-screen">
+            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+            <p className="text-destructive text-lg mb-2">Yetkilendirme Hatası</p>
+            <p className="text-muted-foreground max-w-md text-center">{permissionsError}</p>
+            {/* The logout button is in AdminLayout, so no need for another one here */}
+        </div>
+    );
+  }
+
+  if (!hasPermission('Dashboard Görüntüleme') && currentUserId) {
+    return (
+        <div className="flex flex-col items-center justify-center h-screen">
+            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+            <p className="text-destructive text-lg mb-2">Erişim Reddedildi</p>
+            <p className="text-muted-foreground max-w-md text-center">
+                Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.
+            </p>
         </div>
     );
   }
@@ -473,3 +482,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+    

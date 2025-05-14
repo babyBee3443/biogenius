@@ -26,14 +26,30 @@ import {
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from "@/components/ui/pagination";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
-import { getNotes, deleteNote, type NoteData } from '@/lib/data/notes'; // Updated import
+import { getNotes, deleteNote, type NoteData } from '@/lib/data/notes';
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions"; // Import usePermissions
+import { useRouter } from "next/navigation"; // Import useRouter
 
 export default function AdminBiyolojiNotlariPage() {
   const [notes, setNotes] = React.useState<NoteData[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // State for current user ID
+  const { hasPermission, isLoading: permissionsLoading, error: permissionsError } = usePermissions(currentUserId); // Use permissions hook
+  const router = useRouter(); // Initialize router
+
+  React.useEffect(() => { // Effect to get current user ID from localStorage
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          setCurrentUserId(JSON.parse(storedUser)?.id || null);
+        } catch (e) { setCurrentUserId(null); }
+      }
+    }
+  }, []);
 
   const currentPage = 1; 
   const totalPages = 1; 
@@ -47,66 +63,57 @@ export default function AdminBiyolojiNotlariPage() {
   const fetchNotes = React.useCallback(async () => {
     setLoading(true);
     setError(null);
-    console.log("[fetchNotes] Fetching biology notes...");
     try {
       const data = await getNotes();
-      console.log("[fetchNotes] Raw data fetched:", data.length, "notes");
-
        const filteredData = data.filter(note =>
           (note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (note.summary && note.summary.toLowerCase().includes(searchTerm.toLowerCase())) || // check if summary exists
-           (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))) && // check if tags exist
+           (note.summary && note.summary.toLowerCase().includes(searchTerm.toLowerCase())) || 
+           (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))) && 
           (selectedCategory.length === 0 || selectedCategory.includes(note.category)) &&
           (selectedLevel.length === 0 || selectedLevel.includes(note.level))
        );
-       
       setNotes(filteredData);
-      console.log("[fetchNotes] Filtered data set to state:", filteredData.length, "notes");
     } catch (err) {
       console.error("[fetchNotes] Error fetching notes:", err);
       setError("Biyoloji notları yüklenirken bir hata oluştu.");
       toast({ variant: "destructive", title: "Hata", description: "Notlar yüklenemedi." });
     } finally {
       setLoading(false);
-      console.log("[fetchNotes] Fetching complete, loading set to false.");
     }
   }, [searchTerm, selectedCategory, selectedLevel]); 
 
   React.useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
+    if (!permissionsLoading && !hasPermission('Biyoloji Notlarını Görüntüleme') && currentUserId) {
+        // toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Bu sayfayı görüntüleme yetkiniz yok." });
+        // router.push('/admin'); // Handled by AdminLayout
+        return;
+    }
+    if (!permissionsLoading && (hasPermission('Biyoloji Notlarını Görüntüleme') || !currentUserId)) { // Allow fetch if no user (guest access to admin panel is bad but per request)
+        fetchNotes();
+    }
+  }, [fetchNotes, permissionsLoading, hasPermission, router, currentUserId]);
 
    const handleDelete = async (id: string, title: string) => {
-     console.log(`[handleDelete] Attempting to delete note: ${id} (${title})`);
      if (window.confirm(`"${title}" başlıklı notu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-         console.log(`[handleDelete] User confirmed deletion for: ${id}`);
          setDeletingId(id);
          try {
-             console.log(`[handleDelete] Calling deleteNote(${id})`);
              const success = await deleteNote(id);
-             console.log(`[handleDelete] deleteNote(${id}) returned: ${success}`);
              if (success) {
                  toast({
                      variant: "default",
                      title: "Not Silindi",
                      description: `"${title}" başlıklı not başarıyla silindi.`,
                  });
-                 console.log(`[handleDelete] Deletion successful for ${id}. Refetching notes...`);
                  await fetchNotes();
-                 console.log(`[handleDelete] Note list refetched after deleting ${id}.`);
              } else {
-                 console.error(`[handleDelete] deleteNote(${id}) failed.`);
                  toast({ variant: "destructive", title: "Silme Hatası", description: "Not silinemedi." });
              }
          } catch (error) {
              console.error(`[handleDelete] Error during deletion of ${id}:`, error);
              toast({ variant: "destructive", title: "Silme Hatası", description: "Not silinirken bir hata oluştu." });
          } finally {
-             console.log(`[handleDelete] Resetting deletingId for ${id}.`);
              setDeletingId(null);
          }
-     } else {
-        console.log(`[handleDelete] User cancelled deletion for: ${id}`);
      }
    };
 
@@ -121,6 +128,36 @@ export default function AdminBiyolojiNotlariPage() {
        );
    };
 
+
+    if (loading || permissionsLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                Yükleniyor...
+            </div>
+        );
+    }
+
+    // If there's a permission error and a user is logged in, show error
+    if (permissionsError && currentUserId) {
+        return (
+            <div className="text-center py-10 text-destructive">
+                <p>Yetki Hatası: {permissionsError}</p>
+            </div>
+        );
+    }
+
+    // If user is logged in but doesn't have permission (and no other loading/error state)
+    if (currentUserId && !hasPermission('Biyoloji Notlarını Görüntüleme') && !loading && !permissionsError) {
+        return (
+            <div className="text-center py-10">
+                <p className="text-lg font-semibold text-destructive">Erişim Reddedildi</p>
+                <p className="text-muted-foreground">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
+            </div>
+        );
+    }
+
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -133,11 +170,13 @@ export default function AdminBiyolojiNotlariPage() {
                  <RefreshCw className={cn("mr-2 h-4 w-4", loading && 'animate-spin')} />
                  Yenile
              </Button>
-             <Button asChild>
-               <Link href="/admin/biyoloji-notlari/new">
-                 <PlusCircle className="mr-2 h-4 w-4" /> Yeni Not Ekle
-               </Link>
-             </Button>
+             {hasPermission('Yeni Biyoloji Notu Ekleme') && (
+                <Button asChild>
+                <Link href="/admin/biyoloji-notlari/new">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Yeni Not Ekle
+                </Link>
+                </Button>
+             )}
          </div>
       </div>
 
@@ -200,12 +239,12 @@ export default function AdminBiyolojiNotlariPage() {
 
       <Card>
         <CardContent className="pt-6">
-          {loading ? (
+          {loading && notes.length === 0 ? (
              <div className="flex justify-center items-center py-10">
                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
                Notlar yükleniyor...
              </div>
-          ) : error ? (
+          ) : error && !loading ? (
              <div className="text-center py-10 text-destructive">{error}</div>
           ) : notes.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground">
@@ -242,34 +281,38 @@ export default function AdminBiyolojiNotlariPage() {
                       <Badge variant="outline" className="font-normal">{note.level}</Badge>
                     </TableCell>
                     <TableCell className="max-w-xs truncate">
-                        {note.tags && note.tags.slice(0, 3).map(tag => ( // Add null check for note.tags
+                        {note.tags && note.tags.slice(0, 3).map(tag => ( 
                             <Badge key={tag} variant="outline" className="mr-1 text-xs font-normal">{tag}</Badge>
                         ))}
                         {note.tags && note.tags.length > 3 && <span className="text-xs text-muted-foreground">...</span>}
                     </TableCell>
                     <TableCell>{note.updatedAt ? new Date(note.updatedAt).toLocaleDateString('tr-TR') : '-'}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId === note.id}>
-                        <Link href={`/admin/biyoloji-notlari/edit/${note.id}`}>
-                          <FilePenLine className="h-4 w-4" />
-                          <span className="sr-only">Düzenle</span>
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(note.id, note.title)}
-                        disabled={deletingId === note.id}
-                        aria-label="Sil"
-                      >
-                        {deletingId === note.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                        <span className="sr-only">Sil</span>
-                      </Button>
+                      {hasPermission('Biyoloji Notlarını Düzenleme') && (
+                            <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId === note.id}>
+                                <Link href={`/admin/biyoloji-notlari/edit/${note.id}`}>
+                                <FilePenLine className="h-4 w-4" />
+                                <span className="sr-only">Düzenle</span>
+                                </Link>
+                            </Button>
+                      )}
+                      {hasPermission('Biyoloji Notlarını Silme') && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDelete(note.id, note.title)}
+                                disabled={deletingId === note.id}
+                                aria-label="Sil"
+                            >
+                                {deletingId === note.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                <Trash2 className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">Sil</span>
+                            </Button>
+                       )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -303,3 +346,5 @@ export default function AdminBiyolojiNotlariPage() {
     </div>
   );
 }
+
+    

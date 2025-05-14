@@ -2,8 +2,8 @@
 "use client";
 
 import * as React from 'react';
-import { getRoles, type Role } from '@/lib/data/roles'; // Updated import
-import type { User } from '@/lib/data/users'; // Updated import
+import { getRoles, type Role, getAllPermissions as mockGetAllPermissions, baseMockRoles } from '@/lib/data/roles';
+import type { User } from '@/lib/data/users';
 
 interface PermissionsState {
   permissions: Set<string>;
@@ -11,7 +11,7 @@ interface PermissionsState {
   error: string | null;
 }
 
-export function usePermissions(currentUserId: string | null = null) { // Default to null if not provided
+export function usePermissions(currentUserId: string | null = null) {
   const [state, setState] = React.useState<PermissionsState>({
     permissions: new Set(),
     isLoading: true,
@@ -23,21 +23,18 @@ export function usePermissions(currentUserId: string | null = null) { // Default
     const fetchPermissions = async () => {
       if (!isMounted) return;
 
+      // If currentUserId is null, we're not logged in or still checking.
+      // Don't treat this as an error, just means no permissions for now.
       if (!currentUserId) {
-        // No user ID, means not logged in or session is still loading.
-        // isLoading will remain true until currentUserId is available or auth check completes.
-        // If auth check completes and still no currentUserId, AdminLayout handles redirection.
-        // For non-admin contexts, this means no permissions.
         if (isMounted) {
           setState({ permissions: new Set(), isLoading: false, error: null });
         }
         return;
       }
-
+      
       if(isMounted) {
         setState(prev => ({ ...prev, isLoading: true, error: null }));
       }
-
 
       if (typeof window === 'undefined') {
          if (isMounted) {
@@ -49,7 +46,9 @@ export function usePermissions(currentUserId: string | null = null) { // Default
       const storedUserString = localStorage.getItem('currentUser');
       if (!storedUserString) {
         if (isMounted) {
-          setState({ permissions: new Set(), isLoading: false, error: "Oturum bilgisi bulunamadı. Lütfen giriş yapın." });
+          // No user in localStorage, but currentUserId was provided. This might be an inconsistent state.
+          // For now, treat as no permissions rather than an error.
+          setState({ permissions: new Set(), isLoading: false, error: null });
         }
         return;
       }
@@ -59,7 +58,8 @@ export function usePermissions(currentUserId: string | null = null) { // Default
 
         if (!currentUser || currentUser.id !== currentUserId) {
           if (isMounted) {
-            setState({ permissions: new Set(), isLoading: false, error: "Geçersiz kullanıcı oturumu. Lütfen tekrar giriş yapın." });
+            // Mismatch between passed currentUserId and localStorage.
+            setState({ permissions: new Set(), isLoading: false, error: null });
           }
           return;
         }
@@ -70,30 +70,47 @@ export function usePermissions(currentUserId: string | null = null) { // Default
           }
           return;
         }
-
-        const allRoles = await getRoles();
-        const userRoleString = currentUser.role.trim().toLowerCase();
         
-        const userRoleData = allRoles.find(r =>
-            r.name.trim().toLowerCase() === userRoleString ||
-            r.id.trim().toLowerCase() === userRoleString
-        );
+        const userRoleString = currentUser.role.trim().toLowerCase();
 
-        if (userRoleData) {
-            if (userRoleData.permissions && Array.isArray(userRoleData.permissions)) {
-                 if (isMounted) {
-                    setState({ permissions: new Set(userRoleData.permissions), isLoading: false, error: null });
-                 }
-            } else {
+        if (userRoleString === 'admin') {
+            // If the user is explicitly "Admin", grant all permissions directly from baseMockRoles
+            const adminBaseRole = baseMockRoles.find(r => r.id.toLowerCase() === 'admin');
+            if (adminBaseRole && adminBaseRole.permissions) {
                 if (isMounted) {
-                    setState({ permissions: new Set(), isLoading: false, error: `"${currentUser.role}" rolü için izinler tanımsız veya geçersiz.` });
+                    setState({ permissions: new Set(adminBaseRole.permissions), isLoading: false, error: null });
+                }
+            } else {
+                 if (isMounted) { // Should not happen if baseMockRoles is correct
+                    setState({ permissions: new Set(), isLoading: false, error: `"Admin" rolü için temel izinler bulunamadı.` });
                 }
             }
         } else {
-            if (isMounted) {
-                setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" adlı bir rol bulunamadı. Lütfen rol tanımlarını kontrol edin.` });
+            // For other roles, fetch from getRoles which considers localStorage for custom roles
+            // but ensures base roles (like Editor, User) get permissions from code.
+            const allRoles = await getRoles(); // getRoles now ensures correct base permissions
+            const userRoleData = allRoles.find(r =>
+                r.name.trim().toLowerCase() === userRoleString ||
+                r.id.trim().toLowerCase() === userRoleString
+            );
+
+            if (userRoleData) {
+                if (userRoleData.permissions && Array.isArray(userRoleData.permissions)) {
+                     if (isMounted) {
+                        setState({ permissions: new Set(userRoleData.permissions), isLoading: false, error: null });
+                     }
+                } else {
+                    if (isMounted) {
+                        setState({ permissions: new Set(), isLoading: false, error: `"${currentUser.role}" rolü için izinler tanımsız veya geçersiz.` });
+                    }
+                }
+            } else {
+                if (isMounted) {
+                    setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" adlı bir rol bulunamadı.` });
+                }
             }
         }
+
       } catch (err: any) {
         console.error("[usePermissions] Error during fetchPermissions:", err);
         if (isMounted) {
@@ -115,3 +132,5 @@ export function usePermissions(currentUserId: string | null = null) { // Default
 
   return { ...state, hasPermission };
 }
+
+    

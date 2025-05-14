@@ -52,18 +52,18 @@ export default function AdminLayout({
     let newUserName = "Kullanıcı";
     let newUserAvatar = "https://placehold.co/32x32.png";
     let newUserRoleName: string | null = null;
-    let isMounted = true; // Assume mounted within this callback's scope execution
+    let isMounted = true;
 
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
       if (storedUserString) {
         try {
           const userData = JSON.parse(storedUserString);
-          if (userData && userData.id && userData.role) {
+          if (userData && userData.id) { // Role check removed for initial load, will be handled by permission hook
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://placehold.co/32x32.png?text=${(userData.name || 'U').charAt(0)}`;
             newUserId = userData.id;
-            newUserRoleName = userData.role;
+            newUserRoleName = userData.role || null; // Store role if available
             userFound = true;
           } else {
              newUserId = null;
@@ -71,7 +71,7 @@ export default function AdminLayout({
           }
         } catch (e) {
           console.error("AdminLayout: Error parsing currentUser from localStorage", e);
-          localStorage.removeItem('currentUser'); // Clear corrupted data
+          localStorage.removeItem('currentUser');
           newUserId = null;
           newUserRoleName = null;
         }
@@ -113,13 +113,13 @@ export default function AdminLayout({
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
-            if (isMountedRef.current) setAuthCheckComplete(false); // Re-trigger auth check
+            if (isMountedRef.current) setAuthCheckComplete(false);
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
-        if (isMountedRef.current) setAuthCheckComplete(false); // Re-trigger auth check
+        if (isMountedRef.current) setAuthCheckComplete(false);
         loadUserDataAndSettings();
     };
 
@@ -157,16 +157,16 @@ export default function AdminLayout({
         setCurrentUserName("Kullanıcı");
         setCurrentUserAvatar("https://placehold.co/32x32.png");
         setCurrentUserRoleName(null);
-        setAuthCheckComplete(false); // This will trigger the redirection logic in the next effect
+        setAuthCheckComplete(false);
     }
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/login'); // Explicitly redirect to admin login
+    router.push('/login');
   }, [router]);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
-  // Centralized redirection logic
+  // Centralized redirection logic - MODIFIED TO REMOVE STRICT ADMIN CHECK FOR LAYOUT DISPLAY
   React.useEffect(() => {
     if (!isMountedRef.current || !authCheckComplete) {
       return; // Wait for mount and initial auth check
@@ -180,17 +180,15 @@ export default function AdminLayout({
         return; // Don't redirect on preview pages
     }
 
-    if (!currentUserId || currentUserRoleName !== 'Admin') {
-      if (isAdminPage && !isLoginPage) {
-        console.log(`[AdminLayout Effect] Redirecting to /login: No admin user or role mismatch. currentUserId=${currentUserId}, currentUserRoleName=${currentUserRoleName}`);
-        router.replace('/login'); // Redirect to admin login page
-      }
-      return;
+    // If not logged in and trying to access an admin page (not /login), redirect to /login
+    if (!currentUserId && isAdminPage && !isLoginPage) {
+        console.log(`[AdminLayout Effect] Redirecting to /login: No currentUserId. Path: ${window.location.pathname}`);
+        router.replace('/login');
+        return;
     }
     
-    // At this point, user is an Admin.
-    // If on the login page as an Admin, redirect to dashboard
-    if (isLoginPage) {
+    // If logged in as Admin and on login page, redirect to dashboard
+    if (currentUserId && currentUserRoleName && currentUserRoleName.toLowerCase() === 'admin' && isLoginPage) {
         console.log("[AdminLayout Effect] Admin on login page, redirecting to /admin");
         router.replace('/admin');
     }
@@ -199,7 +197,7 @@ export default function AdminLayout({
 
 
   // Loading state while authCheck is in progress OR if permissions are loading for a confirmed admin
-  if (!authCheckComplete || (currentUserId && currentUserRoleName === 'Admin' && permissionsLoading && !permissionsError)) {
+  if (!authCheckComplete || (currentUserId && permissionsLoading && !permissionsError)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -208,36 +206,8 @@ export default function AdminLayout({
     );
   }
 
-  // If auth check is complete, but user is not an admin and is trying to access an admin page (other than /login or /admin/preview)
-  if (authCheckComplete && (!currentUserId || currentUserRoleName !== 'Admin')) {
-    // This case should ideally be caught by the useEffect redirection.
-    // If it's reached, it means the redirection hasn't happened yet or failed.
-    // Rendering a loading state or null is safer than attempting another redirect during render.
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Yönlendiriliyor...</p>
-        </div>
-    );
-  }
-  
-  // If there's a permissions error for a logged-in admin user
-  if (currentUserId && currentUserRoleName === 'Admin' && permissionsError) {
-    console.error(`[AdminLayout Render] Permissions error for user ${currentUserId}: ${permissionsError}`);
-    return (
-         <div className="flex flex-col min-h-screen"> 
-            <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-                 <ShieldCheck className="h-16 w-16 text-destructive mb-4" />
-                <h2 className="text-2xl font-semibold text-destructive mb-2">Yetkilendirme Hatası</h2>
-                <p className="text-muted-foreground mb-6 max-w-md">
-                    {permissionsError || "Rolünüz için izinler yüklenirken bir sorun oluştu veya tanımlı bir rolünüz bulunmuyor."}
-                </p>
-                <Button onClick={handleLogout}>Giriş Sayfasına Dön</Button>
-            </main>
-         </div>
-    );
-  }
-
+  // REMOVED: Strict "Access Denied" rendering based on permissionsError at layout level
+  // Individual pages will now handle their content display based on permissions, or show a generic message if needed.
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -527,3 +497,5 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
+
+    

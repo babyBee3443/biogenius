@@ -29,9 +29,9 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { type Category, getCategories, addCategory, updateCategory, deleteCategory } from "@/lib/mock-data"; // Import category functions
+import { type Category, getCategories, addCategory, updateCategory, deleteCategory } from "@/lib/data/categories";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button"; // Ensure this is imported if not already
+import { buttonVariants } from "@/components/ui/button"; 
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRouter } from "next/navigation";
 
@@ -45,8 +45,20 @@ export default function AdminCategoriesPage() {
   const [editCategoryName, setEditCategoryName] = React.useState("");
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
-  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
-  const router = useRouter();
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // State for current user ID
+  const { hasPermission, isLoading: permissionsLoading, error: permissionsError } = usePermissions(currentUserId); // Use permissions hook
+  const router = useRouter(); // Initialize router
+
+  React.useEffect(() => { // Effect to get current user ID from localStorage
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          setCurrentUserId(JSON.parse(storedUser)?.id || null);
+        } catch (e) { setCurrentUserId(null); }
+      }
+    }
+  }, []);
 
   const fetchCategories = React.useCallback(async () => {
     setLoading(true);
@@ -64,15 +76,15 @@ export default function AdminCategoriesPage() {
   }, []);
 
   React.useEffect(() => {
-    if (!permissionsLoading && !hasPermission('Kategorileri Yönetme')) {
-        toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Kategori yönetimi sayfasına erişim yetkiniz yok." });
-        router.push('/admin');
+    if (!permissionsLoading && !hasPermission('Kategorileri Yönetme') && currentUserId) {
+        // toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Kategori yönetimi sayfasına erişim yetkiniz yok." });
+        // router.push('/admin'); // Handled by AdminLayout
         return;
     }
-    if (!permissionsLoading && hasPermission('Kategorileri Yönetme')) {
+    if (!permissionsLoading && (hasPermission('Kategorileri Yönetme') || !currentUserId)) { // Allow fetch if no user (guest access to admin panel is bad but per request)
         fetchCategories();
     }
-  }, [fetchCategories, permissionsLoading, hasPermission, router]);
+  }, [fetchCategories, permissionsLoading, hasPermission, router, currentUserId]);
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
@@ -85,7 +97,7 @@ export default function AdminCategoriesPage() {
       if (newCat) {
         toast({ title: "Kategori Eklendi", description: `"${newCat.name}" kategorisi başarıyla eklendi.` });
         setNewCategoryName("");
-        await fetchCategories(); // Refresh list
+        await fetchCategories(); 
       } else {
         toast({ variant: "destructive", title: "Ekleme Hatası", description: "Kategori eklenemedi." });
       }
@@ -103,7 +115,7 @@ export default function AdminCategoriesPage() {
       const success = await deleteCategory(id);
       if (success) {
         toast({ variant: "destructive", title: "Kategori Silindi", description: `"${name}" kategorisi silindi.` });
-        await fetchCategories(); // Refresh list
+        await fetchCategories(); 
       } else {
         toast({ variant: "destructive", title: "Silme Hatası", description: "Kategori silinemedi." });
       }
@@ -130,9 +142,9 @@ export default function AdminCategoriesPage() {
        const updatedCat = await updateCategory(editingCategory.id, { name: editCategoryName.trim() });
        if (updatedCat) {
          toast({ title: "Kategori Güncellendi", description: `"${updatedCat.name}" kategorisi başarıyla güncellendi.` });
-         setEditingCategory(null); // Close dialog
+         setEditingCategory(null); 
          setEditCategoryName("");
-         await fetchCategories(); // Refresh list
+         await fetchCategories(); 
        } else {
          toast({ variant: "destructive", title: "Güncelleme Hatası", description: "Kategori güncellenemedi." });
        }
@@ -153,6 +165,24 @@ export default function AdminCategoriesPage() {
     );
   }
 
+  // If there's a permission error and a user is logged in, show error
+  if (permissionsError && currentUserId) {
+    return (
+        <div className="text-center py-10 text-destructive">
+            <p>Yetki Hatası: {permissionsError}</p>
+        </div>
+    );
+  }
+
+  // If user is logged in but doesn't have permission (and no other loading/error state)
+  if (currentUserId && !hasPermission('Kategorileri Yönetme') && !loading && !permissionsError) {
+    return (
+        <div className="text-center py-10">
+            <p className="text-lg font-semibold text-destructive">Erişim Reddedildi</p>
+            <p className="text-muted-foreground">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -167,7 +197,7 @@ export default function AdminCategoriesPage() {
          </Button>
       </div>
 
-      {/* Add New Category Form */}
+      
       <Card>
         <CardHeader>
           <CardTitle>Yeni Kategori Ekle</CardTitle>
@@ -182,10 +212,10 @@ export default function AdminCategoriesPage() {
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 placeholder="Yeni kategori adı (örn: Moleküler Biyoloji)"
                 required
-                disabled={isAdding}
+                disabled={isAdding || !hasPermission('Kategorileri Yönetme')} 
               />
             </div>
-            <Button type="submit" disabled={isAdding || !newCategoryName.trim()}>
+            <Button type="submit" disabled={isAdding || !newCategoryName.trim() || !hasPermission('Kategorileri Yönetme')}>
               {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
               Ekle
             </Button>
@@ -193,18 +223,18 @@ export default function AdminCategoriesPage() {
         </CardContent>
       </Card>
 
-      {/* Categories List */}
+      
       <Card>
         <CardHeader>
           <CardTitle>Mevcut Kategoriler</CardTitle>
           <CardDescription>Oluşturulmuş kategorileri düzenleyin veya silin.</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading && categories.length === 0 ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="mr-2 h-8 w-8 animate-spin" /> Yükleniyor...
             </div>
-          ) : error ? (
+          ) : error && !loading ? (
             <div className="text-center py-10 text-destructive">{error}</div>
           ) : categories.length === 0 ? (
             <p className="text-center text-muted-foreground py-6">Henüz kategori eklenmemiş.</p>
@@ -221,66 +251,70 @@ export default function AdminCategoriesPage() {
                   <TableRow key={category.id} className={cn(deletingId === category.id && "opacity-50 pointer-events-none")}>
                     <TableCell className="font-medium">{category.name}</TableCell>
                     <TableCell className="text-right">
-                      <Dialog open={editingCategory?.id === category.id} onOpenChange={(open) => { if(!open) setEditingCategory(null); }}>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="mr-1 h-8 w-8" onClick={() => handleEditClick(category)}>
-                              <Edit2 className="h-4 w-4" />
-                              <span className="sr-only">Düzenle</span>
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                              <DialogHeader>
-                                  <DialogTitle>Kategoriyi Düzenle</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                  <div className="space-y-2">
-                                      <Label htmlFor="edit-category-name">Kategori Adı</Label>
-                                      <Input
-                                          id="edit-category-name"
-                                          value={editCategoryName}
-                                          onChange={(e) => setEditCategoryName(e.target.value)}
-                                          required
-                                          disabled={isUpdating}
-                                      />
-                                  </div>
-                              </div>
-                              <DialogFooter>
-                                   <DialogClose asChild>
-                                        <Button variant="outline" disabled={isUpdating}>İptal</Button>
-                                   </DialogClose>
-                                   <Button onClick={handleUpdateCategory} disabled={isUpdating || !editCategoryName.trim()}>
-                                       {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                       Güncelle
-                                   </Button>
-                              </DialogFooter>
-                          </DialogContent>
-                      </Dialog>
+                      {hasPermission('Kategorileri Yönetme') && (
+                        <>
+                            <Dialog open={editingCategory?.id === category.id} onOpenChange={(open) => { if(!open) setEditingCategory(null); }}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="mr-1 h-8 w-8" onClick={() => handleEditClick(category)}>
+                                    <Edit2 className="h-4 w-4" />
+                                    <span className="sr-only">Düzenle</span>
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Kategoriyi Düzenle</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="edit-category-name">Kategori Adı</Label>
+                                            <Input
+                                                id="edit-category-name"
+                                                value={editCategoryName}
+                                                onChange={(e) => setEditCategoryName(e.target.value)}
+                                                required
+                                                disabled={isUpdating}
+                                            />
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <DialogClose asChild>
+                                                <Button variant="outline" disabled={isUpdating}>İptal</Button>
+                                        </DialogClose>
+                                        <Button onClick={handleUpdateCategory} disabled={isUpdating || !editCategoryName.trim()}>
+                                            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Güncelle
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
 
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                            {deletingId === category.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            <span className="sr-only">Sil</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              "{category.name}" kategorisini silmek üzeresiniz. Bu kategoriye ait tüm içerikler kategorisiz kalacaktır. Bu işlem geri alınamaz.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>İptal</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteCategory(category.id, category.name)}
-                              className={buttonVariants({ variant: "destructive" })}
-                            >
-                              Evet, Sil
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                    {deletingId === category.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                    <span className="sr-only">Sil</span>
+                                </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                    "{category.name}" kategorisini silmek üzeresiniz. Bu kategoriye ait tüm içerikler kategorisiz kalacaktır. Bu işlem geri alınamaz.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>İptal</AlertDialogCancel>
+                                    <AlertDialogAction
+                                    onClick={() => handleDeleteCategory(category.id, category.name)}
+                                    className={buttonVariants({ variant: "destructive" })}
+                                    >
+                                    Evet, Sil
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -292,3 +326,5 @@ export default function AdminCategoriesPage() {
     </div>
   );
 }
+
+    

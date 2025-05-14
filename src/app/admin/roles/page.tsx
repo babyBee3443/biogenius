@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getRoles, deleteRole, getAllPermissions, type Role, type PermissionCategory } from '@/lib/data/roles'; // Updated import
+import { getRoles, deleteRole, getAllPermissions, type Role, type PermissionCategory } from '@/lib/data/roles';
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRouter } from "next/navigation";
 
@@ -33,8 +33,20 @@ export default function AdminRolesPage() {
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
     const [deletingId, setDeletingId] = React.useState<string | null>(null);
-    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
-    const router = useRouter();
+    const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // State for current user ID
+    const { hasPermission, isLoading: permissionsLoading, error: permissionsError } = usePermissions(currentUserId); // Use permissions hook
+    const router = useRouter(); // Initialize router
+
+    React.useEffect(() => { // Effect to get current user ID from localStorage
+        if (typeof window !== 'undefined') {
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            try {
+            setCurrentUserId(JSON.parse(storedUser)?.id || null);
+            } catch (e) { setCurrentUserId(null); }
+        }
+        }
+    }, []);
 
     const fetchData = React.useCallback(async () => {
         setLoading(true);
@@ -56,15 +68,15 @@ export default function AdminRolesPage() {
     }, []);
 
     React.useEffect(() => {
-        if (!permissionsLoading && !hasPermission('Rolleri Yönetme')) {
-            toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Rol yönetimi sayfasına erişim yetkiniz yok." });
-            router.push('/admin');
+        if (!permissionsLoading && !hasPermission('Rolleri Yönetme') && currentUserId) {
+            // toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Rol yönetimi sayfasına erişim yetkiniz yok." });
+            // router.push('/admin'); // Handled by AdminLayout
             return;
         }
-        if (!permissionsLoading && hasPermission('Rolleri Yönetme')) {
+        if (!permissionsLoading && (hasPermission('Rolleri Yönetme') || !currentUserId)) { // Allow fetch if no user (guest access to admin panel is bad but per request)
             fetchData();
         }
-    }, [fetchData, permissionsLoading, hasPermission, router]);
+    }, [fetchData, permissionsLoading, hasPermission, router, currentUserId]);
 
     const handleDeleteRole = async (id: string, name: string) => {
         setDeletingId(id);
@@ -93,10 +105,24 @@ export default function AdminRolesPage() {
         );
     }
 
-    if (error) {
-        return <div className="text-center py-10 text-destructive">{error}</div>;
+    // If there's a permission error and a user is logged in, show error
+    if (permissionsError && currentUserId) {
+        return (
+            <div className="text-center py-10 text-destructive">
+                <p>Yetki Hatası: {permissionsError}</p>
+            </div>
+        );
     }
 
+    // If user is logged in but doesn't have permission (and no other loading/error state)
+    if (currentUserId && !hasPermission('Rolleri Yönetme') && !loading && !permissionsError) {
+        return (
+            <div className="text-center py-10">
+                <p className="text-lg font-semibold text-destructive">Erişim Reddedildi</p>
+                <p className="text-muted-foreground">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -221,3 +247,5 @@ export default function AdminRolesPage() {
         </div>
     );
 }
+
+    

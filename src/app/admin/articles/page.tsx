@@ -26,8 +26,8 @@ import {
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from "@/components/ui/pagination";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
-import { getArticles, deleteArticle, type ArticleData } from '@/lib/data/articles'; // Updated import
-import { getCategories, type Category } from '@/lib/data/categories'; // Updated import
+import { getArticles, deleteArticle, type ArticleData } from '@/lib/data/articles';
+import { getCategories, type Category } from '@/lib/data/categories';
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -70,8 +70,21 @@ export default function AdminArticlesPage() {
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
   const [articleToDelete, setArticleToDelete] = React.useState<{ id: string; title: string } | null>(null);
-  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  const { hasPermission, isLoading: permissionsLoading, error: permissionsError } = usePermissions(currentUserId);
   const router = useRouter();
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          setCurrentUserId(JSON.parse(storedUser)?.id || null);
+        } catch (e) { setCurrentUserId(null); }
+      }
+    }
+  }, []);
+
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedStatuses, setSelectedStatuses] = React.useState<string[]>([]);
@@ -107,15 +120,15 @@ export default function AdminArticlesPage() {
   }, [searchTerm, selectedStatuses, selectedCategories]);
 
   React.useEffect(() => {
-    if (!permissionsLoading && !hasPermission('Makaleleri Görüntüleme')) {
-      toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Bu sayfayı görüntüleme yetkiniz yok." });
-      router.push('/admin');
+    if (!permissionsLoading && !hasPermission('Makaleleri Görüntüleme') && currentUserId) {
+      // toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Bu sayfayı görüntüleme yetkiniz yok." });
+      // router.push('/admin'); // Handled by AdminLayout now
       return;
     }
-    if (!permissionsLoading && hasPermission('Makaleleri Görüntüleme')) {
+    if (!permissionsLoading && (hasPermission('Makaleleri Görüntüleme') || !currentUserId) ) { // Allow fetch if no user (guest access to admin panel is bad but per request)
         fetchArticlesAndCategories();
     }
-  }, [fetchArticlesAndCategories, permissionsLoading, hasPermission, router]);
+  }, [fetchArticlesAndCategories, permissionsLoading, hasPermission, router, currentUserId]);
 
   const handleDeleteInitiate = (id: string, title: string) => {
     setArticleToDelete({ id, title });
@@ -187,6 +200,25 @@ export default function AdminArticlesPage() {
         <div className="flex justify-center items-center h-screen">
             <Loader2 className="mr-2 h-8 w-8 animate-spin" />
             Yükleniyor...
+        </div>
+    );
+  }
+
+  // If there's a permission error and a user is logged in, show error
+  if (permissionsError && currentUserId) {
+    return (
+        <div className="text-center py-10 text-destructive">
+            <p>Yetki Hatası: {permissionsError}</p>
+        </div>
+    );
+  }
+
+  // If user is logged in but doesn't have permission (and no other loading/error state)
+  if (currentUserId && !hasPermission('Makaleleri Görüntüleme') && !loading && !permissionsError) {
+    return (
+        <div className="text-center py-10">
+            <p className="text-lg font-semibold text-destructive">Erişim Reddedildi</p>
+            <p className="text-muted-foreground">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
         </div>
     );
   }
@@ -292,12 +324,12 @@ export default function AdminArticlesPage() {
 
       <Card>
         <CardContent className="pt-6">
-          {loading ? (
+          {loading && paginatedArticles.length === 0 ? ( // Show loading only if no articles yet
              <div className="flex justify-center items-center py-10">
                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
                Makaleler yükleniyor...
              </div>
-          ) : error ? (
+          ) : error && !loading ? ( // Show error if loading is complete but error exists
              <div className="text-center py-10 text-destructive">{error}</div>
           ) : paginatedArticles.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground">
@@ -429,3 +461,5 @@ export default function AdminArticlesPage() {
     </AlertDialog>
   );
 }
+
+    
