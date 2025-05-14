@@ -52,7 +52,7 @@ export interface User {
   name: string;
   username: string;
   email: string;
-  role: 'Admin' | 'Editor' | 'User' | string;
+  role: 'Admin' | 'Editor' | 'User' | string; // Role can be a string to accommodate custom roles
   joinedAt: string;
   avatar?: string;
   lastLogin?: string;
@@ -83,7 +83,7 @@ export interface Template {
   previewImageUrl: string;
   blocks: Block[];
   type: 'article' | 'note' | 'page';
-  category?: 'Biyoloji' | 'Genel Sayfa';
+  category?: 'Biyoloji' | 'Genel Sayfa'; // Adjusted to accept 'Genel Sayfa'
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string[];
@@ -199,11 +199,13 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
 let mockArticles: ArticleData[] = [];
 let mockNotes: NoteData[] = [];
 let mockUsers: User[] = [];
-let mockRoles: Role[] = [
+const baseMockRoles: Role[] = [ // Renamed to baseMockRoles to avoid confusion
     { id: 'admin', name: 'Admin', description: 'Tam sistem erişimi.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Makale Silme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Biyoloji Notlarını Silme', 'Hazır İçeriği Görüntüleme','Kategorileri Yönetme', 'Sayfaları Yönetme', 'Kullanıcıları Görüntüleme', 'Kullanıcı Ekleme', 'Kullanıcı Düzenleme', 'Kullanıcı Silme', 'Rolleri Yönetme', 'Ayarları Görüntüleme', 'Menü Yönetimi', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
     { id: 'editor', name: 'Editor', description: 'İçerik yönetimi ve düzenleme yetkileri.', permissions: ['Dashboard Görüntüleme', 'Makaleleri Görüntüleme', 'Makale Oluşturma', 'Makale Düzenleme', 'Biyoloji Notlarını Görüntüleme', 'Yeni Biyoloji Notu Ekleme', 'Biyoloji Notlarını Düzenleme', 'Hazır İçeriği Görüntüleme', 'Kategorileri Yönetme', 'Kullanım Kılavuzunu Görüntüleme'], userCount: 0 },
     { id: 'user', name: 'User', description: 'Standart kullanıcı, içerik görüntüleme ve yorum yapma.', permissions: [], userCount: 0 },
 ];
+let mockRoles: Role[] = [...baseMockRoles]; // Initialize mockRoles
+
 
 let mockPages: PageData[] = [
     {
@@ -216,14 +218,14 @@ let mockPages: PageData[] = [
         status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        heroSettings: { enabled: false, articleSource: 'latest', intervalSeconds: 5, maxArticles: 0 }
+        heroSettings: { enabled: true, articleSource: 'latest', intervalSeconds: 5, maxArticles: 3 }
     },
     {
         id: 'hakkimizda',
         title: 'Hakkımızda',
         slug: 'hakkimizda',
         blocks: [{id: generateId(), type: 'text', content: 'Hakkımızda sayfa içeriği buraya gelecek.'}],
-        status: 'Taslak',
+        status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -232,7 +234,7 @@ let mockPages: PageData[] = [
         title: 'İletişim',
         slug: 'iletisim',
         blocks: [{id: generateId(), type: 'text', content: 'İletişim sayfa içeriği buraya gelecek.'}],
-        status: 'Taslak',
+        status: 'Yayınlandı',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -713,6 +715,7 @@ export const createArticle = async (data: Omit<ArticleData, 'id' | 'createdAt' |
     const newArticle: ArticleData = {
         ...data,
         isHero: data.isHero ?? false,
+        isFeatured: data.isFeatured ?? false,
         id: generateId(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -783,7 +786,7 @@ export const getNoteById = async (id: string): Promise<NoteData | null> => {
     return note ? JSON.parse(JSON.stringify(note)) : null;
 };
 
-export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt'>): Promise<NoteData> => {
+export const createNote = async (data: Omit<NoteData, 'id' | 'createdAt' | 'updatedAt' | 'authorId' | 'status'>): Promise<NoteData> => {
     await delay(50);
     const newNote: NoteData = {
         ...data,
@@ -887,7 +890,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
     return JSON.parse(JSON.stringify(newUser));
 };
 
-export const updateUser = async (id: string, data: Partial<Omit<User, 'id' | 'email' | 'joinedAt' | 'lastLogin' | 'role'>>): Promise<User | null> => {
+export const updateUser = async (id: string, data: Partial<User>): Promise<User | null> => {
     await delay(50);
     const currentUsers = await getUsers();
     const index = currentUsers.findIndex(u => u.id === id);
@@ -958,13 +961,13 @@ export const getRoles = async (): Promise<Role[]> => {
             return parsedRoles;
           }
            console.warn("Invalid roles in localStorage, returning default mockRoles.");
-           return mockRoles;
+           return [...baseMockRoles]; // Return a copy of base if localStorage is invalid
       } catch (e) {
           console.error("Error parsing roles from localStorage", e);
-          return mockRoles; // Return default if parsing fails
+          return [...baseMockRoles]; // Return a copy of base if parsing fails
       }
   }
-  return mockRoles; // Return default if not in localStorage
+  return [...baseMockRoles]; // Return a copy of base if not in localStorage
 };
 
 export const getRoleById = async (id: string): Promise<Role | null> => {
@@ -1202,15 +1205,16 @@ export const PAGE_STORAGE_KEY = 'biyohox_mock_pages_v3';
 
 export const loadInitialData = () => {
     if (typeof window !== 'undefined') {
-        const initOrVerify = (key: string, defaultData: any[]) => {
+        const initOrVerify = (key: string, defaultData: any[], isBaseData: boolean = false) => {
             const stored = localStorage.getItem(key);
-            if (!stored) {
+            if (!stored || isBaseData) { // Always re-init base data to ensure it's up-to-date
                 localStorage.setItem(key, JSON.stringify(defaultData));
+                 console.log(`Initialized/Re-initialized ${key} in localStorage.`);
             } else {
                 try {
                     const parsed = JSON.parse(stored);
-                    if (!Array.isArray(parsed)) { // Basic check, could be more specific
-                        console.warn(`Invalid data for ${key} in localStorage, re-initializing.`);
+                    if (!Array.isArray(parsed)) {
+                        console.warn(`Invalid data for ${key} in localStorage (not an array), re-initializing.`);
                         localStorage.setItem(key, JSON.stringify(defaultData));
                     }
                 } catch (e) {
@@ -1220,40 +1224,56 @@ export const loadInitialData = () => {
             }
         };
 
-        initOrVerify(ARTICLE_STORAGE_KEY, mockArticles);
-        initOrVerify(NOTE_STORAGE_KEY, mockNotes);
-        initOrVerify(CATEGORY_STORAGE_KEY, mockCategories);
+        initOrVerify(ARTICLE_STORAGE_KEY, []);
+        initOrVerify(NOTE_STORAGE_KEY, []);
+        initOrVerify(CATEGORY_STORAGE_KEY, []);
 
-        if (!localStorage.getItem(USER_STORAGE_KEY)) {
-            const defaultAdminUser: User = {
-                 id: 'admin001', name: 'Admin User', username: 'admin',
-                 email: 'admin@biyohox.example.com', role: 'Admin',
-                 joinedAt: new Date().toISOString(),
-                 avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
-            };
+
+        const defaultAdminUser: User = {
+             id: 'admin001', name: 'Admin User', username: 'admin',
+             email: 'admin@biyohox.example.com', role: 'Admin',
+             joinedAt: new Date().toISOString(),
+             avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
+        };
+        const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
+        if (!storedUsers) {
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
-        }
-
-        if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
-            const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
-            const rolesWithCounts = mockRoles.map(role => {
-                const count = users.filter((u: User) => u.role.toLowerCase() === role.name.toLowerCase() || u.role === role.id).length;
-                return {...role, userCount: count};
-            });
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(rolesWithCounts));
-        } else { // Recalculate user counts for roles if roles already exist
-            const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
-            let existingRoles = JSON.parse(localStorage.getItem(ROLE_STORAGE_KEY)!) as Role[];
-            existingRoles = existingRoles.map(role => {
-                 const count = users.filter((u: User) => u.role.toLowerCase() === role.name.toLowerCase() || u.role === role.id).length;
-                 return {...role, userCount: count};
-            });
-            localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(existingRoles));
+            mockUsers = [defaultAdminUser];
+        } else {
+            try {
+                mockUsers = JSON.parse(storedUsers);
+                 if (!Array.isArray(mockUsers) || !mockUsers.find(u => u.id === 'admin001')) {
+                    console.warn("Admin user missing or invalid user data in localStorage, re-initializing users.");
+                    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
+                    mockUsers = [defaultAdminUser];
+                }
+            } catch (e) {
+                 console.error("Error parsing users from localStorage, re-initializing users.", e);
+                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify([defaultAdminUser]));
+                 mockUsers = [defaultAdminUser];
+            }
         }
 
 
-        initOrVerify(PAGE_STORAGE_KEY, mockPages);
-        initOrVerify(TEMPLATE_STORAGE_KEY, [...ALL_MOCK_TEMPLATES_SOURCE]); // Use the const source here
+        // Always use baseMockRoles for permissions, then update counts
+        const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
+        const rolesWithUpdatedCounts = baseMockRoles.map(canonicalRole => {
+            const count = users.filter((u: User) =>
+                u.role.toLowerCase() === canonicalRole.name.toLowerCase() ||
+                u.role.toLowerCase() === canonicalRole.id.toLowerCase()
+            ).length;
+            return { ...canonicalRole, userCount: count };
+        });
+        localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(rolesWithUpdatedCounts));
+        mockRoles = rolesWithUpdatedCounts; // Update in-memory mockRoles
+
+        initOrVerify(PAGE_STORAGE_KEY, mockPages, true); // Re-init pages from mockPages definition
+        initOrVerify(TEMPLATE_STORAGE_KEY, [...ALL_MOCK_TEMPLATES_SOURCE], true); // Always re-init templates from source
+
+        console.log("Initial data load/verification complete.");
+        console.log("Roles in localStorage after init:", localStorage.getItem(ROLE_STORAGE_KEY));
+        console.log("Admin user role:", mockUsers.find(u=>u.id === 'admin001')?.role);
+
     }
 };
 

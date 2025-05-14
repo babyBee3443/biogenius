@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { type User, type Role, getRoles } from '@/lib/mock-data'; // Assuming getRoles is the correct function to fetch all role definitions
+import { type User, type Role, getRoles } from '@/lib/mock-data';
 
 interface PermissionsState {
   permissions: Set<string>;
@@ -22,18 +22,15 @@ export function usePermissions(currentUserId: string | null) {
     const fetchPermissions = async () => {
       if (!isMounted) return;
 
-      // If currentUserId is null, it means the user is not yet identified or logged out.
-      // In this case, permissions are not applicable, and we shouldn't treat it as an error condition here.
-      // The calling component (e.g., AdminLayout) is responsible for handling unauthenticated users.
       if (!currentUserId) {
-        console.log("[usePermissions] No currentUserId provided. isLoading: false, error: null, empty permissions.");
+        console.log("[usePermissions] No currentUserId provided. Setting isLoading to false, error to null, and empty permissions.");
         if (isMounted) {
+          // Set isLoading to false here, as we are done "loading" (or not loading) permissions for a null user
           setState({ permissions: new Set(), isLoading: false, error: null });
         }
         return;
       }
 
-      // Proceed to fetch permissions only if currentUserId is available.
       if (isMounted) {
         setState(prev => ({ ...prev, isLoading: true, error: null }));
         console.log(`[usePermissions] Fetching permissions for userId: ${currentUserId}`);
@@ -41,8 +38,6 @@ export function usePermissions(currentUserId: string | null) {
 
       if (typeof window === 'undefined') {
         if (isMounted) {
-          // This case should ideally not be hit if currentUserId is present,
-          // as localStorage access implies client-side.
           setState({ permissions: new Set(), isLoading: false, error: "Permissions can only be fetched on the client." });
         }
         return;
@@ -52,8 +47,7 @@ export function usePermissions(currentUserId: string | null) {
       if (!storedUserString) {
         console.warn("[usePermissions] No 'currentUser' found in localStorage despite currentUserId being present.");
         if (isMounted) {
-          // This indicates a discrepancy, possibly currentUser was cleared after ID was set.
-          setState({ permissions: new Set(), isLoading: false, error: "Oturum bilgisi localStorage'da bulunamadı." });
+          setState({ permissions: new Set(), isLoading: false, error: "Oturum bilgisi localStorage'da bulunamadı. Lütfen giriş yapın." });
         }
         return;
       }
@@ -78,13 +72,14 @@ export function usePermissions(currentUserId: string | null) {
         }
 
         const allRoles = await getRoles();
-        console.log("[usePermissions] All roles fetched:", JSON.stringify(allRoles.map(r => ({id: r.id, name: r.name}))));
-        const userRoleString = currentUser.role.toLowerCase();
-        console.log("[usePermissions] Attempting to match currentUser.role (lowercase):", userRoleString);
+        console.log("[usePermissions] All roles fetched for permission check:", JSON.stringify(allRoles.map(r => ({id: r.id, name: r.name, permsCount: r.permissions?.length || 0}))));
+        
+        const userRoleString = currentUser.role.trim().toLowerCase(); // Trim and lowercase for robust matching
+        console.log("[usePermissions] Attempting to match currentUser.role (trimmed, lowercase):", userRoleString);
 
         const userRoleData = allRoles.find(r =>
-            r.name.toLowerCase() === userRoleString ||
-            r.id.toLowerCase() === userRoleString
+            r.name.trim().toLowerCase() === userRoleString ||
+            r.id.trim().toLowerCase() === userRoleString // Also match against role ID (trimmed, lowercase)
         );
 
         console.log("[usePermissions] Found userRoleData for role string '" + currentUser.role + "':", userRoleData ? JSON.stringify({id: userRoleData.id, name: userRoleData.name, permsCount: userRoleData.permissions?.length}) : "NOT FOUND");
@@ -104,7 +99,7 @@ export function usePermissions(currentUserId: string | null) {
         } else {
             console.warn(`[usePermissions] No role data found for role string: '${currentUser.role}'. Searched in roles:`, allRoles.map(r => ({ id: r.id, name: r.name })));
             if (isMounted) {
-                setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" rolü bulunamadı veya rol için izin tanımlanmamış. Tanımlı roller: ${allRoles.map(r => r.name).join(', ')}` });
+                setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" adlı bir rol bulunamadı veya bu rol için tanımlanmış izin yok. Tanımlı roller: ${allRoles.map(r => r.name).join(', ')}` });
             }
         }
       } catch (err: any) {
