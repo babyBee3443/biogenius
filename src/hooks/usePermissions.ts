@@ -1,7 +1,8 @@
+
 "use client";
 
 import * as React from 'react';
-import { type User, type Role, getRoles } from '@/lib/mock-data';
+import { type User, type Role, getRoles } from '@/lib/mock-data'; // Assuming getRoles is the correct function to fetch all role definitions
 
 interface PermissionsState {
   permissions: Set<string>;
@@ -12,13 +13,27 @@ interface PermissionsState {
 export function usePermissions(currentUserId: string | null) {
   const [state, setState] = React.useState<PermissionsState>({
     permissions: new Set(),
-    isLoading: true,
+    isLoading: true, // Start with loading true
     error: null,
   });
 
   React.useEffect(() => {
     let isMounted = true;
     const fetchPermissions = async () => {
+      if (!isMounted) return;
+
+      // If currentUserId is null, it means the user is not yet identified or logged out.
+      // In this case, permissions are not applicable, and we shouldn't treat it as an error condition here.
+      // The calling component (e.g., AdminLayout) is responsible for handling unauthenticated users.
+      if (!currentUserId) {
+        console.log("[usePermissions] No currentUserId provided. isLoading: false, error: null, empty permissions.");
+        if (isMounted) {
+          setState({ permissions: new Set(), isLoading: false, error: null });
+        }
+        return;
+      }
+
+      // Proceed to fetch permissions only if currentUserId is available.
       if (isMounted) {
         setState(prev => ({ ...prev, isLoading: true, error: null }));
         console.log(`[usePermissions] Fetching permissions for userId: ${currentUserId}`);
@@ -26,24 +41,19 @@ export function usePermissions(currentUserId: string | null) {
 
       if (typeof window === 'undefined') {
         if (isMounted) {
+          // This case should ideally not be hit if currentUserId is present,
+          // as localStorage access implies client-side.
           setState({ permissions: new Set(), isLoading: false, error: "Permissions can only be fetched on the client." });
-        }
-        return;
-      }
-
-      if (!currentUserId) {
-        console.log("[usePermissions] No currentUserId provided, setting empty permissions.");
-        if (isMounted) {
-          setState({ permissions: new Set(), isLoading: false, error: "Kullanıcı ID bulunamadı (oturum kapalı veya yüklenemedi)." });
         }
         return;
       }
 
       const storedUserString = localStorage.getItem('currentUser');
       if (!storedUserString) {
-        console.warn("[usePermissions] No 'currentUser' found in localStorage.");
+        console.warn("[usePermissions] No 'currentUser' found in localStorage despite currentUserId being present.");
         if (isMounted) {
-          setState({ permissions: new Set(), isLoading: false, error: "localStorage'da kullanıcı bulunamadı." });
+          // This indicates a discrepancy, possibly currentUser was cleared after ID was set.
+          setState({ permissions: new Set(), isLoading: false, error: "Oturum bilgisi localStorage'da bulunamadı." });
         }
         return;
       }
