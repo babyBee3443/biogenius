@@ -13,9 +13,10 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Edit3, Bell, KeyRound, Trash2, Palette, LogOut, UserCircle, Settings as SettingsIcon, Wand2 } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle'; // Assuming you have this
+import { ThemeToggle } from '@/components/theme-toggle';
 import type { User } from '@/lib/data/users';
 import Link from 'next/link';
+import { usePermissions } from "@/hooks/usePermissions"; // Added import for usePermissions
 
 const DnaBackground = () => (
   <div className="absolute inset-0 overflow-hidden z-0 opacity-5 dark:opacity-[0.03]">
