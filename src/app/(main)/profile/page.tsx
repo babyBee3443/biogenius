@@ -16,8 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import {
-    Loader2, Edit3, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
-    Settings as SettingsIcon, Clock, Eye, Save // Added Save icon
+    Loader2, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
+    Settings as SettingsIcon, Clock, Eye, Save, RefreshCw
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { updateUser, type User, getUserById } from '@/lib/data/users';
@@ -75,8 +75,7 @@ export default function UserProfilePage() {
   const [fullName, setFullName] = React.useState("");
   const [userBio, setUserBio] = React.useState("");
   const [userStatus, setUserStatus] = React.useState<User['status'] | undefined>(undefined);
-  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null); // Changed from avatarPreview to avatarUrl
 
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
@@ -103,14 +102,14 @@ export default function UserProfilePage() {
                   setFullName(fetchedUser.name || "");
                   setUserBio(fetchedUser.bio || "");
                   setUserStatus(fetchedUser.status || 'Meraklı');
-                  setAvatarPreview(fetchedUser.avatar || `https://placehold.co/128x128.png?text=${(fetchedUser.name || 'U').charAt(0)}`);
+                  setAvatarUrl(fetchedUser.avatar || `https://api.dicebear.com/8.x/notionists/svg?seed=${(fetchedUser.name || 'User').replace(/\s/g, '')}&backgroundColor=transparent&size=128`);
               } else if (isMounted) {
                  console.warn("User from localStorage not found in DB, using localStorage data for profile.");
                  setCurrentUser(user);
                  setFullName(user.name || "");
                  setUserBio(user.bio || "");
                  setUserStatus(user.status || 'Meraklı');
-                 setAvatarPreview(user.avatar || `https://placehold.co/128x128.png?text=${(user.name || 'U').charAt(0)}`);
+                 setAvatarUrl(user.avatar || `https://api.dicebear.com/8.x/notionists/svg?seed=${(user.name || 'User').replace(/\s/g, '')}&backgroundColor=transparent&size=128`);
               }
             }
           } catch (e) {
@@ -134,7 +133,7 @@ export default function UserProfilePage() {
         name: fullName,
         bio: userBio,
         status: userStatus,
-        avatar: avatarPreview || undefined,
+        avatar: avatarUrl || undefined, // Save the new avatarUrl
     };
     try {
         const updatedUser = await updateUser(currentUser.id, updatedData);
@@ -149,7 +148,7 @@ export default function UserProfilePage() {
                           localStorage.setItem('currentUser', JSON.stringify({
                               ...currentUserData,
                               name: updatedUser.name,
-                              avatar: updatedUser.avatar,
+                              avatar: updatedUser.avatar, // Ensure avatar is updated in localStorage too
                               bio: updatedUser.bio,
                               status: updatedUser.status,
                           }));
@@ -169,24 +168,11 @@ export default function UserProfilePage() {
     }
   };
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 2MB'den küçük bir resim seçin." });
-        return;
-      }
-      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
-        toast({ variant: "destructive", title: "Geçersiz Dosya Türü", description: "Lütfen PNG, JPG, GIF veya WEBP formatında bir resim seçin." });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-        toast({ title: "Avatar Önizlemesi Güncellendi", description: "Kaydetmeyi unutmayın."});
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleFetchRandomAvatar = () => {
+    const randomSeed = Math.random().toString(36).substring(7);
+    const newAvatarUrl = `https://api.dicebear.com/8.x/notionists/svg?seed=${randomSeed}&backgroundColor=transparent&size=128`;
+    setAvatarUrl(newAvatarUrl);
+    toast({ title: "Yeni Avatar Oluşturuldu", description: "Kaydetmeyi unutmayın." });
   };
 
   const handlePasswordChange = () => {
@@ -220,7 +206,7 @@ export default function UserProfilePage() {
         setCurrentUser(null);
         setIsDeletingAccount(false);
         setIsConfirmDeleteOpen(false);
-        router.replace('/'); // Use replace to prevent going back
+        router.replace('/');
     }, 1500);
   };
 
@@ -230,7 +216,7 @@ export default function UserProfilePage() {
       window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     }
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/'); // Use replace to prevent going back to profile
+    router.replace('/');
   };
 
   if (loading) {
@@ -268,13 +254,12 @@ export default function UserProfilePage() {
           <Card className="lg:col-span-1 bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
             <CardHeader className="items-center text-center p-6">
               <Avatar className="h-32 w-32 mb-4 border-4 border-primary/50 shadow-lg">
-                <AvatarImage src={avatarPreview || undefined} alt={currentUser.name || currentUser.username || ''} data-ai-hint="user avatar placeholder" />
+                <AvatarImage src={avatarUrl || undefined} alt={currentUser.name || currentUser.username || ''} data-ai-hint="user avatar placeholder" />
                 <AvatarFallback className="text-4xl bg-muted">{(currentUser.name || currentUser.username || 'U').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => avatarInputRef.current?.click()} disabled={isSavingProfile}>
-                <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Avatar Seç (Yakında)
+              <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleFetchRandomAvatar} disabled={isSavingProfile}>
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Rastgele Avatar Seç
               </Button>
-              <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
               <CardTitle className="text-2xl font-semibold mt-3">{currentUser.name || currentUser.username}</CardTitle>
               <CardDescription className="text-sm text-primary">@{currentUser.username}</CardDescription>
             </CardHeader>
