@@ -67,7 +67,7 @@ type AiDirectChatMessage = AiDirectChatMessageDef;
 // --- Main Page Component ---
 export default function NewBiyolojiNotuPage() {
     const router = useRouter();
-    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+    // const { hasPermission, isLoading: permissionsLoading } = usePermissions(); // Permission check removed
 
     // --- State ---
     const [saving, setSaving] = React.useState(false);
@@ -105,11 +105,12 @@ export default function NewBiyolojiNotuPage() {
 
 
     React.useEffect(() => {
-        if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) {
-          toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni biyoloji notu oluşturma yetkiniz yok." });
-          router.push('/admin/biyoloji-notlari');
-          return;
-        }
+        // Permission check removed
+        // if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) {
+        //   toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni biyoloji notu oluşturma yetkiniz yok." });
+        //   router.push('/admin/biyoloji-notlari');
+        //   return;
+        // }
 
         if (blocks.length === 0) {
             setBlocks([createDefaultBlock()]);
@@ -124,7 +125,8 @@ export default function NewBiyolojiNotuPage() {
                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
             })
             .finally(() => setLoadingCategories(false));
-    }, [permissionsLoading, hasPermission, router, blocks.length]);
+    // }, [permissionsLoading, hasPermission, router, blocks.length]); // Removed permissionsLoading and hasPermission
+    }, [router, blocks.length]); // Updated dependencies
 
     const debouncedSetSlug = useDebouncedCallback((newTitle: string) => {
         if (newTitle) setSlug(generateSlug(newTitle));
@@ -258,13 +260,11 @@ export default function NewBiyolojiNotuPage() {
             localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
             console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
 
-            // Verification step
             const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
             console.log(`[NewBiyolojiNotuPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
 
-
             if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
-                 console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: No data found for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
+                 console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
                  throw new Error("Verification failed: No data found in localStorage after setItem.");
             }
             const parsedVerify = JSON.parse(checkStoredData);
@@ -275,13 +275,18 @@ export default function NewBiyolojiNotuPage() {
             console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS after setItem");
 
             const previewUrl = `/admin/preview`;
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window: ${previewUrl}`);
+            console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window with URL: ${previewUrl}`);
 
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
                     console.error("[NewBiyolojiNotuPage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
-                    toast({ variant: "destructive", title: "Önizleme Açılamadı", description: "Pop-up engelleyiciyi kontrol edin.", duration: 10000 });
+                    toast({
+                        variant: "destructive",
+                        title: "Önizleme Penceresi Açılamadı",
+                        description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
+                        duration: 10000,
+                    });
                 } else {
                     console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened successfully.");
                 }
@@ -289,7 +294,12 @@ export default function NewBiyolojiNotuPage() {
 
         } catch (error: any) {
             console.error("[NewBiyolojiNotuPage/handlePreview] Error during preview process:", error);
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`, duration: 10000 });
+            toast({
+                variant: "destructive",
+                title: "Önizleme Hatası",
+                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
+                duration: 10000,
+            });
         }
     };
 
@@ -420,14 +430,14 @@ export default function NewBiyolojiNotuPage() {
 
     const toggleAiAssistantPanel = () => {
         setIsAiAssistantPanelOpen(prev => !prev);
-        if (!isAiAssistantPanelOpen) {
+        if (!isAiAssistantPanelOpen) { // If opening assistant, close chat
             setIsAiChatPanelOpen(false);
         }
     };
 
     const toggleAiChatPanel = () => {
         setIsAiChatPanelOpen(prev => !prev);
-        if (!isAiChatPanelOpen) {
+        if (!isAiChatPanelOpen) { // If opening chat, close assistant
             setIsAiAssistantPanelOpen(false);
         }
     };
@@ -514,9 +524,8 @@ export default function NewBiyolojiNotuPage() {
                                                         ))
                                                      )}
                                                       <Separator />
-                                                      {hasPermission('Kategorileri Yönetme') && (
-                                                        <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
-                                                      )}
+                                                      {/* Removed permission check for simplicity, assuming it's always available if this page is accessible */}
+                                                      <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -716,3 +725,5 @@ export default function NewBiyolojiNotuPage() {
 // import './flows/generate-biology-note-flow';
 // import './flows/biology-chat-flow';
 
+
+    
