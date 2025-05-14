@@ -4,13 +4,13 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { getArticles, type ArticleData } from '@/lib/data/articles'; // Updated import
+import { getArticles, type ArticleData } from '@/lib/data/articles';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
 
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
-  loading: () => <Skeleton className="h-[50vh] md:h-[55vh] w-full mb-12 rounded-lg" />,
+  loading: () => <Skeleton className="h-[40vh] sm:h-[45vh] md:h-[50vh] w-full mb-12 sm:mb-16 rounded-lg" />,
   ssr: false
 });
 
@@ -106,13 +106,13 @@ const WelcomeScreen = () => {
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center text-center py-6 px-4 overflow-hidden mb-6">
+    <section className="relative flex flex-col items-center justify-center text-center py-4 px-4 overflow-hidden mb-6">
       <div className="relative z-10">
         <motion.h1
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-primary max-w-full px-2 sm:max-w-xl md:max-w-2xl lg:max-w-3xl" // Added max-width for better wrapping
+          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-1 text-primary max-w-full px-2 sm:max-w-xl md:max-w-2xl lg:max-w-3xl"
         >
           {title}
         </motion.h1>
@@ -121,7 +121,7 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-full px-2 sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto" // Added max-width for better wrapping
+          className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-full px-4 sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto"
         >
           {subtitleParts.map((part, partIndex) => (
             <span key={`subpart-${partIndex}`} className={part.colorClass}>
@@ -195,28 +195,36 @@ export default function Home() {
   }, [allArticles, currentUserRole, loadingArticles, loadingRole]);
 
 
-  const heroArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isHero === true && article.status === 'Yayınlandı')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
+  const heroArticles: ArticleData[] = React.useMemo(() => {
+      return filteredArticlesForDisplay
+        .filter(article => article.isHero === true && (article.status === 'Yayınlandı' || ((currentUserRole === 'Admin' || currentUserRole === 'Editor') && article.status === 'Hazır')))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+  }, [filteredArticlesForDisplay, currentUserRole]);
 
-  const featuredArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => article.isFeatured === true && !article.isHero && article.status === 'Yayınlandı')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 3);
 
-  const recentArticles: ArticleData[] = filteredArticlesForDisplay
-    .filter(article => !article.isHero && !article.isFeatured && article.status === 'Yayınlandı')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 3);
+  const featuredArticles: ArticleData[] = React.useMemo(() => {
+    return filteredArticlesForDisplay
+      .filter(article => article.isFeatured === true && !article.isHero && (article.status === 'Yayınlandı' || ((currentUserRole === 'Admin' || currentUserRole === 'Editor') && article.status === 'Hazır')))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 3);
+  }, [filteredArticlesForDisplay, currentUserRole]);
+
+  const recentArticles: ArticleData[] = React.useMemo(() => {
+    return filteredArticlesForDisplay
+      .filter(article => !article.isHero && !article.isFeatured && (article.status === 'Yayınlandı' || ((currentUserRole === 'Admin' || currentUserRole === 'Editor') && article.status === 'Hazır')))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 3);
+   }, [filteredArticlesForDisplay, currentUserRole]);
+
 
   const pageIsLoading = loadingArticles || loadingRole;
 
   if (pageIsLoading) {
      return (
         <div className="space-y-12">
-            <Skeleton className="h-[30vh] w-full mb-8 rounded-lg" />
-            <Skeleton className="h-[50vh] md:h-[55vh] w-full mb-12 rounded-lg" />
+            <Skeleton className="h-[10vh] w-full mb-4 rounded-lg" /> {/* Adjusted WelcomeScreen skeleton */}
+            <Skeleton className="h-[40vh] sm:h-[45vh] md:h-[50vh] w-full mb-12 sm:mb-16 rounded-lg" />
              <section className="w-full py-8">
                 <Skeleton className="h-8 w-48 mb-8 rounded-lg" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -231,21 +239,7 @@ export default function Home() {
                     <Skeleton className="h-40 w-full rounded-lg" />
                 </div>
             </section>
-            {/* Skeleton for RecommendedContentSection */}
-            <section className="w-full py-12">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-                    <div>
-                    <Skeleton className="h-10 w-72 mb-2 rounded-lg" />
-                    <Skeleton className="h-5 w-96 rounded-lg" />
-                    </div>
-                    <Skeleton className="h-10 w-36 mt-4 md:mt-0 rounded-lg" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <Skeleton className="h-64 w-full rounded-lg" />
-                    <Skeleton className="h-64 w-full rounded-lg" />
-                    <Skeleton className="h-64 w-full rounded-lg" />
-                </div>
-            </section>
+            <RecommendedContentSection />
             <section className="w-full py-8">
                 <Skeleton className="h-8 w-56 mb-8 rounded-lg" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
