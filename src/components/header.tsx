@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation'; // Added useRouter import
+import { useRouter } from 'next/navigation';
 
 
 interface ArticleStub {
@@ -65,7 +65,7 @@ const DnaLogo = () => (
                 </stop>
             </linearGradient>
         </defs>
-        <g transform="translate(50,50) scale(0.8) rotate(15)">
+        <g transform="translate(50,50) scale(0.9) rotate(15)">
             <path
                 d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
                 stroke="url(#dnaGradientHeader)"
@@ -103,7 +103,6 @@ const DnaLogo = () => (
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                // const amplitude = 10 + (typeof window !== 'undefined' ? Math.sin(Date.now() / 700 + i) * 2 : 0); // Removed for SSR compatibility
                 const amplitude = 10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i) * 2 : Math.cos(Date.now() / 700 + i) * 2);
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
@@ -239,7 +238,7 @@ const Header = () => {
     setCurrentUser(null);
     window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/'); 
+    router.replace('/');
   };
 
   const handleCreateAccountSuccess = () => {
@@ -260,10 +259,11 @@ const Header = () => {
 
 
   const navItems = [
-    { href: "/", label: "Anasayfa" },
-    { href: "/biyoloji-notlari", label: "Biyoloji Notları" },
+    { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
+    { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
+    { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?" },
   ];
 
   const getCategoryClass = (category: string): string => {
@@ -304,121 +304,125 @@ const Header = () => {
           </nav>
 
           <div className="flex flex-1 items-center justify-end space-x-2">
-            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-              <PopoverTrigger asChild>
-                 <div className="relative w-full max-w-[100px] sm:max-w-[120px]"> {/* Reduced width */}
-                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Ara..."
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      className="pl-9 pr-8 h-9 rounded-full bg-secondary/70 border-transparent focus:bg-background focus:border-border"
-                      onFocus={() => setIsPopoverOpen(true)}
-                    />
-                    {searchQuery && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-1/2 right-1 transform -translate-y-1/2 h-7 w-7 rounded-full"
-                          onClick={clearSearch}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                 </div>
-              </PopoverTrigger>
-              <PopoverContent
-                  className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
-                  align="end"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-               >
-                {isSearching && searchQuery && (
-                   <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
-                )}
-                 {!isSearching && searchQuery && searchResults.length === 0 && (
-                    <div className="p-4 text-sm text-center text-muted-foreground">"{searchQuery}" için sonuç bulunamadı.</div>
-                 )}
-                {!isSearching && searchResults.length > 0 && searchQuery && (
-                  <ScrollArea className="max-h-[300px]">
-                     <ul className="space-y-1">
-                       {searchResults.map((result) => (
-                          <li key={result.id}>
-                              <Link
-                                  href={`/articles/${result.id}`}
-                                  className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                  onClick={closePopover}
-                               >
-                                 <span className="text-sm font-medium truncate mr-2">{result.title}</span>
-                                 <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
-                                     {result.category}
-                                 </Badge>
-                             </Link>
-                         </li>
-                       ))}
-                     </ul>
-                  </ScrollArea>
-                )}
-              </PopoverContent>
-            </Popover>
+            {/* Desktop Search, Theme Toggle, Auth Buttons */}
+            <div className="hidden md:flex items-center space-x-2">
+              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                <PopoverTrigger asChild>
+                   <div className="relative w-full max-w-[100px] sm:max-w-[120px]">
+                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Ara..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        className="pl-9 pr-8 h-9 rounded-full bg-secondary/70 border-transparent focus:bg-background focus:border-border"
+                        onFocus={() => setIsPopoverOpen(true)}
+                      />
+                      {searchQuery && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-1/2 right-1 transform -translate-y-1/2 h-7 w-7 rounded-full"
+                            onClick={clearSearch}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                   </div>
+                </PopoverTrigger>
+                <PopoverContent
+                    className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
+                    align="end"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                 >
+                  {isSearching && searchQuery && (
+                     <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
+                  )}
+                   {!isSearching && searchQuery && searchResults.length === 0 && (
+                      <div className="p-4 text-sm text-center text-muted-foreground">"{searchQuery}" için sonuç bulunamadı.</div>
+                   )}
+                  {!isSearching && searchResults.length > 0 && searchQuery && (
+                    <ScrollArea className="max-h-[300px]">
+                       <ul className="space-y-1">
+                         {searchResults.map((result) => (
+                            <li key={result.id}>
+                                <Link
+                                    href={`/articles/${result.id}`}
+                                    className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
+                                    onClick={closePopover}
+                                 >
+                                   <span className="text-sm font-medium truncate mr-2">{result.title}</span>
+                                   <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
+                                       {result.category}
+                                   </Badge>
+                               </Link>
+                           </li>
+                         ))}
+                       </ul>
+                    </ScrollArea>
+                  )}
+                </PopoverContent>
+              </Popover>
 
-            <ThemeToggle />
+              <ThemeToggle />
 
-             {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
-                  <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
-                     <Link href="/admin" passHref>
-                        <ShieldCheck className="mr-1.5 h-4 w-4" />
-                        <span className="hidden sm:inline">Admin Paneli</span>
-                        <span className="sm:hidden">Admin</span>
-                    </Link>
-                </Button>
-             )}
-            {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={currentUser.avatar || `https://placehold.co/32x32.png?text=${(currentUser.name || 'U').charAt(0)}`} alt={currentUser.name || 'Kullanıcı'} data-ai-hint="user avatar placeholder"/>
-                                <AvatarFallback>{(currentUser.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
-                        <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">{currentUser.name}</p>
-                                <p className="text-xs leading-none text-muted-foreground">
-                                    @{currentUser.username}
-                                </p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href="/profile">
-                                <UserCircle className="mr-2 h-4 w-4" />
-                                Profilim
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast({ title: "Yakında!", description: "Kullanıcı ayarları yakında aktif olacak." })}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            Ayarlarım
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
-                            <LogOutIcon className="mr-2 h-4 w-4" />
-                            Çıkış Yap
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )}
-            {isMounted && !currentUser && (
-                 <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
-                    <LogIn className="mr-1.5 h-4 w-4" />
-                    Giriş Yap
-                </Button>
-            )}
+               {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
+                    <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
+                       <Link href="/admin" passHref>
+                          <ShieldCheck className="mr-1.5 h-4 w-4" />
+                          <span className="hidden sm:inline">Admin Paneli</span>
+                          <span className="sm:hidden">Admin</span>
+                      </Link>
+                  </Button>
+               )}
+              {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
+                   <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
+                              <Avatar className="h-8 w-8">
+                                  <AvatarImage src={currentUser.avatar || `https://placehold.co/32x32.png?text=${(currentUser.name || 'U').charAt(0)}`} alt={currentUser.name || 'Kullanıcı'} data-ai-hint="user avatar placeholder"/>
+                                  <AvatarFallback>{(currentUser.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end" forceMount>
+                          <DropdownMenuLabel className="font-normal">
+                              <div className="flex flex-col space-y-1">
+                                  <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                                  <p className="text-xs leading-none text-muted-foreground">
+                                      @{currentUser.username}
+                                  </p>
+                              </div>
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                              <Link href="/profile">
+                                  <UserCircle className="mr-2 h-4 w-4" />
+                                  Profilim
+                              </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toast({ title: "Yakında!", description: "Kullanıcı ayarları yakında aktif olacak." })}>
+                              <Settings className="mr-2 h-4 w-4" />
+                              Ayarlarım
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={handleLogout}>
+                              <LogOutIcon className="mr-2 h-4 w-4" />
+                              Çıkış Yap
+                          </DropdownMenuItem>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+              )}
+              {isMounted && !currentUser && (
+                   <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
+                      <LogIn className="mr-1.5 h-4 w-4" />
+                      Giriş Yap
+                  </Button>
+              )}
+            </div>
 
 
+            {/* Mobile Menu Trigger */}
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
@@ -427,66 +431,123 @@ const Header = () => {
                     <span className="sr-only">Menüyü Aç</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[250px] sm:w-[300px]">
-                  <nav className="flex flex-col space-y-2 pt-8">
-                    {navItems.map((item) => (
-                      <SheetClose asChild key={item.href}>
-                        <Link href={item.href} passHref legacyBehavior>
-                             <Button
-                                variant="ghost"
-                                className="justify-start flex items-center gap-2 text-base w-full"
-                                 as="a"
-                             >
-                                {item.href === '/biyoloji-notlari' && <BookCopy className="h-4 w-4" />}
-                                {item.href === '/' && <HomeIcon className="h-4 w-4" />}
-                               <span className="capitalize">{item.label}</span>
-                             </Button>
-                         </Link>
-                       </SheetClose>
-                    ))}
-                    {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
-                       <SheetClose asChild>
-                          <Button variant="outline" asChild className="mt-4">
-                              <Link href="/admin">
-                                  <ShieldCheck className="mr-2 h-4 w-4" />
-                                  Admin Paneli
-                              </Link>
-                          </Button>
-                        </SheetClose>
-                     )}
-                     {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
-                        <>
-                          <SheetClose asChild>
-                              <Button variant="ghost" asChild className="justify-start flex items-center gap-2 text-base w-full">
-                                  <Link href="/profile">
-                                      <UserCircle className="mr-2 h-4 w-4" /> Profilim
+                <SheetContent side="right" className="w-[280px] sm:w-[300px] p-0">
+                  <ScrollArea className="h-full">
+                    <div className="p-6 space-y-4">
+                       {/* Mobile Search */}
+                        <div className="relative">
+                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                           <Input
+                             type="text"
+                             placeholder="Ara..."
+                             value={searchQuery}
+                             onChange={handleSearchChange}
+                             className="pl-9 pr-8 h-10 rounded-md bg-secondary/70 border-border/50 focus:bg-background focus:border-primary"
+                           />
+                           {searchQuery && (
+                               <Button
+                                 variant="ghost"
+                                 size="icon"
+                                 className="absolute top-1/2 right-1 transform -translate-y-1/2 h-7 w-7 rounded-full"
+                                 onClick={clearSearch}
+                               >
+                                 <X className="h-4 w-4" />
+                               </Button>
+                             )}
+                         </div>
+                         {isSearching && searchQuery && (
+                            <div className="p-2 text-sm text-center text-muted-foreground">Aranıyor...</div>
+                         )}
+                          {!isSearching && searchQuery && searchResults.length === 0 && (
+                             <div className="p-2 text-sm text-center text-muted-foreground">"{searchQuery}" için sonuç bulunamadı.</div>
+                          )}
+                         {!isSearching && searchResults.length > 0 && searchQuery && (
+                           <ul className="space-y-1 border-t border-border/30 pt-2 mt-2">
+                             {searchResults.map((result) => (
+                                <li key={result.id}>
+                                    <SheetClose asChild>
+                                        <Link
+                                            href={`/articles/${result.id}`}
+                                            className="flex items-center justify-between p-2 rounded-md hover:bg-accent transition-colors text-sm"
+                                            onClick={closePopover}
+                                         >
+                                           <span className="font-medium truncate mr-2">{result.title}</span>
+                                           <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
+                                               {result.category}
+                                           </Badge>
+                                       </Link>
+                                    </SheetClose>
+                               </li>
+                             ))}
+                           </ul>
+                         )}
+
+                      <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
+                        {navItems.map((item) => (
+                          <SheetClose asChild key={item.href}>
+                            <Link href={item.href} passHref legacyBehavior>
+                                 <Button
+                                    variant="ghost"
+                                    className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
+                                     as="a"
+                                 >
+                                   {item.icon}
+                                   <span className="capitalize">{item.label}</span>
+                                 </Button>
+                             </Link>
+                           </SheetClose>
+                        ))}
+                      </nav>
+
+                      <div className="border-t border-border/30 pt-4 space-y-3">
+                        {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
+                           <SheetClose asChild>
+                              <Button variant="outline" asChild className="w-full">
+                                  <Link href="/admin">
+                                      <ShieldCheck className="mr-2 h-4 w-4" />
+                                      Admin Paneli
                                   </Link>
                               </Button>
-                          </SheetClose>
-                           <SheetClose asChild>
-                             <Button variant="ghost" onClick={handleLogout} className="justify-start flex items-center gap-2 text-base w-full text-destructive hover:text-destructive">
-                                <LogOutIcon className="mr-2 h-4 w-4" /> Çıkış Yap
-                             </Button>
-                           </SheetClose>
-                        </>
-                     )}
-                     {isMounted && !currentUser && (
-                       <>
-                        <SheetClose asChild>
-                           <Button variant="outline" onClick={() => setIsLoginModalOpen(true)} className="mt-4 w-full">
-                               <LogIn className="mr-2 h-4 w-4" />
-                               Giriş Yap
-                           </Button>
-                        </SheetClose>
-                        <SheetClose asChild>
-                           <Button variant="default" onClick={openCreateAccountModal} className="mt-2 w-full">
-                               <UserPlus className="mr-2 h-4 w-4" />
-                               Hesap Oluştur
-                           </Button>
-                        </SheetClose>
-                       </>
-                     )}
-                  </nav>
+                            </SheetClose>
+                         )}
+                         {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
+                            <>
+                              <SheetClose asChild>
+                                  <Button variant="ghost" asChild className="justify-start flex items-center gap-2 text-base w-full px-3 py-2">
+                                      <Link href="/profile">
+                                          <UserCircle className="mr-2 h-4 w-4" /> Profilim
+                                      </Link>
+                                  </Button>
+                              </SheetClose>
+                               <SheetClose asChild>
+                                 <Button variant="ghost" onClick={handleLogout} className="justify-start flex items-center gap-2 text-base w-full text-destructive hover:text-destructive px-3 py-2">
+                                    <LogOutIcon className="mr-2 h-4 w-4" /> Çıkış Yap
+                                 </Button>
+                               </SheetClose>
+                            </>
+                         )}
+                         {isMounted && !currentUser && (
+                           <>
+                            <SheetClose asChild>
+                               <Button variant="outline" onClick={() => setIsLoginModalOpen(true)} className="w-full">
+                                   <LogIn className="mr-2 h-4 w-4" />
+                                   Giriş Yap
+                               </Button>
+                            </SheetClose>
+                            <SheetClose asChild>
+                               <Button variant="default" onClick={openCreateAccountModal} className="w-full">
+                                   <UserPlus className="mr-2 h-4 w-4" />
+                                   Hesap Oluştur
+                               </Button>
+                            </SheetClose>
+                           </>
+                         )}
+                         <div className="pt-2">
+                            <ThemeToggle />
+                         </div>
+                      </div>
+                    </div>
+                  </ScrollArea>
                 </SheetContent>
               </Sheet>
             </div>
@@ -500,4 +561,3 @@ const Header = () => {
 };
 
 export default Header;
-
