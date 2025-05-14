@@ -13,7 +13,7 @@ interface PermissionsState {
 export function usePermissions(currentUserId: string | null) {
   const [state, setState] = React.useState<PermissionsState>({
     permissions: new Set(),
-    isLoading: true, // Start with loading true
+    isLoading: true,
     error: null,
   });
 
@@ -23,17 +23,16 @@ export function usePermissions(currentUserId: string | null) {
       if (!isMounted) return;
 
       if (!currentUserId) {
-        console.log("[usePermissions] No currentUserId provided. Setting isLoading to false, error to null, and empty permissions.");
         if (isMounted) {
-          // Set isLoading to false here, as we are done "loading" (or not loading) permissions for a null user
           setState({ permissions: new Set(), isLoading: false, error: null });
+          // console.log("[usePermissions] No currentUserId, permissions set to empty, loading false.");
         }
         return;
       }
 
       if (isMounted) {
         setState(prev => ({ ...prev, isLoading: true, error: null }));
-        console.log(`[usePermissions] Fetching permissions for userId: ${currentUserId}`);
+        // console.log(`[usePermissions] Fetching permissions for userId: ${currentUserId}`);
       }
 
       if (typeof window === 'undefined') {
@@ -45,61 +44,61 @@ export function usePermissions(currentUserId: string | null) {
 
       const storedUserString = localStorage.getItem('currentUser');
       if (!storedUserString) {
-        console.warn("[usePermissions] No 'currentUser' found in localStorage despite currentUserId being present.");
         if (isMounted) {
-          setState({ permissions: new Set(), isLoading: false, error: "Oturum bilgisi localStorage'da bulunamadı. Lütfen giriş yapın." });
+          setState({ permissions: new Set(), isLoading: false, error: "Oturum bilgisi bulunamadı. Lütfen giriş yapın." });
+          // console.warn("[usePermissions] No 'currentUser' found in localStorage.");
         }
         return;
       }
 
       try {
         const currentUser: User = JSON.parse(storedUserString);
-        console.log("[usePermissions] Current user from localStorage:", JSON.stringify(currentUser));
+        // console.log("[usePermissions] Current user from localStorage:", currentUser);
 
         if (!currentUser || currentUser.id !== currentUserId) {
-            console.warn(`[usePermissions] Mismatch or invalid currentUser in localStorage. Expected ID: ${currentUserId}, Found:`, currentUser);
-            if (isMounted) {
-                setState({ permissions: new Set(), isLoading: false, error: "Geçersiz kullanıcı bilgisi." });
-            }
-            return;
+          if (isMounted) {
+            setState({ permissions: new Set(), isLoading: false, error: "Geçersiz kullanıcı bilgisi." });
+            // console.warn(`[usePermissions] Mismatch or invalid currentUser. Expected ID: ${currentUserId}, Found:`, currentUser);
+          }
+          return;
         }
         if (!currentUser.role || typeof currentUser.role !== 'string') {
-            console.warn(`[usePermissions] User role is missing or not a string for user: ${currentUser.id}. Role:`, currentUser.role);
-             if (isMounted) {
-                setState({ permissions: new Set(), isLoading: false, error: `Kullanıcı rolü tanımsız veya geçersiz. Kullanıcı Rolü: ${currentUser.role}` });
-            }
-            return;
+          if (isMounted) {
+            setState({ permissions: new Set(), isLoading: false, error: `Kullanıcı rolü tanımsız veya geçersiz. Kullanıcı Rolü: ${currentUser.role}` });
+            // console.warn(`[usePermissions] User role is missing or not a string for user: ${currentUser.id}. Role:`, currentUser.role);
+          }
+          return;
         }
 
-        const allRoles = await getRoles();
-        console.log("[usePermissions] All roles fetched for permission check:", JSON.stringify(allRoles.map(r => ({id: r.id, name: r.name, permsCount: r.permissions?.length || 0}))));
+        const allRoles = await getRoles(); // This will now ensure base roles have correct permissions
+        // console.log("[usePermissions] All roles fetched:", allRoles.map(r => ({id: r.id, name: r.name, permsCount: r.permissions?.length || 0})));
         
-        const userRoleString = currentUser.role.trim().toLowerCase(); // Trim and lowercase for robust matching
-        console.log("[usePermissions] Attempting to match currentUser.role (trimmed, lowercase):", userRoleString);
+        const userRoleString = currentUser.role.trim().toLowerCase();
+        // console.log("[usePermissions] Attempting to match currentUser.role (trimmed, lowercase):", userRoleString);
 
         const userRoleData = allRoles.find(r =>
             r.name.trim().toLowerCase() === userRoleString ||
-            r.id.trim().toLowerCase() === userRoleString // Also match against role ID (trimmed, lowercase)
+            r.id.trim().toLowerCase() === userRoleString
         );
 
-        console.log("[usePermissions] Found userRoleData for role string '" + currentUser.role + "':", userRoleData ? JSON.stringify({id: userRoleData.id, name: userRoleData.name, permsCount: userRoleData.permissions?.length}) : "NOT FOUND");
+        // console.log("[usePermissions] Found userRoleData for role string '" + currentUser.role + "':", userRoleData ? {id: userRoleData.id, name: userRoleData.name, permsCount: userRoleData.permissions?.length} : "NOT FOUND");
 
         if (userRoleData) {
             if (userRoleData.permissions && Array.isArray(userRoleData.permissions)) {
                 if (isMounted) {
                     setState({ permissions: new Set(userRoleData.permissions), isLoading: false, error: null });
-                    console.log(`[usePermissions] Successfully set ${userRoleData.permissions.length} permissions for role: ${userRoleData.name}`);
+                    // console.log(`[usePermissions] Successfully set ${userRoleData.permissions.length} permissions for role: ${userRoleData.name}`);
                 }
             } else {
-                 console.warn(`[usePermissions] Role data for '${currentUser.role}' found, but permissions array is missing, not an array, or undefined. Permissions:`, userRoleData.permissions);
                  if (isMounted) {
                     setState({ permissions: new Set(), isLoading: false, error: `"${currentUser.role}" rolü için izinler tanımsız veya geçersiz.` });
+                    // console.warn(`[usePermissions] Role data for '${currentUser.role}' found, but permissions array is missing or invalid. Permissions:`, userRoleData.permissions);
                  }
             }
         } else {
-            console.warn(`[usePermissions] No role data found for role string: '${currentUser.role}'. Searched in roles:`, allRoles.map(r => ({ id: r.id, name: r.name })));
             if (isMounted) {
-                setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" adlı bir rol bulunamadı veya bu rol için tanımlanmış izin yok. Tanımlı roller: ${allRoles.map(r => r.name).join(', ')}` });
+                setState({ permissions: new Set(), isLoading: false, error: `Sistemde "${currentUser.role}" adlı bir rol bulunamadı. Lütfen rol tanımlarını kontrol edin.` });
+                // console.warn(`[usePermissions] No role data found for role string: '${currentUser.role}'. Available roles:`, allRoles.map(r => r.name));
             }
         }
       } catch (err: any) {
