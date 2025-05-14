@@ -10,7 +10,8 @@ import { TemplateSelector, Block } from "@/components/admin/template-selector";
 import { BlockEditor } from "@/components/admin/block-editor/block-editor";
 import SeoPreview from "@/components/admin/seo-preview";
 import { useDebouncedCallback } from 'use-debounce';
-import { createArticle, type ArticleData, getCategories, type Category, generateSlug as generateSlugUtil, ARTICLE_STORAGE_KEY } from '@/lib/mock-data';
+import { createArticle, type ArticleData, getCategories, type Category, ARTICLE_STORAGE_KEY } from '@/lib/data/articles'; // Changed mock-data to data/articles
+import { generateSlug as generateSlugUtil } from '@/lib/utils'; // Corrected import path for generateSlug
 import { usePermissions } from "@/hooks/usePermissions";
 
 
@@ -266,7 +267,7 @@ export default function NewArticlePage() {
             title: title || 'Başlıksız Makale',
             excerpt: excerpt || '',
             category: category,
-            mainImageUrl: mainImageUrl || 'https://picsum.photos/seed/preview/1200/600',
+            mainImageUrl: mainImageUrl || 'https://placehold.co/1200x600.png', // Updated placeholder
             blocks,
             isFeatured: isFeatured,
             isHero: isHero,
@@ -569,7 +570,7 @@ export default function NewArticlePage() {
                                                  type="url"
                                                  value={canonicalUrl}
                                                  onChange={(e) => setCanonicalUrl(e.target.value)}
-                                                 placeholder="https://teknobiyo.com/orijinal-makale-url"
+                                                 placeholder="https://biyohox.com/orijinal-makale-url"
                                              />
                                              <p className="text-xs text-muted-foreground">İçerik aynı olan başka bir URL varsa ekleyin.</p>
                                          </div>
