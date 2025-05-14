@@ -19,7 +19,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home as HomeIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
@@ -59,11 +59,11 @@ export default function AdminLayout({
       if (storedUserString) {
         try {
           const userData = JSON.parse(storedUserString);
-          if (userData && userData.id) { // Role check removed for initial load, will be handled by permission hook
+          if (userData && userData.id) {
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://placehold.co/32x32.png?text=${(userData.name || 'U').charAt(0)}`;
             newUserId = userData.id;
-            newUserRoleName = userData.role || null; // Store role if available
+            newUserRoleName = userData.role || null;
             userFound = true;
           } else {
              newUserId = null;
@@ -157,16 +157,16 @@ export default function AdminLayout({
         setCurrentUserName("Kullanıcı");
         setCurrentUserAvatar("https://placehold.co/32x32.png");
         setCurrentUserRoleName(null);
-        setAuthCheckComplete(false);
+        setAuthCheckComplete(false); // Trigger re-check
     }
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/login');
+    router.push('/login'); // Always redirect to admin login on logout from admin panel
   }, [router]);
 
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
-  // Centralized redirection logic - MODIFIED TO REMOVE STRICT ADMIN CHECK FOR LAYOUT DISPLAY
+  // Centralized redirection logic
   React.useEffect(() => {
     if (!isMountedRef.current || !authCheckComplete) {
       return; // Wait for mount and initial auth check
@@ -180,15 +180,17 @@ export default function AdminLayout({
         return; // Don't redirect on preview pages
     }
 
-    // If not logged in and trying to access an admin page (not /login), redirect to /login
-    if (!currentUserId && isAdminPage && !isLoginPage) {
-        console.log(`[AdminLayout Effect] Redirecting to /login: No currentUserId. Path: ${window.location.pathname}`);
-        router.replace('/login');
-        return;
+    // If not logged in OR if logged in but not an Admin, and trying to access an admin page (not /login), redirect to /login
+    if (isAdminPage && !isLoginPage) {
+        if (!currentUserId || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin')) {
+            console.log(`[AdminLayout Effect] Redirecting to /login. User ID: ${currentUserId}, Role: ${currentUserRoleName}. Path: ${window.location.pathname}`);
+            router.replace('/login');
+            return;
+        }
     }
     
-    // If logged in as Admin and on login page, redirect to dashboard
-    if (currentUserId && currentUserRoleName && currentUserRoleName.toLowerCase() === 'admin' && isLoginPage) {
+    // If logged in as Admin and on login page, redirect to admin dashboard
+    if (currentUserId && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin' && isLoginPage) {
         console.log("[AdminLayout Effect] Admin on login page, redirecting to /admin");
         router.replace('/admin');
     }
@@ -196,8 +198,7 @@ export default function AdminLayout({
   }, [authCheckComplete, currentUserId, currentUserRoleName, router]);
 
 
-  // Loading state while authCheck is in progress OR if permissions are loading for a confirmed admin
-  if (!authCheckComplete || (currentUserId && permissionsLoading && !permissionsError)) {
+  if (!authCheckComplete) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -205,9 +206,18 @@ export default function AdminLayout({
       </div>
     );
   }
+  
+  // If trying to access admin pages without being an admin (after auth check is complete)
+  // This is an additional safeguard, primary redirection happens in useEffect above.
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/login' && (!currentUserId || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin'))) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Yönlendiriliyor...</p>
+      </div>
+    );
+  }
 
-  // REMOVED: Strict "Access Denied" rendering based on permissionsError at layout level
-  // Individual pages will now handle their content display based on permissions, or show a generic message if needed.
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -478,7 +488,7 @@ export default function AdminLayout({
            <div className="flex items-center gap-2">
             <Button variant="outline" asChild size="sm">
                 <Link href="/" target="_blank">
-                    <Home className="mr-2 h-4 w-4" /> Siteyi Görüntüle
+                    <HomeIcon className="mr-2 h-4 w-4" /> Siteyi Görüntüle
                 </Link>
             </Button>
             <ThemeToggle />
@@ -491,7 +501,13 @@ export default function AdminLayout({
            </div>
          </header>
          <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)+theme(spacing.6))] md:pt-[calc(theme(spacing.14)+theme(spacing.6))]">
-            {children}
+            {/* Render children only if authenticated and authorized as Admin */}
+             {(currentUserId && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin') ? children : (
+                <div className="flex flex-col items-center justify-center h-full">
+                    {/* This part might not be visible if redirection is immediate */}
+                    <p className="text-muted-foreground">Erişim için lütfen giriş yapın.</p>
+                </div>
+             )}
          </main>
       </SidebarInset>
     </SidebarProvider>
