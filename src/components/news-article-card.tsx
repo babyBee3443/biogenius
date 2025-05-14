@@ -1,7 +1,7 @@
 
 "use client";
 
-import *G React from 'react';
+import * as React from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,3 +83,4 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ article }) => 
     </Card>
   );
 };
+
