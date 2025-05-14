@@ -10,7 +10,8 @@ import { toast } from '@/hooks/use-toast';
 import { LogIn, User, KeyRound, Eye, EyeOff, Loader2, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { getUsers, type User as UserData } from '@/lib/mock-data'; // Assuming UserData type is exported
+import { getUsers, type User as UserData } from '@/lib/data/users'; // Assuming UserData type is exported
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 const AnimatedDnaIcon = () => (
   <motion.div
@@ -77,6 +78,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const router = useRouter(); // Initialize router
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,24 +95,26 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, setIsOpen, onLog
           (user.username && user.username.toLowerCase() === lowercasedInput)
       );
 
-      if (foundUser && password) { // Basic password check: not empty
+      // For mock purposes: If a user is found by email/username,
+      // and password is not empty, consider it a successful login.
+      // In a real app, you'd securely verify the password against a hash.
+      if (foundUser && password) {
+        // Removed the admin check here to allow admins to log in.
+        // The redirection logic below will handle where they go.
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentUser', JSON.stringify(foundUser));
+          window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+        }
+        toast({
+          title: 'Giriş Başarılı!',
+          description: `${foundUser.name}, hoş geldiniz!`,
+        });
+
         if (foundUser.role === 'Admin') {
-          setError('Yöneticiler bu ekrandan giriş yapamaz. Lütfen /login sayfasını kullanın.');
-          toast({
-            variant: 'destructive',
-            title: 'Yönetici Girişi Reddedildi',
-            description: 'Yöneticiler bu ekrandan giriş yapamaz. Lütfen /login sayfasını kullanın.',
-          });
+          router.push('/admin'); // Redirect Admin to admin dashboard
         } else {
-          // User or Editor login successful
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('currentUser', JSON.stringify(foundUser));
-            window.dispatchEvent(new CustomEvent('currentUserUpdated'));
-          }
-          toast({
-            title: 'Giriş Başarılı!',
-            description: `${foundUser.name}, hoş geldiniz!`,
-          });
+          // For other users, just call onLoginSuccess which closes the modal.
+          // Further redirection (e.g., to profile) can be handled by the parent component if needed.
           onLoginSuccess();
         }
       } else {
