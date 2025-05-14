@@ -1,7 +1,7 @@
 
 "use client";
 
-import *G React from 'react';
+import * as React from 'react';
 import { NewsArticleCard } from '@/components/news-article-card';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -92,7 +92,7 @@ const BiyolojideNelerOluyorPage: React.FC = () => {
       const response = await fetch(url);
       if (!response.ok) {
         const errorData: NewsAPIResponse = await response.json();
-        throw new Error(`API Error ${response.status} (${errorData.code}): ${errorData.message || response.statusText}`);
+        throw new Error(`API Error ${response.status} (${errorData.code || 'N/A'}): ${errorData.message || response.statusText}`);
       }
       const data: NewsAPIResponse = await response.json();
 
@@ -108,7 +108,7 @@ const BiyolojideNelerOluyorPage: React.FC = () => {
           console.log("News fetched from API and cached.");
         }
       } else if (data.status === 'error') {
-         throw new Error(`API Error (${data.code}): ${data.message}`);
+         throw new Error(`API Error (${data.code || 'N/A'}): ${data.message || 'Bilinmeyen API hatası'}`);
       }
     } catch (err: any) {
       console.error("Error fetching news:", err);
