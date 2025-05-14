@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import {
     Loader2, Edit3, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
-    Settings as SettingsIcon, Wand2, Info, Download, UserX, Languages, Save, Clock, Eye // Added Clock, Eye
+    Settings as SettingsIcon, Clock, Eye, Save // Added Save icon
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { updateUser, type User, getUserById } from '@/lib/data/users';
@@ -97,7 +97,7 @@ export default function UserProfilePage() {
           try {
             const user = JSON.parse(storedUser) as User;
             if (isMounted) {
-              const fetchedUser = await getUserById(user.id); 
+              const fetchedUser = await getUserById(user.id);
               if (fetchedUser && isMounted) {
                   setCurrentUser(fetchedUser);
                   setFullName(fetchedUser.name || "");
@@ -220,7 +220,7 @@ export default function UserProfilePage() {
         setCurrentUser(null);
         setIsDeletingAccount(false);
         setIsConfirmDeleteOpen(false);
-        router.push('/');
+        router.replace('/'); // Use replace to prevent going back
     }, 1500);
   };
 
@@ -230,7 +230,7 @@ export default function UserProfilePage() {
       window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     }
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/');
+    router.replace('/'); // Use replace to prevent going back to profile
   };
 
   if (loading) {
@@ -268,11 +268,11 @@ export default function UserProfilePage() {
           <Card className="lg:col-span-1 bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
             <CardHeader className="items-center text-center p-6">
               <Avatar className="h-32 w-32 mb-4 border-4 border-primary/50 shadow-lg">
-                <AvatarImage src={avatarPreview || undefined} alt={currentUser.name} data-ai-hint="user avatar placeholder" />
+                <AvatarImage src={avatarPreview || undefined} alt={currentUser.name || currentUser.username || ''} data-ai-hint="user avatar placeholder" />
                 <AvatarFallback className="text-4xl bg-muted">{(currentUser.name || currentUser.username || 'U').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => avatarInputRef.current?.click()} disabled={isSavingProfile}>
-                <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Avatar Değiştir (Yakında)
+                <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Avatar Seç (Yakında)
               </Button>
               <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
               <CardTitle className="text-2xl font-semibold mt-3">{currentUser.name || currentUser.username}</CardTitle>
@@ -314,7 +314,7 @@ export default function UserProfilePage() {
               <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6 bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-border/30 rounded-xl">
                 <TabsTrigger value="general" className="gap-1.5"><SettingsIcon className="h-4 w-4"/>Genel</TabsTrigger>
                 <TabsTrigger value="security" className="gap-1.5"><KeyRound className="h-4 w-4"/>Güvenlik</TabsTrigger>
-                <TabsTrigger value="account" className="gap-1.5"><UserX className="h-4 w-4"/>Hesap</TabsTrigger>
+                <TabsTrigger value="account" className="gap-1.5"><UserCircle className="h-4 w-4"/>Hesap</TabsTrigger>
               </TabsList>
 
               <TabsContent value="general">
@@ -327,21 +327,23 @@ export default function UserProfilePage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="profile-timezone" className="flex items-center gap-1.5"><Clock className="h-4 w-4"/>Saat Dilimi</Label>
-                        <Select disabled>
+                        <Select disabled onValueChange={(value) => toast({title:"Yakında!", description:`Saat dilimi ${value} olarak ayarlanacak.`})}>
                             <SelectTrigger id="profile-timezone"><SelectValue placeholder="Europe/Istanbul (Yakında)" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Europe/Istanbul">Europe/Istanbul</SelectItem>
                                 <SelectItem value="America/New_York">America/New York</SelectItem>
+                                <SelectItem value="Asia/Tokyo">Asia/Tokyo</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="profile-visibility" className="flex items-center gap-1.5"><Eye className="h-4 w-4"/>Profil Görünürlüğü</Label>
-                         <Select disabled>
+                         <Select disabled onValueChange={(value) => toast({title:"Yakında!", description:`Profil görünürlüğü ${value} olarak ayarlanacak.`})}>
                             <SelectTrigger id="profile-visibility"><SelectValue placeholder="Herkese Açık (Yakında)" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="public">Herkese Açık</SelectItem>
                                 <SelectItem value="private">Gizli</SelectItem>
+                                <SelectItem value="friends_only">Sadece Arkadaşlar (Yakında)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -382,13 +384,13 @@ export default function UserProfilePage() {
 
               <TabsContent value="account">
                 <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
-                  <CardHeader><CardTitle className="text-xl flex items-center gap-2"><UserX className="h-5 w-5 text-destructive"/>Hesap Yönetimi</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-xl flex items-center gap-2"><UserCircle className="h-5 w-5 text-primary"/>Hesap Yönetimi</CardTitle></CardHeader>
                   <CardContent className="space-y-6">
                      <Button variant="outline" onClick={() => toast({title:"Yakında!", description:"Hesabı geçici olarak devre dışı bırakma özelliği yakında!"})} className="w-full sm:w-auto justify-start gap-2">
-                        <UserCircle className="mr-2 h-4 w-4" /> Hesabı Geçici Olarak Devre Dışı Bırak (Yakında)
+                         Hesabı Geçici Olarak Devre Dışı Bırak (Yakında)
                     </Button>
                     <div>
-                        <h4 className="font-medium mb-1 flex items-center gap-1.5"><Info className="h-4 w-4"/>Son Giriş Aktiviteleri (Yakında)</h4>
+                        <h4 className="font-medium mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4"/>Son Giriş Aktiviteleri (Yakında)</h4>
                         <p className="text-xs text-muted-foreground">
                             Hesabınıza yapılan son giriş denemeleri ve başarılı girişler burada listelenecektir.
                         </p>

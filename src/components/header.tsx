@@ -119,9 +119,9 @@ const DnaLogo = () => (
                          <animate
                             attributeName="stroke"
                             values="hsl(var(--primary)/0.5);hsl(175 80% 40% / 0.7);hsl(175 75% 45% / 0.5);hsl(var(--primary)/0.5)"
-                            dur="5s" 
+                            dur="5s"
                             repeatCount="indefinite"
-                            begin={`${i * 0.2}s`} 
+                            begin={`${i * 0.2}s`}
                         />
                          <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin={`${i*0.15}s`} />
                         <animateTransform
@@ -149,6 +149,7 @@ const Header = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = React.useState(false);
   const [isMounted, setIsMounted] = React.useState(false);
+  const router = useRouter();
 
 
   const checkUserStatus = React.useCallback(() => {
@@ -180,7 +181,7 @@ const Header = () => {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('currentUserUpdated', checkUserStatus); 
+    window.addEventListener('currentUserUpdated', checkUserStatus);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -233,8 +234,10 @@ const Header = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
     }
-    setCurrentUser(null); 
+    setCurrentUser(null);
+    window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
+    router.replace('/'); // Use replace to prevent going back
   };
 
   const handleCreateAccountSuccess = () => {
@@ -433,7 +436,7 @@ const Header = () => {
                                  as="a"
                              >
                                 {item.href === '/biyoloji-notlari' && <BookCopy className="h-4 w-4" />}
-                                {item.href === '/' && <HomeIcon className="h-4 w-4" />} 
+                                {item.href === '/' && <HomeIcon className="h-4 w-4" />}
                                <span className="capitalize">{item.label}</span>
                              </Button>
                          </Link>
