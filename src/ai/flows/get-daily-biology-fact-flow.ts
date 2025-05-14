@@ -61,21 +61,39 @@ const getDailyBiologyFactFlow = ai.defineFlow(
     outputSchema: DailyBiologyFactOutputSchema,
   },
   async () => {
-    const { output } = await dailyFactPrompt({}); // No specific input needed for a daily random fact
-    if (!output) {
-      // This case should ideally be handled by the AI stating it cannot provide a fact.
-      // If AI returns nothing, it's an unexpected error.
-      throw new Error("AI did not return an output for the daily biology fact.");
-    }
-    // Validate if the AI explicitly stated it couldn't provide a fact
-    if (output.factDetail.toLowerCase().includes("bilgi sağlayamıyorum") || output.factDetail.toLowerCase().includes("cannot provide a fact")) {
+    try {
+      const { output } = await dailyFactPrompt({}); // No specific input needed for a daily random fact
+      if (!output) {
+        // This case should ideally be handled by the AI stating it cannot provide a fact.
+        // If AI returns nothing, it's an unexpected error.
+        console.error("AI did not return an output for the daily biology fact.");
         return {
-            factTitle: "Bilgi Yok",
-            factDetail: "Bugün için doğrulanabilir bir biyoloji bilgisi bulunamadı. Lütfen daha sonra tekrar deneyin.",
+            factTitle: "Geçici Sorun",
+            factDetail: "Günlük bilgi servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.",
+            sourceHint: ""
+        };
+      }
+      // Validate if the AI explicitly stated it couldn't provide a fact
+      if (output.factDetail.toLowerCase().includes("bilgi sağlayamıyorum") || output.factDetail.toLowerCase().includes("cannot provide a fact")) {
+          return {
+              factTitle: "Bilgi Yok",
+              factDetail: "Bugün için doğrulanabilir bir biyoloji bilgisi bulunamadı. Lütfen daha sonra tekrar deneyin.",
+              sourceHint: ""
+          };
+      }
+      return output;
+    } catch (error: any) {
+        console.error("Error calling dailyFactPrompt:", error.message);
+        let errorMessage = "Günlük bilgi alınırken bir hata oluştu. Lütfen daha sonra tekrar deneyin.";
+        if (error.message && (error.message.includes("503") || error.message.toLowerCase().includes("overloaded"))) {
+            errorMessage = "Günlük bilgi servisi geçici olarak kullanılamıyor (aşırı yük). Lütfen daha sonra tekrar deneyin.";
+        }
+         return {
+            factTitle: "Servis Hatası",
+            factDetail: errorMessage,
             sourceHint: ""
         };
     }
-    return output;
   }
 );
 
