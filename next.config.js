@@ -9,43 +9,25 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.ytimg.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.dicebear.com',
-        port: '',
-        pathname: '/**',
-      }
+      { protocol: 'https', hostname: 'picsum.photos', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'i.ytimg.com', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'placehold.co', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'api.dicebear.com', port: '', pathname: '/**' },
+      // News API - More specific domains are better if known, these are examples
+      { protocol: 'https', hostname: '**.com', port: '', pathname: '/**' }, // General for .com domains
+      { protocol: 'https', hostname: '**.org', port: '', pathname: '/**' }, // General for .org domains
+      { protocol: 'https', hostname: '**.net', port: '', pathname: '/**' }, // General for .net domains
+      // Add specific known news source domains here if possible
+      // e.g. { protocol: 'https', hostname: 's.abcnews.com', port: '', pathname: '/**' },
     ],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    deviceSizes: [320, 480, 640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
   },
-  experimental: {
-    // appDir: true, // Already default in newer Next.js versions
-  },
-  reactStrictMode: true, // Helps catch potential problems
-  productionBrowserSourceMaps: false, // Disable source maps in production for smaller bundles
-  // Note for the user: For better performance, ensure your hosting provider
-  // serves your site over HTTP/2 or HTTP/3. This is a server-level configuration.
+  experimental: {},
+  reactStrictMode: true,
+  productionBrowserSourceMaps: false,
 };
 
 module.exports = nextConfig;

@@ -4,8 +4,8 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon } from 'lucide-react';
-import * as React from 'react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope } from 'lucide-react';
+import *G React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
@@ -35,16 +35,18 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
+  // This is mock data. In a real application, you'd fetch this from your backend.
   const mockData: ArticleStub[] = [
-    { id: '2', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
-    { id: '4', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
-    { id: 's1', title: 'İnsan Bağışıklık Sistemi', category: 'Biyoloji' },
-    { id: 's2', title: 'Beyin Nöroplastisitesi', category: 'Biyoloji' },
+    // Only Biyoloji articles are relevant for the main site search now
+    { id: 'gen-duzenleme', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
+    { id: 'mikrobiyom', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
+    { id: 'hucre-dongusu', title: 'Hücre Döngüsü ve Kontrol Noktaları', category: 'Biyoloji' },
+    { id: 'protein-sentezi', title: 'Protein Sentezi: Transkripsiyon ve Translasyon', category: 'Biyoloji' },
   ];
   return mockData.filter(article =>
     (article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.category.toLowerCase().includes(query.toLowerCase())) &&
-    article.category === 'Biyoloji'
+    article.category === 'Biyoloji' // Ensure only biology articles are searched
   ).slice(0, 5);
 };
 
@@ -103,7 +105,8 @@ const DnaLogo = () => (
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                const amplitude = 10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i) * 2 : Math.cos(Date.now() / 700 + i) * 2);
+                // Corrected Math.sin usage for dynamic effect:
+                const amplitude = 10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i * 0.5) * 2 : Math.cos(Date.now() / 700 + i * 0.5) * 2);
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
@@ -227,7 +230,7 @@ const Header = () => {
   }
 
   const handleLoginSuccess = () => {
-    checkUserStatus();
+    checkUserStatus(); // Re-check user status to update header
     setIsLoginModalOpen(false);
   };
 
@@ -236,19 +239,20 @@ const Header = () => {
       localStorage.removeItem('currentUser');
     }
     setCurrentUser(null);
-    window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+    window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify other components
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/');
+    router.replace('/'); // Redirect to home on logout
   };
 
   const handleCreateAccountSuccess = () => {
-    checkUserStatus();
+    checkUserStatus(); // Re-check user status
     setIsCreateAccountModalOpen(false);
+    // Optionally open login modal after successful account creation
     setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
   const openCreateAccountModal = () => {
-    setIsLoginModalOpen(false);
+    setIsLoginModalOpen(false); // Close login modal if open
     setIsCreateAccountModalOpen(true);
   };
 
@@ -261,9 +265,9 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
+    { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?", icon: <Microscope className="h-4 w-4" /> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
-    { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?" },
   ];
 
   const getCategoryClass = (category: string): string => {
@@ -271,6 +275,7 @@ const Header = () => {
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
+     // Fallback or other category styles
      return 'bg-muted text-muted-foreground';
   }
 
@@ -308,7 +313,7 @@ const Header = () => {
             <div className="hidden md:flex items-center space-x-2">
               <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                 <PopoverTrigger asChild>
-                   <div className="relative w-full max-w-[100px] sm:max-w-[120px]">
+                   <div className="relative w-full max-w-[80px] sm:max-w-[100px]"> {/* Reduced max-width */}
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="text"
@@ -333,7 +338,7 @@ const Header = () => {
                 <PopoverContent
                     className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                     align="end"
-                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus on popover content
                  >
                   {isSearching && searchQuery && (
                      <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -349,7 +354,7 @@ const Header = () => {
                                 <Link
                                     href={`/articles/${result.id}`}
                                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                    onClick={closePopover}
+                                    onClick={closePopover} // Close popover on link click
                                  >
                                    <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                    <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -366,7 +371,7 @@ const Header = () => {
 
               <ThemeToggle />
 
-               {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
+               {isMounted && currentUser && (currentUser.role === 'Admin') && ( // Show Admin Paneli only for Admin
                     <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
                        <Link href="/admin" passHref>
                           <ShieldCheck className="mr-1.5 h-4 w-4" />
@@ -375,7 +380,7 @@ const Header = () => {
                       </Link>
                   </Button>
                )}
-              {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
+              {isMounted && currentUser && (currentUser.role !== 'Admin') && ( // User profile dropdown for non-Admins
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
@@ -413,11 +418,17 @@ const Header = () => {
                       </DropdownMenuContent>
                   </DropdownMenu>
               )}
-              {isMounted && !currentUser && (
-                   <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
-                      <LogIn className="mr-1.5 h-4 w-4" />
-                      Giriş Yap
-                  </Button>
+              {isMounted && !currentUser && ( // Show Login/Register if no user
+                   <>
+                     <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
+                        <LogIn className="mr-1.5 h-4 w-4" />
+                        Giriş Yap
+                    </Button>
+                    <Button variant="default" size="sm" onClick={openCreateAccountModal} className="ml-1 shrink-0">
+                        <UserPlus className="mr-1.5 h-4 w-4" />
+                        Kayıt Ol
+                    </Button>
+                   </>
               )}
             </div>
 
@@ -432,7 +443,17 @@ const Header = () => {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[280px] sm:w-[300px] p-0">
-                  <ScrollArea className="h-full">
+                   <SheetClose asChild>
+                        <div className="flex items-center p-4 border-b">
+                            <Link href="/" className="flex items-center group">
+                                <DnaLogo />
+                                <div className="flex flex-col items-start ml-1 -mt-0.5">
+                                    <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
+                                </div>
+                            </Link>
+                        </div>
+                   </SheetClose>
+                  <ScrollArea className="h-[calc(100vh-65px)]"> {/* Adjust height considering header */}
                     <div className="p-6 space-y-4">
                        {/* Mobile Search */}
                         <div className="relative">
@@ -469,7 +490,7 @@ const Header = () => {
                                         <Link
                                             href={`/articles/${result.id}`}
                                             className="flex items-center justify-between p-2 rounded-md hover:bg-accent transition-colors text-sm"
-                                            onClick={closePopover}
+                                            onClick={closePopover} // Ensure popover closes when an item is clicked
                                          >
                                            <span className="font-medium truncate mr-2">{result.title}</span>
                                            <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -484,7 +505,7 @@ const Header = () => {
 
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
                         {navItems.map((item) => (
-                          <SheetClose asChild key={item.href}>
+                          <SheetClose asChild key={`mobile-${item.href}`}>
                             <Link href={item.href} passHref legacyBehavior>
                                  <Button
                                     variant="ghost"
@@ -500,7 +521,7 @@ const Header = () => {
                       </nav>
 
                       <div className="border-t border-border/30 pt-4 space-y-3">
-                        {isMounted && currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Editor') && (
+                        {isMounted && currentUser && (currentUser.role === 'Admin') && (
                            <SheetClose asChild>
                               <Button variant="outline" asChild className="w-full">
                                   <Link href="/admin">
@@ -510,7 +531,7 @@ const Header = () => {
                               </Button>
                             </SheetClose>
                          )}
-                         {isMounted && currentUser && currentUser.role !== 'Admin' && currentUser.role !== 'Editor' && (
+                         {isMounted && currentUser && currentUser.role !== 'Admin' && (
                             <>
                               <SheetClose asChild>
                                   <Button variant="ghost" asChild className="justify-start flex items-center gap-2 text-base w-full px-3 py-2">
@@ -529,20 +550,20 @@ const Header = () => {
                          {isMounted && !currentUser && (
                            <>
                             <SheetClose asChild>
-                               <Button variant="outline" onClick={() => setIsLoginModalOpen(true)} className="w-full">
+                               <Button variant="outline" onClick={() => { setIsLoginModalOpen(true); }} className="w-full">
                                    <LogIn className="mr-2 h-4 w-4" />
                                    Giriş Yap
                                </Button>
                             </SheetClose>
                             <SheetClose asChild>
-                               <Button variant="default" onClick={openCreateAccountModal} className="w-full">
+                               <Button variant="default" onClick={() => { openCreateAccountModal(); }} className="w-full">
                                    <UserPlus className="mr-2 h-4 w-4" />
                                    Hesap Oluştur
                                </Button>
                             </SheetClose>
                            </>
                          )}
-                         <div className="pt-2">
+                         <div className="pt-2 flex justify-center">
                             <ThemeToggle />
                          </div>
                       </div>
