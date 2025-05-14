@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
 import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope } from 'lucide-react';
-import *G React from 'react';
+import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
@@ -105,7 +105,6 @@ const DnaLogo = () => (
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                // Corrected Math.sin usage for dynamic effect:
                 const amplitude = 10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i * 0.5) * 2 : Math.cos(Date.now() / 700 + i * 0.5) * 2);
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
@@ -449,6 +448,9 @@ const Header = () => {
                                 <DnaLogo />
                                 <div className="flex flex-col items-start ml-1 -mt-0.5">
                                     <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
+                                     <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
+                                        Öğrenmenin DNA’sı
+                                    </span>
                                 </div>
                             </Link>
                         </div>
