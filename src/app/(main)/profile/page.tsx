@@ -15,12 +15,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { 
-    Loader2, Edit3, Bell, KeyRound, Trash2, Palette, LogOut, UserCircle, 
-    Settings as SettingsIcon, Wand2, Info, Download, UserX, Languages 
+import {
+    Loader2, Edit3, Bell, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
+    Settings as SettingsIcon, Wand2, Info, Download, UserX, Languages, Save // Added Save icon
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { updateUser, type User, getUserById } from '@/lib/data/users'; // Corrected getUserById import
+import { updateUser, type User, getUserById } from '@/lib/data/users';
 import Link from 'next/link';
 import {
   AlertDialog,
@@ -33,7 +33,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
-// import { usePermissions } from "@/hooks/usePermissions"; // Commented out as it's not used here
 
 
 const DnaBackgroundPattern = () => (
@@ -43,7 +42,7 @@ const DnaBackgroundPattern = () => (
         key={`dna-pattern-${i}`}
         className="absolute animate-pulse"
         style={{
-          left: `${Math.random() * 120 - 10}%`, 
+          left: `${Math.random() * 120 - 10}%`,
           top: `${Math.random() * 120 - 10}%`,
           width: `${Math.random() * 150 + 80}px`,
           height: `${Math.random() * 150 + 80}px`,
@@ -84,13 +83,11 @@ export default function UserProfilePage() {
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmNewPassword, setConfirmNewPassword] = React.useState("");
-  
+
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
   const [isSavingPassword, setIsSavingPassword] = React.useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = React.useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = React.useState(false);
-  
-  // const { permissions, isLoading: permissionsLoading } = usePermissions(currentUser?.id || null);
 
 
   React.useEffect(() => {
@@ -102,35 +99,28 @@ export default function UserProfilePage() {
           try {
             const user = JSON.parse(storedUser) as User;
             if (isMounted) {
-              if (user.role === 'Admin' || user.role === 'Editor') {
-                // For admin/editor, we might want a different profile page or redirect to admin profile.
-                // For now, let's assume this page handles all user profiles including admin/editor if they access it.
-                // router.replace('/admin/profile'); // Example: redirect to admin profile
-              }
               const fetchedUser = await getUserById(user.id); // Fetch latest data
               if (fetchedUser && isMounted) {
                   setCurrentUser(fetchedUser);
                   setFullName(fetchedUser.name || "");
                   setUserBio(fetchedUser.bio || "");
-                  setUserStatus(fetchedUser.status || undefined);
+                  setUserStatus(fetchedUser.status || 'Meraklı');
                   setAvatarPreview(fetchedUser.avatar || `https://placehold.co/128x128.png?text=${(fetchedUser.name || 'U').charAt(0)}`);
               } else if (isMounted) {
-                 // User from localStorage not found in DB, might be an issue.
-                 // For now, proceed with localStorage data but log a warning.
                  console.warn("User from localStorage not found in DB, using localStorage data for profile.");
                  setCurrentUser(user);
                  setFullName(user.name || "");
                  setUserBio(user.bio || "");
-                 setUserStatus(user.status || undefined);
+                 setUserStatus(user.status || 'Meraklı');
                  setAvatarPreview(user.avatar || `https://placehold.co/128x128.png?text=${(user.name || 'U').charAt(0)}`);
               }
             }
           } catch (e) {
             console.error("Error parsing current user from localStorage", e);
-            if (isMounted) router.push('/'); 
+            if (isMounted) router.push('/');
           }
         } else {
-          if (isMounted) router.push('/'); 
+          if (isMounted) router.push('/');
         }
         if (isMounted) setLoading(false);
       }
@@ -180,11 +170,11 @@ export default function UserProfilePage() {
         setIsSavingProfile(false);
     }
   };
-  
+
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { 
+      if (file.size > 2 * 1024 * 1024) {
         toast({ variant: "destructive", title: "Dosya Çok Büyük", description: "Lütfen 2MB'den küçük bir resim seçin." });
         return;
       }
@@ -239,7 +229,7 @@ export default function UserProfilePage() {
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
-      window.dispatchEvent(new CustomEvent('currentUserUpdated')); 
+      window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     }
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
     router.push('/');
@@ -284,7 +274,7 @@ export default function UserProfilePage() {
                 <AvatarFallback className="text-4xl bg-muted">{(currentUser.name || currentUser.username || 'U').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => avatarInputRef.current?.click()} disabled={isSavingProfile}>
-                <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Avatar Seç (Yakında)
+                <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Avatar Değiştir (Yakında)
               </Button>
               <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
               <CardTitle className="text-2xl font-semibold mt-3">{currentUser.name || currentUser.username}</CardTitle>
@@ -428,11 +418,11 @@ export default function UserProfilePage() {
                 </Card>
               </TabsContent>
             </Tabs>
-            
+
             <div className="text-center mt-12">
                  <Button variant="outline" onClick={handleLogout} className="border-border/50 hover:bg-muted/80">
                      <span className="flex items-center gap-2">
-                        <LogOut className="h-4 w-4" /> Çıkış Yap
+                        <LogOutIcon className="mr-2 h-4 w-4" /> Çıkış Yap
                      </span>
                  </Button>
             </div>
@@ -465,5 +455,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
-    
