@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import {
     Loader2, KeyRound, Trash2, Palette, LogOut as LogOutIcon, UserCircle,
-    Settings as SettingsIcon, Clock, Eye, Save, Upload, ChevronLeft, ChevronRight // Added Chevron icons
+    Settings as SettingsIcon, Clock, Eye, Save, Upload, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { updateUser, type User, getUserById } from '@/lib/data/users';
@@ -105,7 +105,7 @@ export default function UserProfilePage() {
                   setFullName(fetchedUser.name || "");
                   setUserBio(fetchedUser.bio || "");
                   setUserStatus(fetchedUser.status || 'Meraklı');
-                  const initialAvatar = fetchedUser.avatar || `https://api.dicebear.com/8.x/bottts/svg?seed=${(fetchedUser.name || 'User').replace(/\s/g, '')}&size=128`;
+                  const initialAvatar = fetchedUser.avatar || `https://api.dicebear.com/8.x/personas/svg?seed=${(fetchedUser.name || 'User').replace(/\s/g, '')}&size=128`;
                   setAvatarUrl(initialAvatar);
                   setSessionAvatarHistory([initialAvatar]);
                   setCurrentHistoryIndex(0);
@@ -115,7 +115,7 @@ export default function UserProfilePage() {
                  setFullName(user.name || "");
                  setUserBio(user.bio || "");
                  setUserStatus(user.status || 'Meraklı');
-                 const initialAvatar = user.avatar || `https://api.dicebear.com/8.x/bottts/svg?seed=${(user.name || 'User').replace(/\s/g, '')}&size=128`;
+                 const initialAvatar = user.avatar || `https://api.dicebear.com/8.x/personas/svg?seed=${(user.name || 'User').replace(/\s/g, '')}&size=128`;
                  setAvatarUrl(initialAvatar);
                  setSessionAvatarHistory([initialAvatar]);
                  setCurrentHistoryIndex(0);
@@ -179,7 +179,7 @@ export default function UserProfilePage() {
 
   const handleGenerateNewAvatar = () => {
     const randomSeed = Math.random().toString(36).substring(7);
-    const newAvatarUrl = `https://api.dicebear.com/8.x/bottts/svg?seed=${randomSeed}&size=128`;
+    const newAvatarUrl = `https://api.dicebear.com/8.x/personas/svg?seed=${randomSeed}&size=128`;
     
     // Remove subsequent history if any
     const newHistory = sessionAvatarHistory.slice(0, currentHistoryIndex + 1);
@@ -290,7 +290,7 @@ export default function UserProfilePage() {
           <Card className="lg:col-span-1 bg-card/80 dark:bg-card/60 backdrop-blur-sm shadow-xl border border-border/30 rounded-xl">
             <CardHeader className="items-center text-center p-6">
               <Avatar className="h-32 w-32 mb-4 border-4 border-primary/50 shadow-lg">
-                <AvatarImage src={avatarUrl || undefined} alt={currentUser.name || currentUser.username || ''} data-ai-hint="user avatar placeholder" />
+                <AvatarImage src={avatarUrl || undefined} alt={currentUser.name || currentUser.username || ''} data-ai-hint="user persona avatar"/>
                 <AvatarFallback className="text-4xl bg-muted">{(currentUser.name || currentUser.username || 'U').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex items-center justify-center gap-2 w-full">
@@ -473,4 +473,3 @@ export default function UserProfilePage() {
     </>
   );
 }
-
