@@ -16,7 +16,7 @@ import { Loader2, Edit3, Bell, KeyRound, Trash2, Palette, LogOut, UserCircle, Se
 import { ThemeToggle } from '@/components/theme-toggle';
 import type { User } from '@/lib/data/users';
 import Link from 'next/link';
-import { usePermissions } from "@/hooks/usePermissions"; // Added import for usePermissions
+import { usePermissions } from "@/hooks/usePermissions";
 
 const DnaBackground = () => (
   <div className="absolute inset-0 overflow-hidden z-0 opacity-5 dark:opacity-[0.03]">
@@ -167,8 +167,8 @@ export default function UserProfilePage() {
               )}
             </CardHeader>
             <CardContent className="px-6 pb-6 space-y-3 text-sm">
-                <Button variant="outline" className="w-full justify-start gap-2" onClick={() => toast({title:"Yakında!", description: "AI Avatar oluşturucu yakında!"})}>
-                    <Wand2 className="h-4 w-4" /> AI Avatar Seç (Yakında)
+                <Button variant="outline" className="w-full justify-start gap-2" onClick={() => toast({title:"Yakında!", description: "Avatar seçme özelliği yakında!"})}>
+                    <Wand2 className="h-4 w-4" /> Avatar Seç (Yakında)
                 </Button>
               <Separator />
               <div>
@@ -255,3 +255,4 @@ export default function UserProfilePage() {
     </div>
   );
 }
+
