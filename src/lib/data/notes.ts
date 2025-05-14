@@ -1,6 +1,6 @@
 
 import type { Block } from "@/components/admin/template-selector";
-import { generateId } from '@/lib/mock-data';
+import { generateId } from '@/lib/utils'; // Import from utils
 
 // --- Biology Note Data Structure ---
 export interface NoteData {

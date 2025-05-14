@@ -1,5 +1,5 @@
 
-import { generateId } from '@/lib/mock-data';
+import { generateId } from '@/lib/utils'; // Import from utils
 import { getRoles, ROLE_STORAGE_KEY } from '@/lib/data/roles'; // Import from new roles file
 import type { Role } from '@/lib/data/roles'; // Import Role type from new roles file
 
@@ -68,7 +68,7 @@ export const createUser = async (data: Omit<User, 'id' | 'joinedAt' | 'lastLogin
         id: generateId(),
         joinedAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        avatar: data.avatar || `https://picsum.photos/seed/${data.username || 'avatar'}/128/128`,
+        avatar: data.avatar || `https://placehold.co/128x128.png?text=${(data.username || 'A').charAt(0)}`,
     };
     const currentUsers = await getUsers();
     currentUsers.push(newUser);

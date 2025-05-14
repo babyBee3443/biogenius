@@ -1,6 +1,6 @@
 
 import type { Block } from "@/components/admin/template-selector";
-import { generateId, generateSlug } from '@/lib/mock-data';
+import { generateId, generateSlug } from '@/lib/utils'; // Import from utils
 
 // --- Page Data Structure ---
 export interface PageData {

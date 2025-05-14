@@ -1,6 +1,6 @@
 
 import type { Block } from "@/components/admin/template-selector"; // Assuming Block might be needed indirectly or for consistency
-import { generateSlug } from '@/lib/mock-data'; // Assuming generateSlug remains in mock-data or is moved to a utils file
+import { generateSlug } from '@/lib/utils'; // Import from utils
 
 // --- Category Data Structure ---
 export interface Category {

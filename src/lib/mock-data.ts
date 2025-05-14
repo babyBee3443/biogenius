@@ -1,5 +1,4 @@
 
-import type { Block } from "@/components/admin/template-selector";
 import { initializeArticles, ARTICLE_STORAGE_KEY } from "./data/articles";
 import { initializeNotes, NOTE_STORAGE_KEY } from "./data/notes";
 import { initializeCategories, CATEGORY_STORAGE_KEY } from "./data/categories";
@@ -7,20 +6,12 @@ import { initializeUsers, USER_STORAGE_KEY, type User } from "./data/users";
 import { initializeRoles, ROLE_STORAGE_KEY, baseMockRoles as baseRolesForInit } from "./data/roles";
 import { initializePages, PAGE_STORAGE_KEY, defaultMockPages } from "./data/pages";
 import { initializeTemplates, TEMPLATE_STORAGE_KEY, ALL_MOCK_TEMPLATES_SOURCE } from "./data/templates";
+import { generateSlug, generateId } from './utils'; // Import from utils
 
 // --- Shared Utility Functions ---
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const generateSlug = (text: string) => {
-    if (!text) return '';
-    return text
-        .toLowerCase()
-        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .replace(/[^a-z0-9 -]/g, '')
-        .replace(/\s+/g, '-').replace(/-+/g, '-');
-};
-
-export const generateId = () => `mock-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`;
+// generateSlug and generateId are now in utils.ts
 
 // --- Shared Constants ---
 export const PREVIEW_STORAGE_KEY = 'preview_data';
@@ -55,7 +46,7 @@ export const loadInitialData = () => {
              id: 'admin001', name: 'Admin User', username: 'admin',
              email: 'admin@biyohox.example.com', role: 'Admin', // Ensure role is 'Admin' string
              joinedAt: new Date().toISOString(),
-             avatar: 'https://picsum.photos/seed/admin-avatar/128/128'
+             avatar: 'https://placehold.co/128x128.png?text=A'
         };
 
         let currentUsers = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '[]') as User[];
@@ -67,7 +58,7 @@ export const loadInitialData = () => {
 
 
         // Role initialization: always ensure base roles have permissions from code
-        const rolesFromStorage = JSON.parse(localStorage.getItem(ROLE_STORAGE_KEY) || '[]');
+        const rolesFromStorage = JSON.parse(localStorage.getItem(ROLE_STORAGE_KEY) || '[]') as Partial<ReturnType<typeof baseRolesForInit[0]>>[];
         const usersForRoleCount = currentUsers; // Use the most up-to-date user list
 
         const initializedRoles = baseRolesForInit.map(baseRoleDef => {

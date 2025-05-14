@@ -1,6 +1,6 @@
 
 import type { Block } from "@/components/admin/template-selector";
-import { generateId } from '@/lib/mock-data'; // Assuming generateId remains here or moved to utils
+import { generateId } from '@/lib/utils'; // Import from utils
 
 // --- Article Data Structure ---
 export interface ArticleData {

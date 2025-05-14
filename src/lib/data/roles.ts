@@ -1,5 +1,5 @@
 
-import { generateSlug } from '@/lib/mock-data';
+import { generateSlug } from '@/lib/utils'; // Import from utils
 import { getUsers, USER_STORAGE_KEY } from '@/lib/data/users'; // Import from new users file
 import type { User } from '@/lib/data/users'; // Import User type from new users file
 
