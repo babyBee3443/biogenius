@@ -204,9 +204,9 @@ export default function AdminSettingsPage() {
             } else {
                 console.warn(`İçe aktarılan veride '${key}' alanı bulunamadı. Bu bölüm için varsayılanlar kullanılacak veya boş kalacaktır.`);
                  try {
-                    const dynamicStorageKey = eval(`${key.toUpperCase()}_STORAGE_KEY`); // Be cautious with eval
-                    if (dynamicStorageKey && typeof dynamicStorageKey === 'string') {
-                         localStorage.removeItem(dynamicStorageKey);
+                    const dynamicStorageKeyEval = eval(`${key.toUpperCase()}_STORAGE_KEY`); // Be cautious with eval
+                    if (dynamicStorageKeyEval && typeof dynamicStorageKeyEval === 'string') {
+                         localStorage.removeItem(dynamicStorageKeyEval);
                     }
                  } catch (evalError) {
                     console.warn(`Could not evaluate storage key for ${key}:`, evalError);
@@ -313,13 +313,13 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-6">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6"> {/* Changed grid-cols-6 to grid-cols-5 */}
                 <TabsTrigger value="general">Genel</TabsTrigger>
                 <TabsTrigger value="adsense">AdSense Yönetimi</TabsTrigger>
                 <TabsTrigger value="navigation">Navigasyon</TabsTrigger>
                 <TabsTrigger value="appearance">Görünüm</TabsTrigger>
                 <TabsTrigger value="security">Güvenlik</TabsTrigger>
-                <TabsTrigger value="integrations">Entegrasyonlar</TabsTrigger>
+                {/* Removed Integrations Tab for simplicity, can be added back if needed */}
             </TabsList>
 
             <TabsContent value="general">
@@ -443,7 +443,7 @@ export default function AdminSettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <p className="text-sm text-muted-foreground">
-                                    Google AdSense reklamlarının sitenizde çalışabilmesi için, AdSense hesabınızdan alacağınız ana script kodunu sitenizin tüm sayfalarının `<head>` bölümüne eklemeniz gerekir.
+                                    Google AdSense reklamlarının sitenizde çalışabilmesi için, AdSense hesabınızdan alacağınız ana script kodunu sitenizin tüm sayfalarının `&lt;head&gt;` bölümüne eklemeniz gerekir.
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     Bu kodu, projenizdeki `src/app/layout.tsx` dosyasında bulunan `&lt;head&gt; ... &lt;/head&gt;` etiketleri arasına, `{/* Google AdSense Ana Script Kodu Buraya Eklenecek */}` yorumunun olduğu yere yapıştırın.
@@ -606,33 +606,6 @@ export default function AdminSettingsPage() {
                          </div>
                     </CardContent>
                  </Card>
-            </TabsContent>
-
-            <TabsContent value="integrations">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Plug className="h-5 w-5"/>
-                            Entegrasyonlar
-                        </CardTitle>
-                        <CardDescription>Üçüncü parti servisleri bağlayın ve yapılandırın.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="google-analytics-id">Google Analytics ID</Label>
-                            <Input id="google-analytics-id" placeholder="UA-XXXXX-Y veya G-XXXXXXX" disabled />
-                             <p className="text-xs text-muted-foreground">Web sitesi trafiğini izlemek için Google Analytics izleme kimliğinizi girin.</p>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="google-maps-key">Google Maps API Anahtarı</Label>
-                            <Input id="google-maps-key" type="password" placeholder="API Anahtarını buraya girin" disabled />
-                        </div>
-                        <Separator />
-                        <div className="flex justify-end">
-                            <Button disabled onClick={() => toast({title: "Kaydedildi (Simülasyon)", description: "Entegrasyonlar kaydedildi."})}>Entegrasyonları Kaydet</Button>
-                        </div>
-                    </CardContent>
-                </Card>
             </TabsContent>
             
         </Tabs>
