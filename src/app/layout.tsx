@@ -24,6 +24,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" suppressHydrationWarning>
+      <head>
+        {/* Google AdSense Ana Script Kodu Buraya Eklenecek */}
+        {/* 
+          AdSense hesabınız onaylandıktan sonra Google'ın size vereceği 
+          ana <script>...</script> etiketini bu yorum satırının yerine yapıştırın.
+          Örnek: <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+        */}
+      </head>
       <body className={`${geistSans.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -43,3 +51,4 @@ export default function RootLayout({
     </html>
   );
 }
+

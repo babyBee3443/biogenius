@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
 import { BookCopy, ArrowRight, Loader2, Search } from "lucide-react"; // Added Search icon
-import { getNotes, type NoteData } from '@/lib/mock-data';
+import { getNotes, type NoteData } from '@/lib/data/notes'; // Corrected import
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -114,6 +114,12 @@ export default function BiyolojiNotlariPage() {
           </Card>
       </section>
 
+      {/* AdSense Placeholder - Filtreleme Sonrası */}
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 728x90)</p>
+      </div>
+
       {loading ? (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array.from({ length: 6 }).map((_, index) => (
@@ -146,11 +152,27 @@ export default function BiyolojiNotlariPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredNotes.map((note) => (
-             <NoteCard key={note.id} note={note} imageLoading="lazy" />
+          {filteredNotes.map((note, index) => (
+            <React.Fragment key={note.id}>
+              <NoteCard note={note} imageLoading="lazy" />
+              {/* AdSense Placeholder - Her 3. Karttan Sonra (Örnek) */}
+              {(index + 1) % 3 === 0 && index < filteredNotes.length -1 && (
+                <div className="my-4 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg md:col-span-1 lg:col-span-1 flex items-center justify-center">
+                  {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Kare veya Dikey) */}
+                  <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 250x250)</p>
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
       )}
+
+      {/* AdSense Placeholder - Sayfa Sonu */}
+      <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Alt Leaderboard)</p>
+      </div>
     </div>
   );
 }
+

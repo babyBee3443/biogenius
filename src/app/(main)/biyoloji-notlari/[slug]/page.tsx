@@ -4,13 +4,14 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Tag } from 'lucide-react';
-import { getNoteById, getNotes, type NoteData } from '@/lib/mock-data';
+import { getNoteById, getNotes, type NoteData } from '@/lib/data/notes'; // Corrected import
 import type { Block } from '@/components/admin/template-selector';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NoteCard } from '@/components/note-card';
 import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
+import * as React from 'react'; // Import React for Fragment
 
 // --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -111,16 +112,14 @@ export async function generateStaticParams() {
 
 export default async function NotePage({ params }: NotePageProps) {
   const noteSlug = params.slug;
-  // const notes = await getNotes(); // Fetching all notes can be slow if there are many
-  // const note = notes.find(n => n.slug === noteSlug);
-  const note = await getNoteById(noteSlug); // Fetch by ID or slug directly for performance
+  const note = await getNoteById(noteSlug); 
 
 
   if (!note) {
     notFound();
   }
 
-  const allNotes = await getNotes(); // Fetch all notes only if note is found, for related notes
+  const allNotes = await getNotes(); 
   const relatedNotes = allNotes
       .filter(n => n.category === note.category && n.id !== note.id)
       .slice(0, 3);
@@ -168,10 +167,27 @@ export default async function NotePage({ params }: NotePageProps) {
                 {note.summary}
             </p>
         )}
+      
+      {/* AdSense Placeholder - İçerik Başı */}
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: İçerik İçi)</p>
+      </div>
 
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {note.contentBlocks && note.contentBlocks.length > 0 ? (
-             note.contentBlocks.map(renderBlock)
+             note.contentBlocks.map((block, index) => (
+                <React.Fragment key={block.id}>
+                    {renderBlock(block)}
+                    {/* AdSense Placeholder - Paragraf Arası */}
+                    {(index === 1 || index === 3) && ( // Örnek: 2. ve 4. bloktan sonra
+                         <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
+                            <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Paragraf Arası)</p>
+                        </div>
+                    )}
+                </React.Fragment>
+            ))
          ) : (
              <p className="text-muted-foreground italic">(Bu not için içerik bulunamadı.)</p>
          )}
@@ -187,6 +203,12 @@ export default async function NotePage({ params }: NotePageProps) {
              </div>
            </div>
        )}
+      
+      {/* AdSense Placeholder - Sayfa Sonu */}
+      <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Alt Leaderboard)</p>
+      </div>
 
        <div className="mt-16 mb-8 text-center">
            <Button asChild variant="outline">
@@ -198,3 +220,4 @@ export default async function NotePage({ params }: NotePageProps) {
     </article>
   );
 }
+

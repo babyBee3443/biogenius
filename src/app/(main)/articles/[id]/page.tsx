@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Twitter, Facebook, Linkedin, Loader2, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
-import { getArticleById, getArticles, type ArticleData } from '@/lib/mock-data';
+import { getArticleById, getArticles, type ArticleData } from '@/lib/data/articles'; // Corrected import
 import type { Block } from '@/components/admin/template-selector';
 import { ArticleCard } from '@/components/article-card';
 import { cn } from '@/lib/utils';
@@ -160,7 +160,6 @@ export default function ArticlePage() {
                     .filter(a =>
                         (a.status === 'Yayınlandı' || ( (currentUserRole === 'Admin' || currentUserRole === 'Editor') && a.status === 'Hazır')) &&
                         a.category === fetchedArticle.category &&
-                        a.category !== 'Teknoloji' && // Exclude Teknoloji category
                         a.id !== articleId
                     )
                     .slice(0, 2);
@@ -257,9 +256,26 @@ export default function ArticlePage() {
           </div>
       )}
 
+      {/* AdSense Placeholder - İçerik Başı */}
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: İçerik İçi)</p>
+      </div>
+
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {article.blocks && article.blocks.length > 0 ? (
-             article.blocks.map(renderBlock)
+             article.blocks.map((block, index) => (
+                <React.Fragment key={block.id}>
+                    {renderBlock(block)}
+                    {/* AdSense Placeholder - Paragraf Arası */}
+                    {(index === 1 || index === 3) && ( // Örnek: 2. ve 4. bloktan sonra
+                         <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
+                            <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Paragraf Arası)</p>
+                        </div>
+                    )}
+                </React.Fragment>
+             ))
          ) : (
              <div dangerouslySetInnerHTML={createMarkup( '<p class="italic text-muted-foreground">[İçerik bulunamadı]</p>')} />
          )}
@@ -280,6 +296,12 @@ export default function ArticlePage() {
              </div>
            </div>
        )}
+
+       {/* AdSense Placeholder - Makale Sonu */}
+        <div className="my-12 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner) */}
+            <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Makale Sonu)</p>
+        </div>
 
        <div className="mt-10">
           <h2 className="text-2xl font-semibold mb-4">Paylaş</h2>
@@ -313,3 +335,4 @@ export default function ArticlePage() {
     </article>
   );
 }
+

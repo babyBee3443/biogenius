@@ -112,7 +112,7 @@ const WelcomeScreen = () => {
           variants={titleVariants}
           initial="hidden"
           animate="visible"
-          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-1 text-primary max-w-full px-2 sm:max-w-xl md:max-w-2xl lg:max-w-3xl"
+          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-1 text-primary max-w-full px-4 sm:max-w-xl md:max-w-2xl lg:max-w-3xl"
         >
           {title}
         </motion.h1>
@@ -121,7 +121,7 @@ const WelcomeScreen = () => {
           variants={subtitleContainerVariants}
           initial="hidden"
           animate="visible"
-          className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-full px-4 sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto"
+          className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-full px-4 sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto"
         >
           {subtitleParts.map((part, partIndex) => (
             <span key={`subpart-${partIndex}`} className={part.colorClass}>
@@ -258,6 +258,12 @@ export default function Home() {
 
        <Hero articles={heroArticles} />
 
+      {/* AdSense Placeholder - Hero Altı */}
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 728x90)</p>
+      </div>
+
       {featuredArticles.length > 0 && (
         <section id="featured-articles">
           <h2 className="text-3xl font-bold mb-8">Öne Çıkanlar</h2>
@@ -270,6 +276,12 @@ export default function Home() {
          <CategoryTeaserSection />
        </section>
 
+      {/* AdSense Placeholder - Bölümler Arası */}
+      <div className="my-12 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Orta Boy Dikdörtgen) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 300x250)</p>
+      </div>
+
       <RecommendedContentSection />
 
       {recentArticles.length > 0 && (
@@ -279,6 +291,13 @@ export default function Home() {
         </section>
       )}
 
+      {/* AdSense Placeholder - Sayfa Sonu */}
+      <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Geniş Leaderboard)</p>
+      </div>
+
     </div>
   );
 }
+
