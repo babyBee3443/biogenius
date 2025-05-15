@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -264,7 +264,6 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
-    // { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?", icon: <Microscope className="h-4 w-4" /> }, // Removed
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
   ];
@@ -312,7 +311,7 @@ const Header = () => {
             <div className="hidden md:flex items-center space-x-2">
               <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                 <PopoverTrigger asChild>
-                   <div className="relative w-full max-w-[80px] sm:max-w-[100px]"> {/* Reduced max-width */}
+                   <div className="relative w-full max-w-[150px] sm:max-w-[180px]">
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="text"
@@ -337,7 +336,7 @@ const Header = () => {
                 <PopoverContent
                     className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                     align="end"
-                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus on popover content
+                    onOpenAutoFocus={(e) => e.preventDefault()} 
                  >
                   {isSearching && searchQuery && (
                      <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -353,7 +352,7 @@ const Header = () => {
                                 <Link
                                     href={`/articles/${result.id}`}
                                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                    onClick={closePopover} // Close popover on link click
+                                    onClick={closePopover} 
                                  >
                                    <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                    <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -370,7 +369,7 @@ const Header = () => {
 
               <ThemeToggle />
 
-               {isMounted && currentUser && (currentUser.role === 'Admin') && ( // Show Admin Paneli only for Admin
+               {isMounted && currentUser && (currentUser.role === 'Admin') && ( 
                     <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
                        <Link href="/admin" passHref>
                           <ShieldCheck className="mr-1.5 h-4 w-4" />
@@ -379,7 +378,7 @@ const Header = () => {
                       </Link>
                   </Button>
                )}
-              {isMounted && currentUser && (currentUser.role !== 'Admin') && ( // User profile dropdown for non-Admins
+              {isMounted && currentUser && (currentUser.role !== 'Admin') && ( 
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
@@ -417,7 +416,7 @@ const Header = () => {
                       </DropdownMenuContent>
                   </DropdownMenu>
               )}
-              {isMounted && !currentUser && ( // Show Login/Register if no user
+              {isMounted && !currentUser && ( 
                    <>
                      <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
                         <LogIn className="mr-1.5 h-4 w-4" />
@@ -492,7 +491,7 @@ const Header = () => {
                                         <Link
                                             href={`/articles/${result.id}`}
                                             className="flex items-center justify-between p-2 rounded-md hover:bg-accent transition-colors text-sm"
-                                            onClick={closePopover} // Ensure popover closes when an item is clicked
+                                            onClick={closePopover} 
                                          >
                                            <span className="font-medium truncate mr-2">{result.title}</span>
                                            <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -585,3 +584,4 @@ const Header = () => {
 
 export default Header;
 
+    
