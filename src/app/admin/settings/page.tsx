@@ -37,8 +37,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const MAINTENANCE_MODE_KEY = 'maintenanceModeActive';
-const ADSENSE_ENABLED_KEY = 'biyohox_adsenseEnabled'; // More specific key
-const ADSENSE_PUBLISHER_ID_KEY = 'biyohox_adsensePublisherId'; // More specific key
+const ADSENSE_ENABLED_KEY = 'biyohox_adsenseEnabled';
+const ADSENSE_PUBLISHER_ID_KEY = 'biyohox_adsensePublisherId';
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 30;
 
 export default function AdminSettingsPage() {
@@ -71,7 +71,7 @@ export default function AdminSettingsPage() {
       setMaintenanceMode(storedMaintenanceMode === 'true');
 
       const storedAdsenseEnabled = localStorage.getItem(ADSENSE_ENABLED_KEY);
-      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true'); // Default to true if not set
+      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true');
 
       const storedAdsensePublisherId = localStorage.getItem(ADSENSE_PUBLISHER_ID_KEY);
       if (storedAdsensePublisherId) {
@@ -98,7 +98,7 @@ export default function AdminSettingsPage() {
 
         window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
         window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
-        window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated')); // Dispatch event for AdSense
+        window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated'));
     }
     toast({ title: "Ayarlar Kaydedildi", description: "Ayarlarınız başarıyla güncellendi." });
     console.log("Ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout, adsenseEnabled, adsensePublisherId });
@@ -203,16 +203,8 @@ export default function AdminSettingsPage() {
                 initializer(importedData[key]);
             } else {
                 console.warn(`İçe aktarılan veride '${key}' alanı bulunamadı. Bu bölüm için varsayılanlar kullanılacak veya boş kalacaktır.`);
-                // Attempt to get the storage key dynamically to clear it if it exists
-                const storageKeyConstantName = `${key.toUpperCase()}_STORAGE_KEY`;
-                // This dynamic access is a bit hacky; direct access to keys is better if possible
-                // For now, we assume keys like ARTICLE_STORAGE_KEY are globally accessible or imported if needed
-                // For a robust solution, a map of key names to storage key constants would be better.
-                // Example: const storageKeysMap = { articles: ARTICLE_STORAGE_KEY, ... }
-                // Then: localStorage.removeItem(storageKeysMap[key]);
-                // As a simple approach for now:
                  try {
-                    const dynamicStorageKey = eval(storageKeyConstantName);
+                    const dynamicStorageKey = eval(`${key.toUpperCase()}_STORAGE_KEY`); // Be cautious with eval
                     if (dynamicStorageKey && typeof dynamicStorageKey === 'string') {
                          localStorage.removeItem(dynamicStorageKey);
                     }
@@ -275,11 +267,16 @@ export default function AdminSettingsPage() {
 
   const adsenseTxtContent = `google.com, ${adsensePublisherId || 'pub-XXXXXXXXXXXXXXXX'}, DIRECT, f08c47fec0942fa0`;
 
-  const adPlaceholderCodeExample = `
+  const mainAdsenseScriptPlaceholder = `
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${adsensePublisherId || 'pub-YOUR_PUBLISHER_ID'}"
+     crossorigin="anonymous"></script>
+  `.trim();
+  
+  const adUnitPlaceholderCode = (slotId: string = "YOUR_AD_SLOT_ID") => `
 <ins class="adsbygoogle"
      style="display:block"
-     data-ad-client="ca-${adsensePublisherId || 'pub-XXXXXXXXXXXXXXXX'}"
-     data-ad-slot="YOUR_AD_SLOT_ID"
+     data-ad-client="ca-${adsensePublisherId || 'pub-YOUR_PUBLISHER_ID'}"
+     data-ad-slot="${slotId}"
      data-ad-format="auto"
      data-full-width-responsive="true"></ins>
 <script>
@@ -287,24 +284,20 @@ export default function AdminSettingsPage() {
 </script>
   `.trim();
 
-  const mainAdsenseScriptPlaceholder = `
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${adsensePublisherId || 'pub-XXXXXXXXXXXXXXXX'}"
-     crossorigin="anonymous"></script>
-  `.trim();
-
   const adPlacementGuide = [
-    { title: "Anasayfa - Hero Altı", file: "src/app/(main)/page.tsx", description: "Hero bölümünün hemen altına, genellikle geniş bir banner için uygundur." },
-    { title: "Anasayfa - Bölümler Arası", file: "src/app/(main)/page.tsx", description: "Öne çıkanlar, kategoriler gibi bölümler arasına yerleştirilebilir." },
-    { title: "Anasayfa - Sayfa Sonu", file: "src/app/(main)/page.tsx", description: "Footer'dan önce, sayfanın en altına." },
-    { title: "Makale Detay - İçerik Başı", file: "src/app/(main)/articles/[id]/page.tsx", description: "Makale başlığından veya ana görselden sonra." },
-    { title: "Makale Detay - Paragraf Arası", file: "src/app/(main)/articles/[id]/page.tsx", description: "Uzun makalelerde, belirli paragraflardan sonra (örneğin her 2-3 blokta bir)." },
-    { title: "Makale Detay - Makale Sonu", file: "src/app/(main)/articles/[id]/page.tsx", description: "Makale içeriği bittikten sonra, yorumlardan önce." },
-    { title: "Notlar Liste - Filtre Altı", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Filtreleme seçeneklerinin hemen altına." },
-    { title: "Notlar Liste - Kart Arası", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Her 3-4 not kartından sonra bir reklam." },
-    { title: "Notlar Liste - Sayfa Sonu", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Sayfalama öncesi veya sonrası." },
-    { title: "Not Detay - İçerik Başı", file: "src/app/(main)/biyoloji-notlari/[slug]/page.tsx", description: "Not başlığından sonra." },
-    { title: "Not Detay - Not Sonu", file: "src/app/(main)/biyoloji-notlari/[slug]/page.tsx", description: "Not içeriği bittikten sonra." },
+    { title: "Anasayfa - Hero Altı", file: "src/app/(main)/page.tsx", description: "Hero bölümünün hemen altına, genellikle geniş bir banner için uygundur.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Anasayfa Hero Altı) */}" },
+    { title: "Anasayfa - Bölümler Arası", file: "src/app/(main)/page.tsx", description: "Öne çıkanlar, kategoriler gibi bölümler arasına yerleştirilebilir.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Anasayfa Bölümler Arası) */}" },
+    { title: "Anasayfa - Sayfa Sonu", file: "src/app/(main)/page.tsx", description: "Footer'dan önce, sayfanın en altına.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Anasayfa Sayfa Sonu) */}" },
+    { title: "Makale Detay - İçerik Başı", file: "src/app/(main)/articles/[id]/page.tsx", description: "Makale başlığından veya ana görselden sonra.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Makale Başı) */}" },
+    { title: "Makale Detay - Paragraf Arası", file: "src/app/(main)/articles/[id]/page.tsx", description: "Uzun makalelerde, belirli paragraflardan sonra (örneğin her 2-3 blokta bir).", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Paragraf Arası) */}" },
+    { title: "Makale Detay - Makale Sonu", file: "src/app/(main)/articles/[id]/page.tsx", description: "Makale içeriği bittikten sonra, yorumlardan önce.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner - Makale Sonu) */}" },
+    { title: "Notlar Liste - Filtre Altı", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Filtreleme seçeneklerinin hemen altına.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Notlar Liste Filtre Altı) */}" },
+    { title: "Notlar Liste - Kart Arası", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Her 3-4 not kartından sonra bir reklam.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Kare veya Dikey - Notlar Liste Kart Arası) */}" },
+    { title: "Notlar Liste - Sayfa Sonu", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Sayfalama öncesi veya sonrası.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Notlar Liste Sayfa Sonu) */}" },
+    { title: "Not Detay - İçerik Başı", file: "src/app/(main)/biyoloji-notlari/[slug]/page.tsx", description: "Not başlığından sonra.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Not Başı) */}" },
+    { title: "Not Detay - Not Sonu", file: "src/app/(main)/biyoloji-notlari/[slug]/page.tsx", description: "Not içeriği bittikten sonra.", placeholderComment: "{/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Not Sonu) */}" },
   ];
+
 
   return (
     <>
@@ -320,7 +313,7 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-6">
                 <TabsTrigger value="general">Genel</TabsTrigger>
                 <TabsTrigger value="adsense">AdSense Yönetimi</TabsTrigger>
                 <TabsTrigger value="navigation">Navigasyon</TabsTrigger>
@@ -419,7 +412,7 @@ export default function AdminSettingsPage() {
                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-primary"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                              AdSense Yönetimi
                         </CardTitle>
-                        <CardDescription>Google AdSense entegrasyonunu yönetin ve reklam yerleşimleri hakkında bilgi edinin.</CardDescription>
+                        <CardDescription>Google AdSense entegrasyonunu yönetin ve reklam yerleşimleri hakkında adım adım bilgi edinin.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-8">
                         <Card className="bg-muted/30">
@@ -432,14 +425,14 @@ export default function AdminSettingsPage() {
                                     <Label htmlFor="adsense-enabled" className="cursor-pointer">Sitede AdSense Reklamlarını Etkinleştir</Label>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="adsense-publisher-id">AdSense Yayıncı Kimliği (Publisher ID)</Label>
-                                    <Input 
-                                        id="adsense-publisher-id" 
-                                        value={adsensePublisherId} 
-                                        onChange={(e) => setAdsensePublisherId(e.target.value)} 
+                                    <Label htmlFor="adsense-publisher-id">AdSense Yayıncı Kimliği (Publisher ID) <span className="text-destructive">*</span></Label>
+                                    <Input
+                                        id="adsense-publisher-id"
+                                        value={adsensePublisherId}
+                                        onChange={(e) => setAdsensePublisherId(e.target.value)}
                                         placeholder="pub-XXXXXXXXXXXXXXXX"
                                     />
-                                    <p className="text-xs text-muted-foreground">Google AdSense hesabınızdaki yayıncı kimliğiniz.</p>
+                                    <p className="text-xs text-muted-foreground">Google AdSense hesabınızdaki yayıncı kimliğiniz (zorunludur).</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -450,7 +443,7 @@ export default function AdminSettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <p className="text-sm text-muted-foreground">
-                                    Google AdSense reklamlarının sitenizde çalışabilmesi için, AdSense hesabınızdan alacağınız ana script kodunu sitenizin tüm sayfalarının `&lt;head&gt;` bölümüne eklemeniz gerekir.
+                                    Google AdSense reklamlarının sitenizde çalışabilmesi için, AdSense hesabınızdan alacağınız ana script kodunu sitenizin tüm sayfalarının `<head>` bölümüne eklemeniz gerekir.
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     Bu kodu, projenizdeki `src/app/layout.tsx` dosyasında bulunan `&lt;head&gt; ... &lt;/head&gt;` etiketleri arasına, `{/* Google AdSense Ana Script Kodu Buraya Eklenecek */}` yorumunun olduğu yere yapıştırın.
@@ -467,7 +460,7 @@ export default function AdminSettingsPage() {
                                 </a>
                             </CardContent>
                         </Card>
-                        
+
                         <Card className="bg-muted/30">
                             <CardHeader>
                                  <CardTitle className="text-lg">Adım 2: `ads.txt` Dosyası</CardTitle>
@@ -507,12 +500,13 @@ export default function AdminSettingsPage() {
                                         <Card key={area.title} className="bg-card/50">
                                             <CardHeader><CardTitle className="text-base">{area.title}</CardTitle></CardHeader>
                                             <CardContent>
+                                                <p className="text-xs text-muted-foreground mb-1">Açıklama: {area.description}</p>
                                                 <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `{area.file}`</p>
-                                                <p className="text-xs text-muted-foreground mb-2">Açıklama: {area.description}</p>
+                                                <p className="text-xs text-muted-foreground mb-2">Kodun Ekleneceği Yer (Tahmini Yorum Satırı): `{area.placeholderComment}`</p>
                                                 <Label className="text-xs">Örnek Reklam Kodu:</Label>
                                                 <div className="bg-background p-3 rounded-md border mt-1">
-                                                    <pre className="text-xs whitespace-pre-wrap break-all"><code>{adPlaceholderCodeExample}</code></pre>
-                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => copyToClipboard(adPlaceholderCodeExample)}>
+                                                    <pre className="text-xs whitespace-pre-wrap break-all"><code>{adUnitPlaceholderCode()}</code></pre>
+                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => copyToClipboard(adUnitPlaceholderCode())}>
                                                         <Copy className="mr-2 h-3.5 w-3.5"/> Kodu Kopyala
                                                     </Button>
                                                 </div>
@@ -526,7 +520,6 @@ export default function AdminSettingsPage() {
                     </CardContent>
                 </Card>
             </TabsContent>
-
 
             <TabsContent value="navigation">
                 <Card>
