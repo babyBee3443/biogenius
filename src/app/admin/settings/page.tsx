@@ -12,15 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon, Info } from "lucide-react";
+import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon, Info, Copy, ExternalLink } from "lucide-react"; // Added Copy, ExternalLink
 import { toast } from "@/hooks/use-toast";
-import { ARTICLE_STORAGE_KEY } from '@/lib/data/articles';
-import { NOTE_STORAGE_KEY } from '@/lib/data/notes';
-import { CATEGORY_STORAGE_KEY } from '@/lib/data/categories';
-import { USER_STORAGE_KEY } from '@/lib/data/users';
-import { ROLE_STORAGE_KEY } from '@/lib/data/roles';
-import { PAGE_STORAGE_KEY } from '@/lib/data/pages';
-import { TEMPLATE_STORAGE_KEY } from '@/lib/data/templates';
+import { ARTICLE_STORAGE_KEY, initializeArticles } from '@/lib/data/articles';
+import { NOTE_STORAGE_KEY, initializeNotes } from '@/lib/data/notes';
+import { CATEGORY_STORAGE_KEY, initializeCategories } from '@/lib/data/categories';
+import { USER_STORAGE_KEY, initializeUsers } from '@/lib/data/users';
+import { ROLE_STORAGE_KEY, initializeRoles } from '@/lib/data/roles';
+import { PAGE_STORAGE_KEY, initializePages } from '@/lib/data/pages';
+import { TEMPLATE_STORAGE_KEY, initializeTemplates } from '@/lib/data/templates';
 import { loadInitialData as reloadMockData } from '@/lib/mock-data';
 import {
   AlertDialog,
@@ -33,13 +33,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ThemeToggle } from '@/components/theme-toggle';
-
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"; // Added Accordion
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const MAINTENANCE_MODE_KEY = 'maintenanceModeActive';
 const ADSENSE_ENABLED_KEY = 'adsenseEnabled';
 const ADSENSE_PUBLISHER_ID_KEY = 'adsensePublisherId';
-const DEFAULT_SESSION_TIMEOUT_MINUTES = 30; // Increased default
+const DEFAULT_SESSION_TIMEOUT_MINUTES = 30;
 
 export default function AdminSettingsPage() {
   const [siteName, setSiteName] = React.useState("BiyoHox");
@@ -71,7 +71,7 @@ export default function AdminSettingsPage() {
       setMaintenanceMode(storedMaintenanceMode === 'true');
 
       const storedAdsenseEnabled = localStorage.getItem(ADSENSE_ENABLED_KEY);
-      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true'); // Default to true if not set
+      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true');
 
       const storedAdsensePublisherId = localStorage.getItem(ADSENSE_PUBLISHER_ID_KEY);
       if (storedAdsensePublisherId) {
@@ -98,11 +98,10 @@ export default function AdminSettingsPage() {
 
         window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
         window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
-        window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated')); // New event for AdSense
-        console.log("AdminSettingsPage: Dispatched maintenanceModeUpdated event on save", maintenanceMode);
+        window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated'));
     }
     toast({ title: "Ayarlar Kaydedildi", description: "Genel ayarlar başarıyla güncellendi." });
-    console.log("Genel ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout, adsenseEnabled, adsensePublisherId });
+    console.log("Ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout, adsenseEnabled, adsensePublisherId });
   };
 
   const handleExportData = () => {
@@ -118,12 +117,12 @@ export default function AdminSettingsPage() {
         roles: ROLE_STORAGE_KEY,
         pages: PAGE_STORAGE_KEY,
         templates: TEMPLATE_STORAGE_KEY,
-        settings: { // Include settings in export
+        settings: {
           [SESSION_TIMEOUT_KEY]: localStorage.getItem(SESSION_TIMEOUT_KEY),
           [MAINTENANCE_MODE_KEY]: localStorage.getItem(MAINTENANCE_MODE_KEY),
           [ADSENSE_ENABLED_KEY]: localStorage.getItem(ADSENSE_ENABLED_KEY),
           [ADSENSE_PUBLISHER_ID_KEY]: localStorage.getItem(ADSENSE_PUBLISHER_ID_KEY),
-          siteName, siteDescription, siteUrl, adminEmail // Include other state-managed settings
+          siteName, siteDescription, siteUrl, adminEmail
         }
       };
 
@@ -189,25 +188,25 @@ export default function AdminSettingsPage() {
         const content = e.target?.result as string;
         const importedData = JSON.parse(content);
 
-        const dataKeys = [
-            ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY,
-            USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, TEMPLATE_STORAGE_KEY
-        ];
-        const dataKeyMap = {
-            articles: ARTICLE_STORAGE_KEY, notes: NOTE_STORAGE_KEY, categories: CATEGORY_STORAGE_KEY,
-            users: USER_STORAGE_KEY, roles: ROLE_STORAGE_KEY, pages: PAGE_STORAGE_KEY, templates: TEMPLATE_STORAGE_KEY
+        const dataInitializers: Record<string, (data: any[]) => void> = {
+            articles: initializeArticles,
+            notes: initializeNotes,
+            categories: initializeCategories,
+            users: initializeUsers,
+            roles: initializeRoles,
+            pages: initializePages,
+            templates: initializeTemplates,
         };
 
-        for (const [key, storageKey] of Object.entries(dataKeyMap)) {
+        for (const [key, initializer] of Object.entries(dataInitializers)) {
             if (importedData[key]) {
-                localStorage.setItem(storageKey, JSON.stringify(importedData[key]));
+                initializer(importedData[key]); // This function should also setItem to localStorage
             } else {
                 console.warn(`İçe aktarılan veride '${key}' alanı bulunamadı. Bu bölüm için varsayılanlar kullanılacak veya boş kalacaktır.`);
-                localStorage.removeItem(storageKey); // Clear if not present in backup
+                localStorage.removeItem(eval(`${key.toUpperCase()}_STORAGE_KEY`)); // Clear if not present
             }
         }
         
-        // Import settings
         if (importedData.settings) {
             const settings = importedData.settings;
             localStorage.setItem(SESSION_TIMEOUT_KEY, settings[SESSION_TIMEOUT_KEY] || DEFAULT_SESSION_TIMEOUT_MINUTES.toString());
@@ -229,7 +228,7 @@ export default function AdminSettingsPage() {
             window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated'));
         }
 
-        reloadMockData(); // This function now correctly initializes from the updated localStorage
+        reloadMockData();
 
         toast({ title: "Veri İçe Aktarıldı", description: "Veriler başarıyla içe aktarıldı. Değişikliklerin yansıması için sayfa yenilenebilir." });
       } catch (error) {
@@ -241,8 +240,6 @@ export default function AdminSettingsPage() {
         if (importFileInputRef.current) {
           importFileInputRef.current.value = "";
         }
-        // Optionally, force a page reload to ensure all components re-fetch from localStorage
-        // window.location.reload(); 
       }
     };
     reader.onerror = () => {
@@ -252,6 +249,35 @@ export default function AdminSettingsPage() {
     }
     reader.readAsText(fileToImport);
   };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({ title: "Kopyalandı!", description: "İçerik panoya kopyalandı." });
+    }).catch(err => {
+      toast({ variant: "destructive", title: "Kopyalama Hatası", description: "İçerik kopyalanamadı." });
+    });
+  };
+
+  const adsenseTxtContent = `google.com, ${adsensePublisherId || 'pub-XXXXXXXXXXXXXXXX'}, DIRECT, f08c47fec0942fa0`;
+
+  const adPlaceholderCodeExample = `
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-YOUR_PUBLISHER_ID"  <!-- Kendi Yayıncı ID'niz ile değiştirin -->
+     data-ad-slot="YOUR_AD_SLOT_ID"           <!-- Kendi Reklam Birimi ID'niz ile değiştirin -->
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+  `.trim();
+
+  const mainAdsenseScriptPlaceholder = `
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+     crossorigin="anonymous"></script>
+<!-- YUKARIDAKİ satırdaki ca-pub-YOUR_PUBLISHER_ID kısmını kendi Yayıncı ID'niz ile DEĞİŞTİRİN -->
+  `.trim();
+
 
   return (
     <>
@@ -266,15 +292,15 @@ export default function AdminSettingsPage() {
              <ThemeToggle />
         </div>
 
-
         <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6">
                 <TabsTrigger value="general">Genel</TabsTrigger>
+                <TabsTrigger value="adsense">AdSense Yönetimi</TabsTrigger> {/* New Tab */}
                 <TabsTrigger value="navigation">Navigasyon</TabsTrigger>
                 <TabsTrigger value="appearance">Görünüm</TabsTrigger>
                 <TabsTrigger value="security">Güvenlik</TabsTrigger>
                 <TabsTrigger value="integrations">Entegrasyonlar</TabsTrigger>
-                <TabsTrigger value="email">E-posta</TabsTrigger>
+                {/* Removed E-posta tab for now, can be re-added if needed */}
             </TabsList>
 
             <TabsContent value="general">
@@ -330,40 +356,6 @@ export default function AdminSettingsPage() {
                         </div>
                         <Separator />
                         <div>
-                            <h3 className="text-md font-medium mb-2">AdSense Ayarları</h3>
-                            <div className="flex items-center space-x-3 pt-1">
-                                <Switch id="adsense-enabled" checked={adsenseEnabled} onCheckedChange={setAdsenseEnabled} />
-                                <Label htmlFor="adsense-enabled" className="cursor-pointer">AdSense Reklamlarını Etkinleştir</Label>
-                            </div>
-                            <div className="space-y-2 mt-4">
-                                <Label htmlFor="adsense-publisher-id">AdSense Yayıncı Kimliği (Publisher ID)</Label>
-                                <Input 
-                                    id="adsense-publisher-id" 
-                                    value={adsensePublisherId} 
-                                    onChange={(e) => setAdsensePublisherId(e.target.value)} 
-                                    placeholder="pub-xxxxxxxxxxxxxxxx"
-                                />
-                                <p className="text-xs text-muted-foreground">Google AdSense yayıncı kimliğinizi girin.</p>
-                            </div>
-                            <Card className="mt-4 bg-muted/30 border-dashed">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium flex items-center gap-2"><Info className="h-4 w-4 text-blue-500"/> ads.txt Bilgisi</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                        Sitenizin reklam envanterini satmaya yetkili olduğunuzu doğrulamak için `public` klasörünüzün kök dizinine `ads.txt` adında bir dosya oluşturup aşağıdaki içeriği eklemeniz gerekir:
-                                    </p>
-                                    <pre className="text-xs bg-background p-2 rounded border overflow-x-auto">
-                                        {`google.com, ${adsensePublisherId || 'pub-xxxxxxxxxxxxxxxx'}, DIRECT, f08c47fec0942fa0`}
-                                    </pre>
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        Yukarıdaki `pub-xxxxxxxxxxxxxxxx` kısmını kendi Yayıncı Kimliğiniz ile değiştirmeyi unutmayın.
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <Separator />
-                        <div>
                             <h3 className="text-md font-medium mb-2">Veri Yönetimi</h3>
                             <p className="text-sm text-muted-foreground mb-3">
                                 Site verilerini JSON formatında yedekleyebilir veya daha önce aldığınız bir yedeği geri yükleyebilirsiniz.
@@ -390,15 +382,149 @@ export default function AdminSettingsPage() {
                                 İçe aktarma işlemi mevcut tüm verilerin üzerine yazacaktır. Lütfen dikkatli olun ve işlem öncesi yedek aldığınızdan emin olun.
                             </p>
                         </div>
-                         <Separator />
-                        <div className="flex justify-end">
-                            <Button onClick={handleGeneralSettingsSave}>
-                                <Save className="mr-2 h-4 w-4"/> Genel Ayarları Kaydet
-                            </Button>
-                        </div>
                     </CardContent>
                 </Card>
             </TabsContent>
+
+            <TabsContent value="adsense">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-primary"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                             AdSense Yönetimi
+                        </CardTitle>
+                        <CardDescription>Google AdSense entegrasyonunu yönetin ve reklam yerleşimleri hakkında bilgi edinin.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-8">
+                        <Card className="bg-muted/30">
+                            <CardHeader>
+                                <CardTitle className="text-lg">Temel AdSense Ayarları</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="flex items-center space-x-3">
+                                    <Switch id="adsense-enabled" checked={adsenseEnabled} onCheckedChange={setAdsenseEnabled} />
+                                    <Label htmlFor="adsense-enabled" className="cursor-pointer">AdSense Reklamlarını Sitede Etkinleştir</Label>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="adsense-publisher-id">AdSense Yayıncı Kimliği (Publisher ID)</Label>
+                                    <Input 
+                                        id="adsense-publisher-id" 
+                                        value={adsensePublisherId} 
+                                        onChange={(e) => setAdsensePublisherId(e.target.value)} 
+                                        placeholder="pub-xxxxxxxxxxxxxxxx"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Google AdSense hesabınızdaki yayıncı kimliğiniz.</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-muted/30">
+                            <CardHeader>
+                                 <CardTitle className="text-lg">Adım 1: Ana AdSense Script Kodu</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <p className="text-sm text-muted-foreground">
+                                    Google AdSense reklamlarının sitenizde çalışabilmesi için, AdSense hesabınızdan alacağınız ana script kodunu sitenizin tüm sayfalarının `<head>` bölümüne eklemeniz gerekir.
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Bu kodu, projenizdeki `src/app/layout.tsx` dosyasında bulunan `<head> ... </head>` etiketleri arasına, `{/* Google AdSense Ana Script Kodu Buraya Eklenecek */}` yorumunun olduğu yere yapıştırın.
+                                </p>
+                                <Label>Örnek Ana Script Kodu (Kendi ID'niz ile güncelleyin):</Label>
+                                <div className="bg-background p-3 rounded-md border">
+                                    <pre className="text-xs whitespace-pre-wrap break-all"><code>{mainAdsenseScriptPlaceholder}</code></pre>
+                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => copyToClipboard(mainAdsenseScriptPlaceholder)}>
+                                        <Copy className="mr-2 h-3.5 w-3.5"/> Kodu Kopyala
+                                    </Button>
+                                </div>
+                                <a href="https://support.google.com/adsense/answer/9274634" target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                                    Daha fazla bilgi için AdSense Yardım Merkezi <ExternalLink className="h-3 w-3"/>
+                                </a>
+                            </CardContent>
+                        </Card>
+                        
+                        <Card className="bg-muted/30">
+                            <CardHeader>
+                                 <CardTitle className="text-lg">Adım 2: `ads.txt` Dosyası</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <p className="text-sm text-muted-foreground">
+                                    `ads.txt`, sitenizde reklam satmaya yetkili olduğunuzu doğrulayan bir dosyadır. Bu dosya, reklam sahteciliğini önlemeye yardımcı olur.
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Aşağıdaki içeriği kopyalayın, projenizin `public` klasörünün içine `ads.txt` adında bir dosya oluşturun ve bu içeriği içine yapıştırın.
+                                    Eğer "AdSense Yayıncı Kimliği" alanını doldurduysanız, aşağıdaki içerik otomatik olarak güncellenecektir.
+                                </p>
+                                <Label htmlFor="ads-txt-content">Oluşturulacak `ads.txt` İçeriği:</Label>
+                                <div className="bg-background p-3 rounded-md border">
+                                    <pre id="ads-txt-content" className="text-xs whitespace-pre-wrap break-all"><code>{adsenseTxtContent}</code></pre>
+                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => copyToClipboard(adsenseTxtContent)}>
+                                        <Copy className="mr-2 h-3.5 w-3.5"/> İçeriği Kopyala
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    <Info className="inline h-3 w-3 mr-1"/> `public` klasörüne ekledikten sonra, `https://biyohox.example.com/ads.txt` (sizin domaininizle) adresinden erişilebilir olmalıdır.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="ad-units-guide">
+                                <AccordionTrigger className="text-lg font-semibold hover:no-underline">Adım 3: Reklam Birimi Yerleştirme Kılavuzu</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-6">
+                                    <p className="text-sm text-muted-foreground">
+                                        Aşağıda, sitenizdeki farklı sayfalara reklam birimlerini nasıl ekleyebileceğinize dair bir rehber bulunmaktadır.
+                                        AdSense panelinizden reklam birimleri oluşturduktan sonra, size verilen kodları bu dosyalardaki ilgili yer tutuculara ekleyebilirsiniz.
+                                        Unutmayın, aşağıdaki kodlar sadece **örnektir** ve kendi Yayıncı ID (`data-ad-client`) ve Reklam Birimi ID (`data-ad-slot`) değerlerinizle değiştirilmelidir.
+                                    </p>
+                                    
+                                    {(['Anasayfa - Hero Altı', 'Anasayfa - Bölümler Arası', 'Anasayfa - Sayfa Sonu'] as const).map(area => (
+                                        <Card key={area} className="bg-card/50">
+                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/page.tsx`</p>
+                                                <Label className="text-xs">Örnek Reklam Kodu:</Label>
+                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                    {(['Makale Detay - İçerik Başı', 'Makale Detay - Paragraf Arası', 'Makale Detay - Makale Sonu'] as const).map(area => (
+                                        <Card key={area} className="bg-card/50">
+                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/articles/[id]/page.tsx`</p>
+                                                <Label className="text-xs">Örnek Reklam Kodu:</Label>
+                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                     {(['Notlar Liste - Filtre Altı', 'Notlar Liste - Kart Arası', 'Notlar Liste - Sayfa Sonu'] as const).map(area => (
+                                        <Card key={area} className="bg-card/50">
+                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/biyoloji-notlari/page.tsx`</p>
+                                                <Label className="text-xs">Örnek Reklam Kodu:</Label>
+                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                     {(['Not Detay - İçerik Başı', 'Not Detay - Not Sonu'] as const).map(area => (
+                                        <Card key={area} className="bg-card/50">
+                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/biyoloji-notlari/[slug]/page.tsx`</p>
+                                                <Label className="text-xs">Örnek Reklam Kodu:</Label>
+                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                        
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
 
             <TabsContent value="navigation">
                 <Card>
@@ -447,9 +573,9 @@ export default function AdminSettingsPage() {
                             <Input id="articles-per-page" type="number" min="1" max="50" defaultValue={9} />
                             <p className="text-xs text-muted-foreground">Ana sayfa ve kategori sayfalarında gösterilecek makale sayısı.</p>
                         </div>
-                        <Separator />
+                         <Separator />
                         <div className="flex justify-end">
-                            <Button>Görünüm Ayarlarını Kaydet</Button>
+                            <Button onClick={() => toast({title: "Kaydedildi (Simülasyon)", description: "Görünüm ayarları kaydedildi."})}>Görünüm Ayarlarını Kaydet</Button>
                          </div>
                     </CardContent>
                  </Card>
@@ -472,16 +598,16 @@ export default function AdminSettingsPage() {
                                     Yönetici hesapları için ek güvenlik katmanı sağlayın.
                                 </p>
                              </div>
-                            <Switch id="enable-mfa" />
+                            <Switch id="enable-mfa" disabled />
                         </div>
                         <div className="space-y-2">
                              <Label htmlFor="allowed-ips">İzin Verilen IP Adresleri (Admin Paneli)</Label>
-                            <Textarea id="allowed-ips" placeholder="Her IP adresini yeni bir satıra girin (örneğin, 192.168.1.1)" />
+                            <Textarea id="allowed-ips" placeholder="Her IP adresini yeni bir satıra girin (örneğin, 192.168.1.1)" disabled />
                             <p className="text-xs text-muted-foreground">Boş bırakılırsa tüm IP adreslerine izin verilir. Sadece admin paneline erişimi kısıtlar.</p>
                         </div>
                          <Separator />
                          <div className="flex justify-end">
-                            <Button>Güvenlik Ayarlarını Kaydet</Button>
+                            <Button disabled onClick={() => toast({title: "Kaydedildi (Simülasyon)", description: "Güvenlik ayarları kaydedildi."})}>Güvenlik Ayarlarını Kaydet</Button>
                          </div>
                     </CardContent>
                  </Card>
@@ -499,97 +625,28 @@ export default function AdminSettingsPage() {
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="google-analytics-id">Google Analytics ID</Label>
-                            <Input id="google-analytics-id" placeholder="UA-XXXXX-Y veya G-XXXXXXX" />
+                            <Input id="google-analytics-id" placeholder="UA-XXXXX-Y veya G-XXXXXXX" disabled />
                              <p className="text-xs text-muted-foreground">Web sitesi trafiğini izlemek için Google Analytics izleme kimliğinizi girin.</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="google-maps-key">Google Maps API Anahtarı</Label>
-                            <Input id="google-maps-key" type="password" placeholder="API Anahtarını buraya girin" />
+                            <Input id="google-maps-key" type="password" placeholder="API Anahtarını buraya girin" disabled />
                         </div>
                         <Separator />
                         <div className="flex justify-end">
-                            <Button>Entegrasyonları Kaydet</Button>
+                            <Button disabled onClick={() => toast({title: "Kaydedildi (Simülasyon)", description: "Entegrasyonlar kaydedildi."})}>Entegrasyonları Kaydet</Button>
                         </div>
                     </CardContent>
                 </Card>
             </TabsContent>
-
-            <TabsContent value="email">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Mail className="h-5 w-5"/>
-                            E-posta Ayarları
-                        </CardTitle>
-                        <CardDescription>Giden e-posta sunucusu ve şablonlarını yapılandırın.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                         <div className="space-y-2">
-                            <Label htmlFor="mail-from-address">Gönderen E-posta Adresi</Label>
-                            <Input id="mail-from-address" type="email" placeholder="noreply@example.com" />
-                            <p className="text-xs text-muted-foreground">Sistem e-postaları bu adresten gönderilecek.</p>
-                         </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="mail-from-name">Gönderen Adı</Label>
-                            <Input id="mail-from-name" placeholder="BiyoHox Bildirimleri" />
-                         </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="mail-driver">E-posta Sürücüsü</Label>
-                            <Select defaultValue="smtp">
-                                <SelectTrigger id="mail-driver">
-                                    <SelectValue placeholder="Bir sürücü seçin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="smtp">SMTP</SelectItem>
-                                    <SelectItem value="sendmail">Sendmail</SelectItem>
-                                    <SelectItem value="log">Log (Test için)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                         </div>
-                         <Card className="bg-muted/50 p-4 space-y-4">
-                             <h4 className="font-medium text-sm">SMTP Ayarları</h4>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="smtp-host">SMTP Sunucusu</Label>
-                                    <Input id="smtp-host" placeholder="smtp.mailtrap.io" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="smtp-port">SMTP Port</Label>
-                                    <Input id="smtp-port" type="number" placeholder="2525" />
-                                </div>
-                             </div>
-                             <div className="space-y-2">
-                                    <Label htmlFor="smtp-username">SMTP Kullanıcı Adı</Label>
-                                    <Input id="smtp-username" />
-                             </div>
-                             <div className="space-y-2">
-                                    <Label htmlFor="smtp-password">SMTP Şifresi</Label>
-                                    <Input id="smtp-password" type="password" />
-                             </div>
-                             <div className="space-y-2">
-                                    <Label htmlFor="smtp-encryption">SMTP Şifreleme</Label>
-                                     <Select>
-                                        <SelectTrigger id="smtp-encryption">
-                                            <SelectValue placeholder="Şifreleme seçin" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="null">Yok</SelectItem>
-                                            <SelectItem value="tls">TLS</SelectItem>
-                                            <SelectItem value="ssl">SSL</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                         </Card>
-                        <Separator />
-                        <div className="flex justify-between items-center">
-                             <Button variant="outline">Test E-postası Gönder</Button>
-                            <Button>E-posta Ayarlarını Kaydet</Button>
-                        </div>
-                    </CardContent>
-                 </Card>
-            </TabsContent>
-
+            
         </Tabs>
+
+        <div className="mt-8 flex justify-end">
+             <Button onClick={handleGeneralSettingsSave}>
+                 <Save className="mr-2 h-4 w-4"/> Tüm Ayarları Kaydet
+             </Button>
+        </div>
     </div>
     <AlertDialog open={isImportConfirmOpen} onOpenChange={setIsImportConfirmOpen}>
         <AlertDialogContent>
@@ -613,3 +670,4 @@ export default function AdminSettingsPage() {
   );
 }
 
+    
