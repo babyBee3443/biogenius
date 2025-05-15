@@ -264,7 +264,7 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
-    { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?", icon: <Microscope className="h-4 w-4" /> },
+    // { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?", icon: <Microscope className="h-4 w-4" /> }, // Removed
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
   ];
@@ -584,3 +584,4 @@ const Header = () => {
 };
 
 export default Header;
+
