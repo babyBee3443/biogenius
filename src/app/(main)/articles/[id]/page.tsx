@@ -122,6 +122,7 @@ export default function ArticlePage() {
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -136,6 +137,8 @@ export default function ArticlePage() {
           if (isMounted) setCurrentUserRole(null);
         }
       }
+      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
+      if (isMounted) setAdsenseEnabled(storedAdsenseEnabled === 'true');
     }
 
     const fetchArticleData = async () => {
@@ -256,22 +259,22 @@ export default function ArticlePage() {
           </div>
       )}
 
-      {/* AdSense Placeholder - İçerik Başı */}
-      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: İçerik İçi)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Makale Başı) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Makale Başı)</p>
+        </div>
+      )}
 
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {article.blocks && article.blocks.length > 0 ? (
              article.blocks.map((block, index) => (
                 <React.Fragment key={block.id}>
                     {renderBlock(block)}
-                    {/* AdSense Placeholder - Paragraf Arası */}
-                    {(index === 1 || index === 3) && ( // Örnek: 2. ve 4. bloktan sonra
+                    {adsenseEnabled && (index === 1 || index === 3) && ( // Örnek: 2. ve 4. bloktan sonra
                          <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
-                            <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Paragraf Arası)</p>
+                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Paragraf Arası) */}
+                            <p className="text-sm text-muted-foreground">Reklam Alanı (Paragraf Arası)</p>
                         </div>
                     )}
                 </React.Fragment>
@@ -297,11 +300,12 @@ export default function ArticlePage() {
            </div>
        )}
 
-       {/* AdSense Placeholder - Makale Sonu */}
+       {adsenseEnabled && (
         <div className="my-12 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner) */}
-            <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Makale Sonu)</p>
+            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner - Makale Sonu) */}
+            <p className="text-sm text-muted-foreground">Reklam Alanı (Makale Sonu)</p>
         </div>
+       )}
 
        <div className="mt-10">
           <h2 className="text-2xl font-semibold mb-4">Paylaş</h2>
@@ -336,3 +340,4 @@ export default function ArticlePage() {
   );
 }
 
+    

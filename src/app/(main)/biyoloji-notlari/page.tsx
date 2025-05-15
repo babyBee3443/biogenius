@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { BookCopy, ArrowRight, Loader2, Search } from "lucide-react"; // Added Search icon
-import { getNotes, type NoteData } from '@/lib/data/notes'; // Corrected import
+import { BookCopy, ArrowRight, Loader2, Search } from "lucide-react"; 
+import { getNotes, type NoteData } from '@/lib/data/notes'; 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,8 +21,14 @@ export default function BiyolojiNotlariPage() {
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedLevel, setSelectedLevel] = React.useState("all");
   const [loading, setLoading] = React.useState(true);
+  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
 
   React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
+      setAdsenseEnabled(storedAdsenseEnabled === 'true');
+    }
+
     setLoading(true);
     getNotes()
       .then(data => {
@@ -31,7 +37,6 @@ export default function BiyolojiNotlariPage() {
       })
       .catch(err => {
         console.error("Error fetching notes:", err);
-        // Consider adding user-facing error display
       })
       .finally(() => setLoading(false));
   }, []);
@@ -43,9 +48,9 @@ export default function BiyolojiNotlariPage() {
     if (lowerSearchTerm) {
       results = results.filter(note =>
         note.title.toLowerCase().includes(lowerSearchTerm) ||
-        (note.summary && note.summary.toLowerCase().includes(lowerSearchTerm)) || // Check if summary exists
+        (note.summary && note.summary.toLowerCase().includes(lowerSearchTerm)) || 
         note.category.toLowerCase().includes(lowerSearchTerm) ||
-        (note.tags && note.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) // Check if tags exist
+        (note.tags && note.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) 
       );
     }
 
@@ -85,7 +90,7 @@ export default function BiyolojiNotlariPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Notlarda ara (başlık, etiket...)"
-                        className="pl-10" // Add padding for icon
+                        className="pl-10" 
                         value={searchTerm}
                         onChange={handleSearchChange}
                      />
@@ -114,11 +119,12 @@ export default function BiyolojiNotlariPage() {
           </Card>
       </section>
 
-      {/* AdSense Placeholder - Filtreleme Sonrası */}
-      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 728x90)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Notlar Liste Filtre Altı) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Notlar Liste Filtre Altı)</p>
+        </div>
+      )}
 
       {loading ? (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -155,11 +161,10 @@ export default function BiyolojiNotlariPage() {
           {filteredNotes.map((note, index) => (
             <React.Fragment key={note.id}>
               <NoteCard note={note} imageLoading="lazy" />
-              {/* AdSense Placeholder - Her 3. Karttan Sonra (Örnek) */}
-              {(index + 1) % 3 === 0 && index < filteredNotes.length -1 && (
+              {adsenseEnabled && (index + 1) % 3 === 0 && index < filteredNotes.length -1 && (
                 <div className="my-4 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg md:col-span-1 lg:col-span-1 flex items-center justify-center">
-                  {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Kare veya Dikey) */}
-                  <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 250x250)</p>
+                  {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Kare veya Dikey - Notlar Liste Kart Arası) */}
+                  <p className="text-sm text-muted-foreground">Reklam Alanı (Notlar Liste Kart Arası)</p>
                 </div>
               )}
             </React.Fragment>
@@ -167,12 +172,14 @@ export default function BiyolojiNotlariPage() {
         </div>
       )}
 
-      {/* AdSense Placeholder - Sayfa Sonu */}
-      <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Alt Leaderboard)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Notlar Liste Sayfa Sonu) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Notlar Liste Sayfa Sonu)</p>
+        </div>
+      )}
     </div>
   );
 }
 
+    

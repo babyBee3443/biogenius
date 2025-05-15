@@ -1,5 +1,7 @@
 
-import { notFound } from 'next/navigation';
+"use client"; // Make client component to access localStorage for AdSense
+
+import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -10,8 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NoteCard } from '@/components/note-card';
-import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
-import * as React from 'react'; // Import React for Fragment
+import { Skeleton } from '@/components/ui/skeleton'; 
+import * as React from 'react'; 
 
 // --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -32,7 +34,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             height={400}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="biology diagram illustration" 
-            loading="lazy" // Ensure images within blocks are lazy-loaded
+            loading="lazy" 
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -70,7 +72,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    loading="lazy" // Lazy load iframes
+                    loading="lazy" 
                 ></iframe>
             </div>
         );
@@ -102,27 +104,78 @@ interface NotePageProps {
   };
 }
 
-export async function generateStaticParams() {
-  const notes = await getNotes();
-  return notes.map((note) => ({
-    slug: note.slug,
-  }));
-}
-
-
-export default async function NotePage({ params }: NotePageProps) {
+export default function NotePage({ params }: NotePageProps) {
   const noteSlug = params.slug;
-  const note = await getNoteById(noteSlug); 
+  const [note, setNote] = React.useState<NoteData | null>(null);
+  const [relatedNotes, setRelatedNotes] = React.useState<NoteData[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    if (typeof window !== 'undefined') {
+      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
+      if (isMounted) setAdsenseEnabled(storedAdsenseEnabled === 'true');
+    }
+
+    const fetchNoteData = async () => {
+      if (!noteSlug) {
+        if (isMounted) {
+          setError("Not slug bulunamadı.");
+          setLoading(false);
+        }
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        const fetchedNote = await getNoteById(noteSlug);
+        if (isMounted) {
+          if (fetchedNote) {
+            setNote(fetchedNote);
+            const allNotes = await getNotes();
+            const relNotes = allNotes
+              .filter(n => n.category === fetchedNote.category && n.id !== fetchedNote.id)
+              .slice(0, 3);
+            setRelatedNotes(relNotes);
+          } else {
+            setError("Not bulunamadı.");
+            setNote(null);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch note:", err);
+        if (isMounted) setError("Not yüklenirken bir hata oluştu.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchNoteData();
+    return () => { isMounted = false; };
+  }, [noteSlug]);
 
 
-  if (!note) {
-    notFound();
+  if (loading) {
+    return (
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <Skeleton className="h-6 w-1/3 mb-4 rounded-md" />
+            <Skeleton className="h-10 w-3/4 mb-3 rounded-md" />
+            <Skeleton className="h-5 w-1/2 mb-4 rounded-md" />
+            <Skeleton className="h-5 w-full mb-8 rounded-md" />
+            <Skeleton className="aspect-video w-full mb-8 rounded-lg" />
+            <Skeleton className="h-20 w-full mb-4 rounded-md" />
+            <Skeleton className="h-4 w-full mb-2 rounded-md" />
+            <Skeleton className="h-4 w-5/6 mb-6 rounded-md" />
+        </div>
+    );
   }
 
-  const allNotes = await getNotes(); 
-  const relatedNotes = allNotes
-      .filter(n => n.category === note.category && n.id !== note.id)
-      .slice(0, 3);
+  if (error || !note) {
+    notFound();
+    return null;
+  }
+
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -156,7 +209,7 @@ export default async function NotePage({ params }: NotePageProps) {
                 width={800}
                 height={400}
                 className="w-full h-auto object-cover"
-                priority // Prioritize the main note image for LCP
+                priority 
                 data-ai-hint="biology note header image"
             />
           </div>
@@ -168,22 +221,22 @@ export default async function NotePage({ params }: NotePageProps) {
             </p>
         )}
       
-      {/* AdSense Placeholder - İçerik Başı */}
-      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: İçerik İçi)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Not Başı) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Not Başı)</p>
+        </div>
+      )}
 
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {note.contentBlocks && note.contentBlocks.length > 0 ? (
              note.contentBlocks.map((block, index) => (
                 <React.Fragment key={block.id}>
                     {renderBlock(block)}
-                    {/* AdSense Placeholder - Paragraf Arası */}
-                    {(index === 1 || index === 3) && ( // Örnek: 2. ve 4. bloktan sonra
+                    {adsenseEnabled && (index === 1 || index === 3) && ( 
                          <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı) */}
-                            <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Paragraf Arası)</p>
+                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Not Paragraf Arası) */}
+                            <p className="text-sm text-muted-foreground">Reklam Alanı (Not Paragraf Arası)</p>
                         </div>
                     )}
                 </React.Fragment>
@@ -204,11 +257,12 @@ export default async function NotePage({ params }: NotePageProps) {
            </div>
        )}
       
-      {/* AdSense Placeholder - Sayfa Sonu */}
-      <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Alt Leaderboard)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Not Sonu) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Not Sonu)</p>
+        </div>
+      )}
 
        <div className="mt-16 mb-8 text-center">
            <Button asChild variant="outline">
@@ -221,3 +275,4 @@ export default async function NotePage({ params }: NotePageProps) {
   );
 }
 
+    

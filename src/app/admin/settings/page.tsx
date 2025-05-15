@@ -21,7 +21,7 @@ import { USER_STORAGE_KEY, initializeUsers } from '@/lib/data/users';
 import { ROLE_STORAGE_KEY, initializeRoles } from '@/lib/data/roles';
 import { PAGE_STORAGE_KEY, initializePages } from '@/lib/data/pages';
 import { TEMPLATE_STORAGE_KEY, initializeTemplates } from '@/lib/data/templates';
-import { loadInitialData as reloadMockData } from '@/lib/mock-data';
+import { reloadMockData } from '@/lib/mock-data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,8 +37,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const MAINTENANCE_MODE_KEY = 'maintenanceModeActive';
-const ADSENSE_ENABLED_KEY = 'adsenseEnabled';
-const ADSENSE_PUBLISHER_ID_KEY = 'adsensePublisherId';
+const ADSENSE_ENABLED_KEY = 'biyohox_adsenseEnabled'; // More specific key
+const ADSENSE_PUBLISHER_ID_KEY = 'biyohox_adsensePublisherId'; // More specific key
 const DEFAULT_SESSION_TIMEOUT_MINUTES = 30;
 
 export default function AdminSettingsPage() {
@@ -71,7 +71,7 @@ export default function AdminSettingsPage() {
       setMaintenanceMode(storedMaintenanceMode === 'true');
 
       const storedAdsenseEnabled = localStorage.getItem(ADSENSE_ENABLED_KEY);
-      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true');
+      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true'); // Default to true if not set
 
       const storedAdsensePublisherId = localStorage.getItem(ADSENSE_PUBLISHER_ID_KEY);
       if (storedAdsensePublisherId) {
@@ -89,7 +89,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleGeneralSettingsSave = () => {
+  const handleSettingsSave = () => {
     if (typeof window !== 'undefined') {
         localStorage.setItem(SESSION_TIMEOUT_KEY, sessionTimeout.toString());
         localStorage.setItem(MAINTENANCE_MODE_KEY, String(maintenanceMode));
@@ -98,9 +98,9 @@ export default function AdminSettingsPage() {
 
         window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
         window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
-        window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated'));
+        window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated')); // Dispatch event for AdSense
     }
-    toast({ title: "Ayarlar Kaydedildi", description: "Genel ve AdSense ayarları başarıyla güncellendi." });
+    toast({ title: "Ayarlar Kaydedildi", description: "Ayarlarınız başarıyla güncellendi." });
     console.log("Ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout, adsenseEnabled, adsensePublisherId });
   };
 
@@ -203,7 +203,22 @@ export default function AdminSettingsPage() {
                 initializer(importedData[key]);
             } else {
                 console.warn(`İçe aktarılan veride '${key}' alanı bulunamadı. Bu bölüm için varsayılanlar kullanılacak veya boş kalacaktır.`);
-                localStorage.removeItem(eval(`${key.toUpperCase()}_STORAGE_KEY`));
+                // Attempt to get the storage key dynamically to clear it if it exists
+                const storageKeyConstantName = `${key.toUpperCase()}_STORAGE_KEY`;
+                // This dynamic access is a bit hacky; direct access to keys is better if possible
+                // For now, we assume keys like ARTICLE_STORAGE_KEY are globally accessible or imported if needed
+                // For a robust solution, a map of key names to storage key constants would be better.
+                // Example: const storageKeysMap = { articles: ARTICLE_STORAGE_KEY, ... }
+                // Then: localStorage.removeItem(storageKeysMap[key]);
+                // As a simple approach for now:
+                 try {
+                    const dynamicStorageKey = eval(storageKeyConstantName);
+                    if (dynamicStorageKey && typeof dynamicStorageKey === 'string') {
+                         localStorage.removeItem(dynamicStorageKey);
+                    }
+                 } catch (evalError) {
+                    console.warn(`Could not evaluate storage key for ${key}:`, evalError);
+                 }
             }
         }
         
@@ -263,8 +278,8 @@ export default function AdminSettingsPage() {
   const adPlaceholderCodeExample = `
 <ins class="adsbygoogle"
      style="display:block"
-     data-ad-client="ca-pub-YOUR_PUBLISHER_ID"  <!-- Kendi Yayıncı ID'niz ile değiştirin -->
-     data-ad-slot="YOUR_AD_SLOT_ID"           <!-- Kendi Reklam Birimi ID'niz ile değiştirin -->
+     data-ad-client="ca-${adsensePublisherId || 'pub-XXXXXXXXXXXXXXXX'}"
+     data-ad-slot="YOUR_AD_SLOT_ID"
      data-ad-format="auto"
      data-full-width-responsive="true"></ins>
 <script>
@@ -273,10 +288,23 @@ export default function AdminSettingsPage() {
   `.trim();
 
   const mainAdsenseScriptPlaceholder = `
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${adsensePublisherId || 'pub-XXXXXXXXXXXXXXXX'}"
      crossorigin="anonymous"></script>
-<!-- YUKARIDAKİ satırdaki ca-pub-YOUR_PUBLISHER_ID kısmını kendi Yayıncı ID'niz ile DEĞİŞTİRİN -->
   `.trim();
+
+  const adPlacementGuide = [
+    { title: "Anasayfa - Hero Altı", file: "src/app/(main)/page.tsx", description: "Hero bölümünün hemen altına, genellikle geniş bir banner için uygundur." },
+    { title: "Anasayfa - Bölümler Arası", file: "src/app/(main)/page.tsx", description: "Öne çıkanlar, kategoriler gibi bölümler arasına yerleştirilebilir." },
+    { title: "Anasayfa - Sayfa Sonu", file: "src/app/(main)/page.tsx", description: "Footer'dan önce, sayfanın en altına." },
+    { title: "Makale Detay - İçerik Başı", file: "src/app/(main)/articles/[id]/page.tsx", description: "Makale başlığından veya ana görselden sonra." },
+    { title: "Makale Detay - Paragraf Arası", file: "src/app/(main)/articles/[id]/page.tsx", description: "Uzun makalelerde, belirli paragraflardan sonra (örneğin her 2-3 blokta bir)." },
+    { title: "Makale Detay - Makale Sonu", file: "src/app/(main)/articles/[id]/page.tsx", description: "Makale içeriği bittikten sonra, yorumlardan önce." },
+    { title: "Notlar Liste - Filtre Altı", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Filtreleme seçeneklerinin hemen altına." },
+    { title: "Notlar Liste - Kart Arası", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Her 3-4 not kartından sonra bir reklam." },
+    { title: "Notlar Liste - Sayfa Sonu", file: "src/app/(main)/biyoloji-notlari/page.tsx", description: "Sayfalama öncesi veya sonrası." },
+    { title: "Not Detay - İçerik Başı", file: "src/app/(main)/biyoloji-notlari/[slug]/page.tsx", description: "Not başlığından sonra." },
+    { title: "Not Detay - Not Sonu", file: "src/app/(main)/biyoloji-notlari/[slug]/page.tsx", description: "Not içeriği bittikten sonra." },
+  ];
 
   return (
     <>
@@ -401,7 +429,7 @@ export default function AdminSettingsPage() {
                             <CardContent className="space-y-6">
                                 <div className="flex items-center space-x-3">
                                     <Switch id="adsense-enabled" checked={adsenseEnabled} onCheckedChange={setAdsenseEnabled} />
-                                    <Label htmlFor="adsense-enabled" className="cursor-pointer">AdSense Reklamlarını Sitede Etkinleştir</Label>
+                                    <Label htmlFor="adsense-enabled" className="cursor-pointer">Sitede AdSense Reklamlarını Etkinleştir</Label>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="adsense-publisher-id">AdSense Yayıncı Kimliği (Publisher ID)</Label>
@@ -409,7 +437,7 @@ export default function AdminSettingsPage() {
                                         id="adsense-publisher-id" 
                                         value={adsensePublisherId} 
                                         onChange={(e) => setAdsensePublisherId(e.target.value)} 
-                                        placeholder="pub-xxxxxxxxxxxxxxxx"
+                                        placeholder="pub-XXXXXXXXXXXXXXXX"
                                     />
                                     <p className="text-xs text-muted-foreground">Google AdSense hesabınızdaki yayıncı kimliğiniz.</p>
                                 </div>
@@ -427,7 +455,7 @@ export default function AdminSettingsPage() {
                                 <p className="text-sm text-muted-foreground">
                                     Bu kodu, projenizdeki `src/app/layout.tsx` dosyasında bulunan `&lt;head&gt; ... &lt;/head&gt;` etiketleri arasına, `{/* Google AdSense Ana Script Kodu Buraya Eklenecek */}` yorumunun olduğu yere yapıştırın.
                                 </p>
-                                <Label>Örnek Ana Script Kodu (Kendi ID'niz ile güncelleyin):</Label>
+                                <Label>Örnek Ana Script Kodu (Kendi Yayıncı ID'niz ile güncelleyin):</Label>
                                 <div className="bg-background p-3 rounded-md border">
                                     <pre className="text-xs whitespace-pre-wrap break-all"><code>{mainAdsenseScriptPlaceholder}</code></pre>
                                     <Button variant="outline" size="sm" className="mt-2" onClick={() => copyToClipboard(mainAdsenseScriptPlaceholder)}>
@@ -450,7 +478,7 @@ export default function AdminSettingsPage() {
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     Aşağıdaki içeriği kopyalayın, projenizin `public` klasörünün içine `ads.txt` adında bir dosya oluşturun ve bu içeriği içine yapıştırın.
-                                    Eğer "AdSense Yayıncı Kimliği" alanını doldurduysanız, aşağıdaki içerik otomatik olarak güncellenecektir.
+                                    Eğer yukarıdaki "AdSense Yayıncı Kimliği" alanını doldurduysanız, aşağıdaki içerik otomatik olarak güncellenecektir.
                                 </p>
                                 <Label htmlFor="ads-txt-content">Oluşturulacak `ads.txt` İçeriği:</Label>
                                 <div className="bg-background p-3 rounded-md border">
@@ -460,7 +488,7 @@ export default function AdminSettingsPage() {
                                     </Button>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    <Info className="inline h-3 w-3 mr-1"/> `public` klasörüne ekledikten sonra, `https://biyohox.example.com/ads.txt` (sizin domaininizle) adresinden erişilebilir olmalıdır.
+                                    <Info className="inline h-3 w-3 mr-1"/> `public` klasörüne ekledikten sonra, `https://[SİTE_ADRESİNİZ]/ads.txt` adresinden erişilebilir olmalıdır.
                                 </p>
                             </CardContent>
                         </Card>
@@ -475,43 +503,19 @@ export default function AdminSettingsPage() {
                                         Unutmayın, aşağıdaki kodlar sadece **örnektir** ve kendi Yayıncı ID (`data-ad-client`) ve Reklam Birimi ID (`data-ad-slot`) değerlerinizle değiştirilmelidir.
                                     </p>
                                     
-                                    {(['Anasayfa - Hero Altı', 'Anasayfa - Bölümler Arası', 'Anasayfa - Sayfa Sonu'] as const).map(area => (
-                                        <Card key={area} className="bg-card/50">
-                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
+                                    {adPlacementGuide.map(area => (
+                                        <Card key={area.title} className="bg-card/50">
+                                            <CardHeader><CardTitle className="text-base">{area.title}</CardTitle></CardHeader>
                                             <CardContent>
-                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/page.tsx`</p>
+                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `{area.file}`</p>
+                                                <p className="text-xs text-muted-foreground mb-2">Açıklama: {area.description}</p>
                                                 <Label className="text-xs">Örnek Reklam Kodu:</Label>
-                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                    {(['Makale Detay - İçerik Başı', 'Makale Detay - Paragraf Arası', 'Makale Detay - Makale Sonu'] as const).map(area => (
-                                        <Card key={area} className="bg-card/50">
-                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
-                                            <CardContent>
-                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/articles/[id]/page.tsx`</p>
-                                                <Label className="text-xs">Örnek Reklam Kodu:</Label>
-                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                     {(['Notlar Liste - Filtre Altı', 'Notlar Liste - Kart Arası', 'Notlar Liste - Sayfa Sonu'] as const).map(area => (
-                                        <Card key={area} className="bg-card/50">
-                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
-                                            <CardContent>
-                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/biyoloji-notlari/page.tsx`</p>
-                                                <Label className="text-xs">Örnek Reklam Kodu:</Label>
-                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                     {(['Not Detay - İçerik Başı', 'Not Detay - Not Sonu'] as const).map(area => (
-                                        <Card key={area} className="bg-card/50">
-                                            <CardHeader><CardTitle className="text-base">{area}</CardTitle></CardHeader>
-                                            <CardContent>
-                                                <p className="text-xs text-muted-foreground mb-1">Hedef Dosya: `src/app/(main)/biyoloji-notlari/[slug]/page.tsx`</p>
-                                                <Label className="text-xs">Örnek Reklam Kodu:</Label>
-                                                <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1"><code>{adPlaceholderCodeExample}</code></pre>
+                                                <div className="bg-background p-3 rounded-md border mt-1">
+                                                    <pre className="text-xs whitespace-pre-wrap break-all"><code>{adPlaceholderCodeExample}</code></pre>
+                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => copyToClipboard(adPlaceholderCodeExample)}>
+                                                        <Copy className="mr-2 h-3.5 w-3.5"/> Kodu Kopyala
+                                                    </Button>
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     ))}
@@ -641,7 +645,7 @@ export default function AdminSettingsPage() {
         </Tabs>
 
         <div className="mt-8 flex justify-end">
-             <Button onClick={handleGeneralSettingsSave}>
+             <Button onClick={handleSettingsSave}>
                  <Save className="mr-2 h-4 w-4"/> Tüm Ayarları Kaydet
              </Button>
         </div>
@@ -667,3 +671,5 @@ export default function AdminSettingsPage() {
     </>
   );
 }
+
+    

@@ -150,6 +150,7 @@ export default function Home() {
   const [loadingArticles, setLoadingArticles] = React.useState(true);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
   const [loadingRole, setLoadingRole] = React.useState(true);
+  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
 
   React.useEffect(() => {
     getArticles()
@@ -175,6 +176,9 @@ export default function Home() {
         }
       }
       setLoadingRole(false);
+
+      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
+      setAdsenseEnabled(storedAdsenseEnabled === 'true');
     } else {
       setLoadingRole(false);
     }
@@ -258,11 +262,12 @@ export default function Home() {
 
        <Hero articles={heroArticles} />
 
-      {/* AdSense Placeholder - Hero Altı */}
-      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 728x90)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner - Anasayfa Hero Altı) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Anasayfa Hero Altı)</p>
+        </div>
+      )}
 
       {featuredArticles.length > 0 && (
         <section id="featured-articles">
@@ -276,11 +281,12 @@ export default function Home() {
          <CategoryTeaserSection />
        </section>
 
-      {/* AdSense Placeholder - Bölümler Arası */}
-      <div className="my-12 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Orta Boy Dikdörtgen) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: 300x250)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="my-12 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Orta Boy Dikdörtgen - Anasayfa Bölümler Arası) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Anasayfa Bölümler Arası)</p>
+        </div>
+      )}
 
       <RecommendedContentSection />
 
@@ -291,13 +297,15 @@ export default function Home() {
         </section>
       )}
 
-      {/* AdSense Placeholder - Sayfa Sonu */}
-      <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-        {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner) */}
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Örn: Geniş Leaderboard)</p>
-      </div>
+      {adsenseEnabled && (
+        <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
+          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Anasayfa Sayfa Sonu) */}
+          <p className="text-sm text-muted-foreground">Reklam Alanı (Anasayfa Sayfa Sonu)</p>
+        </div>
+      )}
 
     </div>
   );
 }
 
+    
