@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon, Info, Copy, ExternalLink } from "lucide-react"; // Added Copy, ExternalLink
+import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon, Info, Copy, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ARTICLE_STORAGE_KEY, initializeArticles } from '@/lib/data/articles';
 import { NOTE_STORAGE_KEY, initializeNotes } from '@/lib/data/notes';
@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"; // Added Accordion
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const MAINTENANCE_MODE_KEY = 'maintenanceModeActive';
@@ -100,7 +100,7 @@ export default function AdminSettingsPage() {
         window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
         window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated'));
     }
-    toast({ title: "Ayarlar Kaydedildi", description: "Genel ayarlar başarıyla güncellendi." });
+    toast({ title: "Ayarlar Kaydedildi", description: "Genel ve AdSense ayarları başarıyla güncellendi." });
     console.log("Ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout, adsenseEnabled, adsensePublisherId });
   };
 
@@ -200,10 +200,10 @@ export default function AdminSettingsPage() {
 
         for (const [key, initializer] of Object.entries(dataInitializers)) {
             if (importedData[key]) {
-                initializer(importedData[key]); // This function should also setItem to localStorage
+                initializer(importedData[key]);
             } else {
                 console.warn(`İçe aktarılan veride '${key}' alanı bulunamadı. Bu bölüm için varsayılanlar kullanılacak veya boş kalacaktır.`);
-                localStorage.removeItem(eval(`${key.toUpperCase()}_STORAGE_KEY`)); // Clear if not present
+                localStorage.removeItem(eval(`${key.toUpperCase()}_STORAGE_KEY`));
             }
         }
         
@@ -278,7 +278,6 @@ export default function AdminSettingsPage() {
 <!-- YUKARIDAKİ satırdaki ca-pub-YOUR_PUBLISHER_ID kısmını kendi Yayıncı ID'niz ile DEĞİŞTİRİN -->
   `.trim();
 
-
   return (
     <>
     <div className="space-y-6">
@@ -295,12 +294,11 @@ export default function AdminSettingsPage() {
         <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6">
                 <TabsTrigger value="general">Genel</TabsTrigger>
-                <TabsTrigger value="adsense">AdSense Yönetimi</TabsTrigger> {/* New Tab */}
+                <TabsTrigger value="adsense">AdSense Yönetimi</TabsTrigger>
                 <TabsTrigger value="navigation">Navigasyon</TabsTrigger>
                 <TabsTrigger value="appearance">Görünüm</TabsTrigger>
                 <TabsTrigger value="security">Güvenlik</TabsTrigger>
                 <TabsTrigger value="integrations">Entegrasyonlar</TabsTrigger>
-                {/* Removed E-posta tab for now, can be re-added if needed */}
             </TabsList>
 
             <TabsContent value="general">
@@ -424,10 +422,10 @@ export default function AdminSettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <p className="text-sm text-muted-foreground">
-                                    Google AdSense reklamlarının sitenizde çalışabilmesi için, AdSense hesabınızdan alacağınız ana script kodunu sitenizin tüm sayfalarının `<head>` bölümüne eklemeniz gerekir.
+                                    Google AdSense reklamlarının sitenizde çalışabilmesi için, AdSense hesabınızdan alacağınız ana script kodunu sitenizin tüm sayfalarının `&lt;head&gt;` bölümüne eklemeniz gerekir.
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    Bu kodu, projenizdeki `src/app/layout.tsx` dosyasında bulunan `<head> ... </head>` etiketleri arasına, `{/* Google AdSense Ana Script Kodu Buraya Eklenecek */}` yorumunun olduğu yere yapıştırın.
+                                    Bu kodu, projenizdeki `src/app/layout.tsx` dosyasında bulunan `&lt;head&gt; ... &lt;/head&gt;` etiketleri arasına, `{/* Google AdSense Ana Script Kodu Buraya Eklenecek */}` yorumunun olduğu yere yapıştırın.
                                 </p>
                                 <Label>Örnek Ana Script Kodu (Kendi ID'niz ile güncelleyin):</Label>
                                 <div className="bg-background p-3 rounded-md border">
@@ -669,5 +667,3 @@ export default function AdminSettingsPage() {
     </>
   );
 }
-
-    
