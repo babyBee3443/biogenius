@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon } from "lucide-react"; // Added SettingsIcon
+import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ARTICLE_STORAGE_KEY } from '@/lib/data/articles';
 import { NOTE_STORAGE_KEY } from '@/lib/data/notes';
@@ -36,8 +36,10 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
-const MAINTENANCE_MODE_KEY = 'maintenanceModeActive'; // Key for localStorage
-const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
+const MAINTENANCE_MODE_KEY = 'maintenanceModeActive';
+const ADSENSE_ENABLED_KEY = 'adsenseEnabled';
+const ADSENSE_PUBLISHER_ID_KEY = 'adsensePublisherId';
+const DEFAULT_SESSION_TIMEOUT_MINUTES = 30; // Increased default
 
 export default function AdminSettingsPage() {
   const [siteName, setSiteName] = React.useState("BiyoHox");
@@ -50,6 +52,9 @@ export default function AdminSettingsPage() {
   const [importing, setImporting] = React.useState(false);
   const [isImportConfirmOpen, setIsImportConfirmOpen] = React.useState(false);
   const [fileToImport, setFileToImport] = React.useState<File | null>(null);
+
+  const [adsenseEnabled, setAdsenseEnabled] = React.useState(true);
+  const [adsensePublisherId, setAdsensePublisherId] = React.useState("");
 
   const importFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -64,6 +69,14 @@ export default function AdminSettingsPage() {
       }
       const storedMaintenanceMode = localStorage.getItem(MAINTENANCE_MODE_KEY);
       setMaintenanceMode(storedMaintenanceMode === 'true');
+
+      const storedAdsenseEnabled = localStorage.getItem(ADSENSE_ENABLED_KEY);
+      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true'); // Default to true if not set
+
+      const storedAdsensePublisherId = localStorage.getItem(ADSENSE_PUBLISHER_ID_KEY);
+      if (storedAdsensePublisherId) {
+        setAdsensePublisherId(storedAdsensePublisherId);
+      }
     }
   }, []);
 
@@ -71,7 +84,6 @@ export default function AdminSettingsPage() {
     setMaintenanceMode(checked);
     if (typeof window !== 'undefined') {
       localStorage.setItem(MAINTENANCE_MODE_KEY, String(checked));
-      // Dispatch a custom event so other parts of the app can react immediately
       window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
       console.log("AdminSettingsPage: Dispatched maintenanceModeUpdated event", checked);
     }
@@ -80,13 +92,17 @@ export default function AdminSettingsPage() {
   const handleGeneralSettingsSave = () => {
     if (typeof window !== 'undefined') {
         localStorage.setItem(SESSION_TIMEOUT_KEY, sessionTimeout.toString());
-        localStorage.setItem(MAINTENANCE_MODE_KEY, String(maintenanceMode)); // Ensure maintenance mode is also saved here
+        localStorage.setItem(MAINTENANCE_MODE_KEY, String(maintenanceMode));
+        localStorage.setItem(ADSENSE_ENABLED_KEY, String(adsenseEnabled));
+        localStorage.setItem(ADSENSE_PUBLISHER_ID_KEY, adsensePublisherId);
+
         window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
-        window.dispatchEvent(new CustomEvent('maintenanceModeUpdated')); // Dispatch event on save too
+        window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
+        window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated')); // New event for AdSense
         console.log("AdminSettingsPage: Dispatched maintenanceModeUpdated event on save", maintenanceMode);
     }
     toast({ title: "Ayarlar Kaydedildi", description: "Genel ayarlar başarıyla güncellendi." });
-    console.log("Genel ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout });
+    console.log("Genel ayarlar kaydedildi:", { siteName, siteDescription, siteUrl, adminEmail, maintenanceMode, sessionTimeout, adsenseEnabled, adsensePublisherId });
   };
 
   const handleExportData = () => {
@@ -102,19 +118,30 @@ export default function AdminSettingsPage() {
         roles: ROLE_STORAGE_KEY,
         pages: PAGE_STORAGE_KEY,
         templates: TEMPLATE_STORAGE_KEY,
+        settings: { // Include settings in export
+          [SESSION_TIMEOUT_KEY]: localStorage.getItem(SESSION_TIMEOUT_KEY),
+          [MAINTENANCE_MODE_KEY]: localStorage.getItem(MAINTENANCE_MODE_KEY),
+          [ADSENSE_ENABLED_KEY]: localStorage.getItem(ADSENSE_ENABLED_KEY),
+          [ADSENSE_PUBLISHER_ID_KEY]: localStorage.getItem(ADSENSE_PUBLISHER_ID_KEY),
+          siteName, siteDescription, siteUrl, adminEmail // Include other state-managed settings
+        }
       };
 
-      for (const [key, storageKey] of Object.entries(dataKeys)) {
-        const storedItem = localStorage.getItem(storageKey);
-        if (storedItem) {
-          try {
-            allData[key] = JSON.parse(storedItem);
-          } catch (e) {
-            console.warn(`Could not parse ${key} from localStorage:`, e);
-            allData[key] = [];
-          }
+      for (const [key, storageKeyOrObject] of Object.entries(dataKeys)) {
+        if (key === 'settings') {
+            allData[key] = storageKeyOrObject;
         } else {
-          allData[key] = [];
+            const storedItem = localStorage.getItem(storageKeyOrObject as string);
+            if (storedItem) {
+              try {
+                allData[key] = JSON.parse(storedItem);
+              } catch (e) {
+                console.warn(`Could not parse ${key} from localStorage:`, e);
+                allData[key] = [];
+              }
+            } else {
+              allData[key] = [];
+            }
         }
       }
 
@@ -124,13 +151,13 @@ export default function AdminSettingsPage() {
       const a = document.createElement('a');
       a.href = url;
       const date = new Date().toISOString().slice(0, 10);
-      a.download = `biyohox_data_${date}.json`;
+      a.download = `biyohox_data_backup_${date}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast({ title: "Veri Dışa Aktarıldı", description: "Tüm uygulama verileri başarıyla bilgisayarınıza indirildi." });
+      toast({ title: "Veri Dışa Aktarıldı", description: "Tüm uygulama verileri ve ayarları başarıyla bilgisayarınıza indirildi." });
     } catch (error) {
       console.error("Error exporting data:", error);
       toast({ variant: "destructive", title: "Dışa Aktarma Hatası", description: "Veriler dışa aktarılırken bir sorun oluştu." });
@@ -162,25 +189,47 @@ export default function AdminSettingsPage() {
         const content = e.target?.result as string;
         const importedData = JSON.parse(content);
 
-        const requiredKeys = ['articles', 'notes', 'categories', 'users', 'roles', 'pages', 'templates'];
-        const missingKeys = requiredKeys.filter(key => !(key in importedData));
+        const dataKeys = [
+            ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY,
+            USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, TEMPLATE_STORAGE_KEY
+        ];
+        const dataKeyMap = {
+            articles: ARTICLE_STORAGE_KEY, notes: NOTE_STORAGE_KEY, categories: CATEGORY_STORAGE_KEY,
+            users: USER_STORAGE_KEY, roles: ROLE_STORAGE_KEY, pages: PAGE_STORAGE_KEY, templates: TEMPLATE_STORAGE_KEY
+        };
 
-        if (missingKeys.length > 0) {
-          toast({ variant: "destructive", title: "İçe Aktarma Hatası", description: `Dosyada eksik alanlar var: ${missingKeys.join(', ')}. Lütfen geçerli bir yedek dosyası seçin.` });
-          setImporting(false);
-          return;
+        for (const [key, storageKey] of Object.entries(dataKeyMap)) {
+            if (importedData[key]) {
+                localStorage.setItem(storageKey, JSON.stringify(importedData[key]));
+            } else {
+                console.warn(`İçe aktarılan veride '${key}' alanı bulunamadı. Bu bölüm için varsayılanlar kullanılacak veya boş kalacaktır.`);
+                localStorage.removeItem(storageKey); // Clear if not present in backup
+            }
+        }
+        
+        // Import settings
+        if (importedData.settings) {
+            const settings = importedData.settings;
+            localStorage.setItem(SESSION_TIMEOUT_KEY, settings[SESSION_TIMEOUT_KEY] || DEFAULT_SESSION_TIMEOUT_MINUTES.toString());
+            localStorage.setItem(MAINTENANCE_MODE_KEY, settings[MAINTENANCE_MODE_KEY] || 'false');
+            localStorage.setItem(ADSENSE_ENABLED_KEY, settings[ADSENSE_ENABLED_KEY] || 'true');
+            localStorage.setItem(ADSENSE_PUBLISHER_ID_KEY, settings[ADSENSE_PUBLISHER_ID_KEY] || '');
+
+            setSiteName(settings.siteName || "BiyoHox");
+            setSiteDescription(settings.siteDescription || "Teknoloji ve Biyoloji Makaleleri");
+            setSiteUrl(settings.siteUrl || "https://biyohox.example.com");
+            setAdminEmail(settings.adminEmail || "admin@example.com");
+            setSessionTimeout(parseInt(settings[SESSION_TIMEOUT_KEY], 10) || DEFAULT_SESSION_TIMEOUT_MINUTES);
+            setMaintenanceMode(settings[MAINTENANCE_MODE_KEY] === 'true');
+            setAdsenseEnabled(settings[ADSENSE_ENABLED_KEY] === null ? true : settings[ADSENSE_ENABLED_KEY] === 'true');
+            setAdsensePublisherId(settings[ADSENSE_PUBLISHER_ID_KEY] || '');
+
+            window.dispatchEvent(new CustomEvent('sessionTimeoutChanged'));
+            window.dispatchEvent(new CustomEvent('maintenanceModeUpdated'));
+            window.dispatchEvent(new CustomEvent('adsenseSettingsUpdated'));
         }
 
-        localStorage.setItem(ARTICLE_STORAGE_KEY, JSON.stringify(importedData.articles || []));
-        localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(importedData.notes || []));
-        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(importedData.categories || []));
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(importedData.users || []));
-        localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(importedData.roles || []));
-        localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(importedData.pages || []));
-        localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(importedData.templates || []));
-
-
-        reloadMockData();
+        reloadMockData(); // This function now correctly initializes from the updated localStorage
 
         toast({ title: "Veri İçe Aktarıldı", description: "Veriler başarıyla içe aktarıldı. Değişikliklerin yansıması için sayfa yenilenebilir." });
       } catch (error) {
@@ -192,6 +241,8 @@ export default function AdminSettingsPage() {
         if (importFileInputRef.current) {
           importFileInputRef.current.value = "";
         }
+        // Optionally, force a page reload to ensure all components re-fetch from localStorage
+        // window.location.reload(); 
       }
     };
     reader.onerror = () => {
@@ -250,10 +301,15 @@ export default function AdminSettingsPage() {
                             <Input id="admin-email" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
                             <p className="text-xs text-muted-foreground">Önemli sistem bildirimleri bu adrese gönderilir.</p>
                          </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 pt-2">
                             <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={handleMaintenanceModeChange} />
-                            <Label htmlFor="maintenance-mode" className="cursor-pointer">Bakım Modu Aktif</Label>
+                            <Label htmlFor="maintenance-mode" className="cursor-pointer flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 text-orange-500"/> Bakım Modu Aktif
+                            </Label>
                         </div>
+                        <p className="text-xs text-muted-foreground -mt-3 pl-12">
+                            Bakım modu aktifken site ziyaretçilere kapalı olacaktır.
+                        </p>
                         <Separator />
                         <div className="space-y-2">
                             <Label htmlFor="session-timeout" className="flex items-center gap-2">
@@ -271,6 +327,40 @@ export default function AdminSettingsPage() {
                             <p className="text-xs text-muted-foreground">
                                 Belirtilen süre (dakika cinsinden) işlem yapılmadığında yönetici oturumu otomatik olarak sonlandırılır. (Min: 1, Maks: 120)
                             </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <h3 className="text-md font-medium mb-2">AdSense Ayarları</h3>
+                            <div className="flex items-center space-x-3 pt-1">
+                                <Switch id="adsense-enabled" checked={adsenseEnabled} onCheckedChange={setAdsenseEnabled} />
+                                <Label htmlFor="adsense-enabled" className="cursor-pointer">AdSense Reklamlarını Etkinleştir</Label>
+                            </div>
+                            <div className="space-y-2 mt-4">
+                                <Label htmlFor="adsense-publisher-id">AdSense Yayıncı Kimliği (Publisher ID)</Label>
+                                <Input 
+                                    id="adsense-publisher-id" 
+                                    value={adsensePublisherId} 
+                                    onChange={(e) => setAdsensePublisherId(e.target.value)} 
+                                    placeholder="pub-xxxxxxxxxxxxxxxx"
+                                />
+                                <p className="text-xs text-muted-foreground">Google AdSense yayıncı kimliğinizi girin.</p>
+                            </div>
+                            <Card className="mt-4 bg-muted/30 border-dashed">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium flex items-center gap-2"><Info className="h-4 w-4 text-blue-500"/> ads.txt Bilgisi</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                        Sitenizin reklam envanterini satmaya yetkili olduğunuzu doğrulamak için `public` klasörünüzün kök dizinine `ads.txt` adında bir dosya oluşturup aşağıdaki içeriği eklemeniz gerekir:
+                                    </p>
+                                    <pre className="text-xs bg-background p-2 rounded border overflow-x-auto">
+                                        {`google.com, ${adsensePublisherId || 'pub-xxxxxxxxxxxxxxxx'}, DIRECT, f08c47fec0942fa0`}
+                                    </pre>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Yukarıdaki `pub-xxxxxxxxxxxxxxxx` kısmını kendi Yayıncı Kimliğiniz ile değiştirmeyi unutmayın.
+                                    </p>
+                                </CardContent>
+                            </Card>
                         </div>
                         <Separator />
                         <div>
@@ -385,7 +475,7 @@ export default function AdminSettingsPage() {
                             <Switch id="enable-mfa" />
                         </div>
                         <div className="space-y-2">
-                             <Label htmlFor="allowed-ips">İzin Verilen IP Adresleri</Label>
+                             <Label htmlFor="allowed-ips">İzin Verilen IP Adresleri (Admin Paneli)</Label>
                             <Textarea id="allowed-ips" placeholder="Her IP adresini yeni bir satıra girin (örneğin, 192.168.1.1)" />
                             <p className="text-xs text-muted-foreground">Boş bırakılırsa tüm IP adreslerine izin verilir. Sadece admin paneline erişimi kısıtlar.</p>
                         </div>
@@ -522,3 +612,4 @@ export default function AdminSettingsPage() {
     </>
   );
 }
+
