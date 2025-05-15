@@ -14,7 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link";
 import { MenuSquare, Palette, Shield, Plug, Mail, Save, Timer, Download, UploadCloud, AlertTriangle, Settings as SettingsIcon } from "lucide-react"; // Added SettingsIcon
 import { toast } from "@/hooks/use-toast";
-import { ARTICLE_STORAGE_KEY, NOTE_STORAGE_KEY, CATEGORY_STORAGE_KEY, USER_STORAGE_KEY, ROLE_STORAGE_KEY, PAGE_STORAGE_KEY, loadInitialData as reloadMockData, TEMPLATE_STORAGE_KEY } from '@/lib/mock-data';
+import { ARTICLE_STORAGE_KEY } from '@/lib/data/articles';
+import { NOTE_STORAGE_KEY } from '@/lib/data/notes';
+import { CATEGORY_STORAGE_KEY } from '@/lib/data/categories';
+import { USER_STORAGE_KEY } from '@/lib/data/users';
+import { ROLE_STORAGE_KEY } from '@/lib/data/roles';
+import { PAGE_STORAGE_KEY } from '@/lib/data/pages';
+import { TEMPLATE_STORAGE_KEY } from '@/lib/data/templates';
+import { loadInitialData as reloadMockData } from '@/lib/mock-data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +32,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ThemeToggle } from '@/components/theme-toggle';
+
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
 const MAINTENANCE_MODE_KEY = 'maintenanceModeActive'; // Key for localStorage
@@ -203,7 +212,7 @@ export default function AdminSettingsPage() {
                 </h1>
                 <p className="text-muted-foreground">Site yapılandırmasını ve tercihlerini yönetin.</p>
              </div>
-             {/* Add any top-level action buttons here if needed */}
+             <ThemeToggle />
         </div>
 
 
