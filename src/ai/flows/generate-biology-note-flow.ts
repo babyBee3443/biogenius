@@ -11,8 +11,8 @@
  * - GenerateBiologyNoteSuggestionOutput - The return type for the function, containing suggested fields and blocks.
  */
 
-import {ai} from '@/ai/ai-instance';
-import {z}  from 'genkit';
+import {ai} from '@/ai/ai-instance'; // Use the existing ai instance
+import {z}  from 'genkit'; // Use from genkit/zod for schema definition
 
 // --- Block Schemas ---
 // Base block with common fields
@@ -35,14 +35,14 @@ const HeadingBlockSchema = BaseBlockSchema.extend({
 
 const ImageBlockSchema = BaseBlockSchema.extend({
   type: z.literal('image'),
-  url: z.string().url().describe("URL of the image. Use a placeholder like 'https://placehold.co/800x400.png?text=Relevant+Image' if a specific image is not known."),
+  url: z.string().describe("URL of the image. Use a placeholder like 'https://placehold.co/800x400.png?text=Relevant+Image' if a specific image is not known."),
   alt: z.string().describe("Alternative text for the image, describing its content for accessibility and SEO."),
   caption: z.string().optional().describe("Optional caption for the image."),
 });
 
 const VideoBlockSchema = BaseBlockSchema.extend({
   type: z.literal('video'),
-  url: z.string().url().describe("URL of the video (e.g., YouTube, Vimeo). Example: https://www.youtube.com/watch?v=VIDEO_ID"),
+  url: z.string().describe("URL of the video (e.g., YouTube, Vimeo). Example: https://www.youtube.com/watch?v=VIDEO_ID"),
   youtubeId: z.string().optional().describe("If a YouTube video, its ID (e.g., dQw4w9WgXcQ). This will be extracted from URL if not provided, but providing it is helpful."),
 });
 
@@ -70,7 +70,7 @@ const SectionBlockSchema = BaseBlockSchema.extend({
 const GalleryBlockSchema = BaseBlockSchema.extend({
   type: z.literal('gallery'),
   images: z.array(z.object({
-    url: z.string().url().describe("URL of an image in the gallery."),
+    url: z.string().describe("URL of an image in the gallery."),
     alt: z.string().describe("Alt text for the image.")
   })).optional().describe("A list of images for the gallery. AI can suggest a few placeholder images.")
 });
@@ -208,7 +208,7 @@ const biologyNotePrompt = ai.definePrompt({
     {{/if}}
 
     Your entire output must be a JSON object matching the 'GenerateBiologyNoteSuggestionOutputSchema'.
-    **Prioritize generating a `suggestedBlocks` array.** Use `suggestedContentIdeas` as a fallback or for additional free-form ideas.
+    **Prioritize generating a 'suggestedBlocks' array.** Use 'suggestedContentIdeas' as a fallback or for additional free-form ideas.
     **Remember to be an expert, accurate, and cautious biology assistant. If unsure, state it.**
   `,
 });
@@ -235,3 +235,5 @@ const generateBiologyNoteSuggestionFlow = ai.defineFlow(
     return output;
   }
 );
+
+    
