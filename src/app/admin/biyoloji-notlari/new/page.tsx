@@ -9,10 +9,10 @@ import { toast } from "@/hooks/use-toast";
 import { BlockEditor } from "@/components/admin/block-editor";
 import { TemplateSelector, type Block } from "@/components/admin/template-selector";
 import { useDebouncedCallback } from 'use-debounce';
-import { createNote, type NoteData } from '@/lib/data/notes';
-import { getCategories, type Category } from '@/lib/data/categories';
-import { generateSlug } from '@/lib/utils';
-import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput, type AiBlockStructure as GenerateNoteAiBlockStructure } from '@/ai/flows/generate-biology-note-flow';
+import { createNote, type NoteData } from '@/lib/data/notes'; // Changed from mock-data
+import { getCategories, type Category } from '@/lib/data/categories'; // Changed from mock-data
+import { generateSlug } from '@/lib/utils'; // Changed from mock-data
+import { generateBiologyNoteSuggestion, type GenerateBiologyNoteSuggestionInput, type GenerateBiologyNoteSuggestionOutput, type AiBlockStructureInput as GenerateNoteAiBlockStructureInput, type SuggestedBlock } from '@/ai/flows/generate-biology-note-flow';
 import { biologyChat, type BiologyChatInput, type BiologyChatOutput, type ChatMessage as AiDirectChatMessageDef } from '@/ai/flows/biology-chat-flow';
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -42,9 +42,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon, Send } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon, Send, Info } from "lucide-react";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 // Helper to generate unique block IDs safely on the client
@@ -58,6 +68,7 @@ interface AiAssistantMessage {
     id: string;
     type: 'user' | 'ai' | 'error';
     content: string | React.ReactNode;
+    suggestedBlocksForApply?: SuggestedBlock[]; // To hold blocks for application
 }
 
 // Use the imported type for AI Direct Chat
@@ -67,7 +78,6 @@ type AiDirectChatMessage = AiDirectChatMessageDef;
 // --- Main Page Component ---
 export default function NewBiyolojiNotuPage() {
     const router = useRouter();
-    // const { hasPermission, isLoading: permissionsLoading } = usePermissions(); // Permission check removed
 
     // --- State ---
     const [saving, setSaving] = React.useState(false);
@@ -95,6 +105,9 @@ export default function NewBiyolojiNotuPage() {
     const [aiAssistantMessages, setAiAssistantMessages] = React.useState<AiAssistantMessage[]>([]);
     const [isAiAssistantGenerating, setIsAiAssistantGenerating] = React.useState(false);
     const aiAssistantChatContainerRef = React.useRef<HTMLDivElement>(null);
+    const [showConfirmApplyBlocksDialog, setShowConfirmApplyBlocksDialog] = React.useState(false);
+    const [blocksToApply, setBlocksToApply] = React.useState<SuggestedBlock[] | null>(null);
+
 
     // --- AI Biology Chat State ---
     const [isAiChatPanelOpen, setIsAiChatPanelOpen] = React.useState(false);
@@ -105,13 +118,6 @@ export default function NewBiyolojiNotuPage() {
 
 
     React.useEffect(() => {
-        // Permission check removed
-        // if (!permissionsLoading && !hasPermission('Yeni Biyoloji Notu Ekleme')) {
-        //   toast({ variant: "destructive", title: "Erişim Reddedildi", description: "Yeni biyoloji notu oluşturma yetkiniz yok." });
-        //   router.push('/admin/biyoloji-notlari');
-        //   return;
-        // }
-
         if (blocks.length === 0) {
             setBlocks([createDefaultBlock()]);
         }
@@ -125,8 +131,7 @@ export default function NewBiyolojiNotuPage() {
                 toast({ variant: "destructive", title: "Hata", description: "Kategoriler yüklenemedi." });
             })
             .finally(() => setLoadingCategories(false));
-    // }, [permissionsLoading, hasPermission, router, blocks.length]); // Removed permissionsLoading and hasPermission
-    }, [router, blocks.length]); // Updated dependencies
+    }, []);
 
     const debouncedSetSlug = useDebouncedCallback((newTitle: string) => {
         if (newTitle) setSlug(generateSlug(newTitle));
@@ -237,69 +242,21 @@ export default function NewBiyolojiNotuPage() {
             category: category, level: level, tags: tags, summary: summary || '', contentBlocks: blocks,
             imageUrl: imageUrl || 'https://picsum.photos/seed/notepreview/800/400',
             createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-            status: 'Taslak' // Default status for new note preview
+            status: 'Taslak'
         };
 
         console.log(`[NewBiyolojiNotuPage/handlePreview] Preparing to save preview data with key: ${PREVIEW_STORAGE_KEY}`);
-        console.log("[NewBiyolojiNotuPage/handlePreview] Preview Data before stringify:", previewData);
-
-        if (!previewData || Object.keys(previewData).length === 0 || !previewData.previewType) {
-            console.error("[NewBiyolojiNotuPage/handlePreview] Error: Preview data is empty or invalid before stringifying.", previewData);
-            toast({ variant: "destructive", title: "Önizleme Hatası", description: "Oluşturulacak önizleme verisi boş veya geçersiz." });
-            return;
-        }
-
         try {
-            const stringifiedData = JSON.stringify(previewData);
-            console.log("[NewBiyolojiNotuPage/handlePreview] Stringified data:", stringifiedData.substring(0, 200) + "..."); // Log part of stringified data
-            if (!stringifiedData || stringifiedData === 'null' || stringifiedData === '{}') {
-                 console.error("[NewBiyolojiNotuPage/handlePreview] Error: Stringified preview data is empty or null.");
-                 toast({ variant: "destructive", title: "Önizleme Hatası", description: "Önizleme verisi oluşturulamadı (boş veri)." });
-                 return;
-            }
-            localStorage.setItem(PREVIEW_STORAGE_KEY, stringifiedData);
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Successfully called localStorage.setItem for key: ${PREVIEW_STORAGE_KEY}`);
-
-            const checkStoredData = localStorage.getItem(PREVIEW_STORAGE_KEY);
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Verification - Data retrieved from localStorage for key '${PREVIEW_STORAGE_KEY}':`, checkStoredData ? checkStoredData.substring(0,200) + "..." : "NULL");
-
-            if (!checkStoredData || checkStoredData === 'null' || checkStoredData === 'undefined') {
-                 console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: No data found (or data is 'null'/'undefined') for key ${PREVIEW_STORAGE_KEY} immediately after setItem.`);
-                 throw new Error("Verification failed: No data found in localStorage after setItem.");
-            }
-            const parsedVerify = JSON.parse(checkStoredData);
-            if (!parsedVerify || parsedVerify.previewType !== 'note') {
-                console.error(`[NewBiyolojiNotuPage/handlePreview] Verification FAILED: Invalid data structure or previewType in localStorage after setItem. Parsed:`, parsedVerify);
-                throw new Error("Verification failed: Invalid data structure in localStorage after setItem.");
-            }
-            console.log("[NewBiyolojiNotuPage/handlePreview] Verification SUCCESS after setItem");
-
+            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewData));
             const previewUrl = `/admin/preview`;
-            console.log(`[NewBiyolojiNotuPage/handlePreview] Opening preview window with URL: ${previewUrl}`);
-
             setTimeout(() => {
                 const newWindow = window.open(previewUrl, '_blank');
                 if (!newWindow) {
-                    console.error("[NewBiyolojiNotuPage/handlePreview] Failed to open preview window. Pop-up blocker might be active.");
-                    toast({
-                        variant: "destructive",
-                        title: "Önizleme Penceresi Açılamadı",
-                        description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.",
-                        duration: 10000,
-                    });
-                } else {
-                    console.log("[NewBiyolojiNotuPage/handlePreview] Preview window opened successfully.");
+                    toast({ variant: "destructive", title: "Önizleme Penceresi Açılamadı", description: "Lütfen tarayıcınızın pop-up engelleyicisini kontrol edin.", duration: 10000 });
                 }
-            }, 300);
-
+            }, 150);
         } catch (error: any) {
-            console.error("[NewBiyolojiNotuPage/handlePreview] Error during preview process:", error);
-            toast({
-                variant: "destructive",
-                title: "Önizleme Hatası",
-                description: `Önizleme verisi kaydedilemedi veya doğrulanamadı: ${error.message}`,
-                duration: 10000,
-            });
+            toast({ variant: "destructive", title: "Önizleme Hatası", description: `Önizleme verisi kaydedilemedi: ${error.message}`, duration: 10000 });
         }
     };
 
@@ -315,7 +272,7 @@ export default function NewBiyolojiNotuPage() {
             return;
         }
 
-        const currentFormData: GenerateBiologyNoteSuggestionInput['currentFormData'] = {
+        const currentFormDataForAI: GenerateBiologyNoteSuggestionInput['currentFormData'] = {
             currentTitle: title,
             currentSummary: summary,
             currentTags: tags,
@@ -324,15 +281,15 @@ export default function NewBiyolojiNotuPage() {
             currentBlocksStructure: blocks.map(b => ({
                 type: b.type,
                 contentPreview: (b as any).content?.substring(0, 50) || (b as any).url?.substring(0,50) || `[${b.type} bloğu]`
-            }) as GenerateNoteAiBlockStructure)
+            }) as GenerateNoteAiBlockStructureInput)
         };
 
-        const userInput: GenerateBiologyNoteSuggestionInput = {
+        const userInputToAI: GenerateBiologyNoteSuggestionInput = {
             topic: aiAssistantTopic,
             level: level,
             keywords: aiAssistantKeywords,
             outline: aiAssistantOutline,
-            currentFormData: currentFormData,
+            currentFormData: currentFormDataForAI,
         };
 
         let userMessageContent = `**Konu:** ${aiAssistantTopic}`;
@@ -340,14 +297,14 @@ export default function NewBiyolojiNotuPage() {
         if (aiAssistantOutline) userMessageContent += `\n**İstenen Taslak:** ${aiAssistantOutline}`;
 
         userMessageContent += `\n\n**Mevcut Form Alanları ve Not Yapısı (bunları dikkate alarak öneri ver):**`;
-        if (currentFormData.currentTitle) userMessageContent += `\n- Başlık: "${currentFormData.currentTitle}"`;
-        if (currentFormData.currentSummary) userMessageContent += `\n- Özet: "${currentFormData.currentSummary}"`;
-        if (currentFormData.currentTags && currentFormData.currentTags.length > 0) userMessageContent += `\n- Etiketler: ${currentFormData.currentTags.join(', ')}`;
-        if (currentFormData.currentCategory) userMessageContent += `\n- Kategori: ${currentFormData.currentCategory}`;
-        if (currentFormData.currentLevel) userMessageContent += `\n- Seviye: ${currentFormData.currentLevel}`;
-        if (currentFormData.currentBlocksStructure && currentFormData.currentBlocksStructure.length > 0) {
-            userMessageContent += `\n- Mevcut Bloklar (${currentFormData.currentBlocksStructure.length} adet):`;
-            currentFormData.currentBlocksStructure.forEach((b, i) => {
+        if (currentFormDataForAI.currentTitle) userMessageContent += `\n- Başlık: "${currentFormDataForAI.currentTitle}"`;
+        if (currentFormDataForAI.currentSummary) userMessageContent += `\n- Özet: "${currentFormDataForAI.currentSummary}"`;
+        if (currentFormDataForAI.currentTags && currentFormDataForAI.currentTags.length > 0) userMessageContent += `\n- Etiketler: ${currentFormDataForAI.currentTags.join(', ')}`;
+        if (currentFormDataForAI.currentCategory) userMessageContent += `\n- Kategori: ${currentFormDataForAI.currentCategory}`;
+        if (currentFormDataForAI.currentLevel) userMessageContent += `\n- Seviye: ${currentFormDataForAI.currentLevel}`;
+        if (currentFormDataForAI.currentBlocksStructure && currentFormDataForAI.currentBlocksStructure.length > 0) {
+            userMessageContent += `\n- Mevcut Bloklar (${currentFormDataForAI.currentBlocksStructure.length} adet):`;
+            currentFormDataForAI.currentBlocksStructure.forEach((b, i) => {
                 userMessageContent += `\n  - Blok ${i+1}: Tip: ${b.type}, İçerik Önizlemesi: "${b.contentPreview}"`;
             });
         } else {
@@ -359,41 +316,61 @@ export default function NewBiyolojiNotuPage() {
         setIsAiAssistantGenerating(true);
 
         try {
-            const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInput);
+            const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInputToAI);
+            
+            let aiResponseContent: React.ReactNode = "AI'dan bir yanıt alınamadı.";
+            let suggestedBlocksToApply: SuggestedBlock[] | undefined = undefined;
 
-            const aiResponseContent = (
-                <div className="space-y-3 text-left">
-                    {aiOutput.suggestedTitle && (
-                        <div>
-                            <strong className="block text-sm font-medium">Önerilen Başlık:</strong>
-                            <p className="text-sm p-2 bg-background rounded border border-border/50">{aiOutput.suggestedTitle}</p>
-                        </div>
-                    )}
-                    {aiOutput.suggestedSummary && (
-                        <div>
-                            <strong className="block text-sm font-medium">Önerilen Özet:</strong>
-                            <p className="text-sm whitespace-pre-wrap p-2 bg-background rounded border border-border/50">{aiOutput.suggestedSummary}</p>
-                        </div>
-                    )}
-                    {aiOutput.suggestedTags && aiOutput.suggestedTags.length > 0 && (
-                        <div>
-                            <strong className="block text-sm font-medium">Önerilen Etiketler:</strong>
-                            <div className="flex flex-wrap gap-1 mt-1 p-2 bg-background rounded border border-border/50">
-                                {aiOutput.suggestedTags.map(tag => (
-                                    <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                                ))}
+            if (aiOutput) {
+                suggestedBlocksToApply = aiOutput.suggestedBlocks;
+                aiResponseContent = (
+                    <div className="space-y-3 text-left">
+                        {aiOutput.suggestedTitle && (
+                            <div>
+                                <strong className="block text-sm font-medium">Önerilen Başlık:</strong>
+                                <p className="text-sm p-2 bg-background rounded border border-border/50">{aiOutput.suggestedTitle}</p>
                             </div>
-                        </div>
-                    )}
-                     {aiOutput.suggestedContentIdeas && (
-                        <div>
-                            <strong className="block text-sm font-medium">Önerilen İçerik Fikirleri/Taslak:</strong>
-                            <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none p-2 bg-background rounded border border-border/50" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '<br />') }} />
-                        </div>
-                    )}
-                </div>
-            );
-            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'ai', content: aiResponseContent }]);
+                        )}
+                        {aiOutput.suggestedSummary && (
+                            <div>
+                                <strong className="block text-sm font-medium">Önerilen Özet:</strong>
+                                <p className="text-sm whitespace-pre-wrap p-2 bg-background rounded border border-border/50">{aiOutput.suggestedSummary}</p>
+                            </div>
+                        )}
+                        {aiOutput.suggestedTags && aiOutput.suggestedTags.length > 0 && (
+                            <div>
+                                <strong className="block text-sm font-medium">Önerilen Etiketler:</strong>
+                                <div className="flex flex-wrap gap-1 mt-1 p-2 bg-background rounded border border-border/50">
+                                    {aiOutput.suggestedTags.map(tag => (
+                                        <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                         {aiOutput.suggestedContentIdeas && (!aiOutput.suggestedBlocks || aiOutput.suggestedBlocks.length === 0) && ( // Show ideas if no blocks suggested
+                            <div>
+                                <strong className="block text-sm font-medium">Önerilen İçerik Fikirleri/Taslak:</strong>
+                                <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none p-2 bg-background rounded border border-border/50" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '<br />') }} />
+                            </div>
+                        )}
+                        {aiOutput.suggestedBlocks && aiOutput.suggestedBlocks.length > 0 && (
+                            <div className="mt-3">
+                                <strong className="block text-sm font-medium mb-1">Önerilen Sayfa Yapısı (Bloklar):</strong>
+                                <div className="text-xs space-y-1 p-2 bg-background rounded border border-border/50 max-h-48 overflow-y-auto">
+                                    {aiOutput.suggestedBlocks.map((block, index) => (
+                                        <p key={`suggested-block-${index}`} className="truncate">
+                                            - <strong>{block.type}</strong>:
+                                            {' '}{(block as any).content?.substring(0, 30) || (block as any).url?.substring(0,30) || (block as any).level || '[Blok detayı]'}...
+                                        </p>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'ai', content: aiResponseContent, suggestedBlocksForApply: suggestedBlocksToApply }]);
+
         } catch (error: any) {
             console.error("AI note suggestion error:", error);
             setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'error', content: `AI not önerisi oluştururken hata: ${error.message}` }]);
@@ -401,6 +378,27 @@ export default function NewBiyolojiNotuPage() {
             setIsAiAssistantGenerating(false);
         }
     };
+
+    const handleApplySuggestedBlocks = (suggestedBlocks?: SuggestedBlock[]) => {
+        if (suggestedBlocks && suggestedBlocks.length > 0) {
+            setBlocksToApply(suggestedBlocks);
+            setShowConfirmApplyBlocksDialog(true);
+        } else {
+            toast({ variant: "destructive", title: "Hata", description: "Uygulanacak önerilen blok bulunamadı." });
+        }
+    };
+
+    const confirmApplyBlocks = () => {
+        if (blocksToApply) {
+            const newEditorBlocks = blocksToApply.map(b => ({ ...b, id: generateBlockId() })) as Block[];
+            setBlocks(newEditorBlocks);
+            setTemplateApplied(true); // Consider AI structure as a form of template
+            toast({ title: "AI Yapısı Uygulandı", description: "AI tarafından önerilen blok yapısı nota uygulandı." });
+        }
+        setShowConfirmApplyBlocksDialog(false);
+        setBlocksToApply(null);
+    };
+
 
     // --- AI Biology Chat Handlers ---
     const handleAiChatSubmit = async () => {
@@ -430,15 +428,15 @@ export default function NewBiyolojiNotuPage() {
 
     const toggleAiAssistantPanel = () => {
         setIsAiAssistantPanelOpen(prev => !prev);
-        if (!isAiAssistantPanelOpen) { // If opening assistant, close chat
-            setIsAiChatPanelOpen(false);
+        if (isAiChatPanelOpen && !isAiAssistantPanelOpen) {
+             setIsAiChatPanelOpen(false); // Close chat if opening assistant
         }
     };
 
     const toggleAiChatPanel = () => {
         setIsAiChatPanelOpen(prev => !prev);
-        if (!isAiChatPanelOpen) { // If opening chat, close assistant
-            setIsAiAssistantPanelOpen(false);
+        if (isAiAssistantPanelOpen && !isAiChatPanelOpen) {
+            setIsAiAssistantPanelOpen(false); // Close assistant if opening chat
         }
     };
 
@@ -464,6 +462,7 @@ export default function NewBiyolojiNotuPage() {
 
 
     return (
+        <>
         <div className="flex flex-col h-full">
             {/* Top Bar */}
              <div className="flex items-center justify-between px-6 py-3 border-b bg-card sticky top-0 z-10">
@@ -517,14 +516,13 @@ export default function NewBiyolojiNotuPage() {
                                                      {loadingCategories ? (
                                                         <SelectItem value="loading_placeholder" disabled>Yükleniyor...</SelectItem>
                                                      ) : categories.length === 0 ? (
-                                                        <SelectItem value="no-categories" disabled>Kategori bulunamadı.</SelectItem>
+                                                        <SelectItem value="no_categories_placeholder" disabled>Kategori bulunamadı.</SelectItem>
                                                      ) : (
                                                         categories.map(cat => (
                                                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                                         ))
                                                      )}
                                                       <Separator />
-                                                      {/* Removed permission check for simplicity, assuming it's always available if this page is accessible */}
                                                       <Link href="/admin/categories" className="p-2 text-sm text-muted-foreground hover:text-primary">Kategorileri Yönet</Link>
                                                 </SelectContent>
                                             </Select>
@@ -615,7 +613,7 @@ export default function NewBiyolojiNotuPage() {
                     <aside className="w-96 border-l bg-card p-6 overflow-y-auto space-y-4 flex flex-col">
                         <CardHeader className="p-0 mb-2">
                              <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> AI Not Öneri Yardımcısı</CardTitle>
-                             <CardDescription className="text-xs">AI'dan not içeriği, başlık, özet ve etiketler için fikir ve öneri alın.</CardDescription>
+                             <CardDescription className="text-xs">AI'dan not içeriği, başlık, özet, etiketler ve blok yapısı için fikir ve öneri alın.</CardDescription>
                         </CardHeader>
 
                         <div className="space-y-3 flex-grow flex flex-col">
@@ -627,6 +625,16 @@ export default function NewBiyolojiNotuPage() {
                                                 <div className="whitespace-pre-wrap">{msg.content}</div>
                                             ) : (
                                                 msg.content
+                                            )}
+                                            {msg.type === 'ai' && msg.suggestedBlocksForApply && msg.suggestedBlocksForApply.length > 0 && (
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="mt-2 border-primary text-primary hover:bg-primary/10"
+                                                    onClick={() => handleApplySuggestedBlocks(msg.suggestedBlocksForApply)}
+                                                >
+                                                    Bu Blok Yapısını Uygula
+                                                </Button>
                                             )}
                                         </div>
                                     ))}
@@ -652,9 +660,9 @@ export default function NewBiyolojiNotuPage() {
                                     <Label htmlFor="ai-assistant-outline">İstenen Taslak/Bölümler (isteğe bağlı)</Label>
                                     <Textarea id="ai-assistant-outline" value={aiAssistantOutline} onChange={(e) => setAiAssistantOutline(e.target.value)} placeholder="Örn: Tanımı, Işığa bağlı reaksiyonlar, Işıktan bağımsız reaksiyonlar, Önemi" rows={2} />
                                 </div>
-                                 <p className="text-xs text-muted-foreground mt-2">
-                                    AI, önerilerde bulunurken soldaki formdaki <strong>Başlık, Özet, Etiketler, Kategori ve Seviye</strong> alanlarını ve <strong>mevcut blok yapısını</strong> dikkate alacaktır.
-                                </p>
+                                 <div className="mt-2 p-2 bg-muted/50 rounded border text-xs text-muted-foreground space-y-1">
+                                    <p className="flex items-start gap-1.5"><Info size={18} className="text-primary flex-shrink-0 mt-0.5"/><span>AI, önerilerde bulunurken soldaki formdaki <strong>Başlık, Özet, Etiketler, Kategori ve Seviye</strong> alanlarını ve <strong>mevcut blok yapısını</strong> dikkate alacaktır.</span></p>
+                                 </div>
                                 <Button type="submit" className="w-full mt-3" disabled={isAiAssistantGenerating || !level}>
                                     {isAiAssistantGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
                                     AI'dan Öneri Al
@@ -717,13 +725,21 @@ export default function NewBiyolojiNotuPage() {
                   templateTypeFilter="note"
               />
          </div>
+          <AlertDialog open={showConfirmApplyBlocksDialog} onOpenChange={setShowConfirmApplyBlocksDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>AI Tarafından Önerilen Bloklar Uygulansın mı?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Bu işlem, düzenleyicideki mevcut tüm blokları AI tarafından önerilen bloklarla değiştirecektir.
+                        Bu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => { setShowConfirmApplyBlocksDialog(false); setBlocksToApply(null); }}>İptal</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmApplyBlocks}>Evet, Uygula</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }
-// Ensure flows are imported for side effects if they register themselves with Genkit.
-// This is typically done in a central `dev.ts` or similar, but if not, ensure they are loaded.
-// For server actions, Next.js handles their availability.
-// import './flows/generate-biology-note-flow';
-// import './flows/biology-chat-flow';
-
-
-    

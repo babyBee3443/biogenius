@@ -1,24 +1,107 @@
+
 'use server';
 /**
- * @fileOverview AI flow for generating biology note suggestions.
- * This flow now provides structured suggestions for various fields of a biology note,
+ * @fileOverview AI flow for generating biology note suggestions, including block structure.
+ * This flow provides structured suggestions for various fields of a biology note,
  * and considers existing form data and block structure provided by the user.
  * It's designed to act as an expert biology educator, prioritizing accuracy.
  *
  * - generateBiologyNoteSuggestion - A function that handles biology note suggestion generation.
  * - GenerateBiologyNoteSuggestionInput - The input type for the function.
- * - GenerateBiologyNoteSuggestionOutput - The return type for the function, containing suggested fields.
+ * - GenerateBiologyNoteSuggestionOutput - The return type for the function, containing suggested fields and blocks.
  */
 
-import {ai} from '@/ai/ai-instance'; // Use the existing ai instance
-import {z}  from 'genkit'; // Use from genkit for schema definition
+import {ai} from '@/ai/ai-instance';
+import {z}  from 'genkit';
 
-// --- Simplified Block Structure for AI Input ---
-const AiBlockStructureSchema = z.object({
+// --- Block Schemas ---
+// Base block with common fields
+const BaseBlockSchema = z.object({
+  id: z.string().describe("A unique identifier for the block, can be a placeholder like 'temp-id-1' as frontend will generate new ones."),
+  type: z.enum(['text', 'heading', 'image', 'video', 'quote', 'divider', 'section', 'gallery', 'code'])
+            .describe("The type of the content block."),
+});
+
+const TextBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('text'),
+  content: z.string().describe("The textual content of the paragraph."),
+});
+
+const HeadingBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('heading'),
+  level: z.number().min(1).max(6).describe("The heading level (1-6). Prefer H2 or H3 for subheadings within a note."),
+  content: z.string().describe("The text content of the heading."),
+});
+
+const ImageBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('image'),
+  url: z.string().url().describe("URL of the image. Use a placeholder like 'https://placehold.co/800x400.png?text=Relevant+Image' if a specific image is not known."),
+  alt: z.string().describe("Alternative text for the image, describing its content for accessibility and SEO."),
+  caption: z.string().optional().describe("Optional caption for the image."),
+});
+
+const VideoBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('video'),
+  url: z.string().url().describe("URL of the video (e.g., YouTube, Vimeo). Example: https://www.youtube.com/watch?v=VIDEO_ID"),
+  youtubeId: z.string().optional().describe("If a YouTube video, its ID (e.g., dQw4w9WgXcQ). This will be extracted from URL if not provided, but providing it is helpful."),
+});
+
+const QuoteBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('quote'),
+  content: z.string().describe("The text content of the quote."),
+  citation: z.string().optional().describe("Optional citation or source of the quote."),
+});
+
+const DividerBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('divider'),
+});
+
+// For Section, Gallery, Code blocks, we'll keep them simpler for now, as their settings can be complex.
+// AI can suggest their presence, and user can configure them.
+const SectionBlockSchema = BaseBlockSchema.extend({
+    type: z.literal('section'),
+    sectionType: z.string().describe("Type of section, e.g., 'custom-text', 'featured-articles'. For generic content, suggest 'custom-text'."),
+    settings: z.object({
+        title: z.string().optional().describe("Optional title for the section."),
+        content: z.string().optional().describe("If sectionType is 'custom-text', the HTML content can go here.")
+    }).describe("Basic settings for the section. Complex settings should be configured by the user."),
+});
+
+const GalleryBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('gallery'),
+  images: z.array(z.object({
+    url: z.string().url().describe("URL of an image in the gallery."),
+    alt: z.string().describe("Alt text for the image.")
+  })).optional().describe("A list of images for the gallery. AI can suggest a few placeholder images.")
+});
+
+const CodeBlockSchema = BaseBlockSchema.extend({
+  type: z.literal('code'),
+  language: z.string().optional().describe("Programming language for syntax highlighting (e.g., 'javascript', 'python'). Default to 'plaintext' if unsure."),
+  content: z.string().describe("The code snippet.")
+});
+
+
+const SuggestedBlockSchema = z.discriminatedUnion("type", [
+  TextBlockSchema,
+  HeadingBlockSchema,
+  ImageBlockSchema,
+  VideoBlockSchema,
+  QuoteBlockSchema,
+  DividerBlockSchema,
+  SectionBlockSchema,
+  GalleryBlockSchema,
+  CodeBlockSchema
+]);
+export type SuggestedBlock = z.infer<typeof SuggestedBlockSchema>;
+
+
+// Simplified Block Structure for AI Input (from existing content)
+const AiBlockStructureInputSchema = z.object({
     type: z.string().describe("The type of the block (e.g., 'text', 'heading', 'image')."),
     contentPreview: z.string().optional().describe("A short preview of the block's content (e.g., first 50 chars of text, heading text, image alt text)."),
 });
-export type AiBlockStructure = z.infer<typeof AiBlockStructureSchema>;
+export type AiBlockStructureInput = z.infer<typeof AiBlockStructureInputSchema>;
 
 
 // --- Input Schema ---
@@ -33,7 +116,7 @@ const GenerateBiologyNoteSuggestionInputSchema = z.object({
     currentTags: z.array(z.string()).optional().describe("User's current tags for the note."),
     currentCategory: z.string().optional().describe("User's current category for the note."),
     currentLevel: z.string().optional().describe("User's current level selection for the note (for context)."),
-    currentBlocksStructure: z.array(AiBlockStructureSchema).optional().describe("A simplified structure of the blocks currently in the editor, for AI to understand the existing layout and content flow.")
+    currentBlocksStructure: z.array(AiBlockStructureInputSchema).optional().describe("A simplified structure of the blocks currently in the editor, for AI to understand the existing layout and content flow.")
   }).optional().describe("Current values from the user's form and block structure, if any, for the AI to consider."),
 });
 export type GenerateBiologyNoteSuggestionInput = z.infer<typeof GenerateBiologyNoteSuggestionInputSchema>;
@@ -44,18 +127,15 @@ const GenerateBiologyNoteSuggestionOutputSchema = z.object({
   suggestedTitle: z.string().describe("AI's suggestion for the note's title based on the topic and existing title (if any)."),
   suggestedSummary: z.string().optional().describe("AI's suggestion for a brief summary of the note, considering existing summary."),
   suggestedTags: z.array(z.string()).optional().describe("AI's suggestion for relevant tags or keywords, considering existing tags."),
-  suggestedContentIdeas: z.string().describe("AI's suggestion for main content points, outline, or key information for the note. This should be a coherent text, possibly using Markdown for basic formatting like headings and lists. It should consider the `currentBlocksStructure` if provided, offering ideas to enhance or fill in that structure."),
+  suggestedContentIdeas: z.string().optional().describe("AI's suggestion for main content points, outline, or key information for the note. This should be a coherent text, possibly using Markdown for basic formatting like headings and lists. This is a general text field if structured blocks are not suitable for the AI's response or if the user wants free-form ideas."),
+  suggestedBlocks: z.array(SuggestedBlockSchema).optional().describe("AI's suggestion for a structured block-based content for the note. This is the preferred way to suggest content structure. If the AI cannot generate a full block structure, it can leave this field empty and use 'suggestedContentIdeas' instead."),
 });
 export type GenerateBiologyNoteSuggestionOutput = z.infer<typeof GenerateBiologyNoteSuggestionOutputSchema>;
 
 
 // --- Exported Wrapper Function ---
 export async function generateBiologyNoteSuggestion(input: GenerateBiologyNoteSuggestionInput): Promise<GenerateBiologyNoteSuggestionOutput> {
-  const { output } = await biologyNotePrompt(input);
-  if (!output) {
-    throw new Error("AI did not return an output for biology note suggestions.");
-  }
-  return output;
+  return generateBiologyNoteSuggestionFlow(input);
 }
 
 
@@ -80,20 +160,31 @@ const biologyNotePrompt = ai.definePrompt({
         {{#if currentFormData.currentSummary}}Current user summary (consider this): "{{currentFormData.currentSummary}}"{{/if}}
     3.  **suggestedTags**: (Optional) An array of relevant keywords or tags for the note.
         {{#if currentFormData.currentTags}}Current user tags (consider this): {{#each currentFormData.currentTags}}"{{this}}" {{/each}}{{/if}}
-    4.  **suggestedContentIdeas**: Key concepts, explanations, definitions, important details, or a structured outline related to the topic.
-        - If an outline is provided by the user ({{{outline}}}), try to expand on it or integrate it.
-        - If keywords are provided ({{{keywords}}}), ensure they are reflected in the content ideas.
+    4.  **suggestedBlocks**: (Preferred Output) A structured array of content blocks for the note.
+        - Each block must have an 'id' (you can use placeholders like 'temp-id-1', 'temp-id-2') and a 'type' (text, heading, image, video, quote, divider, section).
+        - **Text Blocks:** Use clear, concise language. For 'text' blocks, use the 'content' field for the text.
+        - **Heading Blocks:** Use 'content' for text and 'level' (2-6, prefer H2/H3 for subheadings) for the heading level.
+        - **Image Blocks:**
+            - For 'image' blocks, provide a relevant 'url'. If a specific image isn't known, use a placeholder like "https://placehold.co/800x400.png?text=[Descriptive+Image+Placeholder+About+Topic]" (e.g., "https://placehold.co/800x400.png?text=Photosynthesis+Diagram"). The placeholder text should be URL-encoded.
+            - Provide descriptive 'alt' text.
+            - Optionally, add a 'caption'.
+        - **Video Blocks:** For 'video' blocks, provide a 'url' (e.g., a relevant YouTube search URL or a specific video URL if known). If a specific YouTube video is known, you can also suggest its 'youtubeId'.
+        - **Quote Blocks:** Use 'content' for the quote and 'citation' for the source (optional).
+        - **Divider Blocks:** Use these to separate sections.
+        - **Section Blocks:** If you suggest a 'section' block, for 'sectionType', use 'custom-text' for general textual content within a section. The 'settings' object can include a 'title' and 'content' (HTML is allowed for custom-text content).
+        - If an outline is provided by the user ({{{outline}}}), try to structure the blocks based on it.
+        - If keywords are provided ({{{keywords}}}), ensure they are reflected in the block content.
         - Use clear, understandable language appropriate for the specified 'level' ({{{level}}}).
-        - You can use simple Markdown for formatting the 'suggestedContentIdeas' (e.g., ## for headings, * for lists).
         {{#if currentFormData.currentBlocksStructure.length}}
-        - The user already has some blocks in their note. Here's a summary of the current structure:
+        - The user already has some blocks in their note. Here's a summary:
           {{#each currentFormData.currentBlocksStructure}}
           - Block Type: {{this.type}}, Content Preview: "{{this.contentPreview}}"
           {{/each}}
-          Your 'suggestedContentIdeas' should aim to complement, expand upon, or fill in the gaps of this existing structure. You might suggest new blocks or ways to enhance the existing ones.
+          Your 'suggestedBlocks' should complement, expand upon, or fill in the gaps of this existing structure. You might suggest new blocks or ways to enhance existing ones.
         {{else}}
-        - If no blocks currently exist, provide a comprehensive set of content ideas that could form the basis of a new note.
+        - If no blocks currently exist, provide a comprehensive set of blocks that could form the basis of a new note.
         {{/if}}
+    5.  **suggestedContentIdeas**: (Fallback if structured blocks are not feasible) If you cannot generate a structured block list, or as supplementary information, provide key concepts, explanations, or a structured outline here. Use simple Markdown for formatting (e.g., ## for headings, * for lists).
 
     User Input for Context:
     Note Topic: {{{topic}}}
@@ -117,7 +208,7 @@ const biologyNotePrompt = ai.definePrompt({
     {{/if}}
 
     Your entire output must be a JSON object matching the 'GenerateBiologyNoteSuggestionOutputSchema'.
-    Focus on providing informative and structured textual suggestions for each field. The 'suggestedContentIdeas' should be textual content, NOT a list of block objects.
+    **Prioritize generating a `suggestedBlocks` array.** Use `suggestedContentIdeas` as a fallback or for additional free-form ideas.
     **Remember to be an expert, accurate, and cautious biology assistant. If unsure, state it.**
   `,
 });
@@ -133,6 +224,13 @@ const generateBiologyNoteSuggestionFlow = ai.defineFlow(
     const { output } = await biologyNotePrompt(input);
     if (!output) {
       throw new Error("AI did not return an output for biology note generation.");
+    }
+    // Ensure IDs for suggested blocks are placeholders if AI doesn't provide them
+    if (output.suggestedBlocks) {
+        output.suggestedBlocks = output.suggestedBlocks.map((block, index) => ({
+            ...block,
+            id: block.id || `temp-ai-id-${index}`
+        }));
     }
     return output;
   }
