@@ -7,7 +7,8 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import type { ArticleData } from '@/lib/mock-data'; // Ensure this path is correct
+import type { ArticleData } from '@/lib/data/articles'; // Corrected import path
+import { cn } from '@/lib/utils';
 
 interface ArticleCardProps {
   article: ArticleData;
@@ -28,9 +29,9 @@ const ArticleCardComponent: React.FC<ArticleCardProps> = ({ article, priority = 
               <Image
                 src={article.mainImageUrl}
                 alt={article.title}
-                layout="fill"
-                objectFit="cover"
-                className="transition-transform duration-300 group-hover:scale-105"
+                fill // Changed from layout="fill"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Example sizes
+                className="object-cover transition-transform duration-300 group-hover:scale-105" // Ensure object-cover
                 priority={priority}
                 loading={imageLoading || (priority ? "eager" : "lazy")}
                 data-ai-hint={imageHint}
@@ -52,7 +53,7 @@ const ArticleCardComponent: React.FC<ArticleCardProps> = ({ article, priority = 
           </CardDescription>
         )}
         <div className="mt-auto flex justify-between items-center">
-          <span className={`text-xs font-semibold px-2 py-1 rounded ${categoryClass}`}>
+          <span className={cn('text-xs font-semibold px-2 py-1 rounded', categoryClass)}>
             {article.category}
           </span>
           <Button asChild variant="link" className="p-0 h-auto text-primary hover:text-primary/80 transition-colors">

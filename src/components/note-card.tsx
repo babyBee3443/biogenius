@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
-import type { NoteData } from '@/lib/mock-data'; // Ensure this path is correct
+import type { NoteData } from '@/lib/data/notes'; // Corrected import path
 
 interface NoteCardProps {
   note: NoteData;
@@ -25,8 +26,8 @@ const NoteCardComponent: React.FC<NoteCardProps> = ({ note, imageLoading = "lazy
               <Image
                 src={note.imageUrl}
                 alt={note.title}
-                layout="fill"
-                objectFit="cover"
+                fill // Changed from layout="fill"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Example sizes
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 loading={imageLoading}
                 data-ai-hint={imageHint}
