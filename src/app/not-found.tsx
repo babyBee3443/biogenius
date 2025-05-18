@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Home, Zap, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Input } from '@/components/ui/input'; // Added Input import
 
 const AnimatedBrokenDna = () => {
   const strandVariants = {
