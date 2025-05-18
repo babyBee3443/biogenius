@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, ChevronDown, FileText as DerslerIcon } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, ChevronDown, FileText as DerslerIcon, Newspaper } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -35,33 +35,35 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
+  // This is mock data. In a real application, you would fetch this from your backend/API.
+  // We'll assume article data is fetched from where articles are defined.
+  // For now, let's use a simplified version of what might come from getArticles.
   const mockData: ArticleStub[] = [
     { id: 'gen-duzenleme', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
     { id: 'mikrobiyom', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
     { id: 'hucre-dongusu', title: 'Hücre Döngüsü ve Kontrol Noktaları', category: 'Biyoloji' },
     { id: 'protein-sentezi', title: 'Protein Sentezi: Transkripsiyon ve Translasyon', category: 'Biyoloji' },
+    // Add more mock articles if needed, especially for testing search
   ];
   return mockData.filter(article =>
     (article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.category.toLowerCase().includes(query.toLowerCase())) &&
-    article.category === 'Biyoloji'
-  ).slice(0, 5);
+    article.category === 'Biyoloji' // Assuming BiyoHox only has Biyoloji articles for now
+  ).slice(0, 5); // Limit results for the popover
 };
 
 
 const DnaLogo = () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [baseAmplitudes, setBaseAmplitudes] = React.useState<number[]>([]);
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     React.useEffect(() => {
-        setBaseAmplitudes(Array(7).fill(0).map(() => 10 + Math.random() * 4 - 2)); // Initial random amplitudes
+        setBaseAmplitudes(Array(7).fill(0).map(() => 10 + Math.random() * 4 - 2));
 
         const intervalId = setInterval(() => {
             setBaseAmplitudes(prevAmplitudes =>
-                prevAmplitudes.map(amp => 10 + Math.random() * 4 - 2) // Continuously update for subtle movement
+                prevAmplitudes.map(amp => 10 + Math.random() * 4 - 2)
             );
-        }, 200); // Update every 200ms for a smooth, subtle "breathing" effect
+        }, 2000); // Slower update for a more subtle "breathing"
         return () => clearInterval(intervalId);
     }, []);
 
@@ -183,7 +185,7 @@ const Header = () => {
           setCurrentUser(user);
         } catch (e) {
           console.error("Error parsing current user from localStorage in Header", e);
-          setCurrentUser(null);
+          setCurrentUser(null); // Reset on error
         }
       } else {
         setCurrentUser(null);
@@ -193,7 +195,7 @@ const Header = () => {
 
   React.useEffect(() => {
     setIsMounted(true);
-    checkUserStatus();
+    checkUserStatus(); // Check on initial mount
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser') {
@@ -201,7 +203,9 @@ const Header = () => {
         }
     };
 
+    // Listen for storage changes (e.g., logout from another tab)
     window.addEventListener('storage', handleStorageChange);
+    // Listen for custom event dispatched by login/logout functions
     window.addEventListener('currentUserUpdated', checkUserStatus);
 
     return () => {
@@ -212,9 +216,9 @@ const Header = () => {
 
 
   React.useEffect(() => {
-    setIsSearchPopoverOpen(searchQuery.length > 0);
+    setIsSearchPopoverOpen(searchQuery.length > 0); // Open popover if there's a query
     const handler = setTimeout(async () => {
-      if (searchQuery.length > 1) {
+      if (searchQuery.length > 1) { // Start searching after 2 characters
         setIsSearching(true);
         const results = await searchArticles(searchQuery);
         setSearchResults(results);
@@ -222,7 +226,7 @@ const Header = () => {
       } else {
         setSearchResults([]);
       }
-    }, 300);
+    }, 300); // Debounce search
 
     return () => {
       clearTimeout(handler);
@@ -241,13 +245,13 @@ const Header = () => {
   };
 
    const closeSearchPopover = () => {
+    // setSearchQuery(''); // Keep search query if user clicks away, so they don't lose it
+    // setSearchResults([]);
     setIsSearchPopoverOpen(false);
-    setSearchQuery('');
-    setSearchResults([]);
   }
 
   const handleLoginSuccess = () => {
-    checkUserStatus();
+    checkUserStatus(); // Re-check user status
     setIsLoginModalOpen(false);
   };
 
@@ -256,19 +260,20 @@ const Header = () => {
       localStorage.removeItem('currentUser');
     }
     setCurrentUser(null);
-    window.dispatchEvent(new CustomEvent('currentUserUpdated'));
+    window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify other parts of the app
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/');
+    router.replace('/'); // Redirect to homepage on logout
   };
 
   const handleCreateAccountSuccess = () => {
     checkUserStatus();
     setIsCreateAccountModalOpen(false);
+    // Optionally open login modal after successful account creation
     setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
   const openCreateAccountModal = () => {
-    setIsLoginModalOpen(false);
+    setIsLoginModalOpen(false); // Close login if open
     setIsCreateAccountModalOpen(true);
   };
 
@@ -284,7 +289,7 @@ const Header = () => {
     }
     lessonsPopoverEnterTimerRef.current = setTimeout(() => {
       setIsLessonsPopoverOpen(true);
-    }, 150); // Slightly longer delay to open
+    }, 150); // Delay before opening on hover
   };
 
   const handleLessonsMouseLeave = () => {
@@ -294,7 +299,7 @@ const Header = () => {
     }
     lessonsPopoverLeaveTimerRef.current = setTimeout(() => {
       setIsLessonsPopoverOpen(false);
-    }, 300); // Slightly longer delay to close
+    }, 300); // Delay before closing on hover leave
   };
 
 
@@ -304,7 +309,7 @@ const Header = () => {
       label: "Dersler",
       href: "/dersler", // Main link for the Popover/Dropdown trigger
       icon: <DerslerIcon className="h-4 w-4" />,
-      isPopover: true, // Indicate this item should use Popover on desktop
+      isPopover: true,
       subItems: [
         { href: "/dersler/9-sinif", label: "9. Sınıf" },
         { href: "/dersler/10-sinif", label: "10. Sınıf" },
@@ -313,6 +318,7 @@ const Header = () => {
       ]
     },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
+    // { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?", icon: <Newspaper className="h-4 w-4"/> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
   ];
@@ -322,6 +328,7 @@ const Header = () => {
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
+     // Add more category color rules if needed
      return 'bg-muted text-muted-foreground';
   }
 
@@ -350,7 +357,7 @@ const Header = () => {
                       className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
                       onMouseEnter={handleLessonsMouseEnter}
                       onMouseLeave={handleLessonsMouseLeave}
-                      onClick={() => setIsLessonsPopoverOpen(prev => !prev)} // Toggle on click
+                      onClick={() => setIsLessonsPopoverOpen(prev => !prev)} // Toggle on click for accessibility
                     >
                       {item.icon && <span className="mr-1.5">{item.icon}</span>}
                       <span className="capitalize">{item.label}</span>
@@ -358,39 +365,22 @@ const Header = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="w-64 p-4 shadow-xl rounded-lg border border-border/50 bg-card text-card-foreground"
+                    className="w-48 p-2 shadow-xl rounded-lg border border-border/50 bg-card text-card-foreground" // Simplified width
                     align="start"
-                    onMouseEnter={handleLessonsMouseEnter} // Keep open if mouse enters content
-                    onMouseLeave={handleLessonsMouseLeave} // Close if mouse leaves content
+                    onMouseEnter={handleLessonsMouseEnter} 
+                    onMouseLeave={handleLessonsMouseLeave}
                   >
-                    <div className="grid gap-3">
-                        <p className="text-sm text-muted-foreground px-1">Farklı seviyelerdeki biyoloji derslerini keşfedin.</p>
-                        <div className="grid grid-cols-2 gap-2">
-                           {item.subItems?.map(subItem => (
-                             <Link
-                               key={subItem.href}
-                               href={subItem.href}
-                               className="block rounded-md p-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                               onClick={() => setIsLessonsPopoverOpen(false)}
-                              >
-                               {subItem.label}
-                             </Link>
-                           ))}
-                        </div>
-                        <DropdownMenuSeparator />
-                        <Link
-                           href="/dersler"
-                           className="block rounded-md p-2 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground transition-colors"
+                    <div className="grid grid-cols-1 gap-1"> {/* Changed to 1 column for simplicity */}
+                       {item.subItems?.map(subItem => (
+                         <Link
+                           key={subItem.href}
+                           href={subItem.href}
+                           className="block rounded-md p-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                            onClick={() => setIsLessonsPopoverOpen(false)}
-                         >
-                           Tüm Dersler
+                          >
+                           {subItem.label}
                          </Link>
-                        <DropdownMenuSeparator />
-                        <div className="px-1">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1.5">Popüler Kurslar</p>
-                            <Link href="#" className="block text-xs text-foreground hover:underline mb-1" onClick={() => {setIsLessonsPopoverOpen(false); toast({title:"Yakında!"})}}>Hücrenin Temelleri (Yakında)</Link>
-                            <Link href="#" className="block text-xs text-foreground hover:underline" onClick={() => {setIsLessonsPopoverOpen(false); toast({title:"Yakında!"})}}>Genetik Bilimine Giriş (Yakında)</Link>
-                        </div>
+                       ))}
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -399,7 +389,7 @@ const Header = () => {
                      <Button
                         variant="ghost"
                         className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
-                        as="a"
+                        as="a" // Ensure it renders as an anchor tag
                      >
                        {item.icon && <span className="mr-1.5">{item.icon}</span>}
                        <span className="capitalize">{item.label}</span>
@@ -410,17 +400,18 @@ const Header = () => {
           </nav>
 
           <div className="flex flex-1 items-center justify-end space-x-2">
+            {/* Desktop Controls */}
             <div className="hidden md:flex items-center space-x-2">
               <Popover open={isSearchPopoverOpen} onOpenChange={setIsSearchPopoverOpen}>
                 <PopoverTrigger asChild>
-                   <div className="relative w-full max-w-[150px] sm:max-w-[180px]">
+                   <div className="relative w-full max-w-[150px] sm:max-w-[180px]"> {/* Reduced max width */}
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="text"
                         placeholder="Ara..."
                         value={searchQuery}
                         onChange={handleSearchChange}
-                        className="pl-9 pr-8 h-9 rounded-md bg-secondary/70 border-transparent focus:bg-background focus:border-border" // Adjusted for better contrast
+                        className="pl-9 pr-8 h-9 rounded-md bg-secondary/70 border-transparent focus:bg-background focus:border-border"
                         onFocus={() => setIsSearchPopoverOpen(true)}
                       />
                       {searchQuery && (
@@ -438,7 +429,7 @@ const Header = () => {
                 <PopoverContent
                     className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                     align="end"
-                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus on search input inside popover
                  >
                   {isSearching && searchQuery && (
                      <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -454,7 +445,7 @@ const Header = () => {
                                 <Link
                                     href={`/articles/${result.id}`}
                                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                    onClick={closeSearchPopover}
+                                    onClick={closeSearchPopover} // Close popover on link click
                                  >
                                    <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                    <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -532,6 +523,7 @@ const Header = () => {
               )}
             </div>
 
+            {/* Mobile Menu Trigger */}
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
@@ -556,6 +548,7 @@ const Header = () => {
                    </SheetClose>
                   <ScrollArea className="h-[calc(100vh-65px)]">
                     <div className="p-6 space-y-4">
+                        {/* Mobile Search */}
                         <div className="relative">
                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                            <Input
@@ -576,6 +569,7 @@ const Header = () => {
                                </Button>
                              )}
                          </div>
+                         {/* Mobile Search Results */}
                          {isSearching && searchQuery && (
                             <div className="p-2 text-sm text-center text-muted-foreground">Aranıyor...</div>
                          )}
@@ -603,9 +597,10 @@ const Header = () => {
                            </ul>
                          )}
 
+                      {/* Mobile Navigation */}
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
                         {navItems.map((item) => (
-                          item.isPopover && item.subItems ? ( // Use isPopover to identify it as a Dropdown in mobile
+                          item.isPopover && item.subItems ? (
                             <DropdownMenu key={`mobile-${item.label}`}>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -617,7 +612,7 @@ const Header = () => {
                                   <ChevronDown className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3">
+                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3"> {/* Adjust width relative to sheet */}
                                 <DropdownMenuLabel>{item.label} Seviyeleri</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {item.subItems.map(subItem => (
@@ -635,7 +630,7 @@ const Header = () => {
                                    <Button
                                       variant="ghost"
                                       className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
-                                       as="a"
+                                       as="a" // Ensure it renders as an anchor tag
                                    >
                                      {item.icon}
                                      <span className="capitalize">{item.label}</span>
@@ -646,6 +641,7 @@ const Header = () => {
                         ))}
                       </nav>
 
+                      {/* Mobile User/Auth Controls */}
                       <div className="border-t border-border/30 pt-4 space-y-3">
                         {isMounted && currentUser && (currentUser.role === 'Admin') && (
                            <SheetClose asChild>
@@ -701,6 +697,7 @@ const Header = () => {
           </div>
         </div>
       </header>
+      {/* Modals */}
       <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} onLoginSuccess={handleLoginSuccess} openCreateAccount={openCreateAccountModal} />
       <CreateAccountModal isOpen={isCreateAccountModalOpen} setIsOpen={setIsCreateAccountModalOpen} onAccountCreateSuccess={handleCreateAccountSuccess} openLogin={openLoginModalFromCreate} />
     </>
