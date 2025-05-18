@@ -28,7 +28,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
-const DEFAULT_SESSION_TIMEOUT_MINUTES = 5;
+const DEFAULT_SESSION_TIMEOUT_MINUTES = 30; // Increased default
 
 
 export default function AdminLayout({
@@ -52,7 +52,6 @@ export default function AdminLayout({
     let newUserName = "Kullanıcı";
     let newUserAvatar = "https://placehold.co/32x32.png";
     let newUserRoleName: string | null = null;
-    let isMounted = true;
 
     if (typeof window !== 'undefined') {
       const storedUserString = localStorage.getItem('currentUser');
@@ -63,7 +62,7 @@ export default function AdminLayout({
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://placehold.co/32x32.png?text=${(userData.name || 'U').charAt(0)}`;
             newUserId = userData.id;
-            newUserRoleName = userData.role || null;
+            newUserRoleName = userData.role || null; // Ensure role is read
             userFound = true;
           } else {
              newUserId = null;
@@ -71,7 +70,7 @@ export default function AdminLayout({
           }
         } catch (e) {
           console.error("AdminLayout: Error parsing currentUser from localStorage", e);
-          localStorage.removeItem('currentUser');
+          localStorage.removeItem('currentUser'); // Clear corrupted data
           newUserId = null;
           newUserRoleName = null;
         }
@@ -80,25 +79,21 @@ export default function AdminLayout({
         newUserRoleName = null;
       }
 
-      if (isMounted) {
-        setCurrentUserId(newUserId);
-        setCurrentUserName(newUserName);
-        setCurrentUserAvatar(newUserAvatar);
-        setCurrentUserRoleName(newUserRoleName);
-      }
+      setCurrentUserId(newUserId);
+      setCurrentUserName(newUserName);
+      setCurrentUserAvatar(newUserAvatar);
+      setCurrentUserRoleName(newUserRoleName);
 
 
       const storedTimeout = localStorage.getItem(SESSION_TIMEOUT_KEY);
       if (storedTimeout) {
         const timeoutValue = parseInt(storedTimeout, 10);
-         if(isMounted) setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
+        setSessionTimeoutMinutes(!isNaN(timeoutValue) && timeoutValue > 0 ? timeoutValue : DEFAULT_SESSION_TIMEOUT_MINUTES);
       } else {
-         if(isMounted) setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
+        setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    if (isMounted) {
-        setAuthCheckComplete(true);
-    }
+    setAuthCheckComplete(true);
     return userFound;
   }, []);
 
@@ -160,7 +155,7 @@ export default function AdminLayout({
         setAuthCheckComplete(false); // Trigger re-check
     }
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.push('/login'); // Always redirect to admin login on logout from admin panel
+    router.replace('/login'); // Always redirect to admin login on logout from admin panel
   }, [router]);
 
 
@@ -184,7 +179,7 @@ export default function AdminLayout({
     if (isAdminPage && !isLoginPage) {
         if (!currentUserId || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin')) {
             console.log(`[AdminLayout Effect] Redirecting to /login. User ID: ${currentUserId}, Role: ${currentUserRoleName}. Path: ${window.location.pathname}`);
-            router.replace('/login');
+            router.replace('/login'); // Use replace to prevent back button to admin page
             return;
         }
     }
@@ -209,7 +204,11 @@ export default function AdminLayout({
   
   // If trying to access admin pages without being an admin (after auth check is complete)
   // This is an additional safeguard, primary redirection happens in useEffect above.
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/login' && (!currentUserId || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin'))) {
+   if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/login' && (!currentUserId || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin'))) {
+     // This state ideally should be caught by the useEffect above and redirect.
+     // If reached, it means there might be a slight delay or an edge case.
+     // Render a loading/redirecting state or null to prevent flashing content.
+     console.warn("[AdminLayout] Render: Attempting to render admin content for non-admin or unauthenticated user. Should have been redirected.");
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -296,7 +295,7 @@ export default function AdminLayout({
           </Link>
         </SidebarHeader>
 
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-0">
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-0"> {/* Adjusted margin-top */}
              <span className="block font-semibold text-sm text-muted-foreground">
                 Hoşgeldiniz
             </span>
@@ -500,7 +499,7 @@ export default function AdminLayout({
             </Link>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)+theme(spacing.6))] md:pt-[calc(theme(spacing.14)+theme(spacing.6))]">
+         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)_+_0.5rem)] md:pt-[calc(theme(spacing.14)_+_1.5rem)]"> {/* Adjusted padding-top for mobile */}
             {/* Render children only if authenticated and authorized as Admin */}
              {(currentUserId && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin') ? children : (
                 <div className="flex flex-col items-center justify-center h-full">
@@ -513,5 +512,3 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
-
-    

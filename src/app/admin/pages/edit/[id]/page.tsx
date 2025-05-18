@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye, Film } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Monitor, Tablet, Smartphone, Settings, Eye, Film, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { BlockEditor } from "@/components/admin/block-editor";
@@ -20,8 +20,9 @@ import SeoPreview from "@/components/admin/seo-preview";
 import PagePreviewRenderer from "@/components/admin/page-preview-renderer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { PageData as PageDataType, HeroSettings as HeroSettingsType } from "@/lib/mock-data";
-import { getPageById as fetchPageById, updatePage } from "@/lib/mock-data";
+import type { PageData as PageDataType, HeroSettings as HeroSettingsType } from "@/lib/data/pages"; // Changed from mock-data
+import { getPageById as fetchPageById, updatePage, deletePage as mockDeletePage } from "@/lib/data/pages"; // Changed from mock-data
+import { generateSlug as generateSlugUtil } from '@/lib/utils';
 
 const PREVIEW_STORAGE_KEY = 'preview_data';
 
@@ -34,6 +35,9 @@ export default function EditPage() {
 
     const [pageData, setPageData] = React.useState<PageDataType | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [isSaving, setIsSaving] = React.useState(false); // Added saving state
+    const [isDeleting, setIsDeleting] = React.useState(false); // Added deleting state
+
     const [title, setTitle] = React.useState("");
     const [slug, setSlug] = React.useState("");
     const [blocks, setBlocks] = React.useState<Block[]>([]);
@@ -54,6 +58,7 @@ export default function EditPage() {
 
     React.useEffect(() => {
         if (pageId) {
+            setLoading(true);
             fetchPageById(pageId)
                 .then(data => {
                     if (data) {
@@ -78,27 +83,27 @@ export default function EditPage() {
                     notFound();
                 })
                 .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
+            notFound(); // If no pageId, it's a not found scenario
         }
     }, [pageId]);
 
-    const generateSlugUtil = (text: string) => {
-        return text
-            .toLowerCase()
-            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-            .replace(/[^a-z0-9 -]/g, '')
-            .replace(/\s+/g, '-').replace(/-+/g, '-');
-    };
 
-    React.useEffect(() => {
-        if (title && pageData && title !== pageData.title) {
-             if (!slug || slug === generateSlugUtil(pageData.title)) {
-                 setSlug(generateSlugUtil(title));
-            }
-        }
-     }, [title, pageData, slug]);
+     React.useEffect(() => {
+         if (title && pageData && title !== pageData.title) {
+              if (!slug || slug === generateSlugUtil(pageData.title)) {
+                  setSlug(generateSlugUtil(title));
+             }
+         } else if (title && !slug && pageId !== 'anasayfa') { // Don't auto-slug for homepage if title changes but slug was empty
+            setSlug(generateSlugUtil(title));
+         }
+      }, [title, pageData, slug, pageId]);
 
      React.useEffect(() => {
         if (title && !seoTitle && pageData && title !== pageData.title) {
+            setSeoTitle(title);
+        } else if (title && !seoTitle) {
             setSeoTitle(title);
         }
      }, [title, seoTitle, pageData]);
@@ -109,6 +114,12 @@ export default function EditPage() {
             if (firstTextBlock && firstTextBlock.content && firstTextBlock.content !== (pageData.blocks.find(b => b.id === firstTextBlock.id && b.type === 'text') as Extract<Block, { type: 'text' }>)?.content) {
                  const desc = firstTextBlock.content.length > 160 ? firstTextBlock.content.substring(0, 157) + '...' : firstTextBlock.content;
                  setSeoDescription(desc);
+            }
+        } else if (blocks.length > 0 && !seoDescription) {
+            const firstTextBlock = blocks.find(b => b.type === 'text') as Extract<Block, { type: 'text' }> | undefined;
+            if (firstTextBlock && firstTextBlock.content) {
+                const desc = firstTextBlock.content.length > 160 ? firstTextBlock.content.substring(0, 157) + '...' : firstTextBlock.content;
+                setSeoDescription(desc);
             }
         }
      }, [blocks, seoDescription, pageData]);
@@ -171,11 +182,16 @@ export default function EditPage() {
             toast({ variant: "destructive", title: "Hata", description: "Sayfa başlığı zorunludur." });
             return;
         }
+        if (pageId !== 'anasayfa' && !slug) {
+            toast({ variant: "destructive", title: "Hata", description: "URL metni (slug) zorunludur."});
+            return;
+        }
+        setIsSaving(true);
         const saveData: Partial<Omit<PageDataType, 'id' | 'createdAt' | 'updatedAt'>> = {
             title,
-            slug,
+            slug: pageId === 'anasayfa' ? '' : slug,
             blocks,
-            seoTitle,
+            seoTitle: seoTitle || title,
             seoDescription,
             keywords,
             canonicalUrl,
@@ -186,7 +202,17 @@ export default function EditPage() {
         try {
             const updated = await updatePage(pageId, saveData);
             if (updated) {
-                setPageData(updated);
+                setPageData(updated); // Update local state with the response from the "API"
+                setTitle(updated.title);
+                setSlug(updated.slug);
+                setBlocks(updated.blocks || []);
+                setSeoTitle(updated.seoTitle || updated.title || '');
+                setSeoDescription(updated.seoDescription || '');
+                setKeywords(updated.keywords || []);
+                setCanonicalUrl(updated.canonicalUrl || '');
+                if (updated.heroSettings) {
+                    setHeroSettings(updated.heroSettings);
+                }
                 toast({
                     title: "Sayfa Güncellendi",
                     description: `"${title}" başlıklı sayfa başarıyla güncellendi.`,
@@ -197,34 +223,47 @@ export default function EditPage() {
         } catch (error: any) {
             console.error("Error updating page:", error);
             toast({ variant: "destructive", title: "Hata", description: `Sayfa güncellenirken bir sorun oluştu: ${error.message}` });
+        } finally {
+            setIsSaving(false);
         }
     };
 
-     const handleDelete = () => {
+     const handleDelete = async () => {
         if (pageId === 'anasayfa') {
             toast({ variant: "destructive", title: "Hata", description: "Anasayfa silinemez." });
             return;
         }
         if (window.confirm(`"${title}" başlıklı sayfayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-            console.log("Deleting page:", pageId);
-            // TODO: Implement actual API call to delete the page
-             toast({
-                 variant: "destructive",
-                 title: "Sayfa Silindi",
-                 description: `"${title}" başlıklı sayfa silindi.`,
-            });
-            router.push('/admin/pages');
+            setIsDeleting(true);
+            try {
+                const success = await mockDeletePage(pageId); // Use mock delete
+                if (success) {
+                    toast({
+                        variant: "destructive",
+                        title: "Sayfa Silindi",
+                        description: `"${title}" başlıklı sayfa silindi.`,
+                    });
+                    router.push('/admin/pages');
+                } else {
+                    toast({ variant: "destructive", title: "Silme Hatası", description: "Sayfa silinemedi." });
+                }
+            } catch (error: any) {
+                 console.error("Error deleting page:", error);
+                 toast({ variant: "destructive", title: "Silme Hatası", description: `Sayfa silinirken bir hata oluştu: ${error.message}`});
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
     const currentPreviewData: PageDataType = React.useMemo(() => ({
         id: pageId || 'preview',
         title: title,
-        slug: slug,
+        slug: pageId === 'anasayfa' ? '' : slug,
         blocks: blocks,
-        seoTitle: seoTitle,
-        seoDescription: seoDescription,
-        imageUrl: pageData?.imageUrl || (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://picsum.photos/seed/page-preview/1200/600',
+        seoTitle: seoTitle || title,
+        seoDescription: seoDescription || '',
+        imageUrl: pageData?.imageUrl || (blocks.find(b => b.type === 'image') as Extract<Block, { type: 'image' }>)?.url || 'https://placehold.co/1200x600.png',
         settings: pageData?.settings || {},
         heroSettings: pageId === 'anasayfa' ? heroSettings : undefined,
         status: pageData?.status || 'Taslak',
@@ -245,7 +284,7 @@ export default function EditPage() {
 
 
     if (loading) {
-        return <div className="flex justify-center items-center h-screen">Sayfa bilgileri yükleniyor...</div>;
+        return <div className="flex justify-center items-center h-screen"><Loader2 className="mr-2 h-6 w-6 animate-spin"/>Sayfa bilgileri yükleniyor...</div>;
     }
 
      if (!pageData) {
@@ -310,18 +349,18 @@ export default function EditPage() {
                       <Separator orientation="vertical" className="h-6 mx-2" />
 
                      {pageId !== 'anasayfa' && (
-                        <Button variant="destructive" size="sm" onClick={handleDelete}>
-                            <Trash2 className="h-4 w-4" />
+                        <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isSaving || isDeleting}>
+                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
                         </Button>
                      )}
-                      <Button size="sm" onClick={handleSave} disabled={!title}>
-                        <Save className="mr-2 h-4 w-4" /> Kaydet
+                      <Button size="sm" onClick={handleSave} disabled={!title || (pageId !== 'anasayfa' && !slug) || isSaving || isDeleting}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Kaydet
                     </Button>
                  </div>
             </div>
 
              <div className="flex flex-1 overflow-hidden">
-                 <ScrollArea className="flex-shrink-0 border-r w-[500px] h-full">
+                 <ScrollArea className="flex-shrink-0 border-r w-full md:w-[400px] lg:w-[500px] h-full"> {/* Full width on mobile, fixed on larger screens */}
                     <div className="p-6 space-y-6">
                         {editorView === 'editor' && (
                             <>
@@ -348,6 +387,7 @@ export default function EditPage() {
                                                 onChange={(e) => setSlug(generateSlugUtil(e.target.value))}
                                                 disabled={pageId === 'anasayfa'}
                                                 placeholder={pageId === 'anasayfa' ? "(Anasayfa)" : "sayfa-url"}
+                                                required={pageId !== 'anasayfa'}
                                             />
                                             <p className="text-xs text-muted-foreground">
                                                 {pageId === 'anasayfa' ? "Anasayfa URL'si değiştirilemez." : "Tarayıcı adres çubuğunda görünecek kısım."}
@@ -497,15 +537,15 @@ export default function EditPage() {
                     </div>
                  </ScrollArea>
 
-                   <div className="flex-1 bg-muted/30 p-4 overflow-auto flex flex-col items-center justify-start relative">
+                   <div className="flex-1 bg-muted/30 p-4 overflow-auto flex-col items-center justify-start relative hidden md:flex"> {/* Hide on mobile, flex on md+ */}
                      <div className={cn(
                          "border bg-background shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out relative w-full h-full max-w-full max-h-full",
                      )}>
                         <div className={cn(
                              "transition-transform duration-300 ease-in-out origin-top",
                              {
-                                 'scale-[0.5] w-[750px] h-[1334px] mx-auto': previewDevice === 'mobile',
-                                 'scale-[0.7] w-[1097px] h-[1463px] mx-auto': previewDevice === 'tablet',
+                                 'scale-[0.4] w-[937.5px] h-[1667.5px] mx-auto': previewDevice === 'mobile', // Adjusted scale for mobile
+                                 'scale-[0.6] w-[1280px] h-[1706px] mx-auto': previewDevice === 'tablet', // Adjusted scale for tablet
                                  'scale-100 w-full h-full': previewDevice === 'desktop',
                              }
                         )}>
@@ -519,6 +559,19 @@ export default function EditPage() {
                         </div>
                      </div>
                    </div>
+                  {/* Mobile Preview Section */}
+                  <div className="md:hidden flex-1 bg-muted/30 p-4 overflow-auto flex flex-col items-center justify-start relative">
+                    <p className="text-sm font-semibold mb-2 text-center">Önizleme (Mobil)</p>
+                     <div className="w-[375px] h-[667px] max-w-full max-h-[70vh] border bg-background shadow-lg rounded-lg overflow-hidden mx-auto">
+                         <PagePreviewRenderer
+                            key={`mobile-preview-${currentPreviewData.id}-${blocks.map(b => b.id).join('-')}`}
+                            pageData={currentPreviewData}
+                            selectedBlockId={selectedBlockId}
+                            onBlockSelect={handleBlockSelect}
+                            isPreview={true}
+                         />
+                     </div>
+                  </div>
             </div>
         </div>
     );
