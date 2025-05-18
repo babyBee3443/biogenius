@@ -6,9 +6,10 @@ import { getCourseById, type Course, type CourseSection, type Lesson } from '@/l
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronLeft, CheckCircle, RadioButtonUnchecked, Video, FileText, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle, Circle, Video, FileText, Loader2, AlertTriangle } from 'lucide-react'; // Changed RadioButtonUnchecked to Circle
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast'; // Added toast import
 
 // Re-using existing block renderers from article/note pages
 // Ensure these are correctly imported or defined if they are specific to those pages
@@ -223,7 +224,7 @@ export default function DerslerPage() {
                         onClick={() => handleLessonClick(sectionIdx, lessonIdx)}
                       >
                         <div className="flex items-center w-full">
-                           {lesson.isCompleted ? <CheckCircle className="h-4 w-4 mr-2 text-green-500 flex-shrink-0"/> : <RadioButtonUnchecked className="h-4 w-4 mr-2 text-muted-foreground/70 flex-shrink-0"/>}
+                           {lesson.isCompleted ? <CheckCircle className="h-4 w-4 mr-2 text-green-500 flex-shrink-0"/> : <Circle className="h-4 w-4 mr-2 text-muted-foreground/70 flex-shrink-0"/>} {/* Changed RadioButtonUnchecked to Circle */}
                            <div className="flex-grow">
                             <span className="block text-sm leading-snug">{lesson.title}</span>
                             <span className="text-xs text-muted-foreground">
