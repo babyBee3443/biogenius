@@ -141,6 +141,8 @@ export default function DerslerPage() {
     }
   };
 
+  const totalLessons = selectedCourse?.sections.reduce((acc, section) => acc + (section.lessons?.length || 0), 0) || 0;
+
   const navigateLesson = (direction: 'next' | 'prev') => {
     if (!selectedCourse) return;
 
@@ -166,7 +168,9 @@ export default function DerslerPage() {
     }
 
     if (direction === 'next' && newAbsoluteLessonIndex >= totalLessons) {
-        toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
+        setTimeout(() => {
+            toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
+        }, 0);
     }
   };
 
@@ -199,7 +203,7 @@ export default function DerslerPage() {
     return <div className="text-center py-10 text-muted-foreground">Gösterilecek ders bulunamadı.</div>;
   }
 
-  const totalLessons = selectedCourse.sections.reduce((acc, section) => acc + (section.lessons?.length || 0), 0);
+  
   const numCompletedLessons = completedLessons.size;
   const currentLessonNumber = selectedCourse.sections.slice(0, currentSectionIndex).reduce((acc, section) => acc + (section.lessons?.length || 0), 0) + currentLessonIndexInSection + 1;
   const progressPercentage = totalLessons > 0 ? (numCompletedLessons / totalLessons) * 100 : 0;
@@ -287,7 +291,7 @@ export default function DerslerPage() {
                     className={cn("w-full sm:w-auto shadow-sm", isCurrentLessonCompleted && "border-green-500 text-green-600 hover:bg-green-500/10")}
                 >
                     {isCurrentLessonCompleted ? (
-                        <> <CheckCircle className="mr-2 h-4 w-4"/> Dersi Tamamlandı İşaretini Kaldır</>
+                        <> <CheckCircle className="mr-2 h-4 w-4"/> Tamamlandı İşaretini Kaldır</>
                     ) : (
                         <> <Circle className="mr-2 h-4 w-4"/> Dersi Tamamlandı Olarak İşaretle</>
                     )}
