@@ -161,16 +161,26 @@ export default function DerslerPage() {
           setSelectedLesson(selectedCourse.sections[sectionIdx].lessons[lessonIdx]);
           setCurrentSectionIndex(sectionIdx);
           setCurrentLessonIndexInSection(lessonIdx);
+           // Check if this navigation completes the course
+          if (direction === 'next' && newAbsoluteLessonIndex === totalLessons -1 && completedLessons.size === totalLessons -1 && !completedLessons.has(selectedCourse.sections[sectionIdx].lessons[lessonIdx].id) ) {
+            // This is the last lesson and about to be marked as completed
+            // No, wait, completion is handled by toggleLessonCompletion.
+            // Toast for course completion should happen if this is the last lesson AND all are completed
+            // The actual check for course completion will be after marking this one complete.
+          }
           return;
         }
         tempLessonCounter++;
       }
     }
-
+     // This part is reached if trying to go beyond the last lesson
     if (direction === 'next' && newAbsoluteLessonIndex >= totalLessons) {
-        setTimeout(() => {
-            toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
-        }, 0);
+        const allMarked = completedLessons.size === totalLessons;
+        if (allMarked) {
+             setTimeout(() => {
+                toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
+            }, 0);
+        }
     }
   };
 
@@ -178,17 +188,26 @@ export default function DerslerPage() {
   const handlePrevLesson = () => navigateLesson('prev');
   
   const toggleLessonCompletion = (lessonId: string) => {
-    setCompletedLessons(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(lessonId)) {
-            newSet.delete(lessonId);
-            toast({ title: "Ders Tamamlanmadı", description: `"${selectedLesson?.title}" dersi tamamlanmadı olarak işaretlendi.`});
-        } else {
-            newSet.add(lessonId);
-            toast({ title: "Ders Tamamlandı!", description: `"${selectedLesson?.title}" dersi tamamlandı olarak işaretlendi.`});
+    const newSet = new Set(completedLessons);
+    let lessonTitle = selectedLesson?.title || "Bu ders";
+    if (newSet.has(lessonId)) {
+        newSet.delete(lessonId);
+        setTimeout(() => {
+            toast({ title: "Ders Tamamlanmadı", description: `"${lessonTitle}" dersi tamamlanmadı olarak işaretlendi.`});
+        }, 0);
+    } else {
+        newSet.add(lessonId);
+         setTimeout(() => {
+            toast({ title: "Ders Tamamlandı!", description: `"${lessonTitle}" dersi tamamlandı olarak işaretlendi.`});
+        }, 0);
+        // Check for course completion after marking this lesson
+        if (newSet.size === totalLessons && currentLessonNumber === totalLessons) {
+            setTimeout(() => {
+                 toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
+            }, 50); // Slight delay to ensure other toasts can process
         }
-        return newSet;
-    });
+    }
+    setCompletedLessons(newSet);
   };
 
   if (isLoading) {
