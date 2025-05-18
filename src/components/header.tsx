@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, FileText as DerslerIcon } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -264,6 +264,7 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
+    { href: "/dersler", label: "Dersler", icon: <DerslerIcon className="h-4 w-4" /> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
   ];
@@ -583,5 +584,3 @@ const Header = () => {
 };
 
 export default Header;
-
-    
