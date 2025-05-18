@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, FileText as DerslerIcon, ChevronDown } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, ChevronDown, FileText as DerslerIcon } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,12 +21,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuGroup,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal
-
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from '@/hooks/use-toast';
@@ -55,7 +49,24 @@ const searchArticles = async (query: string): Promise<ArticleStub[]> => {
 };
 
 
-const DnaLogo = () => (
+const DnaLogo = () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [baseAmplitudes, setBaseAmplitudes] = React.useState<number[]>([]);
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    React.useEffect(() => {
+        setBaseAmplitudes(Array(7).fill(0).map(() => 10 + Math.random() * 4 - 2)); // Initial random amplitudes
+
+        const intervalId = setInterval(() => {
+            setBaseAmplitudes(prevAmplitudes =>
+                prevAmplitudes.map(amp => 10 + Math.random() * 4 - 2) // Continuously update for subtle movement
+            );
+        }, 200); // Update every 200ms for a smooth, subtle "breathing" effect
+        return () => clearInterval(intervalId);
+    }, []);
+
+
+    return (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 100 100"
@@ -84,10 +95,10 @@ const DnaLogo = () => (
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="10s"
+                    dur="12s" // Slower rotation
                     repeatCount="indefinite"
                 />
-                <animate attributeName="stroke-width" values="5;7;5" dur="3s" repeatCount="indefinite" />
+                <animate attributeName="stroke-width" values="5;6;5" dur="3.5s" repeatCount="indefinite" />
             </path>
             <path
                 d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
@@ -101,26 +112,14 @@ const DnaLogo = () => (
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="10s"
+                    dur="12s" // Slower rotation
                     repeatCount="indefinite"
                 />
-                <animate attributeName="stroke-width" values="5;7;5" dur="3s" repeatCount="indefinite" begin="0.5s" />
+                <animate attributeName="stroke-width" values="5;6;5" dur="3.5s" repeatCount="indefinite" begin="0.3s" />
             </path>
-            {[...Array(7)].map((_, i) => {
+            {baseAmplitudes.map((amplitude, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                const [amplitude, setAmplitude] = React.useState(10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i * 0.5) * 2 : Math.cos(Date.now() / 700 + i * 0.5) * 2));
-
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                React.useEffect(() => {
-                    const intervalId = setInterval(() => {
-                        setAmplitude(10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i * 0.5) * 2 : Math.cos(Date.now() / 700 + i * 0.5) * 2));
-                    }, 50); 
-                    return () => clearInterval(intervalId);
-                }, [i]);
-
-
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
@@ -130,24 +129,24 @@ const DnaLogo = () => (
                         y1={yPos}
                         x2={x2}
                         y2={yPos}
-                        strokeWidth="3"
+                        strokeWidth="2.5" // Slightly thinner bases
                         strokeLinecap="round"
-                        className="stroke-green-500/50 dark:stroke-green-400/30"
+                        className="stroke-green-500/40 dark:stroke-green-400/20" // Softer colors
                     >
                          <animate
                             attributeName="stroke"
-                            values="hsl(var(--primary)/0.5);hsl(145 80% 40% / 0.7);hsl(145 75% 45% / 0.5);hsl(var(--primary)/0.5)"
-                            dur="5s"
+                            values="hsl(var(--primary)/0.4);hsl(145 80% 40% / 0.6);hsl(145 75% 45% / 0.4);hsl(var(--primary)/0.4)"
+                            dur="6s" // Slower color animation
                             repeatCount="indefinite"
-                            begin={`${i * 0.2}s`}
+                            begin={`${i * 0.25}s`}
                         />
-                         <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin={`${i*0.15}s`} />
+                         <animate attributeName="opacity" values="0.2;0.7;0.2" dur="4s" repeatCount="indefinite" begin={`${i*0.2}s`} />
                         <animateTransform
                             attributeName="transform"
                             type="rotate"
                             from="0 0 0"
                             to="360 0 0"
-                            dur="10s"
+                            dur="12s" // Slower rotation
                             repeatCount="indefinite"
                         />
                     </line>
@@ -155,19 +154,24 @@ const DnaLogo = () => (
             })}
         </g>
     </svg>
-);
+    );
+};
 
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<ArticleStub[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
-  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+  const [isSearchPopoverOpen, setIsSearchPopoverOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<any | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = React.useState(false);
   const [isMounted, setIsMounted] = React.useState(false);
   const router = useRouter();
+
+  const [isLessonsPopoverOpen, setIsLessonsPopoverOpen] = React.useState(false);
+  const lessonsPopoverEnterTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const lessonsPopoverLeaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
 
   const checkUserStatus = React.useCallback(() => {
@@ -193,7 +197,6 @@ const Header = () => {
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser') {
-            console.log("Header: 'currentUser' changed in localStorage (another tab), checking user status.");
             checkUserStatus();
         }
     };
@@ -209,7 +212,7 @@ const Header = () => {
 
 
   React.useEffect(() => {
-    setIsPopoverOpen(searchQuery.length > 0);
+    setIsSearchPopoverOpen(searchQuery.length > 0);
     const handler = setTimeout(async () => {
       if (searchQuery.length > 1) {
         setIsSearching(true);
@@ -234,17 +237,17 @@ const Header = () => {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
-    setIsPopoverOpen(false);
+    setIsSearchPopoverOpen(false);
   };
 
-   const closePopover = () => {
-    setIsPopoverOpen(false);
+   const closeSearchPopover = () => {
+    setIsSearchPopoverOpen(false);
     setSearchQuery('');
     setSearchResults([]);
   }
 
   const handleLoginSuccess = () => {
-    checkUserStatus(); 
+    checkUserStatus();
     setIsLoginModalOpen(false);
   };
 
@@ -253,19 +256,19 @@ const Header = () => {
       localStorage.removeItem('currentUser');
     }
     setCurrentUser(null);
-    window.dispatchEvent(new CustomEvent('currentUserUpdated')); 
+    window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/'); 
+    router.replace('/');
   };
 
   const handleCreateAccountSuccess = () => {
-    checkUserStatus(); 
+    checkUserStatus();
     setIsCreateAccountModalOpen(false);
     setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
   const openCreateAccountModal = () => {
-    setIsLoginModalOpen(false); 
+    setIsLoginModalOpen(false);
     setIsCreateAccountModalOpen(true);
   };
 
@@ -274,13 +277,34 @@ const Header = () => {
     setIsLoginModalOpen(true);
   };
 
+  const handleLessonsMouseEnter = () => {
+    if (lessonsPopoverLeaveTimerRef.current) {
+      clearTimeout(lessonsPopoverLeaveTimerRef.current);
+      lessonsPopoverLeaveTimerRef.current = null;
+    }
+    lessonsPopoverEnterTimerRef.current = setTimeout(() => {
+      setIsLessonsPopoverOpen(true);
+    }, 150); // Slightly longer delay to open
+  };
+
+  const handleLessonsMouseLeave = () => {
+    if (lessonsPopoverEnterTimerRef.current) {
+      clearTimeout(lessonsPopoverEnterTimerRef.current);
+      lessonsPopoverEnterTimerRef.current = null;
+    }
+    lessonsPopoverLeaveTimerRef.current = setTimeout(() => {
+      setIsLessonsPopoverOpen(false);
+    }, 300); // Slightly longer delay to close
+  };
+
 
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
-    { 
-      label: "Dersler", 
+    {
+      label: "Dersler",
+      href: "/dersler", // Main link for the Popover/Dropdown trigger
       icon: <DerslerIcon className="h-4 w-4" />,
-      isDropdown: true,
+      isPopover: true, // Indicate this item should use Popover on desktop
       subItems: [
         { href: "/dersler/9-sinif", label: "9. Sınıf" },
         { href: "/dersler/10-sinif", label: "10. Sınıf" },
@@ -310,36 +334,66 @@ const Header = () => {
             <DnaLogo />
              <div className="flex flex-col items-start ml-1 -mt-1">
                 <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
-                <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-1">
+                <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
                     Öğrenmenin DNA’sı
                 </span>
             </div>
           </Link>
 
           <nav className="hidden md:flex flex-1 items-center space-x-1">
-            {navItems.map((item) => (
-              item.isDropdown && item.subItems ? (
-                <DropdownMenu key={item.label}>
-                  <DropdownMenuTrigger asChild>
+            {navItems.map((item) =>
+              item.isPopover ? (
+                <Popover key={item.label} open={isLessonsPopoverOpen} onOpenChange={setIsLessonsPopoverOpen}>
+                  <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
                       className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
+                      onMouseEnter={handleLessonsMouseEnter}
+                      onMouseLeave={handleLessonsMouseLeave}
+                      onClick={() => setIsLessonsPopoverOpen(prev => !prev)} // Toggle on click
                     >
                       {item.icon && <span className="mr-1.5">{item.icon}</span>}
                       <span className="capitalize">{item.label}</span>
                       <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel>{item.label} Seviyeleri</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {item.subItems.map(subItem => (
-                      <DropdownMenuItem key={subItem.href} asChild>
-                        <Link href={subItem.href}>{subItem.label}</Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-64 p-4 shadow-xl rounded-lg border border-border/50 bg-card text-card-foreground"
+                    align="start"
+                    onMouseEnter={handleLessonsMouseEnter} // Keep open if mouse enters content
+                    onMouseLeave={handleLessonsMouseLeave} // Close if mouse leaves content
+                  >
+                    <div className="grid gap-3">
+                        <p className="text-sm text-muted-foreground px-1">Farklı seviyelerdeki biyoloji derslerini keşfedin.</p>
+                        <div className="grid grid-cols-2 gap-2">
+                           {item.subItems?.map(subItem => (
+                             <Link
+                               key={subItem.href}
+                               href={subItem.href}
+                               className="block rounded-md p-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                               onClick={() => setIsLessonsPopoverOpen(false)}
+                              >
+                               {subItem.label}
+                             </Link>
+                           ))}
+                        </div>
+                        <DropdownMenuSeparator />
+                        <Link
+                           href="/dersler"
+                           className="block rounded-md p-2 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground transition-colors"
+                           onClick={() => setIsLessonsPopoverOpen(false)}
+                         >
+                           Tüm Dersler
+                         </Link>
+                        <DropdownMenuSeparator />
+                        <div className="px-1">
+                            <p className="text-xs font-semibold text-muted-foreground mb-1.5">Popüler Kurslar</p>
+                            <Link href="#" className="block text-xs text-foreground hover:underline mb-1" onClick={() => {setIsLessonsPopoverOpen(false); toast({title:"Yakında!"})}}>Hücrenin Temelleri (Yakında)</Link>
+                            <Link href="#" className="block text-xs text-foreground hover:underline" onClick={() => {setIsLessonsPopoverOpen(false); toast({title:"Yakında!"})}}>Genetik Bilimine Giriş (Yakında)</Link>
+                        </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               ) : (
                 <Link href={item.href} key={item.href} passHref legacyBehavior>
                      <Button
@@ -352,12 +406,12 @@ const Header = () => {
                      </Button>
                 </Link>
               )
-            ))}
+            )}
           </nav>
 
           <div className="flex flex-1 items-center justify-end space-x-2">
             <div className="hidden md:flex items-center space-x-2">
-              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <Popover open={isSearchPopoverOpen} onOpenChange={setIsSearchPopoverOpen}>
                 <PopoverTrigger asChild>
                    <div className="relative w-full max-w-[150px] sm:max-w-[180px]">
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -366,8 +420,8 @@ const Header = () => {
                         placeholder="Ara..."
                         value={searchQuery}
                         onChange={handleSearchChange}
-                        className="pl-9 pr-8 h-9 rounded-full bg-secondary/70 border-transparent focus:bg-background focus:border-border"
-                        onFocus={() => setIsPopoverOpen(true)}
+                        className="pl-9 pr-8 h-9 rounded-md bg-secondary/70 border-transparent focus:bg-background focus:border-border" // Adjusted for better contrast
+                        onFocus={() => setIsSearchPopoverOpen(true)}
                       />
                       {searchQuery && (
                           <Button
@@ -384,7 +438,7 @@ const Header = () => {
                 <PopoverContent
                     className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                     align="end"
-                    onOpenAutoFocus={(e) => e.preventDefault()} 
+                    onOpenAutoFocus={(e) => e.preventDefault()}
                  >
                   {isSearching && searchQuery && (
                      <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -400,7 +454,7 @@ const Header = () => {
                                 <Link
                                     href={`/articles/${result.id}`}
                                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                    onClick={closePopover} 
+                                    onClick={closeSearchPopover}
                                  >
                                    <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                    <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -417,7 +471,7 @@ const Header = () => {
 
               <ThemeToggle />
 
-               {isMounted && currentUser && (currentUser.role === 'Admin') && ( 
+               {isMounted && currentUser && (currentUser.role === 'Admin') && (
                     <Button variant="outline" size="sm" asChild className="ml-1 shrink-0">
                        <Link href="/admin" passHref>
                           <ShieldCheck className="mr-1.5 h-4 w-4" />
@@ -426,7 +480,7 @@ const Header = () => {
                       </Link>
                   </Button>
                )}
-              {isMounted && currentUser && (currentUser.role !== 'Admin') && ( 
+              {isMounted && currentUser && (currentUser.role !== 'Admin') && (
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
@@ -464,7 +518,7 @@ const Header = () => {
                       </DropdownMenuContent>
                   </DropdownMenu>
               )}
-              {isMounted && !currentUser && ( 
+              {isMounted && !currentUser && (
                    <>
                      <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
                         <LogIn className="mr-1.5 h-4 w-4" />
@@ -493,14 +547,14 @@ const Header = () => {
                                 <DnaLogo />
                                 <div className="flex flex-col items-start ml-1 -mt-1">
                                     <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
-                                     <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-1">
+                                     <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
                                         Öğrenmenin DNA’sı
                                     </span>
                                 </div>
                             </Link>
                         </div>
                    </SheetClose>
-                  <ScrollArea className="h-[calc(100vh-65px)]"> 
+                  <ScrollArea className="h-[calc(100vh-65px)]">
                     <div className="p-6 space-y-4">
                         <div className="relative">
                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -536,7 +590,7 @@ const Header = () => {
                                         <Link
                                             href={`/articles/${result.id}`}
                                             className="flex items-center justify-between p-2 rounded-md hover:bg-accent transition-colors text-sm"
-                                            onClick={closePopover} 
+                                            onClick={closeSearchPopover}
                                          >
                                            <span className="font-medium truncate mr-2">{result.title}</span>
                                            <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -551,7 +605,7 @@ const Header = () => {
 
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
                         {navItems.map((item) => (
-                          item.isDropdown && item.subItems ? (
+                          item.isPopover && item.subItems ? ( // Use isPopover to identify it as a Dropdown in mobile
                             <DropdownMenu key={`mobile-${item.label}`}>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -563,7 +617,7 @@ const Header = () => {
                                   <ChevronDown className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3"> {/* Adjust width as needed */}
+                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3">
                                 <DropdownMenuLabel>{item.label} Seviyeleri</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {item.subItems.map(subItem => (
