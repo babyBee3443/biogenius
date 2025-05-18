@@ -21,6 +21,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from '@/hooks/use-toast';
@@ -35,21 +39,17 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
-  // This is mock data. In a real application, you would fetch this from your backend/API.
-  // We'll assume article data is fetched from where articles are defined.
-  // For now, let's use a simplified version of what might come from getArticles.
   const mockData: ArticleStub[] = [
     { id: 'gen-duzenleme', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
     { id: 'mikrobiyom', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
     { id: 'hucre-dongusu', title: 'Hücre Döngüsü ve Kontrol Noktaları', category: 'Biyoloji' },
     { id: 'protein-sentezi', title: 'Protein Sentezi: Transkripsiyon ve Translasyon', category: 'Biyoloji' },
-    // Add more mock articles if needed, especially for testing search
   ];
   return mockData.filter(article =>
     (article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.category.toLowerCase().includes(query.toLowerCase())) &&
-    article.category === 'Biyoloji' // Assuming BiyoHox only has Biyoloji articles for now
-  ).slice(0, 5); // Limit results for the popover
+    article.category === 'Biyoloji'
+  ).slice(0, 5);
 };
 
 
@@ -63,7 +63,7 @@ const DnaLogo = () => {
             setBaseAmplitudes(prevAmplitudes =>
                 prevAmplitudes.map(amp => 10 + Math.random() * 4 - 2)
             );
-        }, 2000); // Slower update for a more subtle "breathing"
+        }, 2000);
         return () => clearInterval(intervalId);
     }, []);
 
@@ -97,7 +97,7 @@ const DnaLogo = () => {
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="12s" // Slower rotation
+                    dur="12s"
                     repeatCount="indefinite"
                 />
                 <animate attributeName="stroke-width" values="5;6;5" dur="3.5s" repeatCount="indefinite" />
@@ -114,7 +114,7 @@ const DnaLogo = () => {
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="12s" // Slower rotation
+                    dur="12s"
                     repeatCount="indefinite"
                 />
                 <animate attributeName="stroke-width" values="5;6;5" dur="3.5s" repeatCount="indefinite" begin="0.3s" />
@@ -131,14 +131,14 @@ const DnaLogo = () => {
                         y1={yPos}
                         x2={x2}
                         y2={yPos}
-                        strokeWidth="2.5" // Slightly thinner bases
+                        strokeWidth="2.5"
                         strokeLinecap="round"
-                        className="stroke-green-500/40 dark:stroke-green-400/20" // Softer colors
+                        className="stroke-green-500/40 dark:stroke-green-400/20"
                     >
                          <animate
                             attributeName="stroke"
                             values="hsl(var(--primary)/0.4);hsl(145 80% 40% / 0.6);hsl(145 75% 45% / 0.4);hsl(var(--primary)/0.4)"
-                            dur="6s" // Slower color animation
+                            dur="6s"
                             repeatCount="indefinite"
                             begin={`${i * 0.25}s`}
                         />
@@ -148,7 +148,7 @@ const DnaLogo = () => {
                             type="rotate"
                             from="0 0 0"
                             to="360 0 0"
-                            dur="12s" // Slower rotation
+                            dur="12s"
                             repeatCount="indefinite"
                         />
                     </line>
@@ -171,10 +171,6 @@ const Header = () => {
   const [isMounted, setIsMounted] = React.useState(false);
   const router = useRouter();
 
-  const [isLessonsPopoverOpen, setIsLessonsPopoverOpen] = React.useState(false);
-  const lessonsPopoverEnterTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const lessonsPopoverLeaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-
 
   const checkUserStatus = React.useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -185,7 +181,7 @@ const Header = () => {
           setCurrentUser(user);
         } catch (e) {
           console.error("Error parsing current user from localStorage in Header", e);
-          setCurrentUser(null); // Reset on error
+          setCurrentUser(null);
         }
       } else {
         setCurrentUser(null);
@@ -195,7 +191,7 @@ const Header = () => {
 
   React.useEffect(() => {
     setIsMounted(true);
-    checkUserStatus(); // Check on initial mount
+    checkUserStatus();
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser') {
@@ -203,9 +199,7 @@ const Header = () => {
         }
     };
 
-    // Listen for storage changes (e.g., logout from another tab)
     window.addEventListener('storage', handleStorageChange);
-    // Listen for custom event dispatched by login/logout functions
     window.addEventListener('currentUserUpdated', checkUserStatus);
 
     return () => {
@@ -216,9 +210,9 @@ const Header = () => {
 
 
   React.useEffect(() => {
-    setIsSearchPopoverOpen(searchQuery.length > 0); // Open popover if there's a query
+    setIsSearchPopoverOpen(searchQuery.length > 0);
     const handler = setTimeout(async () => {
-      if (searchQuery.length > 1) { // Start searching after 2 characters
+      if (searchQuery.length > 1) {
         setIsSearching(true);
         const results = await searchArticles(searchQuery);
         setSearchResults(results);
@@ -226,7 +220,7 @@ const Header = () => {
       } else {
         setSearchResults([]);
       }
-    }, 300); // Debounce search
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -245,13 +239,11 @@ const Header = () => {
   };
 
    const closeSearchPopover = () => {
-    // setSearchQuery(''); // Keep search query if user clicks away, so they don't lose it
-    // setSearchResults([]);
     setIsSearchPopoverOpen(false);
   }
 
   const handleLoginSuccess = () => {
-    checkUserStatus(); // Re-check user status
+    checkUserStatus();
     setIsLoginModalOpen(false);
   };
 
@@ -260,20 +252,19 @@ const Header = () => {
       localStorage.removeItem('currentUser');
     }
     setCurrentUser(null);
-    window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify other parts of the app
+    window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/'); // Redirect to homepage on logout
+    router.replace('/');
   };
 
   const handleCreateAccountSuccess = () => {
     checkUserStatus();
     setIsCreateAccountModalOpen(false);
-    // Optionally open login modal after successful account creation
     setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
   const openCreateAccountModal = () => {
-    setIsLoginModalOpen(false); // Close login if open
+    setIsLoginModalOpen(false);
     setIsCreateAccountModalOpen(true);
   };
 
@@ -282,43 +273,61 @@ const Header = () => {
     setIsLoginModalOpen(true);
   };
 
-  const handleLessonsMouseEnter = () => {
-    if (lessonsPopoverLeaveTimerRef.current) {
-      clearTimeout(lessonsPopoverLeaveTimerRef.current);
-      lessonsPopoverLeaveTimerRef.current = null;
-    }
-    lessonsPopoverEnterTimerRef.current = setTimeout(() => {
-      setIsLessonsPopoverOpen(true);
-    }, 150); // Delay before opening on hover
-  };
-
-  const handleLessonsMouseLeave = () => {
-    if (lessonsPopoverEnterTimerRef.current) {
-      clearTimeout(lessonsPopoverEnterTimerRef.current);
-      lessonsPopoverEnterTimerRef.current = null;
-    }
-    lessonsPopoverLeaveTimerRef.current = setTimeout(() => {
-      setIsLessonsPopoverOpen(false);
-    }, 300); // Delay before closing on hover leave
-  };
-
-
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
     {
       label: "Dersler",
-      href: "/dersler", // Main link for the Popover/Dropdown trigger
       icon: <DerslerIcon className="h-4 w-4" />,
-      isPopover: true,
+      isDropdown: true,
       subItems: [
-        { href: "/dersler/9-sinif", label: "9. Sınıf" },
-        { href: "/dersler/10-sinif", label: "10. Sınıf" },
-        { href: "/dersler/11-sinif", label: "11. Sınıf" },
-        { href: "/dersler/12-sinif", label: "12. Sınıf" },
+        {
+          label: "9. Sınıf",
+          href: "/dersler/9-sinif",
+          topics: [
+            { label: "Yaşam Bilimi Biyoloji", href: "/dersler/9-sinif/yasam-bilimi-biyoloji" },
+            { label: "Hücre", href: "/dersler/9-sinif/hucre" },
+            { label: "Canlılar Dünyası", href: "/dersler/9-sinif/canlilar-dunyasi" },
+          ]
+        },
+        {
+          label: "10. Sınıf",
+          href: "/dersler/10-sinif",
+          topics: [
+            { label: "Mitoz ve Eşeysiz Üreme", href: "/dersler/10-sinif/mitoz" },
+            { label: "Mayoz ve Eşeyli Üreme", href: "/dersler/10-sinif/mayoz" },
+            { label: "Kalıtımın Genel İlkeleri", href: "/dersler/10-sinif/kalitim" },
+            { label: "Ekosistem Ekolojisi", href: "/dersler/10-sinif/ekosistem-ekolojisi" },
+          ]
+        },
+        {
+          label: "11. Sınıf",
+          href: "/dersler/11-sinif",
+          topics: [
+            { label: "İnsan Fizyolojisi: Sinir Sistemi", href: "/dersler/11-sinif/sinir-sistemi" },
+            { label: "Endokrin Sistem", href: "/dersler/11-sinif/endokrin-sistem" },
+            { label: "Duyu Organları", href: "/dersler/11-sinif/duyu-organlari" },
+            { label: "Destek ve Hareket Sistemi", href: "/dersler/11-sinif/destek-hareket" },
+            { label: "Sindirim Sistemi", href: "/dersler/11-sinif/sindirim-sistemi" },
+            { label: "Dolaşım ve Bağışıklık Sistemi", href: "/dersler/11-sinif/dolasim-bagisiklik" },
+            { label: "Solunum Sistemi", href: "/dersler/11-sinif/solunum-sistemi" },
+            { label: "Boşaltım Sistemi", href: "/dersler/11-sinif/bosaltim-sistemi" },
+            { label: "Üreme Sistemi ve Embriyonik Gelişim", href: "/dersler/11-sinif/ureme-gelisim" },
+            { label: "Komünite ve Popülasyon Ekolojisi", href: "/dersler/11-sinif/komunite-populasyon" },
+          ]
+        },
+        {
+          label: "12. Sınıf",
+          href: "/dersler/12-sinif",
+          topics: [
+            { label: "Genden Proteine", href: "/dersler/12-sinif/genden-proteine" },
+            { label: "Canlılarda Enerji Dönüşümleri", href: "/dersler/12-sinif/enerji-donusumleri" },
+            { label: "Bitki Biyolojisi", href: "/dersler/12-sinif/bitki-biyolojisi" },
+            { label: "Canlılar ve Çevre", href: "/dersler/12-sinif/canlilar-cevre" },
+          ]
+        },
       ]
     },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
-    // { href: "/biyolojide-neler-oluyor", label: "Biyolojide Neler Oluyor?", icon: <Newspaper className="h-4 w-4"/> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
   ];
@@ -328,7 +337,6 @@ const Header = () => {
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
-     // Add more category color rules if needed
      return 'bg-muted text-muted-foreground';
   }
 
@@ -349,47 +357,49 @@ const Header = () => {
 
           <nav className="hidden md:flex flex-1 items-center space-x-1">
             {navItems.map((item) =>
-              item.isPopover ? (
-                <Popover key={item.label} open={isLessonsPopoverOpen} onOpenChange={setIsLessonsPopoverOpen}>
-                  <PopoverTrigger asChild>
+              item.isDropdown && item.subItems ? (
+                <DropdownMenu key={item.label}>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
-                      onMouseEnter={handleLessonsMouseEnter}
-                      onMouseLeave={handleLessonsMouseLeave}
-                      onClick={() => setIsLessonsPopoverOpen(prev => !prev)} // Toggle on click for accessibility
                     >
                       {item.icon && <span className="mr-1.5">{item.icon}</span>}
                       <span className="capitalize">{item.label}</span>
                       <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-48 p-2 shadow-xl rounded-lg border border-border/50 bg-card text-card-foreground" // Simplified width
-                    align="start"
-                    onMouseEnter={handleLessonsMouseEnter} 
-                    onMouseLeave={handleLessonsMouseLeave}
-                  >
-                    <div className="grid grid-cols-1 gap-1"> {/* Changed to 1 column for simplicity */}
-                       {item.subItems?.map(subItem => (
-                         <Link
-                           key={subItem.href}
-                           href={subItem.href}
-                           className="block rounded-md p-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                           onClick={() => setIsLessonsPopoverOpen(false)}
-                          >
-                           {subItem.label}
-                         </Link>
-                       ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuLabel>{item.label}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {item.subItems.map(subItem => (
+                      <DropdownMenuSub key={subItem.label}>
+                        <DropdownMenuSubTrigger>
+                          <Link href={subItem.href} className="flex-grow text-left">{subItem.label}</Link>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            {subItem.topics?.map(topic => (
+                              <DropdownMenuItem key={topic.label} asChild>
+                                <Link href={topic.href}>{topic.label}</Link>
+                              </DropdownMenuItem>
+                            ))}
+                             <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <Link href={subItem.href}>Tüm {subItem.label} Konuları</Link>
+                              </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <Link href={item.href} key={item.href} passHref legacyBehavior>
                      <Button
                         variant="ghost"
                         className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
-                        as="a" // Ensure it renders as an anchor tag
+                        as="a"
                      >
                        {item.icon && <span className="mr-1.5">{item.icon}</span>}
                        <span className="capitalize">{item.label}</span>
@@ -400,11 +410,10 @@ const Header = () => {
           </nav>
 
           <div className="flex flex-1 items-center justify-end space-x-2">
-            {/* Desktop Controls */}
             <div className="hidden md:flex items-center space-x-2">
               <Popover open={isSearchPopoverOpen} onOpenChange={setIsSearchPopoverOpen}>
                 <PopoverTrigger asChild>
-                   <div className="relative w-full max-w-[150px] sm:max-w-[180px]"> {/* Reduced max width */}
+                   <div className="relative w-full max-w-[150px] sm:max-w-[180px]">
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="text"
@@ -429,7 +438,7 @@ const Header = () => {
                 <PopoverContent
                     className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                     align="end"
-                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus on search input inside popover
+                    onOpenAutoFocus={(e) => e.preventDefault()}
                  >
                   {isSearching && searchQuery && (
                      <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -445,7 +454,7 @@ const Header = () => {
                                 <Link
                                     href={`/articles/${result.id}`}
                                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                    onClick={closeSearchPopover} // Close popover on link click
+                                    onClick={closeSearchPopover}
                                  >
                                    <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                    <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -523,7 +532,6 @@ const Header = () => {
               )}
             </div>
 
-            {/* Mobile Menu Trigger */}
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
@@ -548,7 +556,6 @@ const Header = () => {
                    </SheetClose>
                   <ScrollArea className="h-[calc(100vh-65px)]">
                     <div className="p-6 space-y-4">
-                        {/* Mobile Search */}
                         <div className="relative">
                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                            <Input
@@ -569,7 +576,6 @@ const Header = () => {
                                </Button>
                              )}
                          </div>
-                         {/* Mobile Search Results */}
                          {isSearching && searchQuery && (
                             <div className="p-2 text-sm text-center text-muted-foreground">Aranıyor...</div>
                          )}
@@ -597,10 +603,9 @@ const Header = () => {
                            </ul>
                          )}
 
-                      {/* Mobile Navigation */}
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
                         {navItems.map((item) => (
-                          item.isPopover && item.subItems ? (
+                          item.isDropdown && item.subItems ? (
                             <DropdownMenu key={`mobile-${item.label}`}>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -612,15 +617,32 @@ const Header = () => {
                                   <ChevronDown className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3"> {/* Adjust width relative to sheet */}
-                                <DropdownMenuLabel>{item.label} Seviyeleri</DropdownMenuLabel>
+                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3">
+                                <DropdownMenuLabel>{item.label}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {item.subItems.map(subItem => (
-                                  <SheetClose asChild key={`mobile-sub-${subItem.href}`}>
-                                    <DropdownMenuItem asChild>
-                                      <Link href={subItem.href}>{subItem.label}</Link>
-                                    </DropdownMenuItem>
-                                  </SheetClose>
+                                  <DropdownMenuSub key={`mobile-sub-${subItem.label}`}>
+                                    <DropdownMenuSubTrigger>
+                                       <Link href={subItem.href} className="flex-grow text-left">{subItem.label}</Link>
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                      <DropdownMenuSubContent>
+                                        {subItem.topics?.map(topic => (
+                                          <SheetClose asChild key={`mobile-topic-${topic.label}`}>
+                                            <DropdownMenuItem asChild>
+                                              <Link href={topic.href}>{topic.label}</Link>
+                                            </DropdownMenuItem>
+                                          </SheetClose>
+                                        ))}
+                                        <DropdownMenuSeparator />
+                                          <SheetClose asChild>
+                                            <DropdownMenuItem asChild>
+                                               <Link href={subItem.href}>Tüm {subItem.label} Konuları</Link>
+                                            </DropdownMenuItem>
+                                          </SheetClose>
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                  </DropdownMenuSub>
                                 ))}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -630,7 +652,7 @@ const Header = () => {
                                    <Button
                                       variant="ghost"
                                       className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
-                                       as="a" // Ensure it renders as an anchor tag
+                                       as="a"
                                    >
                                      {item.icon}
                                      <span className="capitalize">{item.label}</span>
@@ -641,7 +663,6 @@ const Header = () => {
                         ))}
                       </nav>
 
-                      {/* Mobile User/Auth Controls */}
                       <div className="border-t border-border/30 pt-4 space-y-3">
                         {isMounted && currentUser && (currentUser.role === 'Admin') && (
                            <SheetClose asChild>
@@ -697,7 +718,6 @@ const Header = () => {
           </div>
         </div>
       </header>
-      {/* Modals */}
       <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} onLoginSuccess={handleLoginSuccess} openCreateAccount={openCreateAccountModal} />
       <CreateAccountModal isOpen={isCreateAccountModalOpen} setIsOpen={setIsCreateAccountModalOpen} onAccountCreateSuccess={handleCreateAccountSuccess} openLogin={openLoginModalFromCreate} />
     </>
