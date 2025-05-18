@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, FileText as DerslerIcon } from 'lucide-react';
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, FileText as DerslerIcon, ChevronDown } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,6 +21,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal
+
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from '@/hooks/use-toast';
@@ -35,9 +41,7 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
-  // This is mock data. In a real application, you'd fetch this from your backend.
   const mockData: ArticleStub[] = [
-    // Only Biyoloji articles are relevant for the main site search now
     { id: 'gen-duzenleme', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
     { id: 'mikrobiyom', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
     { id: 'hucre-dongusu', title: 'Hücre Döngüsü ve Kontrol Noktaları', category: 'Biyoloji' },
@@ -46,7 +50,7 @@ const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   return mockData.filter(article =>
     (article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.category.toLowerCase().includes(query.toLowerCase())) &&
-    article.category === 'Biyoloji' // Ensure only biology articles are searched
+    article.category === 'Biyoloji'
   ).slice(0, 5);
 };
 
@@ -60,10 +64,10 @@ const DnaLogo = () => (
         <defs>
             <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="hsl(var(--primary))">
-                    <animate attributeName="stop-color" values="hsl(var(--primary));hsl(145 60% 40%);hsl(var(--primary))" dur="4s" repeatCount="indefinite" />
+                    <animate attributeName="stop-color" values="hsl(175 80% 30%);hsl(145 60% 40%);hsl(175 80% 30%)" dur="4s" repeatCount="indefinite" />
                 </stop>
                 <stop offset="100%" stopColor="hsl(145 75% 45%)">
-                    <animate attributeName="stop-color" values="hsl(145 75% 45%);hsl(var(--primary));hsl(145 75% 45%)" dur="4s" repeatCount="indefinite" />
+                    <animate attributeName="stop-color" values="hsl(145 75% 45%);hsl(175 80% 30%);hsl(145 75% 45%)" dur="4s" repeatCount="indefinite" />
                 </stop>
             </linearGradient>
         </defs>
@@ -105,7 +109,18 @@ const DnaLogo = () => (
             {[...Array(7)].map((_, i) => {
                 const yPos = -35 + i * (70 / 6);
                 const angle = (i * Math.PI) / 3.5;
-                const amplitude = 10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i * 0.5) * 2 : Math.cos(Date.now() / 700 + i * 0.5) * 2);
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                const [amplitude, setAmplitude] = React.useState(10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i * 0.5) * 2 : Math.cos(Date.now() / 700 + i * 0.5) * 2));
+
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                React.useEffect(() => {
+                    const intervalId = setInterval(() => {
+                        setAmplitude(10 + (i % 2 === 0 ? Math.sin(Date.now() / 700 + i * 0.5) * 2 : Math.cos(Date.now() / 700 + i * 0.5) * 2));
+                    }, 50); 
+                    return () => clearInterval(intervalId);
+                }, [i]);
+
+
                 const x1 = Math.sin(angle) * amplitude;
                 const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
@@ -229,7 +244,7 @@ const Header = () => {
   }
 
   const handleLoginSuccess = () => {
-    checkUserStatus(); // Re-check user status to update header
+    checkUserStatus(); 
     setIsLoginModalOpen(false);
   };
 
@@ -238,20 +253,19 @@ const Header = () => {
       localStorage.removeItem('currentUser');
     }
     setCurrentUser(null);
-    window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify other components
+    window.dispatchEvent(new CustomEvent('currentUserUpdated')); 
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/'); // Redirect to home on logout
+    router.replace('/'); 
   };
 
   const handleCreateAccountSuccess = () => {
-    checkUserStatus(); // Re-check user status
+    checkUserStatus(); 
     setIsCreateAccountModalOpen(false);
-    // Optionally open login modal after successful account creation
     setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
   const openCreateAccountModal = () => {
-    setIsLoginModalOpen(false); // Close login modal if open
+    setIsLoginModalOpen(false); 
     setIsCreateAccountModalOpen(true);
   };
 
@@ -263,8 +277,18 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
+    { 
+      label: "Dersler", 
+      icon: <DerslerIcon className="h-4 w-4" />,
+      isDropdown: true,
+      subItems: [
+        { href: "/dersler/9-sinif", label: "9. Sınıf" },
+        { href: "/dersler/10-sinif", label: "10. Sınıf" },
+        { href: "/dersler/11-sinif", label: "11. Sınıf" },
+        { href: "/dersler/12-sinif", label: "12. Sınıf" },
+      ]
+    },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
-    { href: "/dersler", label: "Dersler", icon: <DerslerIcon className="h-4 w-4" /> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
   ];
@@ -274,7 +298,6 @@ const Header = () => {
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
-     // Fallback or other category styles
      return 'bg-muted text-muted-foreground';
   }
 
@@ -285,9 +308,9 @@ const Header = () => {
         <div className="container flex h-16 items-center">
           <Link href="/" className="mr-6 flex items-center group">
             <DnaLogo />
-             <div className="flex flex-col items-start ml-1 -mt-0.5">
+             <div className="flex flex-col items-start ml-1 -mt-1">
                 <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
-                <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
+                <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-1">
                     Öğrenmenin DNA’sı
                 </span>
             </div>
@@ -295,20 +318,44 @@ const Header = () => {
 
           <nav className="hidden md:flex flex-1 items-center space-x-1">
             {navItems.map((item) => (
-              <Link href={item.href} key={item.href} passHref legacyBehavior>
-                   <Button
+              item.isDropdown && item.subItems ? (
+                <DropdownMenu key={item.label}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
                       variant="ghost"
-                      className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                      as="a"
-                   >
-                     <span className="capitalize">{item.label}</span>
-                   </Button>
-              </Link>
+                      className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
+                    >
+                      {item.icon && <span className="mr-1.5">{item.icon}</span>}
+                      <span className="capitalize">{item.label}</span>
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuLabel>{item.label} Seviyeleri</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {item.subItems.map(subItem => (
+                      <DropdownMenuItem key={subItem.href} asChild>
+                        <Link href={subItem.href}>{subItem.label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href={item.href} key={item.href} passHref legacyBehavior>
+                     <Button
+                        variant="ghost"
+                        className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
+                        as="a"
+                     >
+                       {item.icon && <span className="mr-1.5">{item.icon}</span>}
+                       <span className="capitalize">{item.label}</span>
+                     </Button>
+                </Link>
+              )
             ))}
           </nav>
 
           <div className="flex flex-1 items-center justify-end space-x-2">
-            {/* Desktop Search, Theme Toggle, Auth Buttons */}
             <div className="hidden md:flex items-center space-x-2">
               <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                 <PopoverTrigger asChild>
@@ -431,8 +478,6 @@ const Header = () => {
               )}
             </div>
 
-
-            {/* Mobile Menu Trigger */}
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
@@ -446,18 +491,17 @@ const Header = () => {
                         <div className="flex items-center p-4 border-b">
                             <Link href="/" className="flex items-center group">
                                 <DnaLogo />
-                                <div className="flex flex-col items-start ml-1 -mt-0.5">
+                                <div className="flex flex-col items-start ml-1 -mt-1">
                                     <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
-                                     <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
+                                     <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-1">
                                         Öğrenmenin DNA’sı
                                     </span>
                                 </div>
                             </Link>
                         </div>
                    </SheetClose>
-                  <ScrollArea className="h-[calc(100vh-65px)]"> {/* Adjust height considering header */}
+                  <ScrollArea className="h-[calc(100vh-65px)]"> 
                     <div className="p-6 space-y-4">
-                       {/* Mobile Search */}
                         <div className="relative">
                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                            <Input
@@ -507,18 +551,44 @@ const Header = () => {
 
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
                         {navItems.map((item) => (
-                          <SheetClose asChild key={`mobile-${item.href}`}>
-                            <Link href={item.href} passHref legacyBehavior>
-                                 <Button
-                                    variant="ghost"
-                                    className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
-                                     as="a"
-                                 >
-                                   {item.icon}
-                                   <span className="capitalize">{item.label}</span>
-                                 </Button>
-                             </Link>
-                           </SheetClose>
+                          item.isDropdown && item.subItems ? (
+                            <DropdownMenu key={`mobile-${item.label}`}>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
+                                >
+                                  {item.icon}
+                                  <span className="capitalize flex-grow text-left">{item.label}</span>
+                                  <ChevronDown className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3"> {/* Adjust width as needed */}
+                                <DropdownMenuLabel>{item.label} Seviyeleri</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {item.subItems.map(subItem => (
+                                  <SheetClose asChild key={`mobile-sub-${subItem.href}`}>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={subItem.href}>{subItem.label}</Link>
+                                    </DropdownMenuItem>
+                                  </SheetClose>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <SheetClose asChild key={`mobile-${item.href}`}>
+                              <Link href={item.href} passHref legacyBehavior>
+                                   <Button
+                                      variant="ghost"
+                                      className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
+                                       as="a"
+                                   >
+                                     {item.icon}
+                                     <span className="capitalize">{item.label}</span>
+                                   </Button>
+                               </Link>
+                             </SheetClose>
+                          )
                         ))}
                       </nav>
 
