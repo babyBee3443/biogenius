@@ -6,14 +6,13 @@ import { getCourseById, type Course, type CourseSection, type Lesson } from '@/l
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronLeft, CheckCircle, Circle, Video, FileText, Loader2, AlertTriangle } from 'lucide-react'; // Changed RadioButtonUnchecked to Circle
+import { ChevronRight, ChevronLeft, CheckCircle, Circle, Video, FileText, Loader2, AlertTriangle, BookCopy } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast'; 
-import { Progress } from '@/components/ui/progress'; // Import Progress
+import { toast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 // Re-using existing block renderers from article/note pages
-// Ensure these are correctly imported or defined if they are specific to those pages
 const TextBlockRenderer: React.FC<{ block: Extract<Lesson['contentBlocks'][0], { type: 'text' }> }> = ({ block }) => (
   <div dangerouslySetInnerHTML={{ __html: block.content?.replace(/\n/g, '<br />') || '<p class="italic text-muted-foreground">[Boş Metin Bloğu]</p>' }} />
 );
@@ -26,12 +25,12 @@ const HeadingBlockRenderer: React.FC<{ block: Extract<Lesson['contentBlocks'][0]
 const ImageBlockRenderer: React.FC<{ block: Extract<Lesson['contentBlocks'][0], { type: 'image' }> }> = ({ block }) => (
     <figure className="my-6">
         {block.url ? (
-            <Image 
-                src={block.url} 
-                alt={block.alt || 'Ders Görseli'} 
-                width={700} 
-                height={394} 
-                className="rounded-lg shadow-md mx-auto max-w-full h-auto" 
+            <Image
+                src={block.url}
+                alt={block.alt || 'Ders Görseli'}
+                width={700}
+                height={394}
+                className="rounded-lg shadow-md mx-auto max-w-full h-auto"
                 data-ai-hint="lesson content image"
                 loading="lazy"
             />
@@ -104,8 +103,8 @@ export default function DerslerPage() {
   const [currentLessonIndexInSection, setCurrentLessonIndexInSection] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
 
-  // For now, load a default course. Later, this could come from URL params or a course selection UI.
   const courseIdToLoad = "temel-hucre-biyolojisi";
 
   React.useEffect(() => {
@@ -116,7 +115,6 @@ export default function DerslerPage() {
         const course = await getCourseById(courseIdToLoad);
         if (course) {
           setSelectedCourse(course);
-          // Select the first lesson of the first section by default
           if (course.sections && course.sections.length > 0 && course.sections[0].lessons && course.sections[0].lessons.length > 0) {
             setSelectedLesson(course.sections[0].lessons[0]);
             setCurrentSectionIndex(0);
@@ -143,53 +141,51 @@ export default function DerslerPage() {
     }
   };
 
-  const handleNextLesson = () => {
+  const navigateLesson = (direction: 'next' | 'prev') => {
     if (!selectedCourse) return;
-    let nextLessonIndex = currentLessonIndexInSection + 1;
-    let nextSectionIndex = currentSectionIndex;
 
-    if (nextLessonIndex >= selectedCourse.sections[currentSectionIndex].lessons.length) {
-      // Move to the next section
-      nextSectionIndex++;
-      nextLessonIndex = 0;
+    let currentAbsoluteLessonIndex = 0;
+    for (let i = 0; i < currentSectionIndex; i++) {
+      currentAbsoluteLessonIndex += selectedCourse.sections[i].lessons.length;
     }
+    currentAbsoluteLessonIndex += currentLessonIndexInSection;
 
-    if (nextSectionIndex < selectedCourse.sections.length && 
-        selectedCourse.sections[nextSectionIndex] && 
-        selectedCourse.sections[nextSectionIndex].lessons[nextLessonIndex]) {
-      setSelectedLesson(selectedCourse.sections[nextSectionIndex].lessons[nextLessonIndex]);
-      setCurrentSectionIndex(nextSectionIndex);
-      setCurrentLessonIndexInSection(nextLessonIndex);
-    } else {
-      // End of course
-      toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
-    }
-  };
+    let newAbsoluteLessonIndex = direction === 'next' ? currentAbsoluteLessonIndex + 1 : currentAbsoluteLessonIndex - 1;
 
-  const handlePrevLesson = () => {
-     if (!selectedCourse) return;
-    let prevLessonIndex = currentLessonIndexInSection - 1;
-    let prevSectionIndex = currentSectionIndex;
-
-    if (prevLessonIndex < 0) {
-      // Move to the previous section's last lesson
-      prevSectionIndex--;
-      if (prevSectionIndex >= 0 && selectedCourse.sections[prevSectionIndex]) {
-        prevLessonIndex = selectedCourse.sections[prevSectionIndex].lessons.length - 1;
-      } else {
-        // Beginning of course
-        return;
+    let tempLessonCounter = 0;
+    for (let sectionIdx = 0; sectionIdx < selectedCourse.sections.length; sectionIdx++) {
+      for (let lessonIdx = 0; lessonIdx < selectedCourse.sections[sectionIdx].lessons.length; lessonIdx++) {
+        if (tempLessonCounter === newAbsoluteLessonIndex) {
+          setSelectedLesson(selectedCourse.sections[sectionIdx].lessons[lessonIdx]);
+          setCurrentSectionIndex(sectionIdx);
+          setCurrentLessonIndexInSection(lessonIdx);
+          return;
+        }
+        tempLessonCounter++;
       }
     }
-    if (prevSectionIndex >= 0 && 
-        selectedCourse.sections[prevSectionIndex] && 
-        selectedCourse.sections[prevSectionIndex].lessons[prevLessonIndex]) {
-        setSelectedLesson(selectedCourse.sections[prevSectionIndex].lessons[prevLessonIndex]);
-        setCurrentSectionIndex(prevSectionIndex);
-        setCurrentLessonIndexInSection(prevLessonIndex);
+
+    if (direction === 'next' && newAbsoluteLessonIndex >= totalLessons) {
+        toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
     }
   };
 
+  const handleNextLesson = () => navigateLesson('next');
+  const handlePrevLesson = () => navigateLesson('prev');
+  
+  const toggleLessonCompletion = (lessonId: string) => {
+    setCompletedLessons(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(lessonId)) {
+            newSet.delete(lessonId);
+            toast({ title: "Ders Tamamlanmadı", description: `"${selectedLesson?.title}" dersi tamamlanmadı olarak işaretlendi.`});
+        } else {
+            newSet.add(lessonId);
+            toast({ title: "Ders Tamamlandı!", description: `"${selectedLesson?.title}" dersi tamamlandı olarak işaretlendi.`});
+        }
+        return newSet;
+    });
+  };
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-[calc(100vh-150px)]"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Dersler yükleniyor...</span></div>;
@@ -204,21 +200,20 @@ export default function DerslerPage() {
   }
 
   const totalLessons = selectedCourse.sections.reduce((acc, section) => acc + (section.lessons?.length || 0), 0);
-  // Simulating completion for progress bar. In a real app, this would come from user data.
-  const completedLessons = Math.floor(Math.random() * (totalLessons > 0 ? totalLessons : 1));
+  const numCompletedLessons = completedLessons.size;
   const currentLessonNumber = selectedCourse.sections.slice(0, currentSectionIndex).reduce((acc, section) => acc + (section.lessons?.length || 0), 0) + currentLessonIndexInSection + 1;
-  const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+  const progressPercentage = totalLessons > 0 ? (numCompletedLessons / totalLessons) * 100 : 0;
 
+  const isCurrentLessonCompleted = selectedLesson ? completedLessons.has(selectedLesson.id) : false;
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-theme(spacing.16)-theme(spacing.12))] md:h-[calc(100vh-theme(spacing.16)-theme(spacing.4))] overflow-hidden"> {/* Adjust height based on header/footer */}
-      {/* Right Sidebar: Course Outline */}
+    <div className="flex flex-col md:flex-row h-[calc(100vh-theme(spacing.16)-theme(spacing.12))] md:h-[calc(100vh-theme(spacing.16)-theme(spacing.4))] overflow-hidden">
       <aside className="w-full md:w-80 lg:w-96 border-l md:border-r border-border bg-card flex-shrink-0 h-full">
         <ScrollArea className="h-full">
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-1">{selectedCourse.title}</h2>
             <p className="text-xs text-muted-foreground mb-3">{selectedCourse.instructor}</p>
-             <div className="text-xs text-muted-foreground mb-1">{completedLessons} / {totalLessons} ders tamamlandı</div>
+             <div className="text-xs text-muted-foreground mb-1">{numCompletedLessons} / {totalLessons} ders tamamlandı</div>
               <Progress value={progressPercentage} className="h-2 mb-4 [&>div]:bg-green-500" aria-label={`${progressPercentage}% tamamlandı`}/>
 
             {selectedCourse.sections.map((section, sectionIdx) => (
@@ -227,29 +222,32 @@ export default function DerslerPage() {
                   BÖLÜM {section.order}: {section.title}
                 </h3>
                 <ul className="space-y-1">
-                  {section.lessons.map((lesson, lessonIdx) => (
-                    <li key={lesson.id}>
-                      <Button
-                        variant={selectedLesson?.id === lesson.id ? "secondary" : "ghost"}
-                        className={cn(
-                          "w-full justify-start text-left h-auto py-2.5 px-3 rounded-md",
-                          selectedLesson?.id === lesson.id && "bg-primary/10 text-primary dark:bg-primary/20 ring-1 ring-primary/30"
-                        )}
-                        onClick={() => handleLessonClick(sectionIdx, lessonIdx)}
-                      >
-                        <div className="flex items-center w-full">
-                           {lesson.isCompleted ? <CheckCircle className="h-4 w-4 mr-2.5 text-green-500 flex-shrink-0"/> : <Circle className="h-4 w-4 mr-2.5 text-muted-foreground/70 flex-shrink-0"/>}
-                           <div className="flex-grow">
-                            <span className="block text-sm leading-snug font-medium">{lesson.title}</span>
-                            <span className="text-xs text-muted-foreground flex items-center mt-0.5">
-                                {lesson.videoUrl ? <Video size={12} className="inline mr-1"/> : <FileText size={12} className="inline mr-1"/>}
-                                {lesson.estimatedTime || "Bilinmiyor"}
-                            </span>
-                           </div>
-                        </div>
-                      </Button>
-                    </li>
-                  ))}
+                  {section.lessons.map((lesson, lessonIdx) => {
+                    const isCompleted = completedLessons.has(lesson.id);
+                    return (
+                        <li key={lesson.id}>
+                        <Button
+                            variant={selectedLesson?.id === lesson.id ? "secondary" : "ghost"}
+                            className={cn(
+                            "w-full justify-start text-left h-auto py-2.5 px-3 rounded-md",
+                            selectedLesson?.id === lesson.id && "bg-primary/10 text-primary dark:bg-primary/20 ring-1 ring-primary/30"
+                            )}
+                            onClick={() => handleLessonClick(sectionIdx, lessonIdx)}
+                        >
+                            <div className="flex items-center w-full">
+                            {isCompleted ? <CheckCircle className="h-4 w-4 mr-2.5 text-green-500 flex-shrink-0"/> : <Circle className="h-4 w-4 mr-2.5 text-muted-foreground/70 flex-shrink-0"/>}
+                            <div className="flex-grow">
+                                <span className="block text-sm leading-snug font-medium">{lesson.title}</span>
+                                <span className="text-xs text-muted-foreground flex items-center mt-0.5">
+                                    {lesson.videoUrl ? <Video size={12} className="inline mr-1"/> : <FileText size={12} className="inline mr-1"/>}
+                                    {lesson.estimatedTime || "Bilinmiyor"}
+                                </span>
+                            </div>
+                            </div>
+                        </Button>
+                        </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
@@ -257,7 +255,6 @@ export default function DerslerPage() {
         </ScrollArea>
       </aside>
 
-      {/* Left Main Content: Lesson Details */}
       <main className="flex-1 overflow-y-auto bg-background">
         {selectedLesson ? (
           <>
@@ -271,7 +268,7 @@ export default function DerslerPage() {
                   <iframe
                     width="100%"
                     height="100%"
-                    src={selectedLesson.videoUrl.replace("watch?v=", "embed/")} // Ensure embed URL
+                    src={selectedLesson.videoUrl.replace("watch?v=", "embed/")}
                     title={selectedLesson.title}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -283,27 +280,37 @@ export default function DerslerPage() {
               <div className="prose dark:prose-invert max-w-none">
                 {selectedLesson.contentBlocks.map(renderLessonBlock)}
               </div>
-               <div className="mt-12 flex justify-between border-t pt-6">
-                    <Button 
-                        variant="outline" 
-                        onClick={handlePrevLesson} 
-                        disabled={currentSectionIndex === 0 && currentLessonIndexInSection === 0}
+              <div className="mt-8 border-t pt-6 space-y-4">
+                <Button
+                    variant={isCurrentLessonCompleted ? "outline" : "default"}
+                    onClick={() => toggleLessonCompletion(selectedLesson.id)}
+                    className={cn("w-full sm:w-auto shadow-sm", isCurrentLessonCompleted && "border-green-500 text-green-600 hover:bg-green-500/10")}
+                >
+                    {isCurrentLessonCompleted ? (
+                        <> <CheckCircle className="mr-2 h-4 w-4"/> Dersi Tamamlandı İşaretini Kaldır</>
+                    ) : (
+                        <> <Circle className="mr-2 h-4 w-4"/> Dersi Tamamlandı Olarak İşaretle</>
+                    )}
+                </Button>
+                <div className="flex justify-between">
+                    <Button
+                        variant="outline"
+                        onClick={handlePrevLesson}
+                        disabled={currentLessonNumber <= 1}
                         className="shadow-sm"
                     >
                         <ChevronLeft className="mr-2 h-4 w-4" /> Önceki Ders
                     </Button>
-                    <Button 
-                        variant="default" 
-                        onClick={handleNextLesson} 
-                        disabled={
-                            currentSectionIndex === selectedCourse.sections.length - 1 && 
-                            currentLessonIndexInSection === selectedCourse.sections[selectedCourse.sections.length -1].lessons.length -1 
-                        }
+                    <Button
+                        variant="default"
+                        onClick={handleNextLesson}
+                        disabled={currentLessonNumber >= totalLessons}
                         className="shadow-sm"
                     >
                         Sonraki Ders <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                 </div>
+               </div>
             </div>
           </>
         ) : (
@@ -316,5 +323,3 @@ export default function DerslerPage() {
     </div>
   );
 }
-
-    
