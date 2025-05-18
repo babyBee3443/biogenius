@@ -161,20 +161,12 @@ export default function DerslerPage() {
           setSelectedLesson(selectedCourse.sections[sectionIdx].lessons[lessonIdx]);
           setCurrentSectionIndex(sectionIdx);
           setCurrentLessonIndexInSection(lessonIdx);
-           // Check if this navigation completes the course
-          if (direction === 'next' && newAbsoluteLessonIndex === totalLessons -1 && completedLessons.size === totalLessons -1 && !completedLessons.has(selectedCourse.sections[sectionIdx].lessons[lessonIdx].id) ) {
-            // This is the last lesson and about to be marked as completed
-            // No, wait, completion is handled by toggleLessonCompletion.
-            // Toast for course completion should happen if this is the last lesson AND all are completed
-            // The actual check for course completion will be after marking this one complete.
-          }
           return;
         }
         tempLessonCounter++;
       }
     }
-     // This part is reached if trying to go beyond the last lesson
-    if (direction === 'next' && newAbsoluteLessonIndex >= totalLessons) {
+     if (direction === 'next' && newAbsoluteLessonIndex >= totalLessons) {
         const allMarked = completedLessons.size === totalLessons;
         if (allMarked) {
              setTimeout(() => {
@@ -192,7 +184,7 @@ export default function DerslerPage() {
     let lessonTitle = selectedLesson?.title || "Bu ders";
     if (newSet.has(lessonId)) {
         newSet.delete(lessonId);
-        setTimeout(() => {
+         setTimeout(() => {
             toast({ title: "Ders Tamamlanmadı", description: `"${lessonTitle}" dersi tamamlanmadı olarak işaretlendi.`});
         }, 0);
     } else {
@@ -200,11 +192,11 @@ export default function DerslerPage() {
          setTimeout(() => {
             toast({ title: "Ders Tamamlandı!", description: `"${lessonTitle}" dersi tamamlandı olarak işaretlendi.`});
         }, 0);
-        // Check for course completion after marking this lesson
+        
         if (newSet.size === totalLessons && currentLessonNumber === totalLessons) {
             setTimeout(() => {
                  toast({ title: "Tebrikler!", description: "Kursu tamamladınız." });
-            }, 50); // Slight delay to ensure other toasts can process
+            }, 50); 
         }
     }
     setCompletedLessons(newSet);
@@ -230,14 +222,15 @@ export default function DerslerPage() {
   const isCurrentLessonCompleted = selectedLesson ? completedLessons.has(selectedLesson.id) : false;
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-theme(spacing.16)-theme(spacing.12))] md:h-[calc(100vh-theme(spacing.16)-theme(spacing.4))] overflow-hidden">
-      <aside className="w-full md:w-80 lg:w-96 border-l md:border-r border-border bg-card flex-shrink-0 h-full">
+    <div className="flex flex-col md:flex-row h-full overflow-hidden"> {/* Changed height to h-full */}
+      {/* Sidebar */}
+      <aside className="w-full md:w-72 lg:w-80 border-l md:border-r border-border bg-card flex-shrink-0 h-full"> {/* Reduced sidebar width */}
         <ScrollArea className="h-full">
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-1">{selectedCourse.title}</h2>
             <p className="text-xs text-muted-foreground mb-3">{selectedCourse.instructor}</p>
              <div className="text-xs text-muted-foreground mb-1">{numCompletedLessons} / {totalLessons} ders tamamlandı</div>
-              <Progress value={progressPercentage} className="h-2 mb-4 [&>div]:bg-green-500" aria-label={`${progressPercentage}% tamamlandı`}/>
+              <Progress value={progressPercentage} className="h-2 mb-4 [&>div]:bg-green-500" aria-label={`${Math.round(progressPercentage)}% tamamlandı`}/>
 
             {selectedCourse.sections.map((section, sectionIdx) => (
               <div key={section.id} className="mb-4">
@@ -278,6 +271,7 @@ export default function DerslerPage() {
         </ScrollArea>
       </aside>
 
+      {/* Main Content */}
       <main className="flex-1 overflow-y-auto bg-background">
         {selectedLesson ? (
           <>
@@ -346,3 +340,5 @@ export default function DerslerPage() {
     </div>
   );
 }
+
+    
