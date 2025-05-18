@@ -222,10 +222,10 @@ export default function DerslerPage() {
   const isCurrentLessonCompleted = selectedLesson ? completedLessons.has(selectedLesson.id) : false;
 
   return (
-    <div className="flex flex-col md:flex-row"> {/* Removed h-full and overflow-hidden */}
+    <div className="relative flex flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="w-full md:w-72 lg:w-80 border-l md:border-r border-border bg-card flex-shrink-0 md:sticky md:top-16 md:h-[calc(100vh-4rem)]">
-        <ScrollArea className="h-full"> {/* ScrollArea will use the height of its parent 'aside' */}
+      <aside className="w-full md:w-72 lg:w-80 border-l md:border-r border-border bg-card flex-shrink-0 md:order-2 md:fixed md:right-0 md:top-16 md:h-[calc(100vh-4rem)]">
+        <ScrollArea className="h-full">
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-1">{selectedCourse.title}</h2>
             <p className="text-xs text-muted-foreground mb-3">{selectedCourse.instructor}</p>
@@ -272,10 +272,10 @@ export default function DerslerPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-background"> {/* Removed overflow-y-auto */}
+      <main className="flex-1 bg-background md:order-1 md:mr-72 lg:md:mr-80">
         {selectedLesson ? (
           <>
-            <div className="sticky top-0 md:top-16 bg-background/80 backdrop-blur-sm z-10 border-b p-4 shadow-sm"> {/* Adjusted top for sticky header */}
+            <div className="sticky top-0 md:top-16 bg-background/80 backdrop-blur-sm z-10 border-b p-4 shadow-sm">
                 <h1 className="text-2xl font-bold">{selectedLesson.title}</h1>
                 <p className="text-sm text-muted-foreground">Ders {currentLessonNumber} / {totalLessons}</p>
             </div>
@@ -331,7 +331,7 @@ export default function DerslerPage() {
             </div>
           </>
         ) : (
-          <div className="p-8 text-center text-muted-foreground flex flex-col items-center justify-center h-full"> {/* Adjusted for full height if no lesson selected */}
+          <div className="p-8 text-center text-muted-foreground flex flex-col items-center justify-center h-full">
              <BookCopy className="h-12 w-12 text-muted-foreground/50 mb-4" />
             Başlamak için lütfen sağ taraftan bir ders seçin.
           </div>
