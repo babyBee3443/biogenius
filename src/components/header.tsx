@@ -39,20 +39,18 @@ interface ArticleStub {
 
 const searchArticles = async (query: string): Promise<ArticleStub[]> => {
   if (!query) return [];
-  // This is still mock data. In a real app, this would be an API call.
   const mockData: ArticleStub[] = [
     { id: 'gen-duzenleme', title: 'Gen Düzenleme Teknolojileri', category: 'Biyoloji' },
     { id: 'mikrobiyom', title: 'Mikrobiyom: İçimizdeki Dünya', category: 'Biyoloji' },
     { id: 'hucre-dongusu', title: 'Hücre Döngüsü ve Kontrol Noktaları', category: 'Biyoloji' },
     { id: 'protein-sentezi', title: 'Protein Sentezi: Transkripsiyon ve Translasyon', category: 'Biyoloji' },
-    // Add more mock articles if needed, especially for Teknoloji to test filtering
     { id: 'yapay-zeka-etik', title: 'Yapay Zeka Etiği', category: 'Teknoloji' },
     { id: 'kuantum-bilgisayarlar', title: 'Kuantum Bilgisayarlar ve Geleceği', category: 'Teknoloji' },
   ];
   return mockData.filter(article =>
     (article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.category.toLowerCase().includes(query.toLowerCase())) &&
-    article.category === 'Biyoloji' // Keeping Biyoloji filter for now as per original search
+    article.category === 'Biyoloji'
   ).slice(0, 5);
 };
 
@@ -61,15 +59,12 @@ const DnaLogo = () => {
     const [baseAmplitudes, setBaseAmplitudes] = React.useState<number[]>([]);
 
     React.useEffect(() => {
-        // Initialize amplitudes with a bit of randomness
-        setBaseAmplitudes(Array(7).fill(0).map(() => 10 + Math.random() * 4 - 2)); // Values between 8 and 12
-
-        // Optional: Animate amplitudes over time
+        setBaseAmplitudes(Array(7).fill(0).map(() => 10 + Math.random() * 4 - 2));
         const intervalId = setInterval(() => {
             setBaseAmplitudes(prevAmplitudes =>
                 prevAmplitudes.map(amp => 10 + Math.random() * 4 - 2)
             );
-        }, 2000); // Change amplitudes every 2 seconds for a subtle effect
+        }, 2000);
         return () => clearInterval(intervalId);
     }, []);
 
@@ -78,27 +73,23 @@ const DnaLogo = () => {
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 100 100"
-        className="h-10 w-10 group-hover:animate-spin-slow mr-0" // Removed -mr-1
+        className="h-10 w-10 group-hover:animate-spin-slow mr-0"
     >
         <defs>
             <linearGradient id="dnaGradientHeader" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="hsl(var(--primary))">
-                    {/* Animate the color of the gradient stop */}
                     <animate attributeName="stop-color" values="hsl(175 80% 30%);hsl(145 60% 40%);hsl(175 80% 30%)" dur="4s" repeatCount="indefinite" />
                 </stop>
                 <stop offset="100%" stopColor="hsl(145 75% 45%)">
-                    {/* Animate the color of the gradient stop */}
                     <animate attributeName="stop-color" values="hsl(145 75% 45%);hsl(175 80% 30%);hsl(145 75% 45%)" dur="4s" repeatCount="indefinite" />
                 </stop>
             </linearGradient>
         </defs>
-        {/* Apply rotation to the group for a subtle tilt */}
         <g transform="translate(50,50) scale(0.9) rotate(15)">
-            {/* DNA Strand 1 */}
             <path
-                d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40" // Standard DNA curve
+                d="M0,-40 Q 20,-20 0,0 Q -20,20 0,40"
                 stroke="url(#dnaGradientHeader)"
-                strokeWidth="5" // Slightly thinner for a cleaner look
+                strokeWidth="5"
                 fill="none"
                 strokeLinecap="round"
             >
@@ -107,14 +98,13 @@ const DnaLogo = () => {
                     type="rotate"
                     from="0 0 0"
                     to="360 0 0"
-                    dur="12s" // Slower rotation
+                    dur="12s"
                     repeatCount="indefinite"
                 />
                 <animate attributeName="stroke-width" values="5;6;5" dur="3.5s" repeatCount="indefinite" />
             </path>
-            {/* DNA Strand 2 */}
             <path
-                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40" // Mirrored DNA curve
+                d="M0,-40 Q -20,-20 0,0 Q 20,20 0,40"
                 stroke="url(#dnaGradientHeader)"
                 strokeWidth="5"
                 fill="none"
@@ -130,12 +120,11 @@ const DnaLogo = () => {
                 />
                  <animate attributeName="stroke-width" values="5;6;5" dur="3.5s" repeatCount="indefinite" begin="0.3s"/>
             </path>
-            {/* DNA Bases with subtle animation */}
             {baseAmplitudes.map((amplitude, i) => {
-                const yPos = -35 + i * (70 / 6); // 7 bases, evenly spaced
-                const angle = (i * Math.PI) / 3.5; // Angle for slight curve in bases
-                const x1 = Math.sin(angle) * amplitude; // Use dynamic amplitude
-                const x2 = Math.sin(angle + Math.PI) * amplitude; // Use dynamic amplitude
+                const yPos = -35 + i * (70 / 6);
+                const angle = (i * Math.PI) / 3.5;
+                const x1 = Math.sin(angle) * amplitude;
+                const x2 = Math.sin(angle + Math.PI) * amplitude;
                 return (
                     <line
                         key={`header-dna-base-${i}`}
@@ -143,16 +132,16 @@ const DnaLogo = () => {
                         y1={yPos}
                         x2={x2}
                         y2={yPos}
-                        strokeWidth="2.5" // Thinner bases
+                        strokeWidth="2.5"
                         strokeLinecap="round"
-                        className="stroke-green-500/40 dark:stroke-green-400/20" // Muted base color
+                        className="stroke-green-500/40 dark:stroke-green-400/20"
                     >
                          <animate
                             attributeName="stroke"
                             values="hsl(var(--primary)/0.4);hsl(145 80% 40% / 0.6);hsl(145 75% 45% / 0.4);hsl(var(--primary)/0.4)"
-                            dur="6s" // Slower color transition
+                            dur="6s"
                             repeatCount="indefinite"
-                            begin={`${i * 0.25}s`} // Staggered start
+                            begin={`${i * 0.25}s`}
                         />
                          <animate attributeName="opacity" values="0.2;0.7;0.2" dur="4s" repeatCount="indefinite" begin={`${i*0.2}s`} />
                         <animateTransform
@@ -193,7 +182,7 @@ const Header = () => {
           setCurrentUser(user);
         } catch (e) {
           console.error("Error parsing current user from localStorage in Header", e);
-          setCurrentUser(null); // Clear if parsing fails
+          setCurrentUser(null);
         }
       } else {
         setCurrentUser(null);
@@ -202,17 +191,15 @@ const Header = () => {
   }, []);
 
   React.useEffect(() => {
-    setIsMounted(true); // Component is now mounted on the client
+    setIsMounted(true);
     checkUserStatus();
 
-    // Listen for storage changes (e.g., user logs in/out in another tab)
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser') {
             checkUserStatus();
         }
     };
 
-    // Listen for custom event dispatched after login/logout/account creation
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('currentUserUpdated', checkUserStatus);
 
@@ -224,10 +211,9 @@ const Header = () => {
 
 
   React.useEffect(() => {
-    // Only show popover if there's a query
     setIsSearchPopoverOpen(searchQuery.length > 0);
     const handler = setTimeout(async () => {
-      if (searchQuery.length > 1) { // Start searching after 1 character
+      if (searchQuery.length > 1) {
         setIsSearching(true);
         const results = await searchArticles(searchQuery);
         setSearchResults(results);
@@ -235,7 +221,7 @@ const Header = () => {
       } else {
         setSearchResults([]);
       }
-    }, 300); // Debounce search
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -250,17 +236,15 @@ const Header = () => {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
-    setIsSearchPopoverOpen(false); // Close popover when search is cleared
+    setIsSearchPopoverOpen(false);
   };
 
    const closeSearchPopover = () => {
-    // We still want the popover to close when a link is clicked,
-    // but its open state is primarily controlled by searchQuery.length
     setIsSearchPopoverOpen(false);
   }
 
   const handleLoginSuccess = () => {
-    checkUserStatus(); // Re-check user status
+    checkUserStatus();
     setIsLoginModalOpen(false);
   };
 
@@ -269,20 +253,19 @@ const Header = () => {
       localStorage.removeItem('currentUser');
     }
     setCurrentUser(null);
-    window.dispatchEvent(new CustomEvent('currentUserUpdated')); // Notify other components
+    window.dispatchEvent(new CustomEvent('currentUserUpdated'));
     toast({ title: "Çıkış Başarılı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/'); // Redirect to home after logout
+    router.replace('/');
   };
 
   const handleCreateAccountSuccess = () => {
-    checkUserStatus(); // Re-check user status
+    checkUserStatus();
     setIsCreateAccountModalOpen(false);
-    // Optionally, directly open login modal after successful account creation
     setTimeout(() => setIsLoginModalOpen(true), 100);
   };
 
   const openCreateAccountModal = () => {
-    setIsLoginModalOpen(false); // Ensure login modal is closed
+    setIsLoginModalOpen(false);
     setIsCreateAccountModalOpen(true);
   };
 
@@ -291,10 +274,20 @@ const Header = () => {
     setIsLoginModalOpen(true);
   };
 
-  // Define navigation items including those with sub-menus
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
-    { href: "/dersler", label: "Dersler", icon: <DerslerIcon className="h-4 w-4" /> },
+    {
+      label: "Dersler",
+      icon: <DerslerIcon className="h-4 w-4" />,
+      isDropdown: true,
+      href: "/dersler", // Main link for "Dersler" itself
+      subItems: [ // These will be the dropdown items
+        { href: "/dersler?level=9", label: "9. Sınıf" }, // Example of how to filter, can be actual page later
+        { href: "/dersler?level=10", label: "10. Sınıf" },
+        { href: "/dersler?level=11", label: "11. Sınıf" },
+        { href: "/dersler?level=12", label: "12. Sınıf" },
+      ],
+    },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -305,8 +298,7 @@ const Header = () => {
      if (lowerCaseName.includes('biyoloji') || lowerCaseName.includes('genetik') || lowerCaseName.includes('hücre')) {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
      }
-     // Add other category color rules if needed
-     return 'bg-muted text-muted-foreground'; // Default
+     return 'bg-muted text-muted-foreground';
   }
 
 
@@ -316,7 +308,7 @@ const Header = () => {
         <div className="container flex h-16 items-center">
           <Link href="/" className="mr-6 flex items-center group">
             <DnaLogo />
-             <div className="flex flex-col items-start ml-1 -mt-1"> {/* Adjusted margin for closer text to logo */}
+             <div className="flex flex-col items-start ml-1 -mt-1">
                 <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
                 <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
                     Öğrenmenin DNA’sı
@@ -324,10 +316,9 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex flex-1 items-center space-x-1">
             {navItems.map((item) =>
-              item.isDropdown && item.subItems ? ( // This part is for future sub-menus, not currently used by new navItems
+              item.isDropdown && item.subItems ? (
                 <DropdownMenu key={item.label}>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -339,28 +330,17 @@ const Header = () => {
                       <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel>{item.label}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                  <DropdownMenuContent className="w-48"> {/* Adjusted width */}
+                    {item.href && ( // Add main link for "Dersler" if href is present
+                        <DropdownMenuItem asChild>
+                           <Link href={item.href}>Tüm Dersler</Link>
+                        </DropdownMenuItem>
+                    )}
+                    {item.href && item.subItems.length > 0 && <DropdownMenuSeparator />}
                     {item.subItems.map(subItem => (
-                      <DropdownMenuSub key={subItem.label}>
-                        <DropdownMenuSubTrigger>
-                          <Link href={subItem.href} className="flex-grow text-left">{subItem.label}</Link>
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuPortal>
-                          <DropdownMenuSubContent>
-                            {subItem.topics?.map(topic => (
-                              <DropdownMenuItem key={topic.label} asChild>
-                                <Link href={topic.href}>{topic.label}</Link>
-                              </DropdownMenuItem>
-                            ))}
-                             <DropdownMenuSeparator />
-                              <DropdownMenuItem asChild>
-                                <Link href={subItem.href}>Tüm {subItem.label} Konuları</Link>
-                              </DropdownMenuItem>
-                          </DropdownMenuSubContent>
-                        </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                       <DropdownMenuItem key={subItem.label} asChild>
+                         <Link href={subItem.href}>{subItem.label}</Link>
+                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -369,7 +349,7 @@ const Header = () => {
                      <Button
                         variant="ghost"
                         className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
-                        as="a" // Important for legacyBehavior with Button
+                        as="a"
                      >
                        {item.icon && <span className="mr-1.5">{item.icon}</span>}
                        <span className="capitalize">{item.label}</span>
@@ -379,22 +359,21 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Right side actions - Desktop */}
           <div className="ml-auto flex items-center space-x-2">
-            <div className="hidden lg:flex items-center space-x-2"> {/* This div will be hidden on mobile and medium screens */}
+            <div className="hidden lg:flex items-center space-x-2">
               <Popover open={isSearchPopoverOpen} onOpenChange={setIsSearchPopoverOpen}>
                 <PopoverTrigger asChild>
-                   <div className="relative w-full max-w-[150px] sm:max-w-[180px]"> {/* Responsive width for search */}
+                   <div className="relative w-full max-w-[150px] sm:max-w-[180px]">
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="text"
                         placeholder="Ara..."
                         value={searchQuery}
                         onChange={handleSearchChange}
-                        className="pl-9 pr-8 h-9 rounded-md bg-secondary/70 border-transparent focus:bg-background focus:border-border" // Adjusted styles
-                        onFocus={() => setIsSearchPopoverOpen(true)} // Open popover on focus
+                        className="pl-9 pr-8 h-9 rounded-md bg-secondary/70 border-transparent focus:bg-background focus:border-border"
+                        onFocus={() => setIsSearchPopoverOpen(true)}
                       />
-                      {searchQuery && ( // Show clear button only if there's a query
+                      {searchQuery && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -409,7 +388,7 @@ const Header = () => {
                 <PopoverContent
                     className="w-[280px] sm:w-[300px] p-2 mt-1 rounded-lg shadow-lg border border-border/50"
                     align="end"
-                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus on popover open for better UX
+                    onOpenAutoFocus={(e) => e.preventDefault()}
                  >
                   {isSearching && searchQuery && (
                      <div className="p-4 text-sm text-center text-muted-foreground">Aranıyor...</div>
@@ -418,14 +397,14 @@ const Header = () => {
                       <div className="p-4 text-sm text-center text-muted-foreground">"{searchQuery}" için sonuç bulunamadı.</div>
                    )}
                   {!isSearching && searchResults.length > 0 && searchQuery && (
-                    <ScrollArea className="max-h-[300px]"> {/* Scrollable results */}
+                    <ScrollArea className="max-h-[300px]">
                        <ul className="space-y-1">
                          {searchResults.map((result) => (
                             <li key={result.id}>
                                 <Link
                                     href={`/articles/${result.id}`}
                                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors"
-                                    onClick={closeSearchPopover} // Close popover on link click
+                                    onClick={closeSearchPopover}
                                  >
                                    <span className="text-sm font-medium truncate mr-2">{result.title}</span>
                                    <Badge variant="secondary" className={cn(getCategoryClass(result.category), "capitalize text-xs font-normal whitespace-nowrap")}>
@@ -454,7 +433,7 @@ const Header = () => {
               {isMounted && currentUser && (currentUser.role !== 'Admin') && (
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2"> {/* Added margin */}
+                          <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
                               <Avatar className="h-8 w-8">
                                   <AvatarImage src={currentUser.avatar || `https://placehold.co/32x32.png?text=${(currentUser.name || 'U').charAt(0)}`} alt={currentUser.name || 'Kullanıcı'} data-ai-hint="user avatar placeholder"/>
                                   <AvatarFallback>{(currentUser.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
@@ -466,13 +445,13 @@ const Header = () => {
                               <div className="flex flex-col space-y-1">
                                   <p className="text-sm font-medium leading-none">{currentUser.name}</p>
                                   <p className="text-xs leading-none text-muted-foreground">
-                                      @{currentUser.username} {/* Assuming username exists */}
+                                      @{currentUser.username}
                                   </p>
                               </div>
                           </DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
-                              <Link href="/profile"> {/* Link to actual profile page */}
+                              <Link href="/profile">
                                   <UserCircle className="mr-2 h-4 w-4" />
                                   Profilim
                               </Link>
@@ -489,7 +468,7 @@ const Header = () => {
                       </DropdownMenuContent>
                   </DropdownMenu>
               )}
-              {isMounted && !currentUser && ( // Show login/signup only if not logged in and component is mounted
+              {isMounted && !currentUser && (
                    <>
                      <Button variant="outline" size="sm" onClick={() => setIsLoginModalOpen(true)} className="ml-1 shrink-0">
                         <LogIn className="mr-1.5 h-4 w-4" />
@@ -503,7 +482,6 @@ const Header = () => {
               )}
             </div>
 
-            {/* Mobile Menu Trigger */}
             <div className="lg:hidden">
               <Sheet>
                 <SheetTrigger asChild>
@@ -512,11 +490,11 @@ const Header = () => {
                     <span className="sr-only">Menüyü Aç</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[280px] sm:w-[300px] p-0"> {/* Removed default padding */}
+                <SheetContent side="right" className="w-[280px] sm:w-[300px] p-0">
                    <SheetClose asChild>
-                        <div className="flex items-center p-4 border-b"> {/* Header for mobile menu */}
+                        <div className="flex items-center p-4 border-b">
                             <Link href="/" className="flex items-center group">
-                                <DnaLogo /> {/* Re-use logo */}
+                                <DnaLogo />
                                 <div className="flex flex-col items-start ml-1 -mt-1">
                                     <span className="font-bold text-lg group-hover:text-primary transition-colors leading-tight">BiyoHox</span>
                                      <span className="text-xs text-muted-foreground group-hover:text-primary/80 transition-colors leading-tight -mt-0.5">
@@ -526,9 +504,8 @@ const Header = () => {
                             </Link>
                         </div>
                    </SheetClose>
-                  <ScrollArea className="h-[calc(100vh-65px)]"> {/* Adjust height for header */}
+                  <ScrollArea className="h-[calc(100vh-65px)]">
                     <div className="p-6 space-y-4">
-                        {/* Search for Mobile */}
                         <div className="relative">
                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                            <Input
@@ -549,7 +526,6 @@ const Header = () => {
                                </Button>
                              )}
                          </div>
-                         {/* Search results for mobile */}
                          {isSearching && searchQuery && (
                             <div className="p-2 text-sm text-center text-muted-foreground">Aranıyor...</div>
                          )}
@@ -577,27 +553,48 @@ const Header = () => {
                            </ul>
                          )}
 
-                      {/* Navigation Links for Mobile */}
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
-                        {navItems.map((item) => (
-                           // For mobile, no dropdowns for now, direct links. Sub-menu handling for mobile can be complex.
-                           // If sub-items are needed, they'd require a different UI pattern in mobile sheet.
-                          <SheetClose asChild key={`mobile-${item.href || item.label}`}>
-                            <Link href={item.href || "#"} passHref legacyBehavior>
-                                   <Button
-                                      variant="ghost"
-                                      className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
-                                       as="a" // Important for legacyBehavior with Button
-                                   >
-                                     {item.icon}
-                                     <span className="capitalize">{item.label}</span>
-                                   </Button>
-                               </Link>
-                             </SheetClose>
-                        ))}
+                        {navItems.map((item) =>
+                           item.isDropdown && item.subItems ? (
+                                <DropdownMenu key={`mobile-dropdown-${item.label}`}>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="justify-start flex items-center gap-2 text-base w-full px-3 py-2">
+                                            {item.icon && <span className="mr-1.5">{item.icon}</span>}
+                                            <span className="capitalize flex-grow text-left">{item.label}</span>
+                                            <ChevronDown className="ml-1 h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-[230px]"> {/* Adjust width as needed */}
+                                         {item.href && (
+                                            <DropdownMenuItem asChild>
+                                               <SheetClose asChild><Link href={item.href}>Tüm Dersler</Link></SheetClose>
+                                            </DropdownMenuItem>
+                                        )}
+                                        {item.href && item.subItems.length > 0 && <DropdownMenuSeparator />}
+                                        {item.subItems.map(subItem => (
+                                           <DropdownMenuItem key={`mobile-${subItem.label}`} asChild>
+                                             <SheetClose asChild><Link href={subItem.href}>{subItem.label}</Link></SheetClose>
+                                           </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                           ) : (
+                            <SheetClose asChild key={`mobile-${item.href || item.label}`}>
+                              <Link href={item.href || "#"} passHref legacyBehavior>
+                                <Button
+                                  variant="ghost"
+                                  className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
+                                  as="a"
+                                >
+                                  {item.icon}
+                                  <span className="capitalize">{item.label}</span>
+                                </Button>
+                              </Link>
+                            </SheetClose>
+                           )
+                        )}
                       </nav>
 
-                      {/* Auth and Theme for Mobile */}
                       <div className="border-t border-border/30 pt-4 space-y-3">
                         {isMounted && currentUser && (currentUser.role === 'Admin') && (
                            <SheetClose asChild>
@@ -613,7 +610,7 @@ const Header = () => {
                             <>
                               <SheetClose asChild>
                                   <Button variant="ghost" asChild className="justify-start flex items-center gap-2 text-base w-full px-3 py-2">
-                                      <Link href="/profile"> {/* Link to actual profile page */}
+                                      <Link href="/profile">
                                           <UserCircle className="mr-2 h-4 w-4" /> Profilim
                                       </Link>
                                   </Button>
@@ -625,7 +622,7 @@ const Header = () => {
                                </SheetClose>
                             </>
                          )}
-                         {isMounted && !currentUser && ( // Show login/signup only if not logged in
+                         {isMounted && !currentUser && (
                            <>
                             <SheetClose asChild>
                                <Button variant="outline" onClick={() => { setIsLoginModalOpen(true); }} className="w-full">
@@ -653,7 +650,6 @@ const Header = () => {
           </div>
         </div>
       </header>
-      {/* Modals remain outside the header but are controlled by its state */}
       <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} onLoginSuccess={handleLoginSuccess} openCreateAccount={openCreateAccountModal} />
       <CreateAccountModal isOpen={isCreateAccountModalOpen} setIsOpen={setIsCreateAccountModalOpen} onAccountCreateSuccess={handleCreateAccountSuccess} openLogin={openLoginModalFromCreate} />
     </>
@@ -661,7 +657,4 @@ const Header = () => {
 };
 
 export default Header;
-
-    
-
     
