@@ -1,7 +1,6 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  swcMinify: true, // Enable SWC minifier for faster builds
   typescript: {
     ignoreBuildErrors: true, // Consider setting to false for production builds
   },
