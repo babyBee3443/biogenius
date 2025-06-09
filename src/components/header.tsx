@@ -294,58 +294,7 @@ const Header = () => {
   // Define navigation items including those with sub-menus
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
-    {
-      label: "Dersler",
-      icon: <DerslerIcon className="h-4 w-4" />,
-      isDropdown: true,
-      subItems: [
-        {
-          label: "9. Sınıf",
-          href: "/dersler/9-sinif", // Main link for the grade level
-          topics: [
-            { label: "Yaşam Bilimi Biyoloji", href: "/dersler/9-sinif/yasam-bilimi-biyoloji" },
-            { label: "Hücre", href: "/dersler/9-sinif/hucre" },
-            { label: "Canlılar Dünyası", href: "/dersler/9-sinif/canlilar-dunyasi" },
-          ]
-        },
-        {
-          label: "10. Sınıf",
-          href: "/dersler/10-sinif",
-          topics: [
-            { label: "Mitoz ve Eşeysiz Üreme", href: "/dersler/10-sinif/mitoz" },
-            { label: "Mayoz ve Eşeyli Üreme", href: "/dersler/10-sinif/mayoz" },
-            { label: "Kalıtımın Genel İlkeleri", href: "/dersler/10-sinif/kalitim" },
-            { label: "Ekosistem Ekolojisi", href: "/dersler/10-sinif/ekosistem-ekolojisi" },
-          ]
-        },
-        {
-          label: "11. Sınıf",
-          href: "/dersler/11-sinif",
-          topics: [
-            { label: "İnsan Fizyolojisi: Sinir Sistemi", href: "/dersler/11-sinif/sinir-sistemi" },
-            { label: "Endokrin Sistem", href: "/dersler/11-sinif/endokrin-sistem" },
-            { label: "Duyu Organları", href: "/dersler/11-sinif/duyu-organlari" },
-            { label: "Destek ve Hareket Sistemi", href: "/dersler/11-sinif/destek-hareket" },
-            { label: "Sindirim Sistemi", href: "/dersler/11-sinif/sindirim-sistemi" },
-            { label: "Dolaşım ve Bağışıklık Sistemi", href: "/dersler/11-sinif/dolasim-bagisiklik" },
-            { label: "Solunum Sistemi", href: "/dersler/11-sinif/solunum-sistemi" },
-            { label: "Boşaltım Sistemi", href: "/dersler/11-sinif/bosaltim-sistemi" },
-            { label: "Üreme Sistemi ve Embriyonik Gelişim", href: "/dersler/11-sinif/ureme-gelisim" },
-            { label: "Komünite ve Popülasyon Ekolojisi", href: "/dersler/11-sinif/komunite-populasyon" },
-          ]
-        },
-        {
-          label: "12. Sınıf",
-          href: "/dersler/12-sinif",
-          topics: [
-            { label: "Genden Proteine", href: "/dersler/12-sinif/genden-proteine" },
-            { label: "Canlılarda Enerji Dönüşümleri", href: "/dersler/12-sinif/enerji-donusumleri" },
-            { label: "Bitki Biyolojisi", href: "/dersler/12-sinif/bitki-biyolojisi" },
-            { label: "Canlılar ve Çevre", href: "/dersler/12-sinif/canlilar-cevre" },
-          ]
-        },
-      ]
-    },
+    { href: "/dersler", label: "Dersler", icon: <DerslerIcon className="h-4 w-4" /> },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
     { href: "/hakkimizda", label: "Hakkımızda" },
     { href: "/iletisim", label: "İletişim" },
@@ -378,7 +327,7 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex flex-1 items-center space-x-1">
             {navItems.map((item) =>
-              item.isDropdown && item.subItems ? (
+              item.isDropdown && item.subItems ? ( // This part is for future sub-menus, not currently used by new navItems
                 <DropdownMenu key={item.label}>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -396,7 +345,6 @@ const Header = () => {
                     {item.subItems.map(subItem => (
                       <DropdownMenuSub key={subItem.label}>
                         <DropdownMenuSubTrigger>
-                          {/* Make the sub-item trigger itself a link */}
                           <Link href={subItem.href} className="flex-grow text-left">{subItem.label}</Link>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuPortal>
@@ -408,7 +356,6 @@ const Header = () => {
                             ))}
                              <DropdownMenuSeparator />
                               <DropdownMenuItem asChild>
-                                {/* Link to the main grade level page */}
                                 <Link href={subItem.href}>Tüm {subItem.label} Konuları</Link>
                               </DropdownMenuItem>
                           </DropdownMenuSubContent>
@@ -633,50 +580,10 @@ const Header = () => {
                       {/* Navigation Links for Mobile */}
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
                         {navItems.map((item) => (
-                          item.isDropdown && item.subItems ? (
-                            <DropdownMenu key={`mobile-${item.label}`}>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
-                                >
-                                  {item.icon}
-                                  <span className="capitalize flex-grow text-left">{item.label}</span>
-                                  <ChevronDown className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[calc(100%-2rem)] ml-3 mr-3"> {/* Adjust width for mobile */}
-                                <DropdownMenuLabel>{item.label}</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {item.subItems.map(subItem => (
-                                  <DropdownMenuSub key={`mobile-sub-${subItem.label}`}>
-                                    <DropdownMenuSubTrigger>
-                                       <Link href={subItem.href} className="flex-grow text-left">{subItem.label}</Link>
-                                    </DropdownMenuSubTrigger>
-                                    <DropdownMenuPortal>
-                                      <DropdownMenuSubContent>
-                                        {subItem.topics?.map(topic => (
-                                          <SheetClose asChild key={`mobile-topic-${topic.label}`}>
-                                            <DropdownMenuItem asChild>
-                                              <Link href={topic.href}>{topic.label}</Link>
-                                            </DropdownMenuItem>
-                                          </SheetClose>
-                                        ))}
-                                        <DropdownMenuSeparator />
-                                          <SheetClose asChild>
-                                            <DropdownMenuItem asChild>
-                                               <Link href={subItem.href}>Tüm {subItem.label} Konuları</Link>
-                                            </DropdownMenuItem>
-                                          </SheetClose>
-                                      </DropdownMenuSubContent>
-                                    </DropdownMenuPortal>
-                                  </DropdownMenuSub>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <SheetClose asChild key={`mobile-${item.href}`}>
-                              <Link href={item.href} passHref legacyBehavior>
+                           // For mobile, no dropdowns for now, direct links. Sub-menu handling for mobile can be complex.
+                           // If sub-items are needed, they'd require a different UI pattern in mobile sheet.
+                          <SheetClose asChild key={`mobile-${item.href || item.label}`}>
+                            <Link href={item.href || "#"} passHref legacyBehavior>
                                    <Button
                                       variant="ghost"
                                       className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
@@ -687,7 +594,6 @@ const Header = () => {
                                    </Button>
                                </Link>
                              </SheetClose>
-                          )
                         ))}
                       </nav>
 
@@ -755,5 +661,7 @@ const Header = () => {
 };
 
 export default Header;
+
+    
 
     

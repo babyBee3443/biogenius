@@ -68,7 +68,7 @@ const mockCourseData: Course[] = [
               { id: generateId(), type: "text", content: "Bu derste hücrenin temel tanımı yapılacak ve hücre teorisinin tarihsel gelişimi ile temel ilkeleri anlatılacaktır." },
               { id: generateId(), type: "heading", level: 3, content: "Hücre Teorisinin Maddeleri" },
               { id: generateId(), type: "text", content: "1. Tüm canlılar bir ya da daha fazla hücreden oluşur.\n2. Hücre, canlılığın temel yapısal ve işlevsel birimidir.\n3. Tüm hücreler, daha önce var olan hücrelerin bölünmesiyle meydana gelir." },
-              { id: generateId(), type: "image", url: "https://placehold.co/600x350.png", alt: "Hücre Teorisi", caption: "Hücre teorisinin şematik gösterimi.", "data-ai-hint": "cell theory diagram" }
+              { id: generateId(), type: "image", url: "https://placehold.co/600x350.png?text=Hücre+Teorisi+Diyagramı", alt: "Hücre Teorisi", caption: "Hücre teorisinin şematik gösterimi.", "data-ai-hint": "cell theory diagram" }
             ]
           },
           {
@@ -101,7 +101,7 @@ const mockCourseData: Course[] = [
             contentBlocks: [
               { id: generateId(), type: "heading", level: 2, content: "Enerji Üretim Merkezleri" },
               { id: generateId(), type: "text", content: "Mitokondri, hücresel solunumla ATP üretirken; kloroplast ise fotosentez ile besin üretir." },
-              { id: generateId(), type: "image", url: "https://placehold.co/700x400.png", alt: "Mitokondri ve Kloroplast yapıları", caption: "Mitokondri ve kloroplastın karşılaştırmalı yapısı.", "data-ai-hint": "mitochondria chloroplast biology" }
+              { id: generateId(), type: "image", url: "https://placehold.co/700x400.png?text=Mitokondri+Kloroplast", alt: "Mitokondri ve Kloroplast yapıları", caption: "Mitokondri ve kloroplastın karşılaştırmalı yapısı.", "data-ai-hint": "mitochondria chloroplast biology" }
             ]
           },
           {
@@ -112,7 +112,7 @@ const mockCourseData: Course[] = [
             isCompleted: false,
             contentBlocks: [
               { id: generateId(), type: "text", content: "Protein sentezi, modifikasyonu ve taşınmasında görevli olan ER ve Golgi'nin yapı ve işlevleri." },
-              { id: generateId(), type: "video", url: "https://www.youtube.com/embed/rvfvRgk0MSc" }
+              { id: generateId(), type: "video", url: "https://www.youtube.com/embed/rvfvRgk0MSc", youtubeId: "rvfvRgk0MSc" }
             ]
           }
         ]
@@ -127,9 +127,6 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getCourses = async (): Promise<Course[]> => {
   await delay(100); // Simulate API call delay
-  // In a real app, this would fetch from a database or a static JSON file.
-  // For now, we use the mock data directly.
-  // Consider localStorage for persistence in mock environment if needed.
   return JSON.parse(JSON.stringify(mockCourseData)); // Return a deep copy
 };
 
@@ -138,32 +135,5 @@ export const getCourseById = async (id: string): Promise<Course | null> => {
   const course = mockCourseData.find(c => c.id === id);
   return course ? JSON.parse(JSON.stringify(course)) : null;
 };
-
-// Functions to initialize from localStorage (similar to other data types if needed)
-// export const COURSE_STORAGE_KEY = 'biyohox_mock_courses_v1';
-
-// export const initializeCourses = (initialCourses: Course[]) => {
-//   mockCourseData = initialCourses;
-//   if (typeof window !== 'undefined') {
-//     localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(mockCourseData));
-//   }
-// };
-// // Load initial data if available from localStorage
-// if (typeof window !== 'undefined') {
-//   const storedCourses = localStorage.getItem(COURSE_STORAGE_KEY);
-//   if (storedCourses) {
-//     try {
-//       const parsed = JSON.parse(storedCourses);
-//       if (Array.isArray(parsed)) {
-//         mockCourseData = parsed;
-//       }
-//     } catch (e) {
-//       console.error("Error parsing courses from localStorage", e);
-//     }
-//   } else {
-//     // If nothing in localStorage, save the default mock data
-//     localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(mockCourseData));
-//   }
-// }
 
     
