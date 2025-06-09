@@ -376,7 +376,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex flex-1 items-center space-x-1">
+          <nav className="hidden lg:flex flex-1 items-center space-x-1">
             {navItems.map((item) =>
               item.isDropdown && item.subItems ? (
                 <DropdownMenu key={item.label}>
@@ -433,8 +433,8 @@ const Header = () => {
           </nav>
 
           {/* Right side actions - Desktop */}
-          <div className="ml-auto flex items-center space-x-2"> {/* Changed: removed flex-1 and justify-end, added ml-auto */}
-            <div className="hidden md:flex items-center space-x-2"> {/* This div will be hidden on mobile */}
+          <div className="ml-auto flex items-center space-x-2">
+            <div className="hidden lg:flex items-center space-x-2"> {/* This div will be hidden on mobile and medium screens */}
               <Popover open={isSearchPopoverOpen} onOpenChange={setIsSearchPopoverOpen}>
                 <PopoverTrigger asChild>
                    <div className="relative w-full max-w-[150px] sm:max-w-[180px]"> {/* Responsive width for search */}
@@ -557,7 +557,7 @@ const Header = () => {
             </div>
 
             {/* Mobile Menu Trigger */}
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -755,3 +755,5 @@ const Header = () => {
 };
 
 export default Header;
+
+    
