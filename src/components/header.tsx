@@ -433,7 +433,7 @@ const Header = () => {
           </nav>
 
           {/* Right side actions - Desktop */}
-          <div className="flex flex-1 items-center justify-end space-x-2">
+          <div className="ml-auto flex items-center space-x-2"> {/* Changed: removed flex-1 and justify-end, added ml-auto */}
             <div className="hidden md:flex items-center space-x-2"> {/* This div will be hidden on mobile */}
               <Popover open={isSearchPopoverOpen} onOpenChange={setIsSearchPopoverOpen}>
                 <PopoverTrigger asChild>
