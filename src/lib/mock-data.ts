@@ -6,6 +6,7 @@ import { initializeUsers, USER_STORAGE_KEY, type User } from "./data/users";
 import { initializeRoles, ROLE_STORAGE_KEY, baseMockRoles as baseRolesForInit } from "./data/roles";
 import { initializePages, PAGE_STORAGE_KEY, defaultMockPages } from "./data/pages";
 import { initializeTemplates, TEMPLATE_STORAGE_KEY, ALL_MOCK_TEMPLATES_SOURCE } from "./data/templates";
+import { initializeCourses, COURSE_STORAGE_KEY, type Course } from "./data/courses"; // Added courses
 import { generateSlug, generateId } from './utils'; // Import from utils
 
 // --- Shared Utility Functions ---
@@ -23,7 +24,7 @@ export const loadInitialData = () => {
         const initOrVerify = (key: string, defaultDataFactory: () => any[], initializer: (data: any[]) => void, isBaseData: boolean = false) => {
             let dataToInitialize = defaultDataFactory();
             const stored = localStorage.getItem(key);
-            if (stored && !isBaseData) {
+            if (stored && !isBaseData) { // For non-base data, prefer localStorage if it exists and is valid
                 try {
                     const parsed = JSON.parse(stored);
                     if (Array.isArray(parsed)) {
@@ -32,6 +33,19 @@ export const loadInitialData = () => {
                 } catch (e) {
                     console.warn(`Error parsing ${key} from localStorage, using defaults.`, e);
                 }
+            } else if (isBaseData && stored) { // For base data (like templates, default pages), merge localStorage with defaults
+                 try {
+                    const parsedStored = JSON.parse(stored);
+                    if (Array.isArray(parsedStored)) {
+                        const defaultItems = defaultDataFactory();
+                        const mergedMap = new Map();
+                        defaultItems.forEach(item => mergedMap.set(item.id, item)); // Prioritize defaults structure
+                        parsedStored.forEach(storedItem => mergedMap.set(storedItem.id, { ...mergedMap.get(storedItem.id), ...storedItem }));
+                        dataToInitialize = Array.from(mergedMap.values());
+                    }
+                 } catch (e) {
+                     console.warn(`Error parsing ${key} (base data) from localStorage, using defaults.`, e);
+                 }
             }
             initializer(dataToInitialize); // This will also set it in localStorage via the specific initializer
         };
@@ -40,6 +54,7 @@ export const loadInitialData = () => {
         initOrVerify(ARTICLE_STORAGE_KEY, () => [], initializeArticles);
         initOrVerify(NOTE_STORAGE_KEY, () => [], initializeNotes);
         initOrVerify(CATEGORY_STORAGE_KEY, () => [], initializeCategories);
+        initOrVerify(COURSE_STORAGE_KEY, () => [], initializeCourses); // Initialize courses
         
         // User and Role initialization needs careful handling for default admin
         const defaultAdminUser: User = {
@@ -111,6 +126,7 @@ export type { User } from './data/users';
 export type { Role, Permission, PermissionCategory } from './data/roles';
 export type { PageData } from './data/pages';
 export type { Template } from './data/templates';
+export type { Course, CourseSection, Lesson, LessonBlock } from './data/courses'; // Added courses
 
 // Re-export commonly used functions (optional, direct imports from ./data/* are better)
 export { getCategories, addCategory, updateCategory, deleteCategory } from './data/categories';
@@ -120,3 +136,7 @@ export { getUsers, getUserById, createUser, updateUser, deleteUser } from './dat
 export { getRoles, getRoleById, createRole, updateRole, deleteRole, getAllPermissions } from './data/roles';
 export { getPages, getPageById, createPage, updatePage, deletePage } from './data/pages';
 export { allMockTemplatesGetter } from './data/templates';
+export { getCourses, getCourseById, createCourse, updateCourse, deleteCourse, addSectionToCourse, updateSectionInCourse, deleteSectionFromCourse, addLessonToSection, updateLessonInSection, deleteLessonFromSection, getLessonFromCourse } from './data/courses'; // Added courses
+
+
+    

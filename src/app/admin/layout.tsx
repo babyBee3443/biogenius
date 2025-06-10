@@ -19,7 +19,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home as HomeIcon, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home as HomeIcon, Loader2, BookOpen as DerslerIcon } from 'lucide-react'; // Changed DerslerIcon
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
@@ -317,7 +317,7 @@ export default function AdminLayout({
                 </SidebarMenuItem>
             )}
 
-            {(hasPermission('Makaleleri Görüntüleme') || hasPermission('Makale Oluşturma') || hasPermission('Biyoloji Notlarını Görüntüleme') || hasPermission('Yeni Biyoloji Notu Ekleme') || hasPermission('Kategorileri Yönetme') || hasPermission('Sayfaları Yönetme')) && (
+            {(hasPermission('Makaleleri Görüntüleme') || hasPermission('Makale Oluşturma') || hasPermission('Biyoloji Notlarını Görüntüleme') || hasPermission('Yeni Biyoloji Notu Ekleme') || hasPermission('Dersleri Yönetme') || hasPermission('Kategorileri Yönetme') || hasPermission('Sayfaları Yönetme')) && (
                 <SidebarGroup className="p-0">
                 <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
                     <SidebarMenu>
@@ -357,6 +357,16 @@ export default function AdminLayout({
                                     <Link href="/admin/biyoloji-notlari/new">
                                     <PlusCircle />
                                     <span>Yeni Not Ekle</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {hasPermission('Dersleri Yönetme') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip="Ders Yönetimi">
+                                    <Link href="/admin/dersler">
+                                    <DerslerIcon />
+                                    <span>Dersler</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -512,3 +522,5 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
+
+    
