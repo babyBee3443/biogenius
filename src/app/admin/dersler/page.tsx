@@ -41,7 +41,7 @@ export default function AdminDerslerPage() {
   const [courseToDelete, setCourseToDelete] = React.useState<{ id: string; title: string } | null>(null);
   
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
-  const { hasPermission, isLoading: permissionsLoading } = usePermissions(currentUserId);
+  const { hasPermission, isLoading: permissionsLoading, error: permissionsError } = usePermissions(currentUserId);
   const router = useRouter();
 
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -73,14 +73,52 @@ export default function AdminDerslerPage() {
   }, [searchTerm]);
 
   React.useEffect(() => {
-    if (!permissionsLoading && !hasPermission('Dersleri Yönetme') && currentUserId) {
-      router.push('/admin');
+    if (permissionsLoading) {
+      // Still loading permissions, do nothing yet.
       return;
     }
-    if (!permissionsLoading && (hasPermission('Dersleri Yönetme') || !currentUserId)) {
-        fetchCourses();
+
+    // Permissions are loaded (or failed to load)
+    if (currentUserId) { // User is identified
+      if (permissionsError) {
+        // If there's an error loading permissions, show a toast.
+        // AdminLayout should handle fundamental access issues (e.g., redirecting non-admins to login).
+        // This error here might indicate a misconfiguration or data issue specific to permissions.
+        toast({ variant: "destructive", title: "Yetki Yükleme Hatası", description: `İzinler yüklenirken bir sorun oluştu: ${permissionsError}. Lütfen destek ile iletişime geçin veya ayarları kontrol edin.` });
+        // Optionally, prevent content rendering or redirect to a safe page like /admin
+        // For now, we'll prevent fetchCourses and let AdminLayout handle broader access.
+        // If AdminLayout has already confirmed Admin role, this error points to permission system itself.
+        setError(`İzinler yüklenirken bir sorun oluştu: ${permissionsError}`); // Display error on page
+        setLoading(false); // Ensure loading spinner stops
+        return;
+      }
+
+      if (!hasPermission('Dersleri Yönetme')) {
+        // This means permissions loaded successfully, user is identified, but explicitly lacks permission.
+        // For an Admin user, this would indicate a serious configuration issue (Admin role should have this).
+        // AdminLayout should have already redirected non-Admin users to /login.
+        // If an Admin user reaches this point without the permission, it's a problem with role/permission setup.
+        toast({ variant: "destructive", title: "Yetkisiz Erişim", description: "Bu sayfayı görüntüleme yetkiniz bulunmamaktadır. Rol ve izin yapılandırmanızı kontrol edin." });
+        router.push('/admin'); // Redirect to dashboard as a fallback.
+        return;
+      }
+
+      // If we reach here, user is identified, permissions loaded without error, and has the specific permission.
+      fetchCourses();
+    } else if (!loading && !currentUserId && !permissionsLoading) {
+        // No currentUserId, and all loading flags are false.
+        // This implies the user is not logged in or user data couldn't be retrieved.
+        // AdminLayout should ideally handle redirection to /login.
+        // If this page is somehow accessed directly without user context, show an error or let AdminLayout redirect.
+        setError("Kullanıcı oturumu bulunamadı veya yetkiler yüklenemedi. Lütfen giriş yapın.");
+        setLoading(false);
     }
-  }, [fetchCourses, permissionsLoading, hasPermission, router, currentUserId]);
+    // If currentUserId is null but permissionsLoading is true, we wait.
+    // If currentUserId is null and permissionsLoading is false (and no error), it means usePermissions determined no user.
+    // AdminLayout should then redirect to /login. We don't fetchCourses in that case.
+
+  }, [currentUserId, permissionsLoading, permissionsError, hasPermission, fetchCourses, router, loading]);
+
 
   const handleDeleteInitiate = (id: string, title: string) => {
     setCourseToDelete({ id, title });
@@ -108,24 +146,23 @@ export default function AdminDerslerPage() {
         setCourseToDelete(null);
     }
   };
-
-  if (loading || permissionsLoading) {
+  
+  // Initial loading state for the entire page, before permissions are even checked.
+  // This is different from the `loading` state for `fetchCourses`.
+  if (permissionsLoading && currentUserId === null) { // Show loader if permissions hook is loading AND we don't have a userId yet.
     return (
         <div className="flex justify-center items-center h-screen">
             <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-            Yükleniyor...
+            Yönetici Bilgileri Yükleniyor...
         </div>
     );
   }
 
-  if (!hasPermission('Dersleri Yönetme') && currentUserId) {
-    return (
-        <div className="text-center py-10">
-            <p className="text-lg font-semibold text-destructive">Erişim Reddedildi</p>
-            <p className="text-muted-foreground">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
-        </div>
-    );
+  // If there was a general error during fetchCourses (not permission related)
+  if (error && !loading) { // Display general errors if fetchCourses failed and it wasn't a permission issue handled above
+    return <div className="text-center py-10 text-destructive">{error}</div>;
   }
+
 
   return (
     <AlertDialog open={isConfirmDeleteDialogOpen} onOpenChange={setIsConfirmDeleteDialogOpen}>
@@ -140,11 +177,13 @@ export default function AdminDerslerPage() {
                   <RefreshCw className={cn("mr-2 h-4 w-4", (loading || !!deletingId) && 'animate-spin')} />
                   Yenile
               </Button>
-              <Button asChild>
-                  <Link href="/admin/dersler/new">
-                      <PlusCircle className="mr-2 h-4 w-4" /> Yeni Kurs Ekle
-                  </Link>
-              </Button>
+              {hasPermission('Dersleri Yönetme') && (
+                <Button asChild>
+                    <Link href="/admin/dersler/new">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Yeni Kurs Ekle
+                    </Link>
+                </Button>
+              )}
           </div>
         </div>
 
@@ -164,7 +203,12 @@ export default function AdminDerslerPage() {
 
         <Card>
           <CardContent className="pt-6">
-            {courses.length === 0 && !loading ? (
+            {loading ? ( // This loading is for the fetchCourses call
+                <div className="flex justify-center items-center py-10">
+                    <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                    Kurslar yükleniyor...
+                </div>
+            ) : courses.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
                     {searchTerm ? "Arama kriterlerine uygun kurs bulunamadı." : "Henüz kurs oluşturulmamış."}
                 </div>
@@ -195,27 +239,31 @@ export default function AdminDerslerPage() {
                       <TableCell>{course.sections?.length || 0}</TableCell>
                       <TableCell>{course.sections?.reduce((acc, section) => acc + (section.lessons?.length || 0), 0) || 0}</TableCell>
                       <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId === course.id}>
-                              <Link href={`/admin/dersler/edit/${course.id}`}>
-                                  <FilePenLine className="h-4 w-4" />
-                                  <span className="sr-only">Düzenle</span>
-                              </Link>
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteInitiate(course.id, course.title)}
-                              disabled={deletingId === course.id}
-                              aria-label="Sil"
-                          >
-                              {deletingId === course.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                              <Trash2 className="h-4 w-4" />
-                              )}
-                              <span className="sr-only">Sil</span>
-                          </Button>
+                        {hasPermission('Dersleri Yönetme') && (
+                          <>
+                            <Button variant="ghost" size="icon" className="mr-1" asChild disabled={deletingId === course.id}>
+                                <Link href={`/admin/dersler/edit/${course.id}`}>
+                                    <FilePenLine className="h-4 w-4" />
+                                    <span className="sr-only">Düzenle</span>
+                                </Link>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteInitiate(course.id, course.title)}
+                                disabled={deletingId === course.id}
+                                aria-label="Sil"
+                            >
+                                {deletingId === course.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                <Trash2 className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">Sil</span>
+                            </Button>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -243,4 +291,3 @@ export default function AdminDerslerPage() {
   );
 }
 
-    
