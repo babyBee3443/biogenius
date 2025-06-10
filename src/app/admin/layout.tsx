@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { toast } from '@/hooks/use-toast';
-// import { usePermissions } from "@/hooks/usePermissions"; // Artık layout seviyesinde kullanılmayacak
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
@@ -41,9 +40,8 @@ export default function AdminLayout({
   const [currentUserId, setCurrentUserId] = React.useState<string | null | undefined>(undefined); // Initial undefined state
   const [currentUserRoleName, setCurrentUserRoleName] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
-  const [authCheckComplete, setAuthCheckComplete] = React.useState(false); // New state
+  const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
   const router = useRouter();
-  // const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId === undefined ? null : currentUserId);
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
@@ -62,7 +60,7 @@ export default function AdminLayout({
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://placehold.co/32x32.png?text=${(userData.name || 'U').charAt(0)}`;
             newUserId = userData.id;
-            newUserRoleName = userData.role || null; // Ensure role is read
+            newUserRoleName = userData.role || null;
             userFound = true;
           }
         } catch (e) {
@@ -85,7 +83,7 @@ export default function AdminLayout({
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    setAuthCheckComplete(true); // Mark auth check as complete
+    setAuthCheckComplete(true);
     return userFound;
   }, []);
 
@@ -100,13 +98,13 @@ export default function AdminLayout({
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
-            if (isMountedRef.current) setAuthCheckComplete(false); // Reset to allow re-check
+            if (isMountedRef.current) setAuthCheckComplete(false);
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
-        if (isMountedRef.current) setAuthCheckComplete(false); // Reset to allow re-check
+        if (isMountedRef.current) setAuthCheckComplete(false);
         loadUserDataAndSettings();
     };
 
@@ -144,7 +142,7 @@ export default function AdminLayout({
         setCurrentUserName("Kullanıcı");
         setCurrentUserAvatar("https://placehold.co/32x32.png");
         setCurrentUserRoleName(null);
-        setAuthCheckComplete(false); // Reset auth check state
+        setAuthCheckComplete(false);
     }
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.replace('/login');
@@ -154,7 +152,7 @@ export default function AdminLayout({
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
   React.useEffect(() => {
-    if (!authCheckComplete) { // Wait until the initial auth check from localStorage is done
+    if (!authCheckComplete) {
       return;
     }
 
@@ -163,25 +161,21 @@ export default function AdminLayout({
     const isLoginPage = currentPathname === '/login';
     const isPreviewPage = currentPathname.startsWith('/admin/preview');
 
-    if (isPreviewPage) { // Always allow access to preview pages
+    if (isPreviewPage) {
         return;
     }
 
     const isUserAdmin = currentUserId !== null && currentUserRoleName === 'Admin';
 
-    if (isAdminAreaPage && !isLoginPage) { // Trying to access an admin page (that's not login)
-      if (!isUserAdmin) { // If not logged in as Admin (covers null user or non-Admin role)
+    if (isAdminAreaPage && !isLoginPage) {
+      if (!isUserAdmin) {
         console.log(`[AdminLayout Effect] User not admin or not logged in. Redirecting to /login. User ID: ${currentUserId}, Role: ${currentUserRoleName}, Path: ${currentPathname}`);
         router.replace('/login');
       }
-      // If isUserAdmin, they are allowed on admin pages.
-    } else if (isUserAdmin && isLoginPage) { // If Admin is on the login page
+    } else if (isUserAdmin && isLoginPage) {
       console.log("[AdminLayout Effect] Admin on login page, redirecting to /admin");
       router.replace('/admin');
     }
-    // Other cases are handled implicitly:
-    // - User not admin (or not logged in), on login page: stays on login.
-    // - User not admin (or not logged in), not on admin page: this layout doesn't apply to them.
   }, [authCheckComplete, currentUserId, currentUserRoleName, router]);
 
 
@@ -465,21 +459,17 @@ export default function AdminLayout({
            </div>
          </header>
          <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)_+_0.5rem)] md:pt-[calc(theme(spacing.14)_+_1.5rem)]">
-             {(currentUserId && currentUserRoleName === 'Admin') ? children : (
-                <div className="flex flex-col items-center justify-center h-full">
-                    {currentUserId === undefined || !authCheckComplete ? ( // Show loading if auth check not complete
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    ) : ( // Otherwise, imply redirection or already redirected, so no specific message here is needed
-                        <p className="text-muted-foreground">Erişim için lütfen giriş yapın veya yönlendiriliyorsunuz...</p>
-                    )}
-                </div>
-             )}
+             {/* 
+               Yönlendirme mantığı `useEffect` içinde halledildiği için, `children` doğrudan render edilebilir.
+               Eğer kullanıcı Admin değilse, zaten `/login`'e yönlendirilecektir.
+               Eğer kullanıcı Admin ise ve `/login`'deyse, `/admin`'e yönlendirilecektir.
+               Eğer kullanıcı Admin ise ve bir admin sayfasındaysa, `children` gösterilir.
+             */}
+             {children}
          </main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
     
-    
-
     
