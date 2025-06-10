@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, ChevronDown, FileText as DerslerIcon, Newspaper, Layers } from 'lucide-react'; // Added Layers
+import { Menu, Search, X, BookCopy, ShieldCheck, LogIn, UserPlus, UserCircle, Settings, LogOut as LogOutIcon, Home as HomeIcon, Microscope, ChevronDown, FileText as DerslerIcon, Newspaper, Layers } from 'lucide-react';
 import * as React from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -299,49 +299,49 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
     {
-      href: "/dersler", // Main link for "Dersler" that goes to the overview/course list page
-      label: "Dersler",
-      icon: <DerslerIcon className="h-4 w-4" />,
-    },
-    {
-      label: "Ders Kategorileri", // This will be the trigger for the dropdown of class levels
-      icon: <Layers className="h-4 w-4" />, // Using Layers icon for categories
+      label: "Dersler", // Changed label from "Ders Kategorileri" to "Dersler"
+      icon: <DerslerIcon className="h-4 w-4" />, // Changed icon to DerslerIcon
       isDropdown: true,
-      subItems: [
+      subItems: [ // Sub-items are now directly the class levels
         {
           label: "9. Sınıf",
           isSubDropdown: true, // Indicates this item itself is a trigger for a sub-menu
           subSubItems: [ // The actual links within the sub-menu
-            { href: "/dersler/9-sinif/konu-a", label: "9. Sınıf - Konu A" },
-            { href: "/dersler/9-sinif/konu-b", label: "9. Sınıf - Konu B" },
-            { href: "/dersler/9-sinif/konu-c", label: "9. Sınıf - Konu C" },
+            { href: "/dersler/9-sinif/yasam-bilimi-biyoloji", label: "Yaşam Bilimi Biyoloji" },
+            { href: "/dersler/9-sinif/hucre", label: "Hücre" },
+            { href: "/dersler/9-sinif/canlilar-dunyasi", label: "Canlılar Dünyası" },
           ],
         },
         {
           label: "10. Sınıf",
           isSubDropdown: true,
           subSubItems: [
-            { href: "/dersler/10-sinif/konu-x", label: "10. Sınıf - Konu X" },
-            { href: "/dersler/10-sinif/konu-y", label: "10. Sınıf - Konu Y" },
+            { href: "/dersler/10-sinif/mitoz-ve-eseyli-ureme", label: "Mitoz ve Eşeysiz Üreme" },
+            { href: "/dersler/10-sinif/mayoz-ve-eseyli-ureme", label: "Mayoz ve Eşeyli Üreme" },
+            { href: "/dersler/10-sinif/kalitim", label: "Kalıtımın Genel İlkeleri" },
+            { href: "/dersler/10-sinif/ekosistem-ekolojisi", label: "Ekosistem Ekolojisi" },
           ],
         },
         {
           label: "11. Sınıf",
           isSubDropdown: true,
           subSubItems: [
-            { href: "/dersler/11-sinif/konu-1", label: "11. Sınıf - Konu 1" },
-            { href: "/dersler/11-sinif/konu-2", label: "11. Sınıf - Konu 2" },
-            { href: "/dersler/11-sinif/konu-3", label: "11. Sınıf - Konu 3" },
+            { href: "/dersler/11-sinif/insan-fizyolojisi-sinir-sistemi", label: "İnsan Fizyolojisi (Sinir Sistemi)" },
+            { href: "/dersler/11-sinif/insan-fizyolojisi-endokrin-sistem", label: "İnsan Fizyolojisi (Endokrin Sistem)" },
+            { href: "/dersler/11-sinif/komunite-ve-populasyon-ekolojisi", label: "Komünite ve Popülasyon Ekolojisi" },
           ],
         },
         {
           label: "12. Sınıf",
           isSubDropdown: true,
           subSubItems: [
-            { href: "/dersler/12-sinif/konu-alfa", label: "12. Sınıf - Konu Alfa" },
-            { href: "/dersler/12-sinif/konu-beta", label: "12. Sınıf - Konu Beta" },
+            { href: "/dersler/12-sinif/genden-proteine", label: "Genden Proteine" },
+            { href: "/dersler/12-sinif/canlilarda-enerji-donusumleri", label: "Canlılarda Enerji Dönüşümleri" },
+            { href: "/dersler/12-sinif/bitki-biyolojisi", label: "Bitki Biyolojisi" },
           ],
         },
+         // Link to the main /dersler page, for an overview if needed in the future
+        { href: "/dersler", label: "Tüm Kursları Gör", isSeparator: true }, // Optional: Link to main /dersler page
       ],
     },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
@@ -378,7 +378,7 @@ const Header = () => {
           <nav className="hidden lg:flex flex-1 items-center space-x-1">
             {navItems.map((item) =>
               item.isDropdown && item.subItems ? (
-                // Desktop Dropdown Menu (for "Ders Kategorileri")
+                // Desktop Dropdown Menu
                 <DropdownMenu key={item.label}>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -392,7 +392,9 @@ const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56">
                     {item.subItems.map(subItem => (
-                      subItem.isSubDropdown && subItem.subSubItems ? (
+                       subItem.isSeparator ? (
+                        <DropdownMenuSeparator key={`sep-${subItem.label || subItem.href}`} />
+                      ) : subItem.isSubDropdown && subItem.subSubItems ? (
                         // This is a class level (e.g., "9. Sınıf") - render as a SubMenu
                         <DropdownMenuSub key={subItem.label}>
                           <DropdownMenuSubTrigger>
@@ -409,9 +411,9 @@ const Header = () => {
                           </DropdownMenuPortal>
                         </DropdownMenuSub>
                       ) : (
-                        // This is a direct link (should not happen for "Ders Kategorileri" based on new structure)
-                        !subItem.isSubDropdown && subItem.href && (
-                            <DropdownMenuItem key={subItem.label} asChild>
+                        // This is a direct link (e.g., "Tüm Kursları Gör")
+                        subItem.href && (
+                            <DropdownMenuItem key={subItem.label || subItem.href} asChild>
                             <Link href={subItem.href}>{subItem.label}</Link>
                             </DropdownMenuItem>
                         )
@@ -421,16 +423,18 @@ const Header = () => {
                 </DropdownMenu>
               ) : (
                 // Regular Desktop Nav Link
-                <Link href={item.href || "#"} key={item.href || item.label} passHref legacyBehavior>
-                     <Button
-                        variant="ghost"
-                        className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
-                        as="a"
-                     >
-                       {item.icon && <span className="mr-1.5">{item.icon}</span>}
-                       <span className="capitalize">{item.label}</span>
-                     </Button>
-                </Link>
+                item.href && ( // Ensure item.href exists for regular links
+                  <Link href={item.href} key={item.href} passHref legacyBehavior>
+                       <Button
+                          variant="ghost"
+                          className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center"
+                          as="a"
+                       >
+                         {item.icon && <span className="mr-1.5">{item.icon}</span>}
+                         <span className="capitalize">{item.label}</span>
+                       </Button>
+                  </Link>
+                )
               )
             )}
           </nav>
@@ -640,7 +644,7 @@ const Header = () => {
                       <nav className="flex flex-col space-y-1 border-t border-border/30 pt-4">
                         {navItems.map((item) =>
                            item.isDropdown && item.subItems ? (
-                                // Mobile Dropdown (for "Ders Kategorileri")
+                                // Mobile Dropdown
                                 <DropdownMenu key={`mobile-dropdown-${item.label}`}>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="justify-start flex items-center gap-2 text-base w-full px-3 py-2">
@@ -651,7 +655,9 @@ const Header = () => {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-[230px]"> {/* Adjust width as needed */}
                                         {item.subItems.map(subItem => (
-                                            subItem.isSubDropdown && subItem.subSubItems ? (
+                                            subItem.isSeparator ? (
+                                                <DropdownMenuSeparator key={`mobile-sep-${subItem.label || subItem.href}`} />
+                                            ) : subItem.isSubDropdown && subItem.subSubItems ? (
                                                 <DropdownMenuSub key={`mobile-sub-${subItem.label}`}>
                                                     <DropdownMenuSubTrigger>
                                                         <span>{subItem.label}</span>
@@ -667,8 +673,8 @@ const Header = () => {
                                                     </DropdownMenuPortal>
                                                 </DropdownMenuSub>
                                             ) : (
-                                                !subItem.isSubDropdown && subItem.href && (
-                                                     <DropdownMenuItem key={`mobile-direct-${subItem.label}`} asChild>
+                                                subItem.href && (
+                                                     <DropdownMenuItem key={`mobile-direct-${subItem.label || subItem.href}`} asChild>
                                                          <SheetClose asChild><Link href={subItem.href}>{subItem.label}</Link></SheetClose>
                                                      </DropdownMenuItem>
                                                 )
@@ -678,18 +684,20 @@ const Header = () => {
                                 </DropdownMenu>
                            ) : (
                             // Regular Mobile Nav Link
-                            <SheetClose asChild key={`mobile-${item.href || item.label}`}>
-                              <Link href={item.href || "#"} passHref legacyBehavior>
-                                <Button
-                                  variant="ghost"
-                                  className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
-                                  as="a"
-                                >
-                                  {item.icon}
-                                  <span className="capitalize">{item.label}</span>
-                                </Button>
-                              </Link>
-                            </SheetClose>
+                            item.href && ( // Render only if href exists
+                                <SheetClose asChild key={`mobile-${item.href}`}>
+                                <Link href={item.href} passHref legacyBehavior>
+                                    <Button
+                                    variant="ghost"
+                                    className="justify-start flex items-center gap-2 text-base w-full px-3 py-2"
+                                    as="a"
+                                    >
+                                    {item.icon}
+                                    <span className="capitalize">{item.label}</span>
+                                    </Button>
+                                </Link>
+                                </SheetClose>
+                            )
                            )
                         )}
                       </nav>
