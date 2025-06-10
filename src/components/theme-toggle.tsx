@@ -1,10 +1,11 @@
+
 // src/components/theme-toggle.tsx
 "use client"
 
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { motion } from "framer-motion" 
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 export function ThemeToggle() {
@@ -44,14 +45,14 @@ export function ThemeToggle() {
     >
       {/* Sliding Indicator */}
       <motion.div
-        layout 
+        layout
         transition={{ type: "spring", stiffness: 500, damping: 35 }}
         className={cn(
           "absolute h-7 w-7 rounded-full bg-background shadow-md flex items-center justify-center", // Use background for indicator, simpler shadow
-           "top-1 left-1" 
+           "top-1 left-1"
         )}
-        initial={false} 
-        animate={{ x: isLight ? 0 : moveDistance }} 
+        initial={false}
+        animate={{ x: isLight ? 0 : moveDistance }}
       >
         {isLight ? (
           <Sun className="h-[18px] w-[18px] text-slate-600" /> // Smaller icon, adjusted color
@@ -65,7 +66,7 @@ export function ThemeToggle() {
             className={cn(
            "absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none",
            "hidden sm:inline-block", // Hide on xs, show on sm and up
-           isLight ? "text-slate-500 opacity-100" : "opacity-0" 
+           isLight ? "text-slate-500 opacity-100" : "opacity-0"
         )}>
            LIGHT MODE
        </span>
@@ -73,7 +74,7 @@ export function ThemeToggle() {
             className={cn(
            "absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none",
            "hidden sm:inline-block", // Hide on xs, show on sm and up
-           !isLight ? "text-slate-300 opacity-100" : "opacity-0" 
+           !isLight ? "text-slate-300 opacity-100" : "opacity-0"
         )}>
           DARK MODE
       </span>
