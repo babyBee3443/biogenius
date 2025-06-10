@@ -161,7 +161,7 @@ export default function NotePage({ params }: NotePageProps) {
   const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties, minHeight?: string) => {
     if (adsenseEnabled && adsensePublisherId) {
       return (
-        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
+        <div className="my-8 p-4 text-center" style={{...style, minHeight: minHeight || 'auto'}}> {/* Removed placeholder styling */}
           <ins className="adsbygoogle"
             style={{ display: 'block', ...style }}
             data-ad-client={`ca-${adsensePublisherId}`}
@@ -175,11 +175,7 @@ export default function NotePage({ params }: NotePageProps) {
         </div>
       );
     }
-    return (
-      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
-        <p className="text-sm text-muted-foreground">Reklam Alanı ({minHeight || 'Duyarlı'})</p>
-      </div>
-    );
+    return null; // Return null if AdSense is not enabled or publisher ID is missing
   };
 
 
@@ -288,5 +284,3 @@ export default function NotePage({ params }: NotePageProps) {
     </article>
   );
 }
-
-    

@@ -262,11 +262,11 @@ export default function Home() {
   const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties) => {
     if (adsenseEnabled && adsensePublisherId) {
       return (
-        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={style}>
+        <div className="my-8 p-4 text-center" style={style}> {/* Removed placeholder styling */}
           <ins className="adsbygoogle"
             style={{ display: 'block', ...style }}
             data-ad-client={`ca-${adsensePublisherId}`}
-            data-ad-slot={slotId} // Replace with your actual slot ID
+            data-ad-slot={slotId}
             data-ad-format={adFormat}
             data-full-width-responsive={responsive ? "true" : "false"}
           ></ins>
@@ -276,11 +276,7 @@ export default function Home() {
         </div>
       );
     }
-    return (
-      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={style}>
-        <p className="text-sm text-muted-foreground">Reklam Alanı (Adsense etkin değil veya ID eksik)</p>
-      </div>
-    );
+    return null; // Return null if AdSense is not enabled or publisher ID is missing
   };
 
   return (
@@ -319,5 +315,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
