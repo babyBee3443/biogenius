@@ -19,7 +19,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home as HomeIcon, Loader2, BookOpen as DerslerIcon } from 'lucide-react'; // Changed DerslerIcon
+import { LayoutDashboard, Newspaper, Users, Settings, PlusCircle, LogOut, ShieldCheck, MenuSquare, Layers, BookCopy, Tag, Home as HomeIcon, Loader2, BookOpen as DerslerIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
@@ -28,7 +28,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
-const DEFAULT_SESSION_TIMEOUT_MINUTES = 30; // Increased default
+const DEFAULT_SESSION_TIMEOUT_MINUTES = 30;
 
 
 export default function AdminLayout({
@@ -38,17 +38,18 @@ export default function AdminLayout({
 }) {
   const [currentUserName, setCurrentUserName] = React.useState("Kullanıcı");
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://placehold.co/32x32.png");
-  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  // Initialize currentUserId as undefined to distinguish from "checked and found no user (null)"
+  const [currentUserId, setCurrentUserId] = React.useState<string | null | undefined>(undefined);
   const [currentUserRoleName, setCurrentUserRoleName] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
   const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
   const router = useRouter();
-  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId);
+  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId === undefined ? null : currentUserId);
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
     let userFound = false;
-    let newUserId: string | null = null;
+    let newUserId: string | null = null; // Can be null if no user
     let newUserName = "Kullanıcı";
     let newUserAvatar = "https://placehold.co/32x32.png";
     let newUserRoleName: string | null = null;
@@ -62,24 +63,16 @@ export default function AdminLayout({
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://placehold.co/32x32.png?text=${(userData.name || 'U').charAt(0)}`;
             newUserId = userData.id;
-            newUserRoleName = userData.role || null; // Ensure role is read
+            newUserRoleName = userData.role || null;
             userFound = true;
-          } else {
-             newUserId = null;
-             newUserRoleName = null;
           }
         } catch (e) {
           console.error("AdminLayout: Error parsing currentUser from localStorage", e);
-          localStorage.removeItem('currentUser'); // Clear corrupted data
-          newUserId = null;
-          newUserRoleName = null;
+          localStorage.removeItem('currentUser');
         }
-      } else {
-        newUserId = null;
-        newUserRoleName = null;
       }
 
-      setCurrentUserId(newUserId);
+      setCurrentUserId(newUserId); // Explicitly set to null if no user, or string if user
       setCurrentUserName(newUserName);
       setCurrentUserAvatar(newUserAvatar);
       setCurrentUserRoleName(newUserRoleName);
@@ -108,13 +101,13 @@ export default function AdminLayout({
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'currentUser' || event.key === SESSION_TIMEOUT_KEY) {
-            if (isMountedRef.current) setAuthCheckComplete(false);
+            if (isMountedRef.current) setAuthCheckComplete(false); // Reset to allow re-check
             loadUserDataAndSettings();
         }
     };
 
     const handleCurrentUserUpdated = () => {
-        if (isMountedRef.current) setAuthCheckComplete(false);
+        if (isMountedRef.current) setAuthCheckComplete(false); // Reset to allow re-check
         loadUserDataAndSettings();
     };
 
@@ -148,14 +141,14 @@ export default function AdminLayout({
       localStorage.removeItem('currentUser');
     }
     if (isMountedRef.current) {
-        setCurrentUserId(null);
+        setCurrentUserId(null); // Explicitly set to null on logout
         setCurrentUserName("Kullanıcı");
         setCurrentUserAvatar("https://placehold.co/32x32.png");
         setCurrentUserRoleName(null);
-        setAuthCheckComplete(false); // Trigger re-check
+        setAuthCheckComplete(false);
     }
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
-    router.replace('/login'); // Always redirect to admin login on logout from admin panel
+    router.replace('/login');
   }, [router]);
 
 
@@ -163,37 +156,43 @@ export default function AdminLayout({
 
   // Centralized redirection logic
   React.useEffect(() => {
-    if (!isMountedRef.current || !authCheckComplete) {
-      return; // Wait for mount and initial auth check
+    if (!isMountedRef.current || currentUserId === undefined || !authCheckComplete) {
+      // Wait until currentUserId is explicitly set (to string or null) and authCheck is complete
+      return;
     }
 
-    const isAdminPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-    const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
-    const isPreviewPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin/preview');
+    const currentPathname = window.location.pathname;
+    const isAdminPage = currentPathname.startsWith('/admin');
+    const isLoginPage = currentPathname === '/login';
+    const isPreviewPage = currentPathname.startsWith('/admin/preview');
 
     if (isPreviewPage) {
-        return; // Don't redirect on preview pages
+        return;
     }
 
-    // If not logged in OR if logged in but not an Admin, and trying to access an admin page (not /login), redirect to /login
+    const isUserAdmin = currentUserId !== null && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin';
+
     if (isAdminPage && !isLoginPage) {
-        if (!currentUserId || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin')) {
-            console.log(`[AdminLayout Effect] Redirecting to /login. User ID: ${currentUserId}, Role: ${currentUserRoleName}. Path: ${window.location.pathname}`);
-            router.replace('/login'); // Use replace to prevent back button to admin page
-            return;
-        }
+      if (!isUserAdmin) { // This covers both currentUserId === null (not logged in) and logged in but not Admin
+        console.log(`[AdminLayout Effect] User not admin or not logged in. Redirecting to /login. User ID: ${currentUserId}, Role: ${currentUserRoleName}, Path: ${currentPathname}`);
+        router.replace('/login');
+      }
+      // If isUserAdmin, they are allowed on admin pages (except login if already there).
+    } else if (isUserAdmin && isLoginPage) { // If admin and on login page
+      console.log("[AdminLayout Effect] Admin on login page, redirecting to /admin");
+      router.replace('/admin');
     }
-    
-    // If logged in as Admin and on login page, redirect to admin dashboard
-    if (currentUserId && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin' && isLoginPage) {
-        console.log("[AdminLayout Effect] Admin on login page, redirecting to /admin");
-        router.replace('/admin');
-    }
+    // Other cases:
+    // - Not admin, on login page: stay.
+    // - Not admin, not on admin page: stay.
+    // - Not logged in, on login page: stay.
+    // - Not logged in, not on admin page: stay (main site handles this).
 
   }, [authCheckComplete, currentUserId, currentUserRoleName, router]);
 
 
-  if (!authCheckComplete) {
+  if (currentUserId === undefined || !authCheckComplete) {
+    // Still waiting for the initial load of user data from localStorage
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -202,13 +201,13 @@ export default function AdminLayout({
     );
   }
   
-  // If trying to access admin pages without being an admin (after auth check is complete)
+  // If trying to access admin pages without being an admin (after auth check is complete and currentUserId is resolved)
   // This is an additional safeguard, primary redirection happens in useEffect above.
-   if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/login' && (!currentUserId || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin'))) {
-     // This state ideally should be caught by the useEffect above and redirect.
-     // If reached, it means there might be a slight delay or an edge case.
-     // Render a loading/redirecting state or null to prevent flashing content.
-     console.warn("[AdminLayout] Render: Attempting to render admin content for non-admin or unauthenticated user. Should have been redirected.");
+   if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/login' && 
+       (currentUserId === null || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin'))) {
+     // This state should ideally be caught by the useEffect above and redirect.
+     // If reached, render a "redirecting" state or null to prevent flashing content.
+     console.warn("[AdminLayout] Render: Attempting to render admin content for non-admin or unauthenticated user. Should have been redirected by useEffect.");
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -295,7 +294,7 @@ export default function AdminLayout({
           </Link>
         </SidebarHeader>
 
-        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-0"> {/* Adjusted margin-top */}
+        <div className="py-4 text-center group-data-[collapsible=icon]:hidden mt-0">
              <span className="block font-semibold text-sm text-muted-foreground">
                 Hoşgeldiniz
             </span>
@@ -509,12 +508,17 @@ export default function AdminLayout({
             </Link>
            </div>
          </header>
-         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)_+_0.5rem)] md:pt-[calc(theme(spacing.14)_+_1.5rem)]"> {/* Adjusted padding-top for mobile */}
+         <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)_+_0.5rem)] md:pt-[calc(theme(spacing.14)_+_1.5rem)]">
             {/* Render children only if authenticated and authorized as Admin */}
              {(currentUserId && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin') ? children : (
                 <div className="flex flex-col items-center justify-center h-full">
                     {/* This part might not be visible if redirection is immediate */}
-                    <p className="text-muted-foreground">Erişim için lütfen giriş yapın.</p>
+                    {/* Conditionally show loading or message based on whether initial auth check is done */}
+                    {currentUserId === undefined || !authCheckComplete ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    ) : (
+                        <p className="text-muted-foreground">Erişim için lütfen giriş yapın.</p>
+                    )}
                 </div>
              )}
          </main>
@@ -522,5 +526,5 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
-
+    
     
