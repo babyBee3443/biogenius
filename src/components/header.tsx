@@ -299,49 +299,55 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Anasayfa", icon: <HomeIcon className="h-4 w-4" /> },
     {
-      label: "Dersler", // Changed label from "Ders Kategorileri" to "Dersler"
-      icon: <DerslerIcon className="h-4 w-4" />, // Changed icon to DerslerIcon
+      label: "Dersler",
+      icon: <DerslerIcon className="h-4 w-4" />,
       isDropdown: true,
-      subItems: [ // Sub-items are now directly the class levels
+      subItems: [
         {
           label: "9. Sınıf",
-          isSubDropdown: true, // Indicates this item itself is a trigger for a sub-menu
-          subSubItems: [ // The actual links within the sub-menu
-            { href: "/dersler/9-sinif/yasam-bilimi-biyoloji", label: "Yaşam Bilimi Biyoloji" },
-            { href: "/dersler/9-sinif/hucre", label: "Hücre" },
-            { href: "/dersler/9-sinif/canlilar-dunyasi", label: "Canlılar Dünyası" },
+          isSubDropdown: true,
+          subSubItems: [
+            { href: "/dersler", label: "Tüm Dersler (9. Sınıf)" },
+            { isSeparator: true, key: "sep-9" },
+            { href: "/dersler", label: "Yaşam Bilimi Biyoloji" },
+            { href: "/dersler", label: "Hücre" },
+            { href: "/dersler", label: "Canlılar Dünyası" },
           ],
         },
         {
           label: "10. Sınıf",
           isSubDropdown: true,
           subSubItems: [
-            { href: "/dersler/10-sinif/mitoz-ve-eseyli-ureme", label: "Mitoz ve Eşeysiz Üreme" },
-            { href: "/dersler/10-sinif/mayoz-ve-eseyli-ureme", label: "Mayoz ve Eşeyli Üreme" },
-            { href: "/dersler/10-sinif/kalitim", label: "Kalıtımın Genel İlkeleri" },
-            { href: "/dersler/10-sinif/ekosistem-ekolojisi", label: "Ekosistem Ekolojisi" },
+            { href: "/dersler", label: "Tüm Dersler (10. Sınıf)" },
+            { isSeparator: true, key: "sep-10" },
+            { href: "/dersler", label: "Mitoz ve Eşeysiz Üreme" },
+            { href: "/dersler", label: "Mayoz ve Eşeyli Üreme" },
+            { href: "/dersler", label: "Kalıtımın Genel İlkeleri" },
+            { href: "/dersler", label: "Ekosistem Ekolojisi" },
           ],
         },
         {
           label: "11. Sınıf",
           isSubDropdown: true,
           subSubItems: [
-            { href: "/dersler/11-sinif/insan-fizyolojisi-sinir-sistemi", label: "İnsan Fizyolojisi (Sinir Sistemi)" },
-            { href: "/dersler/11-sinif/insan-fizyolojisi-endokrin-sistem", label: "İnsan Fizyolojisi (Endokrin Sistem)" },
-            { href: "/dersler/11-sinif/komunite-ve-populasyon-ekolojisi", label: "Komünite ve Popülasyon Ekolojisi" },
+            { href: "/dersler", label: "Tüm Dersler (11. Sınıf)" },
+            { isSeparator: true, key: "sep-11" },
+            { href: "/dersler", label: "İnsan Fizyolojisi (Sinir Sistemi)" },
+            { href: "/dersler", label: "İnsan Fizyolojisi (Endokrin Sistem)" },
+            { href: "/dersler", label: "Komünite ve Popülasyon Ekolojisi" },
           ],
         },
         {
           label: "12. Sınıf",
           isSubDropdown: true,
           subSubItems: [
-            { href: "/dersler/12-sinif/genden-proteine", label: "Genden Proteine" },
-            { href: "/dersler/12-sinif/canlilarda-enerji-donusumleri", label: "Canlılarda Enerji Dönüşümleri" },
-            { href: "/dersler/12-sinif/bitki-biyolojisi", label: "Bitki Biyolojisi" },
+            { href: "/dersler", label: "Tüm Dersler (12. Sınıf)" },
+            { isSeparator: true, key: "sep-12" },
+            { href: "/dersler", label: "Genden Proteine" },
+            { href: "/dersler", label: "Canlılarda Enerji Dönüşümleri" },
+            { href: "/dersler", label: "Bitki Biyolojisi" },
           ],
         },
-         // Link to the main /dersler page, for an overview if needed in the future
-        { href: "/dersler", label: "Tüm Kursları Gör", isSeparator: true }, // Optional: Link to main /dersler page
       ],
     },
     { href: "/biyoloji-notlari", label: "Biyoloji Notları", icon: <BookCopy className="h-4 w-4" /> },
@@ -392,9 +398,7 @@ const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56">
                     {item.subItems.map(subItem => (
-                       subItem.isSeparator ? (
-                        <DropdownMenuSeparator key={`sep-${subItem.label || subItem.href}`} />
-                      ) : subItem.isSubDropdown && subItem.subSubItems ? (
+                       subItem.isSubDropdown && subItem.subSubItems ? (
                         // This is a class level (e.g., "9. Sınıf") - render as a SubMenu
                         <DropdownMenuSub key={subItem.label}>
                           <DropdownMenuSubTrigger>
@@ -403,15 +407,21 @@ const Header = () => {
                           <DropdownMenuPortal>
                             <DropdownMenuSubContent className="w-52">
                               {subItem.subSubItems.map(subSubItem => (
-                                <DropdownMenuItem key={subSubItem.label} asChild>
-                                  <Link href={subSubItem.href}>{subSubItem.label}</Link>
-                                </DropdownMenuItem>
+                                subSubItem.isSeparator ? (
+                                  <DropdownMenuSeparator key={subSubItem.key || `sep-${subSubItem.label}`} />
+                                ) : (
+                                  subSubItem.href && (
+                                    <DropdownMenuItem key={subSubItem.label} asChild>
+                                      <Link href={subSubItem.href}>{subSubItem.label}</Link>
+                                    </DropdownMenuItem>
+                                  )
+                                )
                               ))}
                             </DropdownMenuSubContent>
                           </DropdownMenuPortal>
                         </DropdownMenuSub>
                       ) : (
-                        // This is a direct link (e.g., "Tüm Kursları Gör")
+                        // This is a direct link (should not happen for "Dersler" top-level subItems based on new structure)
                         subItem.href && (
                             <DropdownMenuItem key={subItem.label || subItem.href} asChild>
                             <Link href={subItem.href}>{subItem.label}</Link>
@@ -655,9 +665,7 @@ const Header = () => {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-[230px]"> {/* Adjust width as needed */}
                                         {item.subItems.map(subItem => (
-                                            subItem.isSeparator ? (
-                                                <DropdownMenuSeparator key={`mobile-sep-${subItem.label || subItem.href}`} />
-                                            ) : subItem.isSubDropdown && subItem.subSubItems ? (
+                                            subItem.isSubDropdown && subItem.subSubItems ? (
                                                 <DropdownMenuSub key={`mobile-sub-${subItem.label}`}>
                                                     <DropdownMenuSubTrigger>
                                                         <span>{subItem.label}</span>
@@ -665,9 +673,15 @@ const Header = () => {
                                                     <DropdownMenuPortal>
                                                         <DropdownMenuSubContent className="w-[210px]">
                                                             {subItem.subSubItems.map(subSubItem => (
-                                                                <DropdownMenuItem key={`mobile-subsub-${subSubItem.label}`} asChild>
-                                                                     <SheetClose asChild><Link href={subSubItem.href}>{subSubItem.label}</Link></SheetClose>
-                                                                </DropdownMenuItem>
+                                                                subSubItem.isSeparator ? (
+                                                                  <DropdownMenuSeparator key={subSubItem.key || `mobile-sep-${subSubItem.label}`} />
+                                                                ) : (
+                                                                  subSubItem.href && (
+                                                                    <DropdownMenuItem key={`mobile-subsub-${subSubItem.label}`} asChild>
+                                                                        <SheetClose asChild><Link href={subSubItem.href}>{subSubItem.label}</Link></SheetClose>
+                                                                    </DropdownMenuItem>
+                                                                  )
+                                                                )
                                                             ))}
                                                         </DropdownMenuSubContent>
                                                     </DropdownMenuPortal>
