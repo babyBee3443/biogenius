@@ -64,6 +64,7 @@ export function ThemeToggle() {
        <span style={{ left: `${padding + indicatorSize + 6}px` }} // Adjusted spacing
             className={cn(
            "absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none",
+           "hidden sm:inline-block", // Hide on xs, show on sm and up
            isLight ? "text-slate-500 opacity-100" : "opacity-0" 
         )}>
            LIGHT MODE
@@ -71,6 +72,7 @@ export function ThemeToggle() {
        <span style={{ right: `${padding + indicatorSize + 6}px` }} // Adjusted spacing
             className={cn(
            "absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none",
+           "hidden sm:inline-block", // Hide on xs, show on sm and up
            !isLight ? "text-slate-300 opacity-100" : "opacity-0" 
         )}>
           DARK MODE
