@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { toast } from '@/hooks/use-toast';
-import { usePermissions } from "@/hooks/usePermissions";
+// import { usePermissions } from "@/hooks/usePermissions"; // Artık layout seviyesinde kullanılmayacak
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const SESSION_TIMEOUT_KEY = 'adminSessionTimeoutMinutes';
@@ -38,18 +38,17 @@ export default function AdminLayout({
 }) {
   const [currentUserName, setCurrentUserName] = React.useState("Kullanıcı");
   const [currentUserAvatar, setCurrentUserAvatar] = React.useState("https://placehold.co/32x32.png");
-  // Initialize currentUserId as undefined to distinguish from "checked and found no user (null)"
-  const [currentUserId, setCurrentUserId] = React.useState<string | null | undefined>(undefined);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null | undefined>(undefined); // Initial undefined state
   const [currentUserRoleName, setCurrentUserRoleName] = React.useState<string | null>(null);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = React.useState(DEFAULT_SESSION_TIMEOUT_MINUTES);
-  const [authCheckComplete, setAuthCheckComplete] = React.useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = React.useState(false); // New state
   const router = useRouter();
-  const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId === undefined ? null : currentUserId);
+  // const { permissions, isLoading: permissionsLoading, error: permissionsError, hasPermission } = usePermissions(currentUserId === undefined ? null : currentUserId);
 
 
   const loadUserDataAndSettings = React.useCallback(() => {
     let userFound = false;
-    let newUserId: string | null = null; // Can be null if no user
+    let newUserId: string | null = null;
     let newUserName = "Kullanıcı";
     let newUserAvatar = "https://placehold.co/32x32.png";
     let newUserRoleName: string | null = null;
@@ -63,7 +62,7 @@ export default function AdminLayout({
             newUserName = userData.name || "Kullanıcı";
             newUserAvatar = userData.avatar || `https://placehold.co/32x32.png?text=${(userData.name || 'U').charAt(0)}`;
             newUserId = userData.id;
-            newUserRoleName = userData.role || null;
+            newUserRoleName = userData.role || null; // Ensure role is read
             userFound = true;
           }
         } catch (e) {
@@ -72,7 +71,7 @@ export default function AdminLayout({
         }
       }
 
-      setCurrentUserId(newUserId); // Explicitly set to null if no user, or string if user
+      setCurrentUserId(newUserId);
       setCurrentUserName(newUserName);
       setCurrentUserAvatar(newUserAvatar);
       setCurrentUserRoleName(newUserRoleName);
@@ -86,7 +85,7 @@ export default function AdminLayout({
         setSessionTimeoutMinutes(DEFAULT_SESSION_TIMEOUT_MINUTES);
       }
     }
-    setAuthCheckComplete(true);
+    setAuthCheckComplete(true); // Mark auth check as complete
     return userFound;
   }, []);
 
@@ -141,11 +140,11 @@ export default function AdminLayout({
       localStorage.removeItem('currentUser');
     }
     if (isMountedRef.current) {
-        setCurrentUserId(null); // Explicitly set to null on logout
+        setCurrentUserId(null);
         setCurrentUserName("Kullanıcı");
         setCurrentUserAvatar("https://placehold.co/32x32.png");
         setCurrentUserRoleName(null);
-        setAuthCheckComplete(false);
+        setAuthCheckComplete(false); // Reset auth check state
     }
     toast({ title: "Oturum Kapatıldı", description: "Başarıyla çıkış yaptınız." });
     router.replace('/login');
@@ -154,45 +153,39 @@ export default function AdminLayout({
 
   useIdleTimeout({ onIdle: handleLogout, idleTimeInMinutes: sessionTimeoutMinutes });
 
-  // Centralized redirection logic
   React.useEffect(() => {
-    if (!isMountedRef.current || currentUserId === undefined || !authCheckComplete) {
-      // Wait until currentUserId is explicitly set (to string or null) and authCheck is complete
+    if (!authCheckComplete) { // Wait until the initial auth check from localStorage is done
       return;
     }
 
     const currentPathname = window.location.pathname;
-    const isAdminPage = currentPathname.startsWith('/admin');
+    const isAdminAreaPage = currentPathname.startsWith('/admin');
     const isLoginPage = currentPathname === '/login';
     const isPreviewPage = currentPathname.startsWith('/admin/preview');
 
-    if (isPreviewPage) {
+    if (isPreviewPage) { // Always allow access to preview pages
         return;
     }
 
-    const isUserAdmin = currentUserId !== null && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin';
+    const isUserAdmin = currentUserId !== null && currentUserRoleName === 'Admin';
 
-    if (isAdminPage && !isLoginPage) {
-      if (!isUserAdmin) { // This covers both currentUserId === null (not logged in) and logged in but not Admin
+    if (isAdminAreaPage && !isLoginPage) { // Trying to access an admin page (that's not login)
+      if (!isUserAdmin) { // If not logged in as Admin (covers null user or non-Admin role)
         console.log(`[AdminLayout Effect] User not admin or not logged in. Redirecting to /login. User ID: ${currentUserId}, Role: ${currentUserRoleName}, Path: ${currentPathname}`);
         router.replace('/login');
       }
-      // If isUserAdmin, they are allowed on admin pages (except login if already there).
-    } else if (isUserAdmin && isLoginPage) { // If admin and on login page
+      // If isUserAdmin, they are allowed on admin pages.
+    } else if (isUserAdmin && isLoginPage) { // If Admin is on the login page
       console.log("[AdminLayout Effect] Admin on login page, redirecting to /admin");
       router.replace('/admin');
     }
-    // Other cases:
-    // - Not admin, on login page: stay.
-    // - Not admin, not on admin page: stay.
-    // - Not logged in, on login page: stay.
-    // - Not logged in, not on admin page: stay (main site handles this).
-
+    // Other cases are handled implicitly:
+    // - User not admin (or not logged in), on login page: stays on login.
+    // - User not admin (or not logged in), not on admin page: this layout doesn't apply to them.
   }, [authCheckComplete, currentUserId, currentUserRoleName, router]);
 
 
   if (currentUserId === undefined || !authCheckComplete) {
-    // Still waiting for the initial load of user data from localStorage
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -201,14 +194,9 @@ export default function AdminLayout({
     );
   }
   
-  // If trying to access admin pages without being an admin (after auth check is complete and currentUserId is resolved)
-  // This is an additional safeguard, primary redirection happens in useEffect above.
-   if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/login' && 
-       (currentUserId === null || (currentUserRoleName && currentUserRoleName.trim().toLowerCase() !== 'admin'))) {
-     // This state should ideally be caught by the useEffect above and redirect.
-     // If reached, render a "redirecting" state or null to prevent flashing content.
-     console.warn("[AdminLayout] Render: Attempting to render admin content for non-admin or unauthenticated user. Should have been redirected by useEffect.");
-    return (
+   if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/login' && window.location.pathname !== '/admin/preview' &&
+       (currentUserId === null || (currentUserRoleName && currentUserRoleName !== 'Admin'))) {
+     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">Yönlendiriliyor...</p>
@@ -305,160 +293,128 @@ export default function AdminLayout({
 
         <SidebarContent className="p-2">
           <SidebarMenu>
-            {hasPermission('Dashboard Görüntüleme') && (
-                <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Gösterge Paneli">
-                    <Link href="/admin">
-                    <LayoutDashboard />
-                    <span>Gösterge Paneli</span>
+            <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Gösterge Paneli">
+                <Link href="/admin">
+                <LayoutDashboard />
+                <span>Gösterge Paneli</span>
+                </Link>
+            </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Tüm Makaleler">
+                            <Link href="/admin/articles">
+                            <Newspaper />
+                            <span>Makaleler</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Yeni Makale Ekle">
+                            <Link href="/admin/articles/new">
+                            <PlusCircle />
+                            <span>Yeni Makale</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Biyoloji Notları">
+                            <Link href="/admin/biyoloji-notlari">
+                            <BookCopy />
+                            <span>Biyoloji Notları</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Yeni Biyoloji Notu Ekle">
+                            <Link href="/admin/biyoloji-notlari/new">
+                            <PlusCircle />
+                            <span>Yeni Not Ekle</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Ders Yönetimi">
+                            <Link href="/admin/dersler">
+                            <DerslerIcon />
+                            <span>Dersler</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Kategoriler">
+                            <Link href="/admin/categories">
+                            <Tag />
+                            <span>Kategoriler</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Sayfa Yönetimi">
+                            <Link href="/admin/pages">
+                            <Layers />
+                            <span>Sayfa Yönetimi</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+
+            <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Yönetim</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Kullanıcılar">
+                            <Link href="/admin/users">
+                            <Users />
+                            <span>Kullanıcılar</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Roller">
+                            <Link href="/admin/roles">
+                            <ShieldCheck />
+                            <span>Roller</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+
+            <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Genel Ayarlar">
+                            <Link href="/admin/settings">
+                            <Settings />
+                            <span>Genel Ayarlar</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Menü Yönetimi">
+                            <Link href="/admin/settings/navigation">
+                            <MenuSquare />
+                            <span>Menü Yönetimi</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Kullanım Kılavuzu">
+                    <Link href="/admin/pages/edit/kullanim-kilavuzu">
+                       <Layers />
+                       <span>Kullanım Kılavuzu</span>
                     </Link>
                 </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
-
-            {(hasPermission('Makaleleri Görüntüleme') || hasPermission('Makale Oluşturma') || hasPermission('Biyoloji Notlarını Görüntüleme') || hasPermission('Yeni Biyoloji Notu Ekleme') || hasPermission('Dersleri Yönetme') || hasPermission('Kategorileri Yönetme') || hasPermission('Sayfaları Yönetme')) && (
-                <SidebarGroup className="p-0">
-                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">İçerik</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {hasPermission('Makaleleri Görüntüleme') && (
-                            <SidebarMenuItem>
-                            <SidebarMenuButton asChild tooltip="Tüm Makaleler">
-                                <Link href="/admin/articles">
-                                <Newspaper />
-                                <span>Makaleler</span>
-                                </Link>
-                            </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Makale Oluşturma') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Yeni Makale Ekle">
-                                    <Link href="/admin/articles/new">
-                                    <PlusCircle />
-                                    <span>Yeni Makale</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Biyoloji Notlarını Görüntüleme') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Biyoloji Notları">
-                                    <Link href="/admin/biyoloji-notlari">
-                                    <BookCopy />
-                                    <span>Biyoloji Notları</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Yeni Biyoloji Notu Ekleme') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Yeni Biyoloji Notu Ekle">
-                                    <Link href="/admin/biyoloji-notlari/new">
-                                    <PlusCircle />
-                                    <span>Yeni Not Ekle</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Dersleri Yönetme') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Ders Yönetimi">
-                                    <Link href="/admin/dersler">
-                                    <DerslerIcon />
-                                    <span>Dersler</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Kategorileri Yönetme') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Kategoriler">
-                                    <Link href="/admin/categories">
-                                    <Tag />
-                                    <span>Kategoriler</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Sayfaları Yönetme') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Sayfa Yönetimi">
-                                    <Link href="/admin/pages">
-                                    <Layers />
-                                    <span>Sayfa Yönetimi</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
-
-            {(hasPermission('Kullanıcıları Görüntüleme') || hasPermission('Rolleri Yönetme')) && (
-                <SidebarGroup className="p-0">
-                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Yönetim</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {hasPermission('Kullanıcıları Görüntüleme') && (
-                            <SidebarMenuItem>
-                            <SidebarMenuButton asChild tooltip="Kullanıcılar">
-                                <Link href="/admin/users">
-                                <Users />
-                                <span>Kullanıcılar</span>
-                                </Link>
-                            </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Rolleri Yönetme') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Roller">
-                                    <Link href="/admin/roles">
-                                    <ShieldCheck />
-                                    <span>Roller</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
-
-            {(hasPermission('Ayarları Görüntüleme') || hasPermission('Menü Yönetimi')) && (
-                <SidebarGroup className="p-0">
-                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Sistem</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {hasPermission('Ayarları Görüntüleme') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Genel Ayarlar">
-                                    <Link href="/admin/settings">
-                                    <Settings />
-                                    <span>Genel Ayarlar</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('Menü Yönetimi') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Menü Yönetimi">
-                                    <Link href="/admin/settings/navigation">
-                                    <MenuSquare />
-                                    <span>Menü Yönetimi</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
-            {hasPermission('Kullanım Kılavuzunu Görüntüleme') && (
-                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Kullanım Kılavuzu">
-                        <Link href="/admin/pages/edit/kullanim-kilavuzu">
-                           <Layers />
-                           <span>Kullanım Kılavuzu</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-2">
@@ -509,15 +465,12 @@ export default function AdminLayout({
            </div>
          </header>
          <main className="flex-1 p-4 md:p-6 pt-[calc(theme(spacing.14)_+_0.5rem)] md:pt-[calc(theme(spacing.14)_+_1.5rem)]">
-            {/* Render children only if authenticated and authorized as Admin */}
-             {(currentUserId && currentUserRoleName && currentUserRoleName.trim().toLowerCase() === 'admin') ? children : (
+             {(currentUserId && currentUserRoleName === 'Admin') ? children : (
                 <div className="flex flex-col items-center justify-center h-full">
-                    {/* This part might not be visible if redirection is immediate */}
-                    {/* Conditionally show loading or message based on whether initial auth check is done */}
-                    {currentUserId === undefined || !authCheckComplete ? (
+                    {currentUserId === undefined || !authCheckComplete ? ( // Show loading if auth check not complete
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    ) : (
-                        <p className="text-muted-foreground">Erişim için lütfen giriş yapın.</p>
+                    ) : ( // Otherwise, imply redirection or already redirected, so no specific message here is needed
+                        <p className="text-muted-foreground">Erişim için lütfen giriş yapın veya yönlendiriliyorsunuz...</p>
                     )}
                 </div>
              )}
@@ -527,4 +480,6 @@ export default function AdminLayout({
   );
 }
     
+    
+
     
