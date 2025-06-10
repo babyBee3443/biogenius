@@ -6,12 +6,13 @@ import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Twitter, Facebook, Linkedin, Loader2, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
-import { getArticleById, getArticles, type ArticleData } from '@/lib/data/articles'; // Corrected import
+import { ArrowLeft, Twitter, Facebook, Linkedin, Loader2, AlertTriangle } from 'lucide-react';
+import { getArticleById, getArticles, type ArticleData } from '@/lib/data/articles';
 import type { Block } from '@/components/admin/template-selector';
 import { ArticleCard } from '@/components/article-card';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
+import { Skeleton } from '@/components/ui/skeleton';
+import AdsenseUnit from '@/components/adsense-unit'; // Import the new component
 
 // --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -32,7 +33,7 @@ const ImageBlockRenderer: React.FC<{ block: Extract<Block, { type: 'image' }> }>
             height={450}
             className="rounded-lg shadow-md mx-auto max-w-full h-auto"
             data-ai-hint="article content image"
-            loading="lazy" // Ensure images within blocks are lazy-loaded
+            loading="lazy"
          />
         {block.caption && <figcaption className="text-center text-sm text-muted-foreground mt-2">{block.caption}</figcaption>}
     </figure>
@@ -68,7 +69,7 @@ const VideoBlockRenderer: React.FC<{ block: Extract<Block, { type: 'video' }> }>
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    loading="lazy" // Lazy load iframes
+                    loading="lazy" 
                 ></iframe>
             </div>
         );
@@ -122,8 +123,6 @@ export default function ArticlePage() {
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
-  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -138,10 +137,6 @@ export default function ArticlePage() {
           if (isMounted) setCurrentUserRole(null);
         }
       }
-      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
-      if (isMounted) setAdsenseEnabled(storedAdsenseEnabled === 'true');
-      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
-      if (isMounted) setAdsensePublisherId(storedPublisherId);
     }
 
     const fetchArticleData = async () => {
@@ -197,27 +192,6 @@ export default function ArticlePage() {
     if ((currentUserRole === 'Admin' || currentUserRole === 'Editor') && article.status === 'Hazır') return true;
     return false;
   }, [article, currentUserRole]);
-
-
-  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties, minHeight?: string) => {
-    if (adsenseEnabled && adsensePublisherId) {
-      return (
-        <div className="my-8 p-4 text-center" style={{...style, minHeight: minHeight || 'auto'}}> {/* Removed placeholder styling */}
-          <ins className="adsbygoogle"
-            style={{ display: 'block', ...style }}
-            data-ad-client={`ca-${adsensePublisherId}`}
-            data-ad-slot={slotId}
-            data-ad-format={adFormat}
-            data-full-width-responsive={responsive ? "true" : "false"}
-          ></ins>
-          <script
-             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
-          />
-        </div>
-      );
-    }
-    return null; // Return null if AdSense is not enabled or publisher ID is missing
-  };
 
 
   if (loading) {
@@ -277,13 +251,13 @@ export default function ArticlePage() {
                 width={1200}
                 height={600}
                 className="w-full h-auto object-cover"
-                priority // Prioritize the main article image for LCP
+                priority 
                 data-ai-hint="article main image"
             />
           </div>
       )}
 
-      {renderAdsenseUnit("YOUR_AD_SLOT_ID_ARTICLE_TOP", "fluid", true, undefined, "100px")}
+      <AdsenseUnit slotId="YOUR_AD_SLOT_ID_ARTICLE_TOP" adFormat="fluid" minHeight="100px" />
 
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {article.blocks && article.blocks.length > 0 ? (
@@ -291,7 +265,7 @@ export default function ArticlePage() {
                 <React.Fragment key={block.id}>
                     {renderBlock(block)}
                     {(index === 1 || index === Math.floor(article.blocks.length / 2) || index === article.blocks.length - 2) && article.blocks.length > 3 && (
-                        renderAdsenseUnit(`YOUR_AD_SLOT_ID_ARTICLE_INCONTENT_${index}`, "fluid", true, undefined, "150px")
+                        <AdsenseUnit slotId={`YOUR_AD_SLOT_ID_ARTICLE_INCONTENT_${index}`} adFormat="fluid" minHeight="150px" />
                     )}
                 </React.Fragment>
              ))
@@ -316,7 +290,7 @@ export default function ArticlePage() {
            </div>
        )}
 
-       {renderAdsenseUnit("YOUR_AD_SLOT_ID_ARTICLE_BOTTOM", "leaderboard", false, undefined, "90px")}
+       <AdsenseUnit slotId="YOUR_AD_SLOT_ID_ARTICLE_BOTTOM" adFormat="leaderboard" responsive={false} minHeight="90px" />
 
        <div className="mt-10">
           <h2 className="text-2xl font-semibold mb-4">Paylaş</h2>

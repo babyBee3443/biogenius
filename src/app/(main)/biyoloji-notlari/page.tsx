@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoteCard } from '@/components/note-card';
+import AdsenseUnit from '@/components/adsense-unit'; // Import the new component
 
 export default function BiyolojiNotlariPage() {
   const [allNotes, setAllNotes] = React.useState<NoteData[]>([]);
@@ -21,17 +22,8 @@ export default function BiyolojiNotlariPage() {
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedLevel, setSelectedLevel] = React.useState("all");
   const [loading, setLoading] = React.useState(true);
-  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
-  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
-      setAdsenseEnabled(storedAdsenseEnabled === 'true');
-      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
-      setAdsensePublisherId(storedPublisherId);
-    }
-
     setLoading(true);
     getNotes()
       .then(data => {
@@ -75,27 +67,6 @@ export default function BiyolojiNotlariPage() {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
-
-  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties, minHeight?: string) => {
-    if (adsenseEnabled && adsensePublisherId) {
-      return (
-        <div className="my-8 p-4 text-center" style={{...style, minHeight: minHeight || 'auto'}}> {/* Removed placeholder styling */}
-          <ins className="adsbygoogle"
-            style={{ display: 'block', ...style }}
-            data-ad-client={`ca-${adsensePublisherId}`}
-            data-ad-slot={slotId}
-            data-ad-format={adFormat}
-            data-full-width-responsive={responsive ? "true" : "false"}
-          ></ins>
-          <script
-             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
-          />
-        </div>
-      );
-    }
-    return null; // Return null if AdSense is not enabled or publisher ID is missing
-  };
-
 
   return (
     <div className="space-y-12">
@@ -143,7 +114,7 @@ export default function BiyolojiNotlariPage() {
           </Card>
       </section>
 
-      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTES_LIST_TOP", "leaderboard", false, undefined, "90px")}
+      <AdsenseUnit slotId="YOUR_AD_SLOT_ID_NOTES_LIST_TOP" adFormat="leaderboard" responsive={false} minHeight="90px" />
 
       {loading ? (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -181,14 +152,19 @@ export default function BiyolojiNotlariPage() {
             <React.Fragment key={note.id}>
               <NoteCard note={note} imageLoading="lazy" />
               {(index + 1) % 3 === 0 && index < filteredNotes.length -1 && (
-                renderAdsenseUnit(`YOUR_AD_SLOT_ID_NOTES_LIST_INCONTENT_${index}`, "fluid", true, { gridColumn: "span 1 / span 1", display: 'flex', alignItems: 'center', justifyContent: 'center' }, "250px")
+                <AdsenseUnit 
+                    slotId={`YOUR_AD_SLOT_ID_NOTES_LIST_INCONTENT_${index}`} 
+                    adFormat="fluid" 
+                    className="my-8 p-4 text-center md:col-span-1 flex items-center justify-center" // Adjusted for grid
+                    minHeight="250px"
+                />
               )}
             </React.Fragment>
           ))}
         </div>
       )}
 
-      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTES_LIST_BOTTOM", "leaderboard", false, undefined, "90px")}
+      <AdsenseUnit slotId="YOUR_AD_SLOT_ID_NOTES_LIST_BOTTOM" adFormat="leaderboard" responsive={false} minHeight="90px" />
     </div>
   );
 }

@@ -1,12 +1,12 @@
 
-"use client"; // Make client component to access localStorage for AdSense
+"use client";
 
 import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Tag } from 'lucide-react';
-import { getNoteById, getNotes, type NoteData } from '@/lib/data/notes'; // Corrected import
+import { getNoteById, getNotes, type NoteData } from '@/lib/data/notes';
 import type { Block } from '@/components/admin/template-selector';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from '@/components/ui/separator';
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NoteCard } from '@/components/note-card';
 import { Skeleton } from '@/components/ui/skeleton'; 
 import * as React from 'react'; 
+import AdsenseUnit from '@/components/adsense-unit'; // Import the new component
 
 // --- Block Rendering Components ---
 const TextBlockRenderer: React.FC<{ block: Extract<Block, { type: 'text' }> }> = ({ block }) => (
@@ -110,18 +111,9 @@ export default function NotePage({ params }: NotePageProps) {
   const [relatedNotes, setRelatedNotes] = React.useState<NoteData[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
-  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
-    if (typeof window !== 'undefined') {
-      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
-      if (isMounted) setAdsenseEnabled(storedAdsenseEnabled === 'true');
-      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
-      if (isMounted) setAdsensePublisherId(storedPublisherId);
-    }
-
     const fetchNoteData = async () => {
       if (!noteSlug) {
         if (isMounted) {
@@ -157,26 +149,6 @@ export default function NotePage({ params }: NotePageProps) {
     fetchNoteData();
     return () => { isMounted = false; };
   }, [noteSlug]);
-
-  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties, minHeight?: string) => {
-    if (adsenseEnabled && adsensePublisherId) {
-      return (
-        <div className="my-8 p-4 text-center" style={{...style, minHeight: minHeight || 'auto'}}> {/* Removed placeholder styling */}
-          <ins className="adsbygoogle"
-            style={{ display: 'block', ...style }}
-            data-ad-client={`ca-${adsensePublisherId}`}
-            data-ad-slot={slotId}
-            data-ad-format={adFormat}
-            data-full-width-responsive={responsive ? "true" : "false"}
-          ></ins>
-          <script
-             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
-          />
-        </div>
-      );
-    }
-    return null; // Return null if AdSense is not enabled or publisher ID is missing
-  };
 
 
   if (loading) {
@@ -244,7 +216,7 @@ export default function NotePage({ params }: NotePageProps) {
             </p>
         )}
       
-      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTE_TOP", "fluid", true, undefined, "100px")}
+      <AdsenseUnit slotId="YOUR_AD_SLOT_ID_NOTE_TOP" adFormat="fluid" minHeight="100px" />
 
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {note.contentBlocks && note.contentBlocks.length > 0 ? (
@@ -252,7 +224,7 @@ export default function NotePage({ params }: NotePageProps) {
                 <React.Fragment key={block.id}>
                     {renderBlock(block)}
                     {(index === 1 || index === Math.floor(note.contentBlocks.length / 2)) && note.contentBlocks.length > 3 && ( 
-                         renderAdsenseUnit(`YOUR_AD_SLOT_ID_NOTE_INCONTENT_${index}`, "fluid", true, undefined, "150px")
+                         <AdsenseUnit slotId={`YOUR_AD_SLOT_ID_NOTE_INCONTENT_${index}`} adFormat="fluid" minHeight="150px" />
                     )}
                 </React.Fragment>
             ))
@@ -272,7 +244,7 @@ export default function NotePage({ params }: NotePageProps) {
            </div>
        )}
       
-      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTE_BOTTOM", "leaderboard", false, undefined, "90px")}
+      <AdsenseUnit slotId="YOUR_AD_SLOT_ID_NOTE_BOTTOM" adFormat="leaderboard" responsive={false} minHeight="90px" />
 
        <div className="mt-16 mb-8 text-center">
            <Button asChild variant="outline">

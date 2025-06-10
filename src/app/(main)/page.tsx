@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { getArticles, type ArticleData } from '@/lib/data/articles';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
+import AdsenseUnit from '@/components/adsense-unit'; // Import the new component
 
 // Dynamically import sections
 const Hero = dynamic(() => import('@/components/hero'), {
@@ -150,8 +151,6 @@ export default function Home() {
   const [loadingArticles, setLoadingArticles] = React.useState(true);
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
   const [loadingRole, setLoadingRole] = React.useState(true);
-  const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
-  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     getArticles()
@@ -177,11 +176,6 @@ export default function Home() {
         }
       }
       setLoadingRole(false);
-
-      const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
-      setAdsenseEnabled(storedAdsenseEnabled === 'true');
-      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
-      setAdsensePublisherId(storedPublisherId);
     } else {
       setLoadingRole(false);
     }
@@ -259,33 +253,11 @@ export default function Home() {
      );
   }
 
-  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties) => {
-    if (adsenseEnabled && adsensePublisherId) {
-      return (
-        <div className="my-8 p-4 text-center" style={style}> {/* Removed placeholder styling */}
-          <ins className="adsbygoogle"
-            style={{ display: 'block', ...style }}
-            data-ad-client={`ca-${adsensePublisherId}`}
-            data-ad-slot={slotId}
-            data-ad-format={adFormat}
-            data-full-width-responsive={responsive ? "true" : "false"}
-          ></ins>
-          <script
-             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
-          />
-        </div>
-      );
-    }
-    return null; // Return null if AdSense is not enabled or publisher ID is missing
-  };
-
   return (
     <div className="space-y-12">
       <WelcomeScreen />
-
-       <Hero articles={heroArticles} />
-
-       {renderAdsenseUnit("YOUR_AD_SLOT_ID_HERO_BOTTOM", "fluid", true, { minHeight: '100px' })}
+      <Hero articles={heroArticles} />
+      <AdsenseUnit slotId="YOUR_AD_SLOT_ID_HERO_BOTTOM" adFormat="fluid" minHeight="100px" />
 
       {featuredArticles.length > 0 && (
         <section id="featured-articles">
@@ -299,7 +271,7 @@ export default function Home() {
          <CategoryTeaserSection />
        </section>
 
-       {renderAdsenseUnit("YOUR_AD_SLOT_ID_SECTIONS_MIDDLE", "rectangle", true, { minWidth: '300px', minHeight: '250px' })}
+       <AdsenseUnit slotId="YOUR_AD_SLOT_ID_SECTIONS_MIDDLE" adFormat="rectangle" style={{ minWidth: '300px', minHeight: '250px' }} />
 
       <RecommendedContentSection />
 
@@ -310,8 +282,7 @@ export default function Home() {
         </section>
       )}
 
-      {renderAdsenseUnit("YOUR_AD_SLOT_ID_PAGE_BOTTOM", "leaderboard", false, { minHeight: '90px' })}
-
+      <AdsenseUnit slotId="YOUR_AD_SLOT_ID_PAGE_BOTTOM" adFormat="leaderboard" responsive={false} minHeight="90px" />
     </div>
   );
 }
