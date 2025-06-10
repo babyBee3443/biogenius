@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon, Send, Info } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Save, Upload, BookCopy, Tag, AlertTriangle, Layers, Sparkles, MessageCircle, MessageSquare as ChatIcon, Send, Info, CheckCircle } from "lucide-react";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -68,7 +68,7 @@ interface AiAssistantMessage {
     id: string;
     type: 'user' | 'ai' | 'error';
     content: string | React.ReactNode;
-    suggestedBlocksForApply?: SuggestedBlock[]; // To hold blocks for application
+    aiOutput?: GenerateBiologyNoteSuggestionOutput; // Store the full AI output for applying suggestions
 }
 
 // Use the imported type for AI Direct Chat
@@ -316,60 +316,9 @@ export default function NewBiyolojiNotuPage() {
         setIsAiAssistantGenerating(true);
 
         try {
-            const aiOutput: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInputToAI);
+            const aiOutputResponse: GenerateBiologyNoteSuggestionOutput = await generateBiologyNoteSuggestion(userInputToAI);
             
-            let aiResponseContent: React.ReactNode = "AI'dan bir yanıt alınamadı.";
-            let suggestedBlocksToApply: SuggestedBlock[] | undefined = undefined;
-
-            if (aiOutput) {
-                suggestedBlocksToApply = aiOutput.suggestedBlocks;
-                aiResponseContent = (
-                    <div className="space-y-3 text-left">
-                        {aiOutput.suggestedTitle && (
-                            <div>
-                                <strong className="block text-sm font-medium">Önerilen Başlık:</strong>
-                                <p className="text-sm p-2 bg-background rounded border border-border/50">{aiOutput.suggestedTitle}</p>
-                            </div>
-                        )}
-                        {aiOutput.suggestedSummary && (
-                            <div>
-                                <strong className="block text-sm font-medium">Önerilen Özet:</strong>
-                                <p className="text-sm whitespace-pre-wrap p-2 bg-background rounded border border-border/50">{aiOutput.suggestedSummary}</p>
-                            </div>
-                        )}
-                        {aiOutput.suggestedTags && aiOutput.suggestedTags.length > 0 && (
-                            <div>
-                                <strong className="block text-sm font-medium">Önerilen Etiketler:</strong>
-                                <div className="flex flex-wrap gap-1 mt-1 p-2 bg-background rounded border border-border/50">
-                                    {aiOutput.suggestedTags.map(tag => (
-                                        <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                         {aiOutput.suggestedContentIdeas && (!aiOutput.suggestedBlocks || aiOutput.suggestedBlocks.length === 0) && ( // Show ideas if no blocks suggested
-                            <div>
-                                <strong className="block text-sm font-medium">Önerilen İçerik Fikirleri/Taslak:</strong>
-                                <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none p-2 bg-background rounded border border-border/50" dangerouslySetInnerHTML={{ __html: aiOutput.suggestedContentIdeas.replace(/\n/g, '<br />') }} />
-                            </div>
-                        )}
-                        {aiOutput.suggestedBlocks && aiOutput.suggestedBlocks.length > 0 && (
-                            <div className="mt-3">
-                                <strong className="block text-sm font-medium mb-1">Önerilen Sayfa Yapısı (Bloklar):</strong>
-                                <div className="text-xs space-y-1 p-2 bg-background rounded border border-border/50 max-h-48 overflow-y-auto">
-                                    {aiOutput.suggestedBlocks.map((block, index) => (
-                                        <p key={`suggested-block-${index}`} className="truncate">
-                                            - <strong>{block.type}</strong>:
-                                            {' '}{(block as any).content?.substring(0, 30) || (block as any).url?.substring(0,30) || (block as any).level || '[Blok detayı]'}...
-                                        </p>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            }
-            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'ai', content: aiResponseContent, suggestedBlocksForApply: suggestedBlocksToApply }]);
+            setAiAssistantMessages(prev => [...prev, { id: Date.now().toString(), type: 'ai', content: "AI Önerisi Geldi:", aiOutput: aiOutputResponse }]);
 
         } catch (error: any) {
             console.error("AI note suggestion error:", error);
@@ -378,6 +327,15 @@ export default function NewBiyolojiNotuPage() {
             setIsAiAssistantGenerating(false);
         }
     };
+    
+    const handleApplyAiSuggestion = (field: 'title' | 'summary' | 'tags', value: string | string[] | undefined) => {
+        if (value === undefined) return;
+        if (field === 'title' && typeof value === 'string') setTitle(value);
+        else if (field === 'summary' && typeof value === 'string') setSummary(value);
+        else if (field === 'tags' && Array.isArray(value)) setTags(value);
+        toast({ title: `${field.charAt(0).toUpperCase() + field.slice(1)} Uygulandı`, description: "AI önerisi forma aktarıldı." });
+    };
+
 
     const handleApplySuggestedBlocks = (suggestedBlocks?: SuggestedBlock[]) => {
         if (suggestedBlocks && suggestedBlocks.length > 0) {
@@ -621,20 +579,59 @@ export default function NewBiyolojiNotuPage() {
                                 <div className="space-y-3 mb-3">
                                     {aiAssistantMessages.map(msg => (
                                         <div key={msg.id} className={`p-3 rounded-lg max-w-[95%] text-sm ${msg.type === 'user' ? 'bg-primary/10 self-end text-right ml-auto' : msg.type === 'ai' ? 'bg-secondary self-start mr-auto' : 'bg-destructive/10 text-destructive self-start mr-auto'}`}>
-                                            {typeof msg.content === 'string' ? (
-                                                <div className="whitespace-pre-wrap">{msg.content}</div>
+                                            {msg.type === 'ai' && msg.aiOutput ? (
+                                                <div className="space-y-3 text-left">
+                                                    {msg.aiOutput.suggestedTitle && (
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div>
+                                                                <strong className="block text-xs font-medium">Önerilen Başlık:</strong>
+                                                                <p className="text-sm p-1 bg-background rounded border border-border/30 mt-0.5">{msg.aiOutput.suggestedTitle}</p>
+                                                            </div>
+                                                            <Button size="xs" variant="outline" className="mt-1 text-xs h-6 px-1.5" onClick={() => handleApplyAiSuggestion('title', msg.aiOutput?.suggestedTitle)}><CheckCircle size={12} className="mr-1"/>Uygula</Button>
+                                                        </div>
+                                                    )}
+                                                    {msg.aiOutput.suggestedSummary && (
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div>
+                                                                <strong className="block text-xs font-medium">Önerilen Özet:</strong>
+                                                                <p className="text-sm whitespace-pre-wrap p-1 bg-background rounded border border-border/30 mt-0.5">{msg.aiOutput.suggestedSummary}</p>
+                                                            </div>
+                                                            <Button size="xs" variant="outline" className="mt-1 text-xs h-6 px-1.5" onClick={() => handleApplyAiSuggestion('summary', msg.aiOutput?.suggestedSummary)}><CheckCircle size={12} className="mr-1"/>Uygula</Button>
+                                                        </div>
+                                                    )}
+                                                    {msg.aiOutput.suggestedTags && msg.aiOutput.suggestedTags.length > 0 && (
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div>
+                                                                <strong className="block text-xs font-medium">Önerilen Etiketler:</strong>
+                                                                <div className="flex flex-wrap gap-1 mt-1 p-1 bg-background rounded border border-border/30">
+                                                                    {msg.aiOutput.suggestedTags.map(tag => <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>)}
+                                                                </div>
+                                                            </div>
+                                                            <Button size="xs" variant="outline" className="mt-1 text-xs h-6 px-1.5" onClick={() => handleApplyAiSuggestion('tags', msg.aiOutput?.suggestedTags)}><CheckCircle size={12} className="mr-1"/>Uygula</Button>
+                                                        </div>
+                                                    )}
+                                                    {msg.aiOutput.suggestedContentIdeas && (!msg.aiOutput.suggestedBlocks || msg.aiOutput.suggestedBlocks.length === 0) && (
+                                                        <div>
+                                                            <strong className="block text-xs font-medium">Önerilen İçerik Fikirleri/Taslak:</strong>
+                                                            <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none p-1 bg-background rounded border border-border/30 mt-0.5" dangerouslySetInnerHTML={{ __html: msg.aiOutput.suggestedContentIdeas.replace(/\n/g, '<br />') }} />
+                                                        </div>
+                                                    )}
+                                                    {msg.aiOutput.suggestedBlocks && msg.aiOutput.suggestedBlocks.length > 0 && (
+                                                        <div className="mt-2">
+                                                            <strong className="block text-xs font-medium mb-0.5">Önerilen Sayfa Yapısı (Bloklar):</strong>
+                                                            <div className="text-xs space-y-0.5 p-1 bg-background rounded border border-border/30 max-h-32 overflow-y-auto">
+                                                                {msg.aiOutput.suggestedBlocks.map((block, index) => (
+                                                                    <p key={`suggested-block-${index}`} className="truncate text-[11px]">
+                                                                        - <strong>{block.type}</strong>: {(block as any).content?.substring(0, 25) || (block as any).url?.substring(0,25) || (block as any).level || '[detay]'}...
+                                                                    </p>
+                                                                ))}
+                                                            </div>
+                                                             <Button size="xs" variant="outline" className="mt-1.5 border-primary text-primary hover:bg-primary/10 w-full text-xs h-7" onClick={() => handleApplySuggestedBlocks(msg.aiOutput?.suggestedBlocks)}><CheckCircle size={12} className="mr-1"/>Bu Blok Yapısını Uygula</Button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ) : (
-                                                msg.content
-                                            )}
-                                            {msg.type === 'ai' && msg.suggestedBlocksForApply && msg.suggestedBlocksForApply.length > 0 && (
-                                                <Button 
-                                                    size="sm" 
-                                                    variant="outline" 
-                                                    className="mt-2 border-primary text-primary hover:bg-primary/10"
-                                                    onClick={() => handleApplySuggestedBlocks(msg.suggestedBlocksForApply)}
-                                                >
-                                                    Bu Blok Yapısını Uygula
-                                                </Button>
+                                                typeof msg.content === 'string' ? <div className="whitespace-pre-wrap">{msg.content}</div> : msg.content
                                             )}
                                         </div>
                                     ))}
@@ -743,3 +740,5 @@ export default function NewBiyolojiNotuPage() {
         </>
     );
 }
+
+    

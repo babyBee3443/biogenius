@@ -111,12 +111,15 @@ export default function NotePage({ params }: NotePageProps) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
+  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
     if (typeof window !== 'undefined') {
       const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
       if (isMounted) setAdsenseEnabled(storedAdsenseEnabled === 'true');
+      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
+      if (isMounted) setAdsensePublisherId(storedPublisherId);
     }
 
     const fetchNoteData = async () => {
@@ -154,6 +157,30 @@ export default function NotePage({ params }: NotePageProps) {
     fetchNoteData();
     return () => { isMounted = false; };
   }, [noteSlug]);
+
+  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties, minHeight?: string) => {
+    if (adsenseEnabled && adsensePublisherId) {
+      return (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
+          <ins className="adsbygoogle"
+            style={{ display: 'block', ...style }}
+            data-ad-client={`ca-${adsensePublisherId}`}
+            data-ad-slot={slotId}
+            data-ad-format={adFormat}
+            data-full-width-responsive={responsive ? "true" : "false"}
+          ></ins>
+          <script
+             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
+        <p className="text-sm text-muted-foreground">Reklam Alanı ({minHeight || 'Duyarlı'})</p>
+      </div>
+    );
+  };
 
 
   if (loading) {
@@ -221,23 +248,15 @@ export default function NotePage({ params }: NotePageProps) {
             </p>
         )}
       
-      {adsenseEnabled && (
-        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Not Başı) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Not Başı)</p>
-        </div>
-      )}
+      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTE_TOP", "fluid", true, undefined, "100px")}
 
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {note.contentBlocks && note.contentBlocks.length > 0 ? (
              note.contentBlocks.map((block, index) => (
                 <React.Fragment key={block.id}>
                     {renderBlock(block)}
-                    {adsenseEnabled && (index === 1 || index === 3) && ( 
-                         <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Not Paragraf Arası) */}
-                            <p className="text-sm text-muted-foreground">Reklam Alanı (Not Paragraf Arası)</p>
-                        </div>
+                    {(index === 1 || index === Math.floor(note.contentBlocks.length / 2)) && note.contentBlocks.length > 3 && ( 
+                         renderAdsenseUnit(`YOUR_AD_SLOT_ID_NOTE_INCONTENT_${index}`, "fluid", true, undefined, "150px")
                     )}
                 </React.Fragment>
             ))
@@ -257,12 +276,7 @@ export default function NotePage({ params }: NotePageProps) {
            </div>
        )}
       
-      {adsenseEnabled && (
-        <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Not Sonu) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Not Sonu)</p>
-        </div>
-      )}
+      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTE_BOTTOM", "leaderboard", false, undefined, "90px")}
 
        <div className="mt-16 mb-8 text-center">
            <Button asChild variant="outline">

@@ -123,6 +123,7 @@ export default function ArticlePage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
+  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -139,6 +140,8 @@ export default function ArticlePage() {
       }
       const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
       if (isMounted) setAdsenseEnabled(storedAdsenseEnabled === 'true');
+      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
+      if (isMounted) setAdsensePublisherId(storedPublisherId);
     }
 
     const fetchArticleData = async () => {
@@ -194,6 +197,31 @@ export default function ArticlePage() {
     if ((currentUserRole === 'Admin' || currentUserRole === 'Editor') && article.status === 'Hazır') return true;
     return false;
   }, [article, currentUserRole]);
+
+
+  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties, minHeight?: string) => {
+    if (adsenseEnabled && adsensePublisherId) {
+      return (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
+          <ins className="adsbygoogle"
+            style={{ display: 'block', ...style }}
+            data-ad-client={`ca-${adsensePublisherId}`}
+            data-ad-slot={slotId}
+            data-ad-format={adFormat}
+            data-full-width-responsive={responsive ? "true" : "false"}
+          ></ins>
+          <script
+             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
+        <p className="text-sm text-muted-foreground">Reklam Alanı ({minHeight || 'Duyarlı'})</p>
+      </div>
+    );
+  };
 
 
   if (loading) {
@@ -259,23 +287,15 @@ export default function ArticlePage() {
           </div>
       )}
 
-      {adsenseEnabled && (
-        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Makale Başı) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Makale Başı)</p>
-        </div>
-      )}
+      {renderAdsenseUnit("YOUR_AD_SLOT_ID_ARTICLE_TOP", "fluid", true, undefined, "100px")}
 
       <div className="prose dark:prose-invert lg:prose-lg max-w-none mb-12">
         {article.blocks && article.blocks.length > 0 ? (
              article.blocks.map((block, index) => (
                 <React.Fragment key={block.id}>
                     {renderBlock(block)}
-                    {adsenseEnabled && (index === 1 || index === 3) && ( // Örnek: 2. ve 4. bloktan sonra
-                         <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-                            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: İçerik İçi Duyarlı - Paragraf Arası) */}
-                            <p className="text-sm text-muted-foreground">Reklam Alanı (Paragraf Arası)</p>
-                        </div>
+                    {(index === 1 || index === Math.floor(article.blocks.length / 2) || index === article.blocks.length - 2) && article.blocks.length > 3 && (
+                        renderAdsenseUnit(`YOUR_AD_SLOT_ID_ARTICLE_INCONTENT_${index}`, "fluid", true, undefined, "150px")
                     )}
                 </React.Fragment>
              ))
@@ -300,12 +320,7 @@ export default function ArticlePage() {
            </div>
        )}
 
-       {adsenseEnabled && (
-        <div className="my-12 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-            {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner - Makale Sonu) */}
-            <p className="text-sm text-muted-foreground">Reklam Alanı (Makale Sonu)</p>
-        </div>
-       )}
+       {renderAdsenseUnit("YOUR_AD_SLOT_ID_ARTICLE_BOTTOM", "leaderboard", false, undefined, "90px")}
 
        <div className="mt-10">
           <h2 className="text-2xl font-semibold mb-4">Paylaş</h2>

@@ -22,11 +22,14 @@ export default function BiyolojiNotlariPage() {
   const [selectedLevel, setSelectedLevel] = React.useState("all");
   const [loading, setLoading] = React.useState(true);
   const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
+  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
       setAdsenseEnabled(storedAdsenseEnabled === 'true');
+      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
+      setAdsensePublisherId(storedPublisherId);
     }
 
     setLoading(true);
@@ -72,6 +75,31 @@ export default function BiyolojiNotlariPage() {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
+
+  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties, minHeight?: string) => {
+    if (adsenseEnabled && adsensePublisherId) {
+      return (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
+          <ins className="adsbygoogle"
+            style={{ display: 'block', ...style }}
+            data-ad-client={`ca-${adsensePublisherId}`}
+            data-ad-slot={slotId}
+            data-ad-format={adFormat}
+            data-full-width-responsive={responsive ? "true" : "false"}
+          ></ins>
+          <script
+             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={{...style, minHeight: minHeight || 'auto'}}>
+        <p className="text-sm text-muted-foreground">Reklam Alanı ({minHeight || 'Duyarlı'})</p>
+      </div>
+    );
+  };
+
 
   return (
     <div className="space-y-12">
@@ -119,12 +147,7 @@ export default function BiyolojiNotlariPage() {
           </Card>
       </section>
 
-      {adsenseEnabled && (
-        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Notlar Liste Filtre Altı) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Notlar Liste Filtre Altı)</p>
-        </div>
-      )}
+      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTES_LIST_TOP", "leaderboard", false, undefined, "90px")}
 
       {loading ? (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -161,23 +184,15 @@ export default function BiyolojiNotlariPage() {
           {filteredNotes.map((note, index) => (
             <React.Fragment key={note.id}>
               <NoteCard note={note} imageLoading="lazy" />
-              {adsenseEnabled && (index + 1) % 3 === 0 && index < filteredNotes.length -1 && (
-                <div className="my-4 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg md:col-span-1 lg:col-span-1 flex items-center justify-center">
-                  {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Kare veya Dikey - Notlar Liste Kart Arası) */}
-                  <p className="text-sm text-muted-foreground">Reklam Alanı (Notlar Liste Kart Arası)</p>
-                </div>
+              {(index + 1) % 3 === 0 && index < filteredNotes.length -1 && (
+                renderAdsenseUnit(`YOUR_AD_SLOT_ID_NOTES_LIST_INCONTENT_${index}`, "fluid", true, { gridColumn: "span 1 / span 1", display: 'flex', alignItems: 'center', justifyContent: 'center' }, "250px")
               )}
             </React.Fragment>
           ))}
         </div>
       )}
 
-      {adsenseEnabled && (
-        <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Notlar Liste Sayfa Sonu) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Notlar Liste Sayfa Sonu)</p>
-        </div>
-      )}
+      {renderAdsenseUnit("YOUR_AD_SLOT_ID_NOTES_LIST_BOTTOM", "leaderboard", false, undefined, "90px")}
     </div>
   );
 }

@@ -33,7 +33,7 @@ export default function RootLayout({
     setIsMounted(true); // Indicate that the component has mounted on the client
     if (typeof window !== 'undefined') {
       const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
-      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true');
+      setAdsenseEnabled(storedAdsenseEnabled === null ? true : storedAdsenseEnabled === 'true'); // Default to true if not set
 
       const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
       setAdsensePublisherId(storedPublisherId);
@@ -72,7 +72,7 @@ export default function RootLayout({
             <meta name="adsense-disabled" content="true" />
          )}
          {isMounted && adsenseEnabled && !adsensePublisherId && (
-            <meta name="adsense-misconfigured" content="Publisher ID missing" />
+            <meta name="adsense-warning" content="AdSense Publisher ID missing" />
          )}
       </head>
       <body className={`${geistSans.variable} font-sans antialiased`}>

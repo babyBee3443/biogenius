@@ -151,6 +151,7 @@ export default function Home() {
   const [currentUserRole, setCurrentUserRole] = React.useState<string | null>(null);
   const [loadingRole, setLoadingRole] = React.useState(true);
   const [adsenseEnabled, setAdsenseEnabled] = React.useState(false);
+  const [adsensePublisherId, setAdsensePublisherId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     getArticles()
@@ -179,6 +180,8 @@ export default function Home() {
 
       const storedAdsenseEnabled = localStorage.getItem('biyohox_adsenseEnabled');
       setAdsenseEnabled(storedAdsenseEnabled === 'true');
+      const storedPublisherId = localStorage.getItem('biyohox_adsensePublisherId');
+      setAdsensePublisherId(storedPublisherId);
     } else {
       setLoadingRole(false);
     }
@@ -256,18 +259,37 @@ export default function Home() {
      );
   }
 
+  const renderAdsenseUnit = (slotId: string, adFormat: string = "auto", responsive: boolean = true, style?: React.CSSProperties) => {
+    if (adsenseEnabled && adsensePublisherId) {
+      return (
+        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={style}>
+          <ins className="adsbygoogle"
+            style={{ display: 'block', ...style }}
+            data-ad-client={`ca-${adsensePublisherId}`}
+            data-ad-slot={slotId} // Replace with your actual slot ID
+            data-ad-format={adFormat}
+            data-full-width-responsive={responsive ? "true" : "false"}
+          ></ins>
+          <script
+             dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg" style={style}>
+        <p className="text-sm text-muted-foreground">Reklam Alanı (Adsense etkin değil veya ID eksik)</p>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-12">
       <WelcomeScreen />
 
        <Hero articles={heroArticles} />
 
-      {adsenseEnabled && (
-        <div className="my-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Geniş Yatay Banner - Anasayfa Hero Altı) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Anasayfa Hero Altı)</p>
-        </div>
-      )}
+       {renderAdsenseUnit("YOUR_AD_SLOT_ID_HERO_BOTTOM", "fluid", true, { minHeight: '100px' })}
 
       {featuredArticles.length > 0 && (
         <section id="featured-articles">
@@ -281,12 +303,7 @@ export default function Home() {
          <CategoryTeaserSection />
        </section>
 
-      {adsenseEnabled && (
-        <div className="my-12 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Orta Boy Dikdörtgen - Anasayfa Bölümler Arası) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Anasayfa Bölümler Arası)</p>
-        </div>
-      )}
+       {renderAdsenseUnit("YOUR_AD_SLOT_ID_SECTIONS_MIDDLE", "rectangle", true, { minWidth: '300px', minHeight: '250px' })}
 
       <RecommendedContentSection />
 
@@ -297,12 +314,7 @@ export default function Home() {
         </section>
       )}
 
-      {adsenseEnabled && (
-        <div className="mt-12 mb-8 p-4 text-center bg-muted/30 border border-dashed border-border rounded-lg">
-          {/* Google AdSense Reklam Birimi Kodu Buraya Eklenecek (Örn: Yatay Banner - Anasayfa Sayfa Sonu) */}
-          <p className="text-sm text-muted-foreground">Reklam Alanı (Anasayfa Sayfa Sonu)</p>
-        </div>
-      )}
+      {renderAdsenseUnit("YOUR_AD_SLOT_ID_PAGE_BOTTOM", "leaderboard", false, { minHeight: '90px' })}
 
     </div>
   );
